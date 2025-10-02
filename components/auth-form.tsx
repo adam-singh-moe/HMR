@@ -475,7 +475,7 @@ function AuthFormContent() {
             {isSignUp && (
               <div className="grid gap-2">
                 <Label htmlFor="name" className="text-primary-700 font-medium">
-                  Full Name
+                  Headteacher's Full Name
                 </Label>
                 <Input
                   id="name"
@@ -488,7 +488,7 @@ function AuthFormContent() {
             )}
             <div className="grid gap-2">
               <Label htmlFor="email" className="text-primary-700 font-medium">
-                Email
+                Headteacher's Email
               </Label>
               <Input
                 id="email"
