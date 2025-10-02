@@ -31,6 +31,7 @@ function SubmitButton({ text }: { text: string }) {
 
 function AuthFormContent() {
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [role, setRole] = useState<"head_teacher" | "regional_officer" | "education_official">("head_teacher")
   const [error, setError] = useState<string | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
@@ -53,6 +54,8 @@ function AuthFormContent() {
   const [showEmailVerification, setShowEmailVerification] = useState(false)
   const [verificationEmail, setVerificationEmail] = useState("")
   const [pendingUserData, setPendingUserData] = useState<any>(null)
+  const [initialVerificationToken, setInitialVerificationToken] = useState<string | null>(null)
+  const [verificationType, setVerificationType] = useState<"signup" | "password_reset">("signup")
 
   const searchParams = useSearchParams()
 
@@ -392,7 +395,54 @@ function AuthFormContent() {
     setShowEmailVerification(false)
     setPendingUserData(null)
     setVerificationEmail("")
+    setInitialVerificationToken(null)
     setError(null)
+  }
+
+  // Handle forgot password form submission
+  const handleForgotPassword = async (formData: FormData) => {
+    const email = formData.get("email") as string
+
+    if (!email) {
+      setError("Email is required")
+      return
+    }
+
+    try {
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setVerificationEmail(email)
+        setPendingUserData({ email, type: "password_reset" })
+        setInitialVerificationToken(data.token)
+        setVerificationType("password_reset")
+        setShowEmailVerification(true)
+        setIsForgotPassword(false)
+      } else {
+        // Even on "error", we show success message for security (don't reveal if email exists)
+        setSuccessMessage("If an account with this email exists, you will receive a password reset code.")
+        setShowSuccess(true)
+        setError("")
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error)
+      setError("Failed to process request. Please try again.")
+    }
+  }
+
+  // Handle password reset success
+  const handlePasswordResetSuccess = (data: any) => {
+    setSuccessMessage(data.message || "Password updated successfully! You can now log in with your new password.")
+    setShowSuccess(true)
+    setShowEmailVerification(false)
+    setIsForgotPassword(false)
+    setVerificationType("signup")
   }
 
   const handleRoleChange = (value: "head_teacher" | "regional_officer" | "education_official") => {
@@ -432,8 +482,10 @@ function AuthFormContent() {
       <EmailVerification
         email={verificationEmail}
         userData={pendingUserData}
-        onVerificationSuccess={handleEmailVerificationSuccess}
+        onVerificationSuccess={verificationType === "password_reset" ? handlePasswordResetSuccess : handleEmailVerificationSuccess}
         onBack={handleBackFromVerification}
+        initialToken={initialVerificationToken || undefined}
+        verificationType={verificationType}
       />
     )
   }
@@ -451,13 +503,19 @@ function AuthFormContent() {
 
       <Card className="gradient-card shadow-xl border-0">
         <CardHeader className="text-center pb-4">
-          <CardTitle className="text-xl text-primary-700">{isSignUp ? "Create Account" : "Sign In"}</CardTitle>
+          <CardTitle className="text-xl text-primary-700">
+            {isForgotPassword ? "Forgot Password" : isSignUp ? "Create Account" : "Sign In"}
+          </CardTitle>
           <CardDescription>
-            {isSignUp ? "Register for your School Headteachers' Monthly Reporting Portal account" : "Access your School Headteachers' Monthly reporting portal account"}
+            {isForgotPassword 
+              ? "Enter your email to receive a password reset code" 
+              : isSignUp 
+                ? "Register for your School Headteachers' Monthly Reporting Portal account" 
+                : "Access your School Headteachers' Monthly reporting portal account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="grid gap-4">
+          <form action={isForgotPassword ? handleForgotPassword : handleSubmit} className="grid gap-4">
             {showSuccess && (
               <Alert className="border-green-200 bg-green-50 text-green-800">
                 <CheckCircledIcon className="h-4 w-4 text-green-600" />
@@ -501,10 +559,11 @@ function AuthFormContent() {
                 className="border-primary-200 focus:border-primary-500"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password" className="text-primary-700 font-medium">
-                Password
-              </Label>
+            {!isForgotPassword && (
+              <div className="grid gap-2">
+                <Label htmlFor="password" className="text-primary-700 font-medium">
+                  Password
+                </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -535,6 +594,7 @@ function AuthFormContent() {
                 </div>
               )}
             </div>
+            )}
             {isSignUp && (
               <div className="grid gap-2">
                 <Label htmlFor="confirmPassword" className="text-primary-700 font-medium">
@@ -705,17 +765,44 @@ function AuthFormContent() {
                 )}
               </>
             )}
-            <SubmitButton text={isSignUp ? "Create Account" : "Sign In"} />
+            <SubmitButton text={isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"} />
           </form>
+          {!isForgotPassword && !isSignUp && (
+            <div className="mt-4 text-center text-sm">
+              <Button
+                variant="link"
+                onClick={() => setIsForgotPassword(true)}
+                className="p-0 h-auto text-primary-600 hover:text-primary-700"
+              >
+                Forgot your password?
+              </Button>
+            </div>
+          )}
+          
           <div className="mt-6 text-center text-sm">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <Button
-              variant="link"
-              onClick={toggleSignUp}
-              className="p-0 h-auto text-primary-600 hover:text-primary-700"
-            >
-              {isSignUp ? "Sign In" : "Create Account"}
-            </Button>
+            {isForgotPassword ? (
+              <>
+                Remember your password?{" "}
+                <Button
+                  variant="link"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="p-0 h-auto text-primary-600 hover:text-primary-700"
+                >
+                  Back to Sign In
+                </Button>
+              </>
+            ) : (
+              <>
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                <Button
+                  variant="link"
+                  onClick={toggleSignUp}
+                  className="p-0 h-auto text-primary-600 hover:text-primary-700"
+                >
+                  {isSignUp ? "Sign In" : "Create Account"}
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
