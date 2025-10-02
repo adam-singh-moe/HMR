@@ -65,7 +65,6 @@ const clearCache = () => {
   localStorage.removeItem(SCHOOLS_CACHE_KEY)
 }
 
-//testing
 export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRegion, setSelectedRegion] = useState<string>("all")

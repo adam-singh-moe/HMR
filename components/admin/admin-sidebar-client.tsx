@@ -11,6 +11,8 @@ import {
   School,
   MapPin,
   UserCheck,
+  FileText,
+  FilePlus,
   LogOut,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -51,6 +53,16 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
         name: "Regions",
         href: "/dashboard/admin/regions",
         icon: MapPin,
+      },
+      {
+        name: "Reports",
+        href: "/dashboard/admin/reports",
+        icon: FileText,
+      },
+      {
+        name: "Submit Report",
+        href: "/dashboard/admin/submit-report",
+        icon: FilePlus,
       },
       {
         name: "Verifications",

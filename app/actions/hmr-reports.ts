@@ -8,8 +8,8 @@ export async function createHmrReport(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can submit reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can submit reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -104,20 +104,25 @@ export async function updateHmrReport(reportId: string, formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user
-    const { data: report, error: reportError } = await supabase
+    // Verify the report belongs to the current user (or user is admin)
+    let reportQuery = supabase
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
       .is("deleted_on", null)
-      .single()
+
+    // Only filter by headteacher_id for head teachers, admins can update any report
+    if (user.role !== "Admin") {
+      reportQuery = reportQuery.eq("headteacher_id", user.id)
+    }
+
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to update it." }
@@ -212,8 +217,8 @@ export async function deleteHmrReport(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can delete reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can delete reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -223,7 +228,7 @@ export async function deleteHmrReport(reportId: string) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
 
@@ -256,8 +261,8 @@ export async function deleteHmrReport(reportId: string) {
 export async function saveStudentEnrollment(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -276,7 +281,7 @@ export async function saveStudentEnrollment(formData: FormData) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
     if (reportError || !report) {
@@ -329,8 +334,8 @@ export async function getStudentEnrollment(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can view reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can view reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -374,8 +379,8 @@ export async function getStudentEnrollment(reportId: string) {
 export async function saveAttendance(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -395,7 +400,7 @@ export async function saveAttendance(formData: FormData) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
     if (reportError || !report) {
@@ -455,8 +460,8 @@ export async function getAttendance(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can view reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can view reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -509,8 +514,8 @@ export async function getAttendance(reportId: string) {
 export async function saveStaffing(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -532,7 +537,7 @@ export async function saveStaffing(formData: FormData) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
 
@@ -709,8 +714,8 @@ export async function saveStaffDevelopment(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -732,7 +737,7 @@ export async function saveStaffDevelopment(formData: FormData) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
 
@@ -792,8 +797,8 @@ export async function getStaffDevelopment(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can view reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can view reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -838,8 +843,8 @@ export async function saveSupervision(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can update reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can update reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -872,7 +877,7 @@ export async function saveSupervision(formData: FormData) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
 
@@ -944,8 +949,8 @@ export async function getSupervision(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can view reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can view reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -1014,8 +1019,8 @@ export async function getCurrentMonthReport() {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can access reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can access reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1026,15 +1031,20 @@ export async function getCurrentMonthReport() {
     const reportMonth = previousMonth.getMonth() + 1 // JavaScript months are 0-indexed
     const reportYear = previousMonth.getFullYear()
 
-    // Check if a report exists for the previous month/year
-    const { data: existingReport, error: reportError } = await supabase
+    // Build query - filter by school for head teachers, no filter for admins
+    let query = supabase
       .from("hmr_report")
       .select("*")
-      .eq("headteacher_id", user.id)
       .eq("month", reportMonth)
       .eq("year", reportYear)
       .is("deleted_on", null)
-      .maybeSingle()
+
+    // Head teachers can only see reports for their school
+    if (user.role === "Head Teacher") {
+      query = query.eq("headteacher_id", user.id)
+    }
+
+    const { data: existingReport, error: reportError } = await query.maybeSingle()
 
     if (reportError) {
       console.error("Error fetching current month report:", reportError)
@@ -1058,8 +1068,8 @@ export async function getReportProgress(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can access reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can access reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1069,7 +1079,7 @@ export async function getReportProgress(reportId: string) {
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
+      
       .is("deleted_on", null)
       .single()
 
@@ -1590,8 +1600,8 @@ export async function saveStaffMeetings(
 ) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can save staff meetings data." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can save staff meetings data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1710,8 +1720,8 @@ export async function savePhysicalFacilities(
 ) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can save physical facilities data." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can save physical facilities data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1803,8 +1813,8 @@ export async function getPhysicalFacilities(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can view reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can view reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -1874,8 +1884,8 @@ export async function saveResourcesNeeded(
 ) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can save resources needed data." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can save resources needed data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1981,19 +1991,24 @@ export async function getResourcesNeeded(reportId: string) {
 export async function submitReport(reportId: string) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Head Teacher") {
-      return { error: "Only Head Teachers can submit reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can submit reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
     // Check if report exists and is in draft status
-    const { data: existingReport, error: checkError } = await supabase
+    let query = supabase
       .from("hmr_report")
       .select("id, status")
       .eq("id", reportId)
-      .eq("headteacher_id", user.id)
-      .single()
+
+    // Only filter by headteacher_id for head teachers, admins can access any report
+    if (user.role === "Head Teacher") {
+      query = query.eq("headteacher_id", user.id)
+    }
+
+    const { data: existingReport, error: checkError } = await query.single()
 
     if (checkError || !existingReport) {
       return { error: "Report not found or you don't have permission to submit it." }
@@ -2080,7 +2095,7 @@ export async function getSubmittedReports() {
 
     // Filter based on user role
     if (user.role === "Head Teacher") {
-      query = query.eq("headteacher_id", user.id)
+      query = query
     } else if (user.role === "Regional Officer") {
       // For Regional Officers, filter by the region_id which represents the school's region
       // The user.region should match the region_id in the hmr_report table
@@ -2359,8 +2374,8 @@ export async function getMissingMonthsForSchool() {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { missingMonths: [], error: "Only Head Teachers can check missing reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { missingMonths: [], error: "Only Head Teachers and Admins can check missing reports." }
     }
 
     if (!user.school_id) {
@@ -2427,8 +2442,8 @@ export async function getDraftReports() {
   try {
     const user = await getUser()
 
-    if (!user || user.role !== "Head Teacher") {
-      return { draftReports: [], error: "Only Head Teachers can check draft reports." }
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { draftReports: [], error: "Only Head Teachers and Admins can check draft reports." }
     }
 
     if (!user.school_id) {

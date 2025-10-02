@@ -1303,3 +1303,537 @@ export async function getAvailableReportYears() {
     return { years: [2025], error: "An unexpected error occurred." }
   }
 }
+
+// Get missing months for a specific school
+export async function getMissingMonthsForSchool(schoolId: string) {
+  try {
+    const user = await getUser()
+
+    if (!user || user.role !== "Admin") {
+      return { missingMonths: [], error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Get all reports submitted by this school in the current year
+    const currentYear = new Date().getFullYear()
+    const { data: reports, error } = await supabase
+      .from("hmr_report")
+      .select(`
+        month,
+        year,
+        status
+      `)
+      .eq("school_id", schoolId)
+      .eq("year", currentYear.toString()) // Convert year to string since it's stored as text
+      .is("deleted_on", null) // Filter out soft-deleted reports
+      .eq("status", "submitted") // Only count submitted reports as complete
+
+    if (error) {
+      console.error("Error fetching school reports:", error)
+      return { missingMonths: [], error: "Failed to fetch school reports." }
+    }
+
+    // Debug logging
+    console.log(`School ${schoolId} has ${reports?.length || 0} reports in ${currentYear}`)
+    console.log('Reports found:', reports)
+
+    // Get submitted months - convert text months to numbers
+    const submittedMonths = new Set(reports?.map(report => parseInt(report.month)) || [])
+    console.log('Submitted months:', Array.from(submittedMonths))
+
+    // Generate list of missing months (from January to current month - 1)
+    // Since it's October 1st, we should check Jan-Sep for missing reports
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth() + 1 // getMonth() returns 0-11, we want 1-12
+    const missingMonths = []
+
+    // Check from January to previous month (not including current month)
+    const monthsToCheck = currentMonth - 1
+
+    for (let month = 1; month <= monthsToCheck; month++) {
+      if (!submittedMonths.has(month)) {
+        const monthNames = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ]
+        
+        missingMonths.push({
+          month: month,
+          year: currentYear,
+          displayName: `${monthNames[month - 1]} ${currentYear}`
+        })
+      }
+    }
+
+    console.log('Missing months:', missingMonths)
+    return { missingMonths, error: null }
+  } catch (error) {
+    console.error("Error in getMissingMonthsForSchool:", error)
+    return { missingMonths: [], error: "An unexpected error occurred." }
+  }
+}
+
+// Get complete school details with joined data for auto-filling admin form
+export async function getSchoolDetails(schoolId: string) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    const { data: school, error } = await supabase
+      .from("sms_schools")
+      .select(`
+        id,
+        name,
+        grade,
+        code,
+        region_id,
+        school_level_id,
+        sms_regions!inner(name),
+        sms_school_levels!inner(name)
+      `)
+      .eq("id", schoolId)
+      .single()
+
+    if (error) {
+      console.error("Error fetching school details:", error)
+      return null
+    }
+
+    return {
+      id: school.id,
+      name: school.name,
+      grade: school.grade || "",
+      code: school.code,
+      educationDistrict: (school.sms_regions as any).name,
+      schoolLevel: (school.sms_school_levels as any).name,
+    }
+  } catch (error) {
+    console.error("Error fetching school details:", error)
+    return null
+  }
+}
+
+// Create admin HMR report (exact copy of head teacher createHmrReport)
+export async function createAdminHmrReport(formData: FormData) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { error: "Authentication required. Please log in." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Extract form data (exact same as head teacher)
+    const schoolName = formData.get("schoolName") as string
+    const educationDistrict = formData.get("educationDistrict") as string
+    const schoolLevel = formData.get("schoolLevel") as string
+    const schoolGrade = formData.get("schoolGrade") as string
+    const month = formData.get("month") as string
+    const year = formData.get("year") as string
+
+    if (!schoolName || !educationDistrict || !schoolLevel || !schoolGrade || !month || !year) {
+      return { error: "Please fill in all required fields." }
+    }
+
+    // Get school ID from school name (exact same as head teacher)
+    const { data: school, error: schoolError } = await supabase
+      .from("sms_schools")
+      .select("id")
+      .eq("name", schoolName)
+      .single()
+
+    if (schoolError || !school) {
+      return { error: "School not found. Please select a valid school." }
+    }
+
+    // Get region ID from region name (exact same as head teacher)
+    const { data: region, error: regionError } = await supabase
+      .from("sms_regions")
+      .select("id")
+      .eq("name", educationDistrict)
+      .single()
+
+    if (regionError || !region) {
+      return { error: "Education district not found. Please select a valid district." }
+    }
+
+    // Check if report already exists for this month/year/school (exact same as head teacher)
+    const { data: existingReport } = await supabase
+      .from("hmr_report")
+      .select("id, status")
+      .eq("school_id", school.id)
+      .eq("month", Number.parseInt(month))
+      .eq("year", Number.parseInt(year))
+      .is("deleted_on", null)
+      .single()
+
+    if (existingReport) {
+      if (existingReport.status === "submitted") {
+        // Report already submitted for this month
+        return {
+          error:
+            "A report has already been submitted for this month. You cannot create or edit reports for months that have already been submitted.",
+          isSubmitted: true,
+        }
+      }
+      // Return the existing draft report ID to continue editing
+      return { success: true, reportId: existingReport.id, isExistingReport: true, status: existingReport.status }
+    }
+
+    // Create the report (exact same as head teacher)
+    const { data: newReport, error: insertError } = await supabase
+      .from("hmr_report")
+      .insert({
+        school_id: school.id,
+        headteacher_id: user.id,
+        month: Number.parseInt(month),
+        year: Number.parseInt(year),
+        region_id: region.id,
+        school_level: schoolLevel,
+        school_grade: schoolGrade,
+        status: "draft",
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("Insert error:", insertError)
+      return { error: "Failed to create report. Please try again." }
+    }
+
+    revalidatePath("/dashboard/admin")
+    return { success: true, reportId: newReport.id }
+  } catch (error) {
+    console.error("Error creating HMR report:", error)
+    return { error: "An unexpected error occurred. Please try again." }
+  }
+}
+
+// Admin-specific save functions (without role restrictions)
+export async function saveAdminStudentEnrollment(formData: FormData) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { error: "Authentication required." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const reportId = formData.get("reportId") as string
+    const totalStudents = formData.get("totalStudents") as string
+    const totalTransferredIn = formData.get("totalTransferredIn") as string
+    const totalTransferredOut = formData.get("totalTransferredOut") as string
+
+    if (!reportId) {
+      return { error: "Report ID is required. Please start from the Basic Information section." }
+    }
+
+    // Insert or update enrollment data
+    const { error } = await supabase
+      .from("hmr_student_enrollment")
+      .upsert({
+        hmr_report_id: reportId,
+        total_students_enrolled: totalStudents ? parseInt(totalStudents) : 0,
+        students_transferred_in: totalTransferredIn ? parseInt(totalTransferredIn) : 0,
+        students_transferred_out: totalTransferredOut ? parseInt(totalTransferredOut) : 0,
+      })
+
+    if (error) {
+      console.error("Error saving student enrollment:", error)
+      return { error: "Failed to save student enrollment data." }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error in saveAdminStudentEnrollment:", error)
+    return { error: "An unexpected error occurred." }
+  }
+}
+
+export async function saveAdminAttendance(formData: FormData) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { error: "Authentication required." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const reportId = formData.get("reportId") as string
+    const studentAttendanceRate = formData.get("studentAttendanceRate") as string
+    const studentPunctualityRate = formData.get("studentPunctualityRate") as string
+    const teacherAttendanceRate = formData.get("teacherAttendanceRate") as string
+    const teacherPunctualityRate = formData.get("teacherPunctualityRate") as string
+
+    if (!reportId) {
+      return { error: "Report ID is required." }
+    }
+
+    const { error } = await supabase
+      .from("hmr_attendance")
+      .upsert({
+        hmr_report_id: reportId,
+        student_attendance_rate: studentAttendanceRate ? parseFloat(studentAttendanceRate) : null,
+        student_punctuality_rate: studentPunctualityRate ? parseFloat(studentPunctualityRate) : null,
+        teacher_attendance_rate: teacherAttendanceRate ? parseFloat(teacherAttendanceRate) : null,
+        teacher_punctuality_rate: teacherPunctualityRate ? parseFloat(teacherPunctualityRate) : null,
+      })
+
+    if (error) {
+      console.error("Error saving attendance:", error)
+      return { error: "Failed to save attendance data." }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error in saveAdminAttendance:", error)
+    return { error: "An unexpected error occurred." }
+  }
+}
+
+export async function saveAdminStaffing(formData: FormData) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { error: "Authentication required." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const reportId = formData.get("reportId") as string
+    const totalStaffEntitlement = formData.get("totalStaffEntitlement") as string
+    const currentTeachersOnStaff = formData.get("currentTeachersOnStaff") as string
+    const underStaffedBy = formData.get("underStaffedBy") as string
+    const overStaffedBy = formData.get("overStaffedBy") as string
+    const secondmentCertificatesPrepared = formData.get("secondmentCertificatesPrepared") as string
+
+    if (!reportId) {
+      return { error: "Report ID is required." }
+    }
+
+    const { error } = await supabase
+      .from("hmr_staffing")
+      .upsert({
+        hmr_report_id: reportId,
+        total_staff_entitlement: totalStaffEntitlement ? parseInt(totalStaffEntitlement) : null,
+        current_teachers_on_staff: currentTeachersOnStaff ? parseInt(currentTeachersOnStaff) : null,
+        under_staffed_by: underStaffedBy ? parseInt(underStaffedBy) : null,
+        over_staffed_by: overStaffedBy ? parseInt(overStaffedBy) : null,
+        secondment_certificates_prepared: secondmentCertificatesPrepared === 'true',
+      })
+
+    if (error) {
+      console.error("Error saving staffing:", error)
+      return { error: "Failed to save staffing data." }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error in saveAdminStaffing:", error)
+    return { error: "An unexpected error occurred." }
+  }
+}
+
+// Submit admin report to database
+export async function submitAdminReport(reportData: any) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    const user = await getUser()
+
+    if (!user) {
+      return { error: "Authentication required. Please log in." }
+    }
+
+    // Parse month and year from monthYear (e.g., "June 2025")
+    const [monthName, yearStr] = reportData.monthYear.split(' ')
+    const monthMap: Record<string, number> = {
+      'January': 1, 'February': 2, 'March': 3, 'April': 4,
+      'May': 5, 'June': 6, 'July': 7, 'August': 8,
+      'September': 9, 'October': 10, 'November': 11, 'December': 12
+    }
+    const month = monthMap[monthName]
+    const year = parseInt(yearStr)
+
+    if (!month || !year) {
+      return { error: "Invalid month/year format." }
+    }
+
+    // Get school details
+    const { data: school, error: schoolError } = await supabase
+      .from("sms_schools")
+      .select("id, region_id")
+      .eq("id", reportData.schoolId)
+      .single()
+
+    if (schoolError || !school) {
+      return { error: "School not found." }
+    }
+
+    // Check if report already exists
+    const { data: existingReport } = await supabase
+      .from("hmr_report")
+      .select("id, status")
+      .eq("school_id", reportData.schoolId)
+      .eq("month", month.toString())
+      .eq("year", year.toString())
+      .single()
+
+    if (existingReport) {
+      return { error: "A report for this school and month already exists." }
+    }
+
+    // Create the main report entry (metadata only)
+    const { data: newReport, error: insertError } = await supabase
+      .from("hmr_report")
+      .insert({
+        school_id: reportData.schoolId,
+        headteacher_id: user.id, // Admin submitting on behalf
+        month: month,
+        year: year,
+        region_id: school.region_id,
+        school_level: reportData.schoolLevel,
+        school_grade: reportData.schoolGrade,
+        status: "draft",
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("Insert error:", insertError)
+      return { error: "Failed to create report. Please try again." }
+    }
+
+    const reportId = newReport.id
+
+    // Now save each section directly to the database tables
+    try {
+      // Section 1: Student Enrollment
+      if (reportData.totalStudentsEnrolled || reportData.studentsTransferredIn || reportData.studentsTransferredOut) {
+        const { error: enrollmentError } = await supabase
+          .from("hmr_student_enrollment")
+          .insert({
+            hmr_report_id: reportId,
+            total_students_enrolled: reportData.totalStudentsEnrolled ? parseInt(reportData.totalStudentsEnrolled) : 0,
+            students_transferred_in: reportData.studentsTransferredIn ? parseInt(reportData.studentsTransferredIn) : 0,
+            students_transferred_out: reportData.studentsTransferredOut ? parseInt(reportData.studentsTransferredOut) : 0,
+          })
+
+        if (enrollmentError) {
+          console.error("Error saving student enrollment:", enrollmentError)
+        }
+      }
+
+      // Section 2: Attendance
+      if (reportData.studentAttendanceRate || reportData.teacherAttendanceRate) {
+        const { error: attendanceError } = await supabase
+          .from("hmr_attendance")
+          .insert({
+            hmr_report_id: reportId,
+            student_attendance_rate: reportData.studentAttendanceRate ? parseFloat(reportData.studentAttendanceRate) : null,
+            student_punctuality_rate: reportData.studentPunctualityRate ? parseFloat(reportData.studentPunctualityRate) : null,
+            teacher_attendance_rate: reportData.teacherAttendanceRate ? parseFloat(reportData.teacherAttendanceRate) : null,
+            teacher_punctuality_rate: reportData.teacherPunctualityRate ? parseFloat(reportData.teacherPunctualityRate) : null,
+          })
+
+        if (attendanceError) {
+          console.error("Error saving attendance:", attendanceError)
+        }
+      }
+
+      // Section 3: Staffing
+      if (reportData.totalStaffEntitlement || reportData.currentTeachersOnStaff) {
+        const { error: staffingError } = await supabase
+          .from("hmr_staffing")
+          .insert({
+            hmr_report_id: reportId,
+            total_staff_entitlement: reportData.totalStaffEntitlement ? parseInt(reportData.totalStaffEntitlement) : null,
+            current_teachers_on_staff: reportData.currentTeachersOnStaff ? parseInt(reportData.currentTeachersOnStaff) : null,
+            under_staffed_by: reportData.underStaffedBy ? parseInt(reportData.underStaffedBy) : null,
+            over_staffed_by: reportData.overStaffedBy ? parseInt(reportData.overStaffedBy) : null,
+            secondment_certificates_prepared: reportData.secondmentCertificatesPrepared === 'true' || reportData.secondmentCertificatesPrepared === true,
+          })
+
+        if (staffingError) {
+          console.error("Error saving staffing:", staffingError)
+        }
+      }
+
+      // Section 4: Teacher Status Updates (if any teachers data exists)
+      if (reportData.teachersWhoLeft && reportData.teachersWhoLeft.length > 0) {
+        const teacherStatusRecords = reportData.teachersWhoLeft
+          .filter((teacher: any) => teacher.name && teacher.name.trim())
+          .map((teacher: any) => ({
+            hmr_report_id: reportId,
+            teacher_name: teacher.name,
+            teacher_status: teacher.status,
+            reason: teacher.reason,
+            status_type: "left"
+          }))
+
+        if (teacherStatusRecords.length > 0) {
+          const { error: teacherStatusError } = await supabase
+            .from("hmr_teacher_status_updates")
+            .insert(teacherStatusRecords)
+
+          if (teacherStatusError) {
+            console.error("Error saving teacher status updates:", teacherStatusError)
+          }
+        }
+      }
+
+      // Update report status to submitted
+      const { error: updateError } = await supabase
+        .from("hmr_report")
+        .update({ 
+          status: "submitted",
+          submitted_at: new Date().toISOString()
+        })
+        .eq("id", reportId)
+
+      if (updateError) {
+        console.error("Error updating report status:", updateError)
+        return { error: "Report saved but failed to update status." }
+      }
+
+      revalidatePath("/dashboard/admin")
+      return { success: true, reportId: newReport.id }
+
+    } catch (sectionError) {
+      console.error("Error saving report sections:", sectionError)
+      
+      // If there's an error saving sections, we should probably delete the main report
+      await supabase.from("hmr_report").delete().eq("id", reportId)
+      
+      return { error: "Failed to save report sections. Please try again." }
+    }
+
+  } catch (error) {
+    console.error("Error submitting admin report:", error)
+    return { error: "An unexpected error occurred. Please try again." }
+  }
+}
+
+// Simple function to mark an admin report as submitted
+export async function submitAdminReportById(reportId: string) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Update the report status to submitted
+    const { error } = await supabase
+      .from("hmr_report")
+      .update({ 
+        status: "submitted",
+        submitted_at: new Date().toISOString()
+      })
+      .eq("id", reportId)
+
+    if (error) {
+      console.error("Error updating report status:", error)
+      return { error: "Failed to submit report. Please try again." }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error submitting admin report:", error)
+    return { error: "Failed to submit report. Please try again." }
+  }
+}

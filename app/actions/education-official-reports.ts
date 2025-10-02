@@ -11,8 +11,8 @@ export async function getSubmittedReportsForEducationOfficial() {
       return { reports: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { reports: [], error: "Only Education Officials can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+      return { reports: [], error: "Only Education Officials and Admins can access this data." }
     }
     // Use service role client to ensure we can read all data
     const supabase = createServiceRoleSupabaseClient()
@@ -129,8 +129,8 @@ export async function getSubmittedReportsWithSearchAndPagination({
       return { reports: [], totalCount: 0, totalPages: 0, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { reports: [], totalCount: 0, totalPages: 0, error: "Only Education Officials can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+      return { reports: [], totalCount: 0, totalPages: 0, error: "Only Education Officials and Admins can access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -220,11 +220,27 @@ export async function getSubmittedReportsWithSearchAndPagination({
       return { reports: [], totalCount: 0, totalPages: 0, error: "Failed to fetch reports." }
     }
 
+    // Transform the nested data structure to flat structure expected by the client
+    const transformedReports = (reports || []).map((report: any) => ({
+      id: report.id,
+      month: report.month,
+      year: report.year,
+      status: report.status,
+      created_at: report.created_at,
+      updated_at: report.updated_at,
+      school_name: report.sms_schools?.name || 'Unknown School',
+      region: report.sms_schools?.sms_regions?.name || 'Unknown Region',
+      head_teacher_name: report.hmr_users?.name || 'Unknown Teacher',
+      submitted_at: report.updated_at,
+      total_enrollment: 0, // This would need to be added to the query if available
+      total_attendance: 0, // This would need to be added to the query if available
+    }))
+
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / pageSize)
 
     return { 
-      reports: reports || [], 
+      reports: transformedReports, 
       totalCount, 
       totalPages, 
       currentPage: page,
@@ -372,8 +388,8 @@ export async function getReportCounts() {
       return { totalReports: 0, currentMonthReports: 0, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { totalReports: 0, currentMonthReports: 0, error: "Only Education Officials can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+      return { totalReports: 0, currentMonthReports: 0, error: "Only Education Officials and Admins can access this data." }
     }
 
     // Use service role client to ensure we can read all data
