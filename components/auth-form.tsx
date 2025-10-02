@@ -488,7 +488,7 @@ function AuthFormContent() {
             )}
             <div className="grid gap-2">
               <Label htmlFor="email" className="text-primary-700 font-medium">
-                Headteacher's Email
+                School's Email
               </Label>
               <Input
                 id="email"
