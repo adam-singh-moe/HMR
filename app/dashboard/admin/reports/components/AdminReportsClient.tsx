@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 interface Report {
   id: string
+  school_id: string
   school_name: string
   region: string
   month: string
@@ -33,8 +34,6 @@ interface Report {
   head_teacher_name: string
   submitted_at: string
   status: 'submitted' | 'pending' | 'reviewed'
-  total_enrollment: number
-  total_attendance: number
 }
 
 interface AdminReportsClientProps {
@@ -175,8 +174,6 @@ export function AdminReportsClient({ reports = [], totalPages = 0, currentPage =
                       <TableHead>Region</TableHead>
                       <TableHead>Head Teacher</TableHead>
                       <TableHead>Period</TableHead>
-                      <TableHead>Enrollment</TableHead>
-                      <TableHead>Attendance</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Submitted</TableHead>
                       <TableHead>Actions</TableHead>
@@ -193,14 +190,12 @@ export function AdminReportsClient({ reports = [], totalPages = 0, currentPage =
                         <TableCell>
                           {report.month} {report.year}
                         </TableCell>
-                        <TableCell>{report.total_enrollment?.toLocaleString() || 'N/A'}</TableCell>
-                        <TableCell>{report.total_attendance?.toLocaleString() || 'N/A'}</TableCell>
                         <TableCell>{getStatusBadge(report.status)}</TableCell>
                         <TableCell>{formatDate(report.submitted_at)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button asChild size="sm" variant="outline">
-                              <Link href={`/dashboard/admin/reports/${report.id}`}>
+                              <Link href={`/dashboard/reports/view/${report.school_id}/${report.month}-${report.year}?back=${encodeURIComponent('/dashboard/admin/reports')}`}>
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>

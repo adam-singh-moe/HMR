@@ -223,6 +223,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
     // Transform the nested data structure to flat structure expected by the client
     const transformedReports = (reports || []).map((report: any) => ({
       id: report.id,
+      school_id: report.school_id,
       month: report.month,
       year: report.year,
       status: report.status,
@@ -232,8 +233,6 @@ export async function getSubmittedReportsWithSearchAndPagination({
       region: report.sms_schools?.sms_regions?.name || 'Unknown Region',
       head_teacher_name: report.hmr_users?.name || 'Unknown Teacher',
       submitted_at: report.updated_at,
-      total_enrollment: 0, // This would need to be added to the query if available
-      total_attendance: 0, // This would need to be added to the query if available
     }))
 
     const totalCount = count || 0
