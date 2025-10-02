@@ -16,12 +16,12 @@ Replaced the file-based verification storage with a database-based solution usin
 3. Run the SQL script from `database/verification_codes_table.sql`
 
 ### Option 2: Using Supabase CLI (if you have it set up)
-```bash
+\`\`\`bash
 supabase db push
-```
+\`\`\`
 
 ### SQL Script to Run:
-```sql
+\`\`\`sql
 -- Create verification_codes table for storing email verification codes
 CREATE TABLE IF NOT EXISTS verification_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS verification_codes (
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_verification_codes_email ON verification_codes(email);
 CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON verification_codes(expires_at);
-```
+\`\`\`
 
 ## Changes Made
 
