@@ -75,12 +75,12 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">HeadTeacher's Full Name</Label>
+            <Label htmlFor="name">Full Name</Label>
             <Input id="name" name="name" defaultValue={user?.name || ""} required />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">School's Email Address</Label>
+            <Label htmlFor="email">Email Address</Label>
             <Input id="email" name="email" type="email" defaultValue={user?.email || ""} required />
           </div>
         </div>
