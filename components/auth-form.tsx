@@ -10,7 +10,7 @@ import { useFormStatus } from "react-dom"
 import { signIn, signUp } from "@/app/actions/auth"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ExclamationTriangleIcon, CheckCircledIcon } from "@radix-ui/react-icons"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase-client"
 import { EmailVerification } from "./email-verification"
@@ -30,6 +30,7 @@ function SubmitButton({ text }: { text: string }) {
 }
 
 function AuthFormContent() {
+  const router = useRouter()
   const [isSignUp, setIsSignUp] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [role, setRole] = useState<"head_teacher" | "regional_officer" | "education_official">("head_teacher")
@@ -313,8 +314,11 @@ function AuthFormContent() {
         const verifyData = await verifyResponse.json()
 
         if (verifyData.success) {
+          //console.log("Received verification token:", verifyData.token)
           setVerificationEmail(userData.email as string)
           setPendingUserData(userData)
+          setInitialVerificationToken(verifyData.token) // Store the token from signup
+          //console.log("Set initial verification token and showing email verification")
           setShowEmailVerification(true)
           return // Don't proceed with signup yet
         } else {
@@ -343,47 +347,41 @@ function AuthFormContent() {
   // Handle successful email verification
   const handleEmailVerificationSuccess = async (userData: any) => {
     setError(null)
-    setShowSuccess(false)
 
     try {
-      // Create FormData from the verified user data
-      const formData = new FormData()
-      formData.append("name", userData.name)
-      formData.append("email", userData.email)
-      formData.append("password", userData.password)
-      formData.append("role", userData.role)
-      
-      if (userData.school) {
-        formData.append("school", userData.school)
-      }
-      if (userData.region) {
-        formData.append("region", userData.region)
-      }
+      // Call the create account API endpoint
+      const response = await fetch("/api/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          role: userData.role,
+          region: userData.region,
+          school: userData.school
+        })
+      })
 
-      // Now create the user account
-      const result = await signUp(formData)
+      const result = await response.json()
 
-      if (result?.error) {
-        setError(result.error)
+      if (result.success) {
+        // Account created successfully
         setShowEmailVerification(false)
-      } else {
-        // Handle success based on role
-        if (userData.role === "education_official") {
+        
+        if (result.user.needsVerification) {
           setSuccessMessage("Account created successfully! Your account has been sent for admin approval. You will be notified once approved.")
         } else {
           setSuccessMessage("Account created successfully! You can now log in.")
         }
         setShowSuccess(true)
+        setIsSignUp(false) // Switch back to sign-in form
+      } else {
+        // Show error
+        setError(result.error)
         setShowEmailVerification(false)
-        setIsSignUp(false)
       }
-    } catch (error: any) {
-      // Only handle actual errors, not redirects
-      if (error?.digest && error.digest.includes("NEXT_REDIRECT")) {
-        // This is a redirect, which is expected - don't show error
-        return
-      }
-      
+    } catch (error) {
       console.error("Account creation error:", error)
       setError("Failed to create account. Please try again.")
       setShowEmailVerification(false)

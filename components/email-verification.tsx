@@ -33,6 +33,13 @@ export function EmailVerification({
   const [canResend, setCanResend] = useState(false)
   const [verificationToken, setVerificationToken] = useState<string | null>(initialToken || null)
   
+  // Update token when initialToken changes
+  useEffect(() => {
+    if (initialToken && initialToken !== verificationToken) {
+      setVerificationToken(initialToken)
+    }
+  }, [initialToken, verificationToken])
+  
   // Password reset states
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newPassword, setNewPassword] = useState("")
@@ -40,12 +47,15 @@ export function EmailVerification({
   const [passwordError, setPasswordError] = useState("")
   const [verifiedCode, setVerifiedCode] = useState("")
 
-  // Only send verification code on mount if no initial token provided
+  // Update verification token when initial token is provided
   useEffect(() => {
-    if (!initialToken) {
-      sendVerificationCode()
+    if (initialToken) {
+      setVerificationToken(initialToken)
     }
-  }, [])
+  }, [initialToken])
+
+  // Never send verification code automatically on mount
+  // The parent component (auth-form) should handle ALL initial verification code sending
 
   // Countdown timer
   useEffect(() => {
