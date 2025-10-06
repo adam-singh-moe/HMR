@@ -13,7 +13,7 @@ import { FileTextIcon, ChevronLeft, ChevronRight, Plus, Trash2, Eye, Loader2, Sa
 import { useRouter } from "next/navigation"
 import type { Report } from "@/types"
 import { supabase } from "@/lib/supabase-client"
-import { createHmrReport, saveStudentEnrollment, getStudentEnrollment, saveAttendance, getAttendance, saveStaffing, getStaffing, saveStaffDevelopment, getStaffDevelopment, saveSupervision, getSupervision, saveCurriculum, getCurriculum, saveFinance, getFinance, saveIncome, getIncome, saveAccidentSafety, getAccidentSafety, saveStaffMeetings, getStaffMeetings, savePhysicalFacilities, getPhysicalFacilities, saveResourcesNeeded, getResourcesNeeded, submitReport, getReportStatus, getCurrentMonthReport, getReportProgress, getTeacherStatusOptions } from "@/app/actions/hmr-reports"
+import { createHmrReport, saveStudentEnrollment, getStudentEnrollment, saveAttendance, getAttendance, saveStaffing, getStaffing, saveStaffDevelopment, getStaffDevelopment, saveSupervision, getSupervision, saveCurriculum, getCurriculum, saveFinance, getFinance, saveIncome, getIncome, saveAccidentSafety, getAccidentSafety, saveStaffMeetings, getStaffMeetings, savePhysicalFacilities, getPhysicalFacilities, saveResourcesNeeded, getResourcesNeeded, savePhysicalEducation, getPhysicalEducation, submitReport, getReportStatus, getCurrentMonthReport, getReportProgress, getTeacherStatusOptions } from "@/app/actions/hmr-reports"
 import { useAutoSave } from "@/hooks/use-auto-save"
 import { useReportProgress } from "@/hooks/use-report-progress"
 import { useToast } from "@/components/ui/use-toast"
@@ -134,6 +134,10 @@ interface FormData {
   curriculumResources: string
   janitorialSupplies: string
   otherIssues: string
+
+  // Section 13: Physical Education
+  physicalEducationActivities: Array<{ activity: string }>
+  physicalEducationChallenges: Array<{ challenge: string }>
 }
 
 const SECTIONS = [
@@ -150,6 +154,7 @@ const SECTIONS = [
   "Staff Meetings",
   "Physical Facilities",
   "Resources Needed",
+  "Physical Education",
 ]
 
 export function MonthlyReportForm({ report, onSuccess, previousReportData, reportId: initialReportId }: MonthlyReportFormProps) {
@@ -236,6 +241,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     curriculumResources: "",
     janitorialSupplies: "",
     otherIssues: "",
+    physicalEducationActivities: [],
+    physicalEducationChallenges: [],
   })
 
   const [schools, setSchools] = useState<Array<{ id: string; name: string; region_id: string }>>([])
@@ -345,7 +352,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         accidentSafetyResult,
         staffMeetingsResult,
         facilitiesResult,
-        resourcesResult
+        resourcesResult,
+        physicalEducationResult
       ] = await Promise.all([
         getStudentEnrollment(reportId),
         getAttendance(reportId),
@@ -358,7 +366,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         getAccidentSafety(reportId),
         getStaffMeetings(reportId),
         getPhysicalFacilities(reportId),
-        getResourcesNeeded(reportId)
+        getResourcesNeeded(reportId),
+        getPhysicalEducation(reportId)
       ])
 
       // Update form data with all loaded data
@@ -469,6 +478,21 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           updatedData.infrastructureNeeds = data.infrastructure_needs || ""
           updatedData.janitorialSupplies = data.janitorial_supplies || ""
           updatedData.otherIssues = data.other_issues || ""
+        }
+
+        // Physical Education data
+        if (physicalEducationResult.success && physicalEducationResult.data) {
+          const data = physicalEducationResult.data
+          // Convert comma-separated strings back to arrays
+          const activitiesArray = data.physicalEducationActivities 
+            ? data.physicalEducationActivities.split(',').map(activity => ({ activity: activity.trim() })).filter(item => item.activity)
+            : []
+          const challengesArray = data.physicalEducationChallenges
+            ? data.physicalEducationChallenges.split(',').map(challenge => ({ challenge: challenge.trim() })).filter(item => item.challenge)
+            : []
+          
+          updatedData.physicalEducationActivities = activitiesArray
+          updatedData.physicalEducationChallenges = challengesArray
         }
 
         return updatedData
@@ -1053,6 +1077,35 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     loadResourcesNeededData()
   }, [reportId, currentSection])
 
+  // Load existing physical education data when reportId is available
+  useEffect(() => {
+    async function loadPhysicalEducationData() {
+      if (reportId && currentSection === 13) {
+        try {
+          const result = await getPhysicalEducation(reportId)
+          if (result.success && result.data) {
+            // Convert comma-separated strings back to arrays
+            const activitiesArray = result.data.physicalEducationActivities 
+              ? result.data.physicalEducationActivities.split(',').map(activity => ({ activity: activity.trim() })).filter(item => item.activity)
+              : []
+            const challengesArray = result.data.physicalEducationChallenges
+              ? result.data.physicalEducationChallenges.split(',').map(challenge => ({ challenge: challenge.trim() })).filter(item => item.challenge)
+              : []
+            
+            setFormData((prev) => ({
+              ...prev,
+              physicalEducationActivities: activitiesArray,
+              physicalEducationChallenges: challengesArray,
+            }))
+          }
+        } catch (error) {
+          console.error("Error loading physical education data:", error)
+        }
+      }
+    }
+    loadPhysicalEducationData()
+  }, [reportId, currentSection])
+
   // Check report status when reportId changes
   useEffect(() => {
     async function checkReportStatus() {
@@ -1309,6 +1362,29 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             }
           })
           result = await saveResourcesNeeded(resourcesFormData)
+          break
+        case 13: // Physical Education
+          const physicalEducationFormData = new FormData()
+          physicalEducationFormData.append("reportId", reportId)
+          // Convert arrays to comma-separated strings with type safety
+          const activitiesArray = Array.isArray(formDataObj.physicalEducationActivities) 
+            ? formDataObj.physicalEducationActivities 
+            : []
+          const challengesArray = Array.isArray(formDataObj.physicalEducationChallenges) 
+            ? formDataObj.physicalEducationChallenges 
+            : []
+          
+          const activitiesString = activitiesArray
+            .map(item => item.activity)
+            .filter(activity => activity && activity.trim())
+            .join(', ')
+          const challengesString = challengesArray
+            .map(item => item.challenge)
+            .filter(challenge => challenge && challenge.trim())
+            .join(', ')
+          physicalEducationFormData.append("activities", activitiesString)
+          physicalEducationFormData.append("challenges", challengesString)
+          result = await savePhysicalEducation(physicalEducationFormData)
           break
         default:
           // For unknown sections, just mark as successful to avoid errors
@@ -1897,6 +1973,61 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         // Mark section as saved
         setSavedSections((prev) => new Set(prev).add(12))
 
+        // Move to next section (Physical Education)
+        setCurrentSection(13)
+        
+        // Show success toast
+        toast({
+          title: "Resources section saved!",
+          description: "Continue to Physical Education section.",
+          duration: 3000,
+        })
+      }
+
+      setIsSubmitting(false)
+    } else if (currentSection === 13) {
+      // Save physical education data and submit report
+      if (!reportId) {
+        alert("Please complete the Basic Information section first.")
+        return
+      }
+
+      setIsSubmitting(true)
+
+      // First save the Physical Education data
+      const physicalEducationFormData = new FormData()
+      physicalEducationFormData.append("reportId", reportId)
+      // Convert arrays to comma-separated strings with type safety
+      const activitiesArray = Array.isArray(formData.physicalEducationActivities) 
+        ? formData.physicalEducationActivities 
+        : []
+      const challengesArray = Array.isArray(formData.physicalEducationChallenges) 
+        ? formData.physicalEducationChallenges 
+        : []
+      
+      const activitiesString = activitiesArray
+        .map(item => item.activity)
+        .filter(activity => activity && activity.trim())
+        .join(', ')
+      const challengesString = challengesArray
+        .map(item => item.challenge)
+        .filter(challenge => challenge && challenge.trim())
+        .join(', ')
+      physicalEducationFormData.append("activities", activitiesString)
+      physicalEducationFormData.append("challenges", challengesString)
+
+      const result = await savePhysicalEducation(physicalEducationFormData)
+
+      if (result.error) {
+        alert(`Error: ${result.error}`)
+        setIsSubmitting(false)
+        return
+      }
+
+      if (result.success) {
+        // Mark section as saved
+        setSavedSections((prev) => new Set(prev).add(13))
+
         // Submit the entire report
         const submitResult = await submitReport(reportId)
         if (submitResult.success) {
@@ -1914,7 +2045,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             description: "Your monthly report has been submitted and can no longer be edited.",
             duration: 5000,
           })
-        
+          
           onSuccess?.()
         } else {
           alert(`Report data saved but submission failed: ${submitResult.error}`)
@@ -4169,6 +4300,163 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     </div>
   )
 
+  const renderPhysicalEducation = () => {
+    // Ensure Physical Education data is always arrays
+    const activities = Array.isArray(formData.physicalEducationActivities) 
+      ? formData.physicalEducationActivities 
+      : []
+    
+    const challenges = Array.isArray(formData.physicalEducationChallenges) 
+      ? formData.physicalEducationChallenges 
+      : []
+
+    // Helper functions for managing dynamic lists
+    const addPhysicalEducationActivity = () => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationActivities: [...activities, { activity: "" }]
+      }))
+    }
+
+    const removePhysicalEducationActivity = (index: number) => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationActivities: activities.filter((_, i) => i !== index)
+      }))
+    }
+
+    const updatePhysicalEducationActivity = (index: number, activity: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationActivities: activities.map((item, i) => 
+          i === index ? { activity } : item
+        )
+      }))
+    }
+
+    const addPhysicalEducationChallenge = () => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationChallenges: [...challenges, { challenge: "" }]
+      }))
+    }
+
+    const removePhysicalEducationChallenge = (index: number) => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationChallenges: challenges.filter((_, i) => i !== index)
+      }))
+    }
+
+    const updatePhysicalEducationChallenge = (index: number, challenge: string) => {
+      setFormData((prev) => ({
+        ...prev,
+        physicalEducationChallenges: challenges.map((item, i) => 
+          i === index ? { challenge } : item
+        )
+      }))
+    }
+
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold text-primary-700">
+          Section 13: Physical Education
+          {savedSections.has(13) && (
+            <span className="ml-2 text-green-600">✅ Section saved</span>
+          )}
+        </h3>
+
+        <div className="space-y-6">
+          {/* Physical Education Activities */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-primary-700 font-medium">Physical Education Activities Performed</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPhysicalEducationActivity}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Activity
+              </Button>
+            </div>
+            
+            {activities.length === 0 && (
+              <div className="text-center py-6 text-gray-500 border-2 border-dashed rounded-lg">
+                <p>No activities added yet. Click "Add Activity" to get started.</p>
+              </div>
+            )}
+
+            {activities.map((item, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <Input
+                  value={item.activity}
+                  onChange={(e) => updatePhysicalEducationActivity(index, e.target.value)}
+                  placeholder={`Activity ${index + 1} (e.g., Soccer practice, Running, Gymnastics)`}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removePhysicalEducationActivity(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {/* Physical Education Challenges */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-primary-700 font-medium">Major Challenges in Physical Education</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPhysicalEducationChallenge}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Challenge
+              </Button>
+            </div>
+            
+            {challenges.length === 0 && (
+              <div className="text-center py-6 text-gray-500 border-2 border-dashed rounded-lg">
+                <p>No challenges added yet. Click "Add Challenge" to get started.</p>
+              </div>
+            )}
+
+            {challenges.map((item, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <Input
+                  value={item.challenge}
+                  onChange={(e) => updatePhysicalEducationChallenge(index, e.target.value)}
+                  placeholder={`Challenge ${index + 1} (e.g., Lack of equipment, Weather conditions, Limited space)`}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => removePhysicalEducationChallenge(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
@@ -4197,6 +4485,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         return renderFacilities()
       case 12:
         return renderResources()
+      case 13:
+        return renderPhysicalEducation()
       default:
         return renderBasicInfo()
     }
@@ -4642,7 +4932,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
             </Button>
-          ) : currentSection === 12 ? (
+          ) : currentSection === 13 ? (
             justSubmittedReport ? (
               // Show View Report button after successful submission
               <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">

@@ -86,7 +86,7 @@ export async function getAvailableSchools(): Promise<{
   }
 }
 
-export async function searchAvailableSchools(searchQuery: string, limit: number = 20): Promise<{
+export async function searchAvailableSchools(searchQuery: string, limit?: number): Promise<{
   schools: AvailableSchool[]
   error?: string
 }> {
@@ -94,10 +94,10 @@ export async function searchAvailableSchools(searchQuery: string, limit: number 
     const supabase = createServerSupabaseClient()
 
     if (!searchQuery.trim()) {
-      // If no search query, return first 20 available schools
+      // If no search query, return all available schools
       const result = await getAvailableSchools()
       return {
-        schools: result.schools.slice(0, limit),
+        schools: result.schools,
         error: result.error
       }
     }
@@ -130,7 +130,6 @@ export async function searchAvailableSchools(searchQuery: string, limit: number 
       `)
       .ilike("name", `%${searchQuery}%`)
       .order("name")
-      .limit(limit)
 
     // Only add the not filter if there are assigned schools
     if (assignedSchoolIds.length > 0) {
@@ -163,7 +162,10 @@ export async function searchAvailableSchools(searchQuery: string, limit: number 
       }
     })
 
-    return { schools: transformedSchools }
+    // Apply limit if provided, otherwise return all results
+    const finalSchools = limit ? transformedSchools.slice(0, limit) : transformedSchools
+
+    return { schools: finalSchools }
   } catch (error) {
     console.error("Error in searchAvailableSchools:", error)
     return { schools: [], error: "An unexpected error occurred" }

@@ -64,6 +64,7 @@ export function AdminSubmitReportClient() {
           return
         }
 
+        console.log(`Loaded ${result.schools.length} schools for admin search`)
         setSchools(result.schools)
         setFilteredSchools(result.schools)
       } catch (error) {

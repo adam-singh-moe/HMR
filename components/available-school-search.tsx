@@ -35,7 +35,7 @@ export function AvailableSchoolSearch({
   onChange,
   disabled = false,
   placeholder = "Search available schools...",
-  maxResults = 20,
+  maxResults = 2000,
   debounceMs = 300,
   showRegion = true,
   allowClear = true,

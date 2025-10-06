@@ -117,7 +117,7 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
               onChange={setSelectedSchoolId}
               placeholder="Search for a school..."
               showRegion={true}
-              maxResults={20}
+              maxResults={2000}
             />
           </div>
         )}

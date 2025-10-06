@@ -1987,6 +1987,117 @@ export async function getResourcesNeeded(reportId: string) {
   }
 }
 
+// Physical Education Functions
+export async function savePhysicalEducation(formData: FormData) {
+  try {
+    const user = await getUser()
+    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
+      return { error: "Only Head Teachers and Admins can save physical education data." }
+    }
+
+    const reportId = formData.get("reportId") as string
+    const activities = formData.get("activities") as string
+    const challenges = formData.get("challenges") as string
+
+    if (!reportId) {
+      return { error: "Report ID is required." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Check if record exists
+    const { data: existingRecord, error: checkError } = await supabase
+      .from("hmr_physical_education")
+      .select("id")
+      .eq("report_id", reportId)
+      .single()
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking existing physical education record:", checkError)
+      return { error: "Failed to check existing physical education data." }
+    }
+
+    if (existingRecord) {
+      // Update existing record
+      const { error } = await supabase
+        .from("hmr_physical_education")
+        .update({
+          activities: activities || "",
+          challenges: challenges || "",
+          created_at: new Date().toISOString(),
+        })
+        .eq("report_id", reportId)
+
+      if (error) {
+        console.error("Error updating physical education data:", error)
+        return { error: "Failed to update physical education data." }
+      }
+    } else {
+      // Insert new record
+      const { error } = await supabase.from("hmr_physical_education").insert({
+        report_id: reportId,
+        activities: activities || "",
+        challenges: challenges || "",
+      })
+
+      if (error) {
+        console.error("Error inserting physical education data:", error)
+        return { error: "Failed to save physical education data." }
+      }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Error in savePhysicalEducation:", error)
+    return { error: "An unexpected error occurred." }
+  }
+}
+
+export async function getPhysicalEducation(reportId: string) {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    const supabase = createServerSupabaseClient()
+
+    const { data: physicalEducation, error } = await supabase
+      .from("hmr_physical_education")
+      .select("*")
+      .eq("report_id", reportId)
+      .single()
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Error getting physical education data:", error)
+      return { error: "Failed to load physical education data." }
+    }
+
+    if (!physicalEducation) {
+      // Return default values if no data exists
+      return {
+        success: true,
+        data: {
+          physicalEducationActivities: "",
+          physicalEducationChallenges: "",
+        },
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        physicalEducationActivities: physicalEducation.activities || "",
+        physicalEducationChallenges: physicalEducation.challenges || "",
+      },
+    }
+  } catch (error) {
+    console.error("Error in getPhysicalEducation:", error)
+    return { error: "An unexpected error occurred." }
+  }
+}
+
 // Submit Report Function
 export async function submitReport(reportId: string) {
   try {

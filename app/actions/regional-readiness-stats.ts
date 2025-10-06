@@ -41,7 +41,6 @@ export async function getRegionalReadinessStats() {
         )
       `)
       .order('name')
-      .limit(10000)  // Add explicit high limit to ensure we get ALL schools
 
     if (schoolsError) {
       console.error("Error getting schools:", schoolsError)

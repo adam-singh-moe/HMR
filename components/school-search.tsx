@@ -59,7 +59,7 @@ export function SchoolSearch({
   onChange,
   disabled = false,
   placeholder = "Search schools...",
-  maxResults = 20,
+  maxResults = 2000,
   debounceMs = 300,
   showRegion = true,
   allowClear = true,

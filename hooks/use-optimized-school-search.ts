@@ -45,7 +45,7 @@ interface UseOptimizedSchoolSearchOptions {
 export function useOptimizedSchoolSearch({
   schools = [],
   reports = [],
-  maxResults = 20,
+  maxResults = 2000,
   searchFields = ["name", "region"],
   debounceMs = 300,
   enableFirstLetterSearch = true,

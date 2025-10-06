@@ -1074,6 +1074,8 @@ export async function getSchoolsWithRegions() {
       return { schools: [], error: "Failed to fetch schools." }
     }
 
+    console.log(`getSchoolsWithRegions: Fetched ${schools?.length || 0} schools from database`)
+
     // Transform the data to flatten the region information
     const transformedSchools = schools?.map(school => ({
       id: school.id,
@@ -1082,6 +1084,8 @@ export async function getSchoolsWithRegions() {
       region_name: (school.sms_regions as any)?.name || 'No Region'
     })) || []
 
+    console.log(`getSchoolsWithRegions: Returning ${transformedSchools.length} transformed schools`)
+    
     return { schools: transformedSchools, error: null }
   } catch (error) {
     console.error("Error in getSchoolsWithRegions:", error)

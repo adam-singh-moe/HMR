@@ -5,7 +5,7 @@ export default async function NewUserPage() {
   const [roles, regionsResult, schoolsResult] = await Promise.all([
     getRoles(), 
     getRegions(), 
-    getSchools(1, 1000) // Get up to 1000 schools for the dropdown
+    getSchools(1, 2500) // Get up to 2500 schools for the dropdown to accommodate all schools
   ])
 
   const regions = regionsResult.regions || []

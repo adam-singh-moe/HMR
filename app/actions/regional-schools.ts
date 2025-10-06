@@ -38,7 +38,6 @@ export async function getSchoolsByRegion(regionId: string): Promise<{
       `)
       .eq('region_id', regionId)
       .order('name')
-      .limit(10000)
 
     if (error) {
       console.error('Error fetching schools by region:', error)

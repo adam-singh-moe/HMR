@@ -938,7 +938,6 @@ export async function getSchoolsOverviewData() {
           )
         `)
         .order("name", { ascending: true })
-        .limit(10000), // Increase limit to get all schools (database has 1091)
     ])
 
     const { data: schools, error: schoolsError } = schoolsResult
