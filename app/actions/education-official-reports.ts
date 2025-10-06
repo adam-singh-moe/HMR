@@ -1636,3 +1636,103 @@ export async function getReportDetails(reportId: string) {
     return { report: null, error: "An unexpected error occurred." }
   }
 }
+
+export async function getPhysicalEducationReports() {
+  try {
+    const user = await getUser()
+
+    if (!user) {
+      return { reports: [], error: "User not authenticated." }
+    }
+
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+      return { reports: [], error: "Only Education Officials and Admins can access this data." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Fetch physical education reports with related data
+    const { data: physicalEducationData, error } = await supabase
+      .from("hmr_physical_education")
+      .select(`
+        id,
+        report_id,
+        activities,
+        challenges,
+        created_at,
+        hmr_report!inner (
+          id,
+          month,
+          year,
+          status,
+          school_id,
+          sms_schools (
+            id,
+            name,
+            region_id,
+            sms_regions (
+              id,
+              name
+            )
+          )
+        )
+      `)
+      .eq("hmr_report.status", "submitted")
+      .is("hmr_report.deleted_on", null)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching physical education reports:", error)
+      return { reports: [], error: "Failed to fetch physical education reports." }
+    }
+
+    if (!physicalEducationData || physicalEducationData.length === 0) {
+      return { reports: [], error: null }
+    }
+
+    // Get report IDs to fetch student enrollment data
+    const reportIds = physicalEducationData.map(pe => pe.report_id)
+
+    // Fetch student enrollment data for these reports
+    const { data: enrollmentData, error: enrollmentError } = await supabase
+      .from("hmr_student_enrollment")
+      .select("report_id, total_students")
+      .in("report_id", reportIds)
+
+    if (enrollmentError) {
+      console.error("Error fetching enrollment data:", enrollmentError)
+      // Continue without enrollment data
+    }
+
+    // Create a map of report_id to total_students for quick lookup
+    const enrollmentMap = new Map()
+    enrollmentData?.forEach(enrollment => {
+      enrollmentMap.set(enrollment.report_id, enrollment.total_students || 0)
+    })
+
+    // Transform the data for the table
+    const transformedReports = physicalEducationData.map(pe => {
+      const report = pe.hmr_report as any
+      const school = report?.sms_schools as any
+      const region = school?.sms_regions as any
+      
+      return {
+        id: pe.id,
+        report_id: pe.report_id,
+        month: report?.month || 0,
+        year: report?.year || 0,
+        region_name: region?.name || 'Unknown Region',
+        school_name: school?.name || 'Unknown School',
+        total_students: enrollmentMap.get(pe.report_id) || 0,
+        activities: pe.activities || '',
+        challenges: pe.challenges || '',
+        created_at: pe.created_at
+      }
+    })
+
+    return { reports: transformedReports, error: null }
+  } catch (error) {
+    console.error("Error in getPhysicalEducationReports:", error)
+    return { reports: [], error: "An unexpected error occurred." }
+  }
+}

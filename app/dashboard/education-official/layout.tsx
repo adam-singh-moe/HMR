@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { FileText, School, BarChart3 } from "lucide-react"
+import { FileText, School, BarChart3, Activity } from "lucide-react"
 import { SchoolReadinessIndicator } from "@/components/school-readiness-indicator"
 
 export default async function EducationOfficialLayout({ children }: { children: ReactNode }) {
@@ -47,6 +47,13 @@ export default async function EducationOfficialLayout({ children }: { children: 
                   <School className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Schools</span>
                   <span className="sm:hidden">Schools</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="justify-start text-xs sm:text-sm" size="sm">
+                <Link href="/dashboard/education-official/physical-education-reports" className="flex items-center gap-2">
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Physical Education Reports</span>
+                  <span className="sm:hidden">PE Reports</span>
                 </Link>
               </Button>
             </div>
