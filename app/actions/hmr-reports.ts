@@ -2392,6 +2392,9 @@ export async function getReportSectionData(reportId: string, sectionType: string
       case "resources_needed":
         tableName = "hmr_resources_needed"
         break
+      case "physical_education":
+        tableName = "hmr_physical_education"
+        break
       default:
         return { data: null, error: "Invalid section type." }
     }

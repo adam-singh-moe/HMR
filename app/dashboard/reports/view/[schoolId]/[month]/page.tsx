@@ -29,6 +29,7 @@ import {
   Building,
   Wrench,
   Package,
+  Activity,
   Loader2,
   Check,
   ChevronsUpDown,
@@ -84,7 +85,8 @@ const sectionNames = [
   "Staff Meeting",
   "Physical Facilities",
   "Repairs Needed",
-  "Resource Needed"
+  "Resource Needed",
+  "Physical Education"
 ]
 
 const sectionIcons = [
@@ -101,7 +103,8 @@ const sectionIcons = [
   MessageSquare,
   Building,
   Wrench,
-  Package
+  Package,
+  Activity
 ]
 
 const reportSections = sectionNames.map((name, index) => ({
@@ -1014,6 +1017,56 @@ function SectionContent({
         </div>
       )
 
+    case 14: // Physical Education
+      if (!data) {
+        return (
+          <div className="text-center py-8">
+            <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground leading-6">No physical education data available for this report</p>
+          </div>
+        )
+      }
+
+      const physicalEducationData = Array.isArray(data) ? data[0] : data
+      return (
+        <div className="space-y-6">
+          {physicalEducationData.activities && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground leading-5">Physical Education Activities</label>
+              <div className="mt-2 space-y-2">
+                {physicalEducationData.activities.split(',').map((activity: string, index: number) => (
+                  <div key={index} className="flex items-center p-3 bg-blue-50/80 border border-blue-200 rounded-lg shadow-sm">
+                    <Activity className="h-4 w-4 text-blue-600 mr-3 flex-shrink-0" />
+                    <span className="text-base leading-6">{activity.trim()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {physicalEducationData.challenges && (
+            <div>
+              <label className="text-sm font-medium text-muted-foreground leading-5">Challenges Faced</label>
+              <div className="mt-2 space-y-2">
+                {physicalEducationData.challenges.split(',').map((challenge: string, index: number) => (
+                  <div key={index} className="flex items-start p-3 bg-red-50/80 border border-red-200 rounded-lg shadow-sm">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span className="text-base leading-6">{challenge.trim()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!physicalEducationData.activities && !physicalEducationData.challenges && (
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground leading-6">No physical education information recorded for this report</p>
+            </div>
+          )}
+        </div>
+      )
+
     default:
       return (
         <div className="text-center py-8">
@@ -1127,6 +1180,19 @@ function ViewFullReportPageContent({ params }: PageProps) {
         return
       }
 
+      // Special handling for Physical Education section
+      if (activeSection === 14) {
+        const result = await getReportSectionData(selectedReport.id, "physical_education")
+        
+        if (result.error) {
+          setError(result.error)
+          setSectionData(null)
+        } else {
+          setSectionData(result.data)
+        }
+        return
+      }
+
       // Map section indices to section types for the API
       const sectionTypeMap = [
         null, // Basic Information (index 0) - no API needed, uses report data
@@ -1142,7 +1208,8 @@ function ViewFullReportPageContent({ params }: PageProps) {
         "staff_meetings", // Staff Meeting
         "facilities", // Physical Facilities
         "repairs", // Repairs
-        "resources_needed" // Resource Needed
+        "resources_needed", // Resource Needed
+        "physical_education" // Physical Education
       ]
 
       const sectionType = sectionTypeMap[activeSection]
