@@ -197,11 +197,22 @@ export async function signIn(formData: FormData) {
 
   // Check if user is using default password
   if (password === "hnCf4MN") {
+    // Debug logging
+    // console.log("Default password detected for user:", {
+    //   email: user.email,
+    //   name: user.name,
+    //   nameIsNull: user.name === null,
+    //   nameIsEmpty: user.name === "",
+    //   nameIsUndefined: user.name === undefined,
+    //   requiresName: !user.name || user.name.trim() === ""
+    // })
+    
     return { 
       requirePasswordChange: true, 
       userEmail: email,
       userName: user.name,
-      userId: user.id
+      userId: user.id,
+      requiresName: !user.name || user.name.trim() === ""
     }
   }
 
@@ -270,6 +281,7 @@ export async function changeDefaultPassword(formData: FormData) {
   const userId = formData.get("userId") as string
   const newPassword = formData.get("newPassword") as string
   const confirmPassword = formData.get("confirmPassword") as string
+  const fullName = formData.get("fullName") as string
 
   if (!userId || !newPassword || !confirmPassword) {
     return { error: "All fields are required" }
@@ -292,15 +304,23 @@ export async function changeDefaultPassword(formData: FormData) {
   // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 12)
 
-  // Update the user's password
+  // Prepare update object
+  const updateData: any = { password: hashedPassword }
+  
+  // Add name if provided
+  if (fullName && fullName.trim() !== "") {
+    updateData.name = fullName.trim()
+  }
+
+  // Update the user's password and optionally name
   const { error: updateError } = await supabase
     .from("hmr_users")
-    .update({ password: hashedPassword })
+    .update(updateData)
     .eq("id", userId)
 
   if (updateError) {
     console.error("Password update error:", updateError)
-    return { error: "Failed to update password. Please try again." }
+    return { error: "Failed to update information. Please try again." }
   }
 
   // After successful password change, log the user in automatically

@@ -13,12 +13,14 @@ import { useRouter } from "next/navigation"
 
 interface PasswordChangeFormProps {
   userEmail: string
-  userName: string
+  userName: string | null
   userId: string
+  requiresName: boolean
   onBack: () => void
 }
 
-export function PasswordChangeForm({ userEmail, userName, userId, onBack }: PasswordChangeFormProps) {
+export function PasswordChangeForm({ userEmail, userName, userId, requiresName, onBack }: PasswordChangeFormProps) {
+  const [fullName, setFullName] = useState(userName || "")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -28,15 +30,35 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  // Debug logging
+  console.log("PasswordChangeForm rendered with props:", {
+    userEmail,
+    userName,
+    userId,
+    requiresName
+  })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
+    // Validate name if required
+    if (requiresName && (!fullName || fullName.trim() === "")) {
+      setError("Full name is required")
+      setIsLoading(false)
+      return
+    }
+
     const formData = new FormData()
     formData.append("userId", userId)
     formData.append("newPassword", newPassword)
     formData.append("confirmPassword", confirmPassword)
+    
+    // Include name if provided or required
+    if (fullName && fullName.trim() !== "") {
+      formData.append("fullName", fullName.trim())
+    }
 
     const result = await changeDefaultPassword(formData)
 
@@ -51,7 +73,7 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
           router.push(result.redirectTo)
         }, 2000)
       } else {
-        // Redirect to login if auto-login failed
+        // Redirect to login after a short delay
         setTimeout(() => {
           router.push("/auth")
         }, 2000)
@@ -63,9 +85,14 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
     return (
       <Card className="gradient-card shadow-xl border-0 max-w-md mx-auto">
         <CardHeader className="text-center pb-4">
-          <CardTitle className="text-xl text-green-700">Password Changed Successfully!</CardTitle>
+          <CardTitle className="text-xl text-green-700">
+            {requiresName ? "Profile Completed Successfully!" : "Password Changed Successfully!"}
+          </CardTitle>
           <CardDescription>
-            Your password has been updated. Redirecting to login...
+            {requiresName 
+              ? "Your profile has been completed. Redirecting to dashboard..."
+              : "Your password has been updated. Redirecting to dashboard..."
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,7 +100,10 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
             <CheckCircledIcon className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-800">Success!</AlertTitle>
             <AlertDescription className="text-green-700">
-              You can now sign in with your new password.
+              {requiresName 
+                ? "You can now access your dashboard with your new profile information."
+                : "You can now sign in with your new password."
+              }
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -84,9 +114,14 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
   return (
     <Card className="gradient-card shadow-xl border-0 max-w-md mx-auto">
       <CardHeader className="text-center pb-4">
-        <CardTitle className="text-xl text-primary-700">Change Your Password</CardTitle>
+        <CardTitle className="text-xl text-primary-700">
+          {requiresName ? "Complete Your Profile" : "Change Your Password"}
+        </CardTitle>
         <CardDescription>
-          Welcome, {userName}! For security reasons, you must change your default password before continuing.
+          {requiresName 
+            ? "Please provide your full name and change your default password to continue."
+            : `Welcome, ${userName}! For security reasons, you must change your default password before continuing.`
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -109,6 +144,21 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
               className="bg-gray-50"
             />
           </div>
+
+          {requiresName && (
+            <div className="space-y-2">
+              <Label htmlFor="full-name">Head Teacher's Full Name *</Label>
+              <Input
+                id="full-name"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter the Head Teacher's full name"
+                required
+                className="focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="new-password">New Password</Label>
@@ -171,9 +221,10 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-            <h4 className="font-medium text-blue-800 mb-1">Password Requirements:</h4>
+            <h4 className="font-medium text-blue-800 mb-1">Requirements:</h4>
             <ul className="text-blue-700 space-y-1">
-              <li>• At least 8 characters long</li>
+              {requiresName && <li>• Full name is required</li>}
+              <li>• Password must be at least 8 characters long</li>
               <li>• Cannot be the default password</li>
               <li>• Should be unique and secure</li>
             </ul>
@@ -192,9 +243,9 @@ export function PasswordChangeForm({ userEmail, userName, userId, onBack }: Pass
             <Button
               type="submit"
               className="flex-1 gradient-button text-white hover:shadow-lg transition-all duration-200"
-              disabled={isLoading || !newPassword || !confirmPassword}
+              disabled={isLoading || !newPassword || !confirmPassword || (requiresName && !fullName)}
             >
-              {isLoading ? "Updating..." : "Change Password"}
+              {isLoading ? "Updating..." : requiresName ? "Complete Profile" : "Change Password"}
             </Button>
           </div>
         </form>

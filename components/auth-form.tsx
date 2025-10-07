@@ -63,8 +63,9 @@ function AuthFormContent() {
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [passwordChangeUser, setPasswordChangeUser] = useState<{
     userEmail: string
-    userName: string
+    userName: string | null
     userId: string
+    requiresName: boolean
   } | null>(null)
 
   const searchParams = useSearchParams()
@@ -295,6 +296,7 @@ function AuthFormContent() {
         userEmail?: string;
         userName?: string;
         userId?: string;
+        requiresName?: boolean;
       } | undefined
 
       if (isSignUp) {
@@ -357,11 +359,18 @@ function AuthFormContent() {
       }
 
       // Check if password change is required
-      if (result?.requirePasswordChange && result.userEmail && result.userName && result.userId) {
+      if (result?.requirePasswordChange && result.userEmail && result.userId) {
+        // Debug logging
+        console.log("Password change required:", {
+          result,
+          requiresName: result.requiresName
+        })
+        
         setPasswordChangeUser({
           userEmail: result.userEmail,
-          userName: result.userName,
-          userId: result.userId
+          userName: result.userName || null,
+          userId: result.userId,
+          requiresName: result.requiresName || false
         })
         setShowPasswordChange(true)
         return
@@ -520,6 +529,7 @@ function AuthFormContent() {
         userEmail={passwordChangeUser.userEmail}
         userName={passwordChangeUser.userName}
         userId={passwordChangeUser.userId}
+        requiresName={passwordChangeUser.requiresName}
         onBack={() => {
           setShowPasswordChange(false)
           setPasswordChangeUser(null)
