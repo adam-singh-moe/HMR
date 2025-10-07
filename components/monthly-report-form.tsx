@@ -875,11 +875,11 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     async function loadResourcesNeededData() {
       if (reportId && currentSection === 12) {
         try {
-          console.log("Loading resources needed data for reportId:", reportId)
+         // console.log("Loading resources needed data for reportId:", reportId)
           const result = await getResourcesNeeded(reportId)
-          console.log("getResourcesNeeded result:", result)
+         // console.log("getResourcesNeeded result:", result)
           if (result.success && result.data) {
-            console.log("Setting resources data to form:", result.data)
+            //console.log("Setting resources data to form:", result.data)
             setFormData((prev) => ({
               ...prev,
               curriculumResources: result.data.curriculumResources,
@@ -1140,7 +1140,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Only save if we have actual data or if this is not just from auto-loading
           if (allArraysEmpty && changedFields.size === 0) {
-            console.log("Skipping save of empty teacher status data")
+         //   console.log("Skipping save of empty teacher status data")
             return { success: true, message: "No teacher status changes to save" }
           }
 
@@ -1448,7 +1448,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
       }
 
       if (result?.success && result.data) {
-        console.log(`Loading data for section ${sectionIndex}:`, result.data)
+       // console.log(`Loading data for section ${sectionIndex}:`, result.data)
         
         // Store original data for this section
         setOriginalSectionData(prev => ({
@@ -1459,7 +1459,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         // Update form data with loaded data (without triggering change detection)
         if (sectionIndex === 3) {
           // Special handling for Teacher Status section (case 3)
-          console.log("Loading Teacher Status data:", result.data)
+         // console.log("Loading Teacher Status data:", result.data)
           const { staffing, teacherStatusUpdates } = result.data
           
           // Only update if we have valid teacherStatusUpdates
@@ -1494,7 +1494,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
                 : (prev.teachersWithoutSalary?.length > 0 ? prev.teachersWithoutSalary : [{ name: "", status: "", reason: "" }]),
             }))
           } else {
-            console.log("No teacherStatusUpdates found, keeping existing form data")
+           // console.log("No teacherStatusUpdates found, keeping existing form data")
             // Just update staffing data, keep existing teacher status arrays
             setFormData(prev => ({
               ...prev,
@@ -1507,12 +1507,12 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           }
         } else if (sectionIndex === 10) {
           // Special handling for Staff Meetings section (case 10)
-          console.log("Loading Staff Meetings data:", result.data)
-          console.log("Setting form fields:", {
-            generalStaffMeetingHeld: result.data.generalMeetingHeld,
-            keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
-            decisionsImplemented: result.data.decisionsImplemented || "0",
-          })
+        //  console.log("Loading Staff Meetings data:", result.data)
+          // console.log("Setting form fields:", {
+          //   generalStaffMeetingHeld: result.data.generalMeetingHeld,
+          //   keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
+          //   decisionsImplemented: result.data.decisionsImplemented || "0",
+          // })
           
           setFormData(prev => {
             const newData = {
@@ -1521,21 +1521,21 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
               decisionsImplemented: result.data.decisionsImplemented || "0",
             }
-            console.log("Updated form data:", newData)
+          //  console.log("Updated form data:", newData)
             return newData
           })
         } else if (sectionIndex === 13) {
           // Special handling for Physical Education section (case 13)
-          console.log("Loading Physical Education data:", result.data)
+        //  console.log("Loading Physical Education data:", result.data)
           
           // Convert comma-separated strings back to arrays
           const activitiesString = (result as any).data.physicalEducationActivities || ""
           const challengesString = (result as any).data.physicalEducationChallenges || ""
           
-          console.log("Raw Physical Education strings:", {
-            activitiesString,
-            challengesString
-          })
+          // console.log("Raw Physical Education strings:", {
+          //   activitiesString,
+          //   challengesString
+          // })
           
           const activitiesArray = activitiesString.length > 0 
             ? activitiesString.split(',')
@@ -1551,10 +1551,10 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
                 .map((challenge: string) => ({ challenge }))
             : []
           
-          console.log("Converted Physical Education arrays:", {
-            activitiesArray,
-            challengesArray
-          })
+          // console.log("Converted Physical Education arrays:", {
+          //   activitiesArray,
+          //   challengesArray
+          // })
           
           setFormData(prev => ({
             ...prev,
@@ -1595,14 +1595,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         } else {
           setSavedSections(prev => new Set(prev).add(sectionIndex))
         }
-        
-        toast({
-          title: "Section data loaded",
-          description: `Section ${sectionIndex + 1} data loaded from database.`,
-          duration: 2000,
-        })
       } else {
-        console.log(`No existing data found for section ${sectionIndex}`)
+     //   console.log(`No existing data found for section ${sectionIndex}`)
         
         // No existing data for this section, clear original data
         setOriginalSectionData(prev => ({
@@ -2213,13 +2207,6 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
         // Move to next section (Physical Education)
         setCurrentSection(13)
-        
-        // Show success toast
-        toast({
-          title: "Resources section saved!",
-          description: "Continue to Physical Education section.",
-          duration: 3000,
-        })
       }
 
       setIsSubmitting(false)
