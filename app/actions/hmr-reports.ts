@@ -1664,7 +1664,7 @@ export async function getStaffMeetings(reportId: string) {
       return { error: "User not authenticated." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
     const { data: staffMeetings, error } = await supabase
       .from("hmr_staff_meetings")
@@ -1689,7 +1689,9 @@ export async function getStaffMeetings(reportId: string) {
       }
     }
 
-    return {
+    console.log("Raw staff meetings data from DB:", staffMeetings)
+    
+    const result = {
       success: true,
       data: {
         generalMeetingHeld: staffMeetings.general_meeting === null ? null :
@@ -1698,6 +1700,9 @@ export async function getStaffMeetings(reportId: string) {
         decisionsImplemented: staffMeetings.percentage_decisions_implemented?.toString() || "0",
       },
     }
+    
+    console.log("Processed staff meetings data:", result.data)
+    return result
   } catch (error) {
     console.error("Error in getStaffMeetings:", error)
     return { error: "An unexpected error occurred." }
@@ -1948,13 +1953,18 @@ export async function getResourcesNeeded(reportId: string) {
       return { error: "User not authenticated." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
+    console.log("Querying hmr_resources_needed with report_id:", reportId)
+    
     const { data: resourcesNeeded, error } = await supabase
       .from("hmr_resources_needed")
       .select("*")
       .eq("report_id", reportId)
       .single()
+
+    console.log("Query result - error:", error)
+    console.log("Query result - data:", resourcesNeeded)
 
     if (error && error.code !== "PGRST116") {
       console.error("Error getting resources needed data:", error)
@@ -1973,7 +1983,13 @@ export async function getResourcesNeeded(reportId: string) {
       }
     }
 
-    return {
+    console.log("Raw resources data from DB:", resourcesNeeded)
+    console.log("Available columns:", Object.keys(resourcesNeeded))
+    console.log("curriculum_resources value:", resourcesNeeded.curriculum_resources)
+    console.log("janitorial_supplies value:", resourcesNeeded.janitorial_supplies)
+    console.log("issues value:", resourcesNeeded.issues)
+    
+    const result = {
       success: true,
       data: {
         curriculumResources: resourcesNeeded.curriculum_resources || "",
@@ -1981,6 +1997,9 @@ export async function getResourcesNeeded(reportId: string) {
         otherIssues: resourcesNeeded.issues || "",
       },
     }
+    
+    console.log("Processed resources data:", result.data)
+    return result
   } catch (error) {
     console.error("Error in getResourcesNeeded:", error)
     return { error: "An unexpected error occurred." }
@@ -1999,6 +2018,12 @@ export async function savePhysicalEducation(formData: FormData) {
     const activities = formData.get("activities") as string
     const challenges = formData.get("challenges") as string
 
+    console.log("Saving Physical Education data:", {
+      reportId,
+      activities,
+      challenges
+    })
+
     if (!reportId) {
       return { error: "Report ID is required." }
     }
@@ -2010,9 +2035,9 @@ export async function savePhysicalEducation(formData: FormData) {
       .from("hmr_physical_education")
       .select("id")
       .eq("report_id", reportId)
-      .single()
+      .maybeSingle()
 
-    if (checkError && checkError.code !== "PGRST116") {
+    if (checkError) {
       console.error("Error checking existing physical education record:", checkError)
       return { error: "Failed to check existing physical education data." }
     }
@@ -2061,13 +2086,18 @@ export async function getPhysicalEducation(reportId: string) {
       return { error: "User not authenticated." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
+
+    console.log("Searching for Physical Education with reportId:", reportId)
 
     const { data: physicalEducation, error } = await supabase
       .from("hmr_physical_education")
       .select("*")
       .eq("report_id", reportId)
-      .single()
+      .maybeSingle()
+
+    console.log("Raw Physical Education data from DB:", physicalEducation)
+    console.log("Physical Education DB error:", error)
 
     if (error && error.code !== "PGRST116") {
       console.error("Error getting physical education data:", error)
@@ -2076,6 +2106,7 @@ export async function getPhysicalEducation(reportId: string) {
 
     if (!physicalEducation) {
       // Return default values if no data exists
+      console.log("No Physical Education data found, returning defaults")
       return {
         success: true,
         data: {
@@ -2084,6 +2115,11 @@ export async function getPhysicalEducation(reportId: string) {
         },
       }
     }
+
+    console.log("Returning Physical Education data:", {
+      activities: physicalEducation.activities,
+      challenges: physicalEducation.challenges
+    })
 
     return {
       success: true,

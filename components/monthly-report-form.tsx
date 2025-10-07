@@ -14,8 +14,6 @@ import { useRouter } from "next/navigation"
 import type { Report } from "@/types"
 import { supabase } from "@/lib/supabase-client"
 import { createHmrReport, saveStudentEnrollment, getStudentEnrollment, saveAttendance, getAttendance, saveStaffing, getStaffing, saveStaffDevelopment, getStaffDevelopment, saveSupervision, getSupervision, saveCurriculum, getCurriculum, saveFinance, getFinance, saveIncome, getIncome, saveAccidentSafety, getAccidentSafety, saveStaffMeetings, getStaffMeetings, savePhysicalFacilities, getPhysicalFacilities, saveResourcesNeeded, getResourcesNeeded, savePhysicalEducation, getPhysicalEducation, submitReport, getReportStatus, getCurrentMonthReport, getReportProgress, getTeacherStatusOptions } from "@/app/actions/hmr-reports"
-import { useAutoSave } from "@/hooks/use-auto-save"
-import { useReportProgress } from "@/hooks/use-report-progress"
 import { useToast } from "@/components/ui/use-toast"
 
 interface MonthlyReportFormProps {
@@ -258,80 +256,18 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
   const [justSubmittedReport, setJustSubmittedReport] = useState(false)
   const [teacherStatusOptions, setTeacherStatusOptions] = useState<string[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(true)
-  const [isAutoSaving, setIsAutoSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  // Track changes for section-by-section saving
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [originalSectionData, setOriginalSectionData] = useState<Record<number, any>>({})
+  const [changedFields, setChangedFields] = useState<Set<string>>(new Set())
+  const [isSavingSection, setIsSavingSection] = useState(false)
+  const [isLoadingSection, setIsLoadingSection] = useState(false)
   
   const router = useRouter()
   const { toast } = useToast()
 
-  // Initialize progress tracking
-  const {
-    progressState,
-    markSectionComplete,
-    updateSectionProgress,
-    setCurrentSection: setProgressCurrentSection,
-    getNextIncompleteSection,
-    getOverallProgress,
-    clearProgress,
-    resumeFromLastPosition,
-    loadProgress
-  } = useReportProgress(reportId, SECTIONS.length)
-
-  // Track current section changes
-  const currentSection = progressState.currentSection
-
-  // Auto-save functionality
-  const autoSaveKey = `hmr-report-${reportId || 'draft'}-${currentUser?.id || 'anonymous'}`
-  
-  const performAutoSave = useCallback(async (data: FormData) => {
-    if (!reportId || reportStatus === 'submitted') return
-    
-    setIsAutoSaving(true)
-    try {
-      // Ensure data is in the correct format before saving
-      const formDataToSave = typeof data === 'object' && !(data instanceof FormData) ? data : data
-      
-      // Save current section data to server
-      const success = await handleSectionSave(currentSection, formDataToSave, false)
-      if (success) {
-        setLastSaved(new Date())
-        setHasUnsavedChanges(false)
-        // Silent auto-save - no toast notifications to avoid spam
-      } else {
-        // Only show error toast for failed saves
-        toast({
-          title: "Auto-save failed",
-          description: "Changes are saved locally but server sync failed.",
-          variant: "destructive",
-          duration: 3000,
-        })
-      }
-    } catch (error) {
-      console.error('Auto-save failed:', error)
-      // Only show error toast for exceptions
-      toast({
-        title: "Auto-save failed",
-        description: "Changes are saved locally but server sync failed.",
-        variant: "destructive", 
-        duration: 3000,
-      })
-    } finally {
-      setIsAutoSaving(false)
-    }
-  }, [reportId, reportStatus, currentSection, toast])
-
-  const { loadFromLocalStorage, clearLocalStorage, isSaving: isAutoSavingHook } = useAutoSave({
-    key: autoSaveKey,
-    data: formData,
-    onSave: performAutoSave,
-    delay: 5000, // 5 seconds debounce
-    enabled: reportStatus !== 'submitted' && !isInitialLoading,
-    maxRetries: 3
-  })
-
-  // Combined auto-save status
-  const isAutoSavingCombined = isAutoSaving || isAutoSavingHook
+  // Track current section without caching
+  const [currentSection, setCurrentSection] = useState(0)
 
   // Load all existing data when continuing a draft report
   const loadAllExistingData = async (reportId: string) => {
@@ -473,11 +409,9 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         // Resources Needed data
         if (resourcesResult.success && resourcesResult.data) {
           const data = resourcesResult.data
-          updatedData.teachingMaterials = data.teaching_materials || ""
-          updatedData.technologyRequirements = data.technology_requirements || ""
-          updatedData.infrastructureNeeds = data.infrastructure_needs || ""
-          updatedData.janitorialSupplies = data.janitorial_supplies || ""
-          updatedData.otherIssues = data.other_issues || ""
+          updatedData.curriculumResources = data.curriculumResources || ""
+          updatedData.janitorialSupplies = data.janitorialSupplies || ""
+          updatedData.otherIssues = data.otherIssues || ""
         }
 
         // Physical Education data
@@ -498,10 +432,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         return updatedData
       })
 
-      // Set current section to where user left off
-      if (progressResult.success && typeof progressResult.nextIncompleteSection === 'number') {
-        setProgressCurrentSection(progressResult.nextIncompleteSection)
-      }
+      // Start at section 0 since we removed progress tracking
+      setCurrentSection(0)
 
       // Mark completed sections as saved
       if (progressResult.success && progressResult.completedSections) {
@@ -631,7 +563,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               if (progressResult.success) {
                 setSavedSections(new Set(progressResult.completedSections))
                 // Set to the last section or section 0 for viewing
-                setProgressCurrentSection(0)
+                setCurrentSection(0)
               }
               
               // Update form data with basic info from existing report
@@ -647,21 +579,6 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               setIsExistingReport(true)
               setReportStatus(result.status)
               
-              // Try to resume from last saved position first
-              const resumed = resumeFromLastPosition()
-              
-              // Get report progress to determine which sections are completed and which to navigate to
-              const progressResult = await getReportProgress(result.report.id)
-              if (progressResult.success) {
-                // Mark completed sections
-                setSavedSections(new Set(progressResult.completedSections))
-                
-                // Navigate to the next incomplete section only if not resumed from saved position
-                if (!resumed) {
-                  setProgressCurrentSection(progressResult.nextIncompleteSection)
-                }
-              }
-              
               // Update form data with basic info from existing report
               setFormData((prev) => ({
                 ...prev,
@@ -669,22 +586,6 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
                 schoolLevel: result.report.school_level || prev.schoolLevel,
                 schoolGrade: result.report.school_grade || prev.schoolGrade,
               }))
-              
-              // Load any saved draft data from localStorage
-              const savedData = loadFromLocalStorage()
-              if (savedData) {
-                setFormData((prev) => ({
-                  ...prev,
-                  ...savedData
-                }))
-                
-                // Show notification about loaded draft data
-                toast({
-                  title: "Draft data restored",
-                  description: "Your unsaved changes have been restored from local storage.",
-                  duration: 3000,
-                })
-              }
             }
           }
         } catch (error) {
@@ -728,35 +629,14 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges, reportStatus])
 
-  // Clear localStorage when report is submitted
+  // Clear unsaved changes flag when report is submitted
   useEffect(() => {
     if (reportStatus === 'submitted') {
-      clearLocalStorage()
-      clearProgress()
       setHasUnsavedChanges(false)
     }
-  }, [reportStatus, clearLocalStorage, clearProgress])
+  }, [reportStatus])
 
-  // Keyboard shortcut for manual save (Ctrl+S / Cmd+S)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault()
-        if (reportId && reportStatus !== 'submitted' && !isAutoSavingCombined) {
-          performAutoSave(formData)
-          // Show toast only for manual saves
-          toast({
-            title: "Manual save",
-            description: "Your progress has been saved manually.",
-            duration: 2000,
-          })
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [reportId, reportStatus, isAutoSavingCombined, formData, performAutoSave, toast])
+  // Removed keyboard shortcut for manual save to disable caching
 
   // Load existing student enrollment data when reportId is available
   useEffect(() => {
@@ -803,52 +683,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     loadAttendanceData()
   }, [reportId, currentSection])
 
-  // Load existing staffing data when reportId is available
-  useEffect(() => {
-    async function loadStaffingData() {
-      if (reportId && currentSection === 3) {
-        try {
-          const result = await getStaffing(reportId)
-          if (result.success && result.data) {
-            const { staffing, teacherStatusUpdates } = result.data
-            
-            setFormData((prev) => ({
-              ...prev,
-              totalStaffEntitlement: staffing?.total_staff_entitlement?.toString() || "",
-              currentTeachersOnStaff: staffing?.total_current_teachers?.toString() || "",
-              underStaffedBy: staffing?.under_staffed_by?.toString() || "",
-              overStaffedBy: staffing?.over_staffed_by?.toString() || "",
-              secondmentCertificatesPrepared: staffing?.secondment_attendance_cert || false,
-              teachersWhoLeft: teacherStatusUpdates.leftSchool.length > 0 
-                ? teacherStatusUpdates.leftSchool.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
-                : [{ name: "", status: "", reason: "" }],
-              specialLeave: teacherStatusUpdates.specialLeave.length > 0 
-                ? teacherStatusUpdates.specialLeave.map(t => ({ name: t.name, status: t.status, offence: t.offence }))
-                : [{ name: "", status: "", offence: "" }],
-              teachersAssumedDuty: teacherStatusUpdates.assumedDuty.length > 0 
-                ? teacherStatusUpdates.assumedDuty.map(t => ({ name: t.name, status: t.status }))
-                : [{ name: "", status: "" }],
-              teachersNotReported: teacherStatusUpdates.notReported.length > 0 
-                ? teacherStatusUpdates.notReported.map(t => ({ 
-                    name: t.name, 
-                    status: t.status, 
-                    reason: t.reason, 
-                    daysAbsent: t.days_absent?.toString() || "", 
-                    actionTaken: t.action_taken 
-                  }))
-                : [{ name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" }],
-              teachersWithoutSalary: teacherStatusUpdates.didNotReceiveSalary.length > 0 
-                ? teacherStatusUpdates.didNotReceiveSalary.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
-                : [{ name: "", status: "", reason: "" }],
-            }))
-          }
-        } catch (error) {
-          console.error("Error loading staffing data:", error)
-        }
-      }
-    }
-    loadStaffingData()
-  }, [reportId, currentSection])
+
 
   // Load existing staff development data when reportId is available
   useEffect(() => {
@@ -1006,27 +841,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     loadAccidentSafetyData()
   }, [reportId, currentSection])
 
-  // Load existing staff meetings data when reportId is available
-  useEffect(() => {
-    async function loadStaffMeetingsData() {
-      if (reportId && currentSection === 10) {
-        try {
-          const result = await getStaffMeetings(reportId)
-          if (result.success && result.data) {
-            setFormData((prev) => ({
-              ...prev,
-              generalStaffMeetingHeld: result.data.generalMeetingHeld,
-              keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
-              decisionsImplemented: result.data.decisionsImplemented || "",
-            }))
-          }
-        } catch (error) {
-          console.error("Error loading staff meetings data:", error)
-        }
-      }
-    }
-    loadStaffMeetingsData()
-  }, [reportId, currentSection])
+
 
   // Load existing physical facilities data when reportId is available
   useEffect(() => {
@@ -1060,8 +875,11 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     async function loadResourcesNeededData() {
       if (reportId && currentSection === 12) {
         try {
+          console.log("Loading resources needed data for reportId:", reportId)
           const result = await getResourcesNeeded(reportId)
+          console.log("getResourcesNeeded result:", result)
           if (result.success && result.data) {
+            console.log("Setting resources data to form:", result.data)
             setFormData((prev) => ({
               ...prev,
               curriculumResources: result.data.curriculumResources,
@@ -1084,12 +902,18 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         try {
           const result = await getPhysicalEducation(reportId)
           if (result.success && result.data) {
-            // Convert comma-separated strings back to arrays
+            // Convert comma-separated strings back to arrays, filtering out empty strings
             const activitiesArray = result.data.physicalEducationActivities 
-              ? result.data.physicalEducationActivities.split(',').map(activity => ({ activity: activity.trim() })).filter(item => item.activity)
+              ? result.data.physicalEducationActivities.split(',')
+                  .map(activity => activity.trim())
+                  .filter(activity => activity.length > 0)
+                  .map(activity => ({ activity }))
               : []
             const challengesArray = result.data.physicalEducationChallenges
-              ? result.data.physicalEducationChallenges.split(',').map(challenge => ({ challenge: challenge.trim() })).filter(item => item.challenge)
+              ? result.data.physicalEducationChallenges.split(',')
+                  .map(challenge => challenge.trim())
+                  .filter(challenge => challenge.length > 0)
+                  .map(challenge => ({ challenge }))
               : []
             
             setFormData((prev) => ({
@@ -1128,13 +952,21 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     checkReportStatus()
   }, [reportId, previousReportData])
 
+  // Load section data when current section changes
+  useEffect(() => {
+    if (reportId && currentSection > 0) {
+      loadSectionData(currentSection)
+    }
+  }, [reportId, currentSection])
+
   const updateFormData = (field: string, value: any) => {
     // Prevent updates if report is submitted
     if (reportStatus === 'submitted') {
       return
     }
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    setHasUnsavedChanges(true)
+    
+    // Use our change tracking function
+    handleFieldChange(field, value)
   }
 
   const addToArray = (field: string, item: any) => {
@@ -1142,11 +974,10 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     if (reportStatus === 'submitted') {
       return
     }
-    setFormData((prev) => ({
-      ...prev,
-      [field]: [...(prev[field as keyof FormData] as any[]), item],
-    }))
-    setHasUnsavedChanges(true)
+    
+    const currentArray = formData[field as keyof FormData] as any[]
+    const newArray = [...currentArray, item]
+    handleFieldChange(field, newArray)
   }
 
   const removeFromArray = (field: string, index: number) => {
@@ -1154,11 +985,10 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     if (reportStatus === 'submitted') {
       return
     }
-    setFormData((prev) => ({
-      ...prev,
-      [field]: (prev[field as keyof FormData] as any[]).filter((_, i) => i !== index),
-    }))
-    setHasUnsavedChanges(true)
+    
+    const currentArray = formData[field as keyof FormData] as any[]
+    const newArray = currentArray.filter((_, i) => i !== index)
+    handleFieldChange(field, newArray)
   }
 
   // Enhanced section save handler
@@ -1206,69 +1036,164 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           const staffingFormData = new FormData()
           staffingFormData.append("reportId", reportId)
           staffingFormData.append("totalStaffEntitlement", safeGet("totalStaffEntitlement", "0"))
-          staffingFormData.append("currentTeachersOnStaff", safeGet("currentTeachersOnStaff", "0"))
+          staffingFormData.append("totalCurrentTeachers", safeGet("currentTeachersOnStaff", "0"))
           staffingFormData.append("underStaffedBy", safeGet("underStaffedBy", "0"))
           staffingFormData.append("overStaffedBy", safeGet("overStaffedBy", "0"))
-          staffingFormData.append("secondmentCertificatesPrepared", formDataObj.secondmentCertificatesPrepared ? "true" : "false")
+          staffingFormData.append("secondmentAttendanceCert", formDataObj.secondmentCertificatesPrepared ? "true" : "false")
           
-          // Add teacher status updates
+          // Prepare teacher status updates as JSON for the database
+          const teacherStatusUpdates: any[] = []
+
+          // Teachers who left the school
           const teachersWhoLeft = safeGetArray("teachersWhoLeft")
-          teachersWhoLeft.forEach((teacher, index) => {
+          teachersWhoLeft.forEach((teacher) => {
             if (teacher && teacher.name && teacher.name.trim()) {
-              staffingFormData.append(`teacherLeft_${index}_name`, teacher.name)
-              staffingFormData.append(`teacherLeft_${index}_status`, teacher.status || "")
-              staffingFormData.append(`teacherLeft_${index}_reason`, teacher.reason || "")
+              teacherStatusUpdates.push({
+                report_id: reportId,
+                category: "left_school",
+                name: teacher.name,
+                status: teacher.status || "",
+                reason: teacher.reason || "",
+                offence: null,
+                days_absent: null,
+                action_taken: null
+              })
             }
           })
+
+          // Teachers on special leave
+          const specialLeave = safeGetArray("specialLeave")
+          specialLeave.forEach((teacher) => {
+            if (teacher && teacher.name && teacher.name.trim()) {
+              teacherStatusUpdates.push({
+                report_id: reportId,
+                category: "special_leave",
+                name: teacher.name,
+                status: teacher.status || "",
+                reason: null,
+                offence: teacher.offence || "",
+                days_absent: null,
+                action_taken: null
+              })
+            }
+          })
+
+          // Teachers who assumed duty
+          const teachersAssumedDuty = safeGetArray("teachersAssumedDuty")
+          teachersAssumedDuty.forEach((teacher) => {
+            if (teacher && teacher.name && teacher.name.trim()) {
+              teacherStatusUpdates.push({
+                report_id: reportId,
+                category: "assumed_duty",
+                name: teacher.name,
+                status: teacher.status || "",
+                reason: null,
+                offence: null,
+                days_absent: null,
+                action_taken: null
+              })
+            }
+          })
+
+          // Teachers not reported for duty
+          const teachersNotReported = safeGetArray("teachersNotReported")
+          teachersNotReported.forEach((teacher) => {
+            if (teacher && teacher.name && teacher.name.trim()) {
+              teacherStatusUpdates.push({
+                report_id: reportId,
+                category: "not_reported",
+                name: teacher.name,
+                status: teacher.status || "",
+                reason: teacher.reason || "",
+                offence: null,
+                days_absent: teacher.daysAbsent ? parseInt(teacher.daysAbsent) : null,
+                action_taken: teacher.actionTaken || ""
+              })
+            }
+          })
+
+          // Teachers without salary
+          const teachersWithoutSalary = safeGetArray("teachersWithoutSalary")
+          teachersWithoutSalary.forEach((teacher) => {
+            if (teacher && teacher.name && teacher.name.trim()) {
+              teacherStatusUpdates.push({
+                report_id: reportId,
+                category: "without_salary",
+                name: teacher.name,
+                status: teacher.status || "",
+                reason: teacher.reason || "",
+                offence: null,
+                days_absent: null,
+                action_taken: null
+              })
+            }
+          })
+
+          // Check if we have any meaningful teacher status data
+          const hasTeacherStatusData = teacherStatusUpdates.length > 0
+          const allArraysEmpty = !hasTeacherStatusData && 
+            (!safeGetArray("teachersWhoLeft").some(t => t?.name?.trim()) &&
+             !safeGetArray("specialLeave").some(t => t?.name?.trim()) &&
+             !safeGetArray("teachersAssumedDuty").some(t => t?.name?.trim()) &&
+             !safeGetArray("teachersNotReported").some(t => t?.name?.trim()) &&
+             !safeGetArray("teachersWithoutSalary").some(t => t?.name?.trim()))
+
+          // Only save if we have actual data or if this is not just from auto-loading
+          if (allArraysEmpty && changedFields.size === 0) {
+            console.log("Skipping save of empty teacher status data")
+            return { success: true, message: "No teacher status changes to save" }
+          }
+
+          // Add the teacher status data as JSON string
+          staffingFormData.append("teacherStatusData", JSON.stringify(teacherStatusUpdates))
           
           result = await saveStaffing(staffingFormData)
           break
         case 4: // Staff Development
           const staffDevFormData = new FormData()
           staffDevFormData.append("reportId", reportId)
-          const staffDevActivities = safeGetArray("staffDevelopmentActivities")
-          staffDevActivities.forEach((activity, index) => {
-            if (activity && activity.activity && activity.activity.trim()) {
-              staffDevFormData.append(`activity_${index}_name`, activity.activity)
-              staffDevFormData.append(`activity_${index}_date`, activity.date || "")
-              staffDevFormData.append(`activity_${index}_participants`, activity.participants || "0")
-              staffDevFormData.append(`activity_${index}_facilitator`, activity.facilitator || "")
-            }
-          })
+          staffDevFormData.append("pdSessionHeld", formData.wholeschoolPDHeld !== null ? formData.wholeschoolPDHeld.toString() : "")
+          staffDevFormData.append("percentageAttended", formData.teachersAttendedPD)
+          staffDevFormData.append("pdTopic", formData.pdTopic)
+          staffDevFormData.append("outcomes", formData.pdOutcomes)
+          staffDevFormData.append("reason", formData.pdTopicReason)
           result = await saveStaffDevelopment(staffDevFormData)
           break
         case 5: // Supervision
           const supervisionFormData = new FormData()
           supervisionFormData.append("reportId", reportId)
-          supervisionFormData.append("totalTeachers", safeGet("totalTeachers", "0"))
-          supervisionFormData.append("teachersSupervised", safeGet("teachersSupervised", "0"))
-          supervisionFormData.append("lessonsObserved", safeGet("lessonsObserved", "0"))
-          supervisionFormData.append("supervisionMeetingsHeld", safeGet("supervisionMeetingsHeld", "0"))
-          if (formDataObj.supervisionChallenges) {
-            supervisionFormData.append("supervisionChallenges", safeGet("supervisionChallenges"))
-          }
+          supervisionFormData.append("hmLessonsObserved", safeGet("hmLessonsObserved", "0"))
+          supervisionFormData.append("hmPositiveFindings", safeGet("hmPositiveFindings", ""))
+          supervisionFormData.append("hmNegativeFindings", safeGet("hmNegativeFindings", ""))
+          supervisionFormData.append("hmFollowUpActions", safeGet("hmFollowUpActions", ""))
+          supervisionFormData.append("dhmLessonsObserved", safeGet("dhmLessonsObserved", "0"))
+          supervisionFormData.append("dhmPositiveFindings", safeGet("dhmPositiveFindings", ""))
+          supervisionFormData.append("dhmNegativeFindings", safeGet("dhmNegativeFindings", ""))
+          supervisionFormData.append("dhmFollowUpActions", safeGet("dhmFollowUpActions", ""))
+          supervisionFormData.append("groupHeadLessonsObserved", safeGet("groupHeadLessonsObserved", "0"))
+          supervisionFormData.append("groupHeadPositiveFindings", safeGet("groupHeadPositiveFindings", ""))
+          supervisionFormData.append("groupHeadNegativeFindings", safeGet("groupHeadNegativeFindings", ""))
+          supervisionFormData.append("groupHeadFollowUpActions", safeGet("groupHeadFollowUpActions", ""))
+          supervisionFormData.append("hodLessonsObserved", safeGet("hodLessonsObserved", "0"))
+          supervisionFormData.append("hodPositiveFindings", safeGet("hodPositiveFindings", ""))
+          supervisionFormData.append("hodNegativeFindings", safeGet("hodNegativeFindings", ""))
+          supervisionFormData.append("hodFollowUpActions", safeGet("hodFollowUpActions", ""))
           result = await saveSupervision(supervisionFormData)
           break
         case 6: // Curriculum Monitoring
           const curriculumFormData = new FormData()
           curriculumFormData.append("reportId", reportId)
-          curriculumFormData.append("curriculumCoverage", safeGet("curriculumCoverage", "0"))
-          curriculumFormData.append("assessmentActivities", safeGet("assessmentActivities", "0"))
-          if (formDataObj.curriculumChallenges) {
-            curriculumFormData.append("curriculumChallenges", safeGet("curriculumChallenges"))
-          }
-          if (formDataObj.curriculumImprovements) {
-            curriculumFormData.append("curriculumImprovements", safeGet("curriculumImprovements"))
-          }
+          curriculumFormData.append("teachersNoLessonPlans", safeGet("teachersNoLessonPlans", "0"))
+          curriculumFormData.append("curriculumActionsTaken", safeGet("curriculumActionsTaken", ""))
           result = await saveCurriculum(curriculumFormData)
           break
         case 7: // Finance
           const financeFormData = new FormData()
           financeFormData.append("reportId", reportId)
-          financeFormData.append("previousBalance", safeGet("previousBalance", "0"))
-          financeFormData.append("currentMonthIncome", safeGet("currentMonthIncome", "0"))
-          financeFormData.append("currentMonthExpenditure", safeGet("currentMonthExpenditure", "0"))
-          financeFormData.append("currentBalance", safeGet("currentBalance", "0"))
+          financeFormData.append("openingBalance", safeGet("openingBalance", "0"))
+          financeFormData.append("totalIncome", safeGet("totalIncome", "0"))
+          financeFormData.append("totalExpenditure", safeGet("totalExpenditure", "0"))
+          financeFormData.append("closingBalance", safeGet("closingBalance", "0"))
           const expenditureDetails = safeGetArray("expenditureDetails")
           expenditureDetails.forEach((expense, index) => {
             if (expense && expense.description && expense.description.trim()) {
@@ -1283,85 +1208,67 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           const incomeFormData = new FormData()
           incomeFormData.append("reportId", reportId)
           const incomeSources = safeGetArray("incomeSources")
-          incomeSources.forEach((income, index) => {
+          
+          // Prepare income sources as JSON for the database
+          const incomeSourcesData: any[] = []
+          incomeSources.forEach((income) => {
             if (income && income.source && income.source.trim()) {
-              incomeFormData.append(`income_${index}_source`, income.source)
-              incomeFormData.append(`income_${index}_amount`, income.amount || "0")
-              incomeFormData.append(`income_${index}_date`, income.date || "")
+              incomeSourcesData.push({
+                source: income.source.trim(),
+                amount: income.amount || "0"
+              })
             }
           })
+          
+          incomeFormData.append("incomeSourcesData", JSON.stringify(incomeSourcesData))
           result = await saveIncome(incomeFormData)
           break
         case 9: // Accident & Safety
           const accidentFormData = new FormData()
           accidentFormData.append("reportId", reportId)
-          const accidents = safeGetArray("accidents")
-          accidents.forEach((accident, index) => {
-            if (accident && accident.description && accident.description.trim()) {
-              accidentFormData.append(`accident_${index}_description`, accident.description)
-              accidentFormData.append(`accident_${index}_date`, accident.date || "")
-              accidentFormData.append(`accident_${index}_severity`, accident.severity || "")
-              accidentFormData.append(`accident_${index}_action`, accident.action || "")
-            }
-          })
-          const safetyMeasures = safeGetArray("safetyMeasures")
-          safetyMeasures.forEach((measure, index) => {
-            if (measure && measure.description && measure.description.trim()) {
-              accidentFormData.append(`safety_${index}_description`, measure.description)
-              accidentFormData.append(`safety_${index}_status`, measure.status || "")
-            }
-          })
+          
+          // Main safety fields
+          accidentFormData.append("evacuationDrill", formData.evacuationDrillHeld !== null ? (formData.evacuationDrillHeld ? "yes" : "no") : "")
+          accidentFormData.append("personsInvolvedDrill", formData.personsInvolved || "0")
+          accidentFormData.append("timeTakenDrill", formData.timeTaken || "0")
+          accidentFormData.append("observationsDrill", formData.drillObservations || "")
+          accidentFormData.append("classroomFirebuckets", formData.classroomsHaveFireBuckets !== null ? (formData.classroomsHaveFireBuckets ? "yes" : "no") : "")
+          accidentFormData.append("functionalFireExtinguishers", formData.fireExtinguishersFunctional !== null ? (formData.fireExtinguishersFunctional ? "yes" : "no") : "")
+          accidentFormData.append("totalAccidents", formData.numberOfIncidents || "0")
+          accidentFormData.append("totalStudentsInvolved", formData.studentsInvolved || "0")
+          accidentFormData.append("totalTeachersInvolved", formData.teachersInvolvedIncidents || "0")
+          accidentFormData.append("actions", formData.preventionActions || "")
+          
           result = await saveAccidentSafety(accidentFormData)
           break
         case 10: // Staff Meetings
-          const meetingsFormData = new FormData()
-          meetingsFormData.append("reportId", reportId)
-          const staffMeetings = safeGetArray("staffMeetings")
-          staffMeetings.forEach((meeting, index) => {
-            if (meeting && meeting.topic && meeting.topic.trim()) {
-              meetingsFormData.append(`meeting_${index}_topic`, meeting.topic)
-              meetingsFormData.append(`meeting_${index}_date`, meeting.date || "")
-              meetingsFormData.append(`meeting_${index}_attendees`, meeting.attendees || "0")
-              meetingsFormData.append(`meeting_${index}_outcomes`, meeting.outcomes || "")
-            }
-          })
-          result = await saveStaffMeetings(meetingsFormData)
+          const staffMeetingsData = {
+            generalMeetingHeld: formData.generalStaffMeetingHeld,
+            keyIssuesDiscussed: formData.keyIssuesDiscussed,
+            decisionsImplemented: formData.decisionsImplemented
+          }
+          result = await saveStaffMeetings(reportId, staffMeetingsData)
           break
         case 11: // Physical Facilities
-          const facilitiesFormData = new FormData()
-          facilitiesFormData.append("reportId", reportId)
-          const repairs = safeGetArray("repairs")
-          repairs.forEach((repair, index) => {
-            if (repair && repair.description && repair.description.trim()) {
-              facilitiesFormData.append(`repair_${index}_description`, repair.description)
-              facilitiesFormData.append(`repair_${index}_status`, repair.status || "")
-              facilitiesFormData.append(`repair_${index}_cost`, repair.cost || "0")
-              facilitiesFormData.append(`repair_${index}_date`, repair.date || "")
-            }
-          })
-          const facilityImprovements = safeGetArray("facilityImprovements")
-          facilityImprovements.forEach((improvement, index) => {
-            if (improvement && improvement.description && improvement.description.trim()) {
-              facilitiesFormData.append(`improvement_${index}_description`, improvement.description)
-              facilitiesFormData.append(`improvement_${index}_status`, improvement.status || "")
-              facilitiesFormData.append(`improvement_${index}_priority`, improvement.priority || "")
-            }
-          })
-          result = await savePhysicalFacilities(facilitiesFormData)
+          const facilitiesData = {
+            repairsNeeded: formData.repairsNeeded,
+            teacherToiletsFunctional: formData.teacherToiletsFunctional,
+            teacherSinksFunctional: formData.teacherSinksFunctional,
+            teacherTapsFunctional: formData.teacherTapsFunctional,
+            studentToiletsFunctional: formData.studentToiletsFunctional,
+            studentSinksFunctional: formData.studentSinksFunctional,
+            studentTapsFunctional: formData.studentTapsFunctional,
+            overcrowdedClassrooms: formData.overcrowdedClassrooms
+          }
+          result = await savePhysicalFacilities(reportId, facilitiesData)
           break
         case 12: // Resources Needed
-          const resourcesFormData = new FormData()
-          resourcesFormData.append("reportId", reportId)
-          const resourcesNeeded = safeGetArray("resourcesNeeded")
-          resourcesNeeded.forEach((resource, index) => {
-            if (resource && resource.resource && resource.resource.trim()) {
-              resourcesFormData.append(`resource_${index}_name`, resource.resource)
-              resourcesFormData.append(`resource_${index}_quantity`, resource.quantity || "0")
-              resourcesFormData.append(`resource_${index}_priority`, resource.priority || "")
-              resourcesFormData.append(`resource_${index}_justification`, resource.justification || "")
-            }
-          })
-          result = await saveResourcesNeeded(resourcesFormData)
+          const resourcesData = {
+            curriculumResources: formData.curriculumResources,
+            janitorialSupplies: formData.janitorialSupplies,
+            otherIssues: formData.otherIssues
+          }
+          result = await saveResourcesNeeded(reportId, resourcesData)
           break
         case 13: // Physical Education
           const physicalEducationFormData = new FormData()
@@ -1393,7 +1300,6 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
       }
 
       if (result.success && markComplete) {
-        markSectionComplete(sectionIndex)
         setSavedSections((prev) => new Set(prev).add(sectionIndex))
       }
 
@@ -1404,15 +1310,347 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     }
   }
 
-  const nextSection = () => {
-    if (currentSection < SECTIONS.length - 1) {
-      setProgressCurrentSection(currentSection + 1)
+  // Helper function to handle form field changes and track modifications
+  const handleFieldChange = (fieldName: string, value: any) => {
+    // Get original data for current section
+    const originalData = originalSectionData[currentSection] || {}
+    const originalValue = originalData[fieldName]
+    
+    // Normalize values for comparison (handle empty strings, null, undefined)
+    const normalizedValue = value === null || value === undefined ? "" : String(value)
+    const normalizedOriginal = originalValue === null || originalValue === undefined ? "" : String(originalValue)
+    
+    // Check if the value has actually changed from the original
+    const hasChanged = normalizedValue !== normalizedOriginal
+    
+    // Update form data first
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }))
+
+    // Update change tracking
+    if (hasChanged) {
+      setChangedFields(prev => new Set(prev).add(fieldName))
+      setHasUnsavedChanges(true)
+    } else {
+      setChangedFields(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(fieldName)
+        // Check if any other fields are still changed
+        setHasUnsavedChanges(newSet.size > 0)
+        return newSet
+      })
     }
   }
 
-  const prevSection = () => {
+  // Save current section data if changes were made before navigating
+  const saveCurrentSectionIfChanged = async (): Promise<boolean> => {
+    if (changedFields.size === 0) {
+      // No changes made, don't save
+      return true
+    }
+
+    if (!reportId) {
+      toast({
+        title: "Error",
+        description: "Report ID is required to save data.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    setIsSavingSection(true)
+    try {
+      const success = await handleSectionSave(currentSection, formData, true)
+      if (success) {
+        // Clear changed fields and mark section as saved
+        setChangedFields(new Set())
+        setSavedSections(prev => new Set(prev).add(currentSection))
+        setHasUnsavedChanges(false)
+        
+        toast({
+          title: "Section saved",
+          description: `Section ${currentSection + 1} data has been saved.`,
+          duration: 2000,
+        })
+        return true
+      } else {
+        toast({
+          title: "Save failed",
+          description: "Failed to save section data. Please try again.",
+          variant: "destructive",
+        })
+        return false
+      }
+    } catch (error) {
+      console.error('Error saving section:', error)
+      toast({
+        title: "Save failed",
+        description: "An error occurred while saving. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    } finally {
+      setIsSavingSection(false)
+    }
+  }
+
+  // Load section data from database
+  const loadSectionData = async (sectionIndex: number) => {
+    if (!reportId) return
+
+    setIsLoadingSection(true)
+    try {
+      let result
+      switch (sectionIndex) {
+        case 1:
+          result = await getStudentEnrollment(reportId)
+          break
+        case 2:
+          result = await getAttendance(reportId)
+          break
+        case 3:
+          result = await getStaffing(reportId)
+          break
+        case 4:
+          result = await getStaffDevelopment(reportId)
+          break
+        case 5:
+          result = await getSupervision(reportId)
+          break
+        case 6:
+          result = await getCurriculum(reportId)
+          break
+        case 7:
+          result = await getFinance(reportId)
+          break
+        case 8:
+          result = await getIncome(reportId)
+          break
+        case 9:
+          result = await getAccidentSafety(reportId)
+          break
+        case 10:
+          result = await getStaffMeetings(reportId)
+          break
+        case 11:
+          result = await getPhysicalFacilities(reportId)
+          break
+        case 12:
+          result = await getResourcesNeeded(reportId)
+          break
+        case 13:
+          result = await getPhysicalEducation(reportId)
+          break
+        default:
+          return
+      }
+
+      if (result?.success && result.data) {
+        console.log(`Loading data for section ${sectionIndex}:`, result.data)
+        
+        // Store original data for this section
+        setOriginalSectionData(prev => ({
+          ...prev,
+          [sectionIndex]: result.data
+        }))
+
+        // Update form data with loaded data (without triggering change detection)
+        if (sectionIndex === 3) {
+          // Special handling for Teacher Status section (case 3)
+          console.log("Loading Teacher Status data:", result.data)
+          const { staffing, teacherStatusUpdates } = result.data
+          
+          // Only update if we have valid teacherStatusUpdates
+          if (teacherStatusUpdates) {
+            setFormData(prev => ({
+              ...prev,
+              totalStaffEntitlement: staffing?.total_staff_entitlement?.toString() || "",
+              currentTeachersOnStaff: staffing?.total_current_teachers?.toString() || "",
+              underStaffedBy: staffing?.under_staffed_by?.toString() || "",
+              overStaffedBy: staffing?.over_staffed_by?.toString() || "",
+              secondmentCertificatesPrepared: staffing?.secondment_attendance_cert || false,
+              teachersWhoLeft: teacherStatusUpdates.leftSchool?.length > 0 
+                ? teacherStatusUpdates.leftSchool.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
+                : (prev.teachersWhoLeft?.length > 0 ? prev.teachersWhoLeft : [{ name: "", status: "", reason: "" }]),
+              specialLeave: teacherStatusUpdates.specialLeave?.length > 0 
+                ? teacherStatusUpdates.specialLeave.map(t => ({ name: t.name, status: t.status, offence: t.offence }))
+                : (prev.specialLeave?.length > 0 ? prev.specialLeave : [{ name: "", status: "", offence: "" }]),
+              teachersAssumedDuty: teacherStatusUpdates.assumedDuty?.length > 0 
+                ? teacherStatusUpdates.assumedDuty.map(t => ({ name: t.name, status: t.status }))
+                : (prev.teachersAssumedDuty?.length > 0 ? prev.teachersAssumedDuty : [{ name: "", status: "" }]),
+              teachersNotReported: teacherStatusUpdates.notReported?.length > 0 
+                ? teacherStatusUpdates.notReported.map(t => ({ 
+                    name: t.name, 
+                    status: t.status, 
+                    reason: t.reason, 
+                    daysAbsent: t.days_absent?.toString() || "", 
+                    actionTaken: t.action_taken 
+                  }))
+                : (prev.teachersNotReported?.length > 0 ? prev.teachersNotReported : [{ name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" }]),
+              teachersWithoutSalary: teacherStatusUpdates.didNotReceiveSalary?.length > 0 
+                ? teacherStatusUpdates.didNotReceiveSalary.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
+                : (prev.teachersWithoutSalary?.length > 0 ? prev.teachersWithoutSalary : [{ name: "", status: "", reason: "" }]),
+            }))
+          } else {
+            console.log("No teacherStatusUpdates found, keeping existing form data")
+            // Just update staffing data, keep existing teacher status arrays
+            setFormData(prev => ({
+              ...prev,
+              totalStaffEntitlement: staffing?.total_staff_entitlement?.toString() || prev.totalStaffEntitlement,
+              currentTeachersOnStaff: staffing?.total_current_teachers?.toString() || prev.currentTeachersOnStaff,
+              underStaffedBy: staffing?.under_staffed_by?.toString() || prev.underStaffedBy,
+              overStaffedBy: staffing?.over_staffed_by?.toString() || prev.overStaffedBy,
+              secondmentCertificatesPrepared: staffing?.secondment_attendance_cert ?? prev.secondmentCertificatesPrepared,
+            }))
+          }
+        } else if (sectionIndex === 10) {
+          // Special handling for Staff Meetings section (case 10)
+          console.log("Loading Staff Meetings data:", result.data)
+          console.log("Setting form fields:", {
+            generalStaffMeetingHeld: result.data.generalMeetingHeld,
+            keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
+            decisionsImplemented: result.data.decisionsImplemented || "0",
+          })
+          
+          setFormData(prev => {
+            const newData = {
+              ...prev,
+              generalStaffMeetingHeld: result.data.generalMeetingHeld,
+              keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
+              decisionsImplemented: result.data.decisionsImplemented || "0",
+            }
+            console.log("Updated form data:", newData)
+            return newData
+          })
+        } else if (sectionIndex === 13) {
+          // Special handling for Physical Education section (case 13)
+          console.log("Loading Physical Education data:", result.data)
+          
+          // Convert comma-separated strings back to arrays
+          const activitiesString = (result as any).data.physicalEducationActivities || ""
+          const challengesString = (result as any).data.physicalEducationChallenges || ""
+          
+          console.log("Raw Physical Education strings:", {
+            activitiesString,
+            challengesString
+          })
+          
+          const activitiesArray = activitiesString.length > 0 
+            ? activitiesString.split(',')
+                .map((activity: string) => activity.trim())
+                .filter((activity: string) => activity.length > 0)
+                .map((activity: string) => ({ activity }))
+            : []
+            
+          const challengesArray = challengesString.length > 0
+            ? challengesString.split(',')
+                .map((challenge: string) => challenge.trim())
+                .filter((challenge: string) => challenge.length > 0)
+                .map((challenge: string) => ({ challenge }))
+            : []
+          
+          console.log("Converted Physical Education arrays:", {
+            activitiesArray,
+            challengesArray
+          })
+          
+          setFormData(prev => ({
+            ...prev,
+            physicalEducationActivities: activitiesArray,
+            physicalEducationChallenges: challengesArray,
+          }))
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            ...(result as any).data
+          }))
+        }
+
+        // Clear changed fields since we just loaded fresh data from database
+        setChangedFields(new Set())
+        setHasUnsavedChanges(false)
+
+        // Mark this section as saved since we just loaded existing data
+        // For Teacher Status section, only mark as saved if we actually have data
+        if (sectionIndex === 3) {
+          const { teacherStatusUpdates } = result.data
+          if (teacherStatusUpdates && (
+            teacherStatusUpdates.leftSchool?.length > 0 ||
+            teacherStatusUpdates.specialLeave?.length > 0 ||
+            teacherStatusUpdates.assumedDuty?.length > 0 ||
+            teacherStatusUpdates.notReported?.length > 0 ||
+            teacherStatusUpdates.didNotReceiveSalary?.length > 0
+          )) {
+            setSavedSections(prev => new Set(prev).add(sectionIndex))
+          }
+        } else if (sectionIndex === 10) {
+          // Staff Meetings section - only mark as saved if we have data
+          if (result.data.generalMeetingHeld !== null || 
+              result.data.keyIssuesDiscussed || 
+              result.data.decisionsImplemented !== "0") {
+            setSavedSections(prev => new Set(prev).add(sectionIndex))
+          }
+        } else {
+          setSavedSections(prev => new Set(prev).add(sectionIndex))
+        }
+        
+        toast({
+          title: "Section data loaded",
+          description: `Section ${sectionIndex + 1} data loaded from database.`,
+          duration: 2000,
+        })
+      } else {
+        console.log(`No existing data found for section ${sectionIndex}`)
+        
+        // No existing data for this section, clear original data
+        setOriginalSectionData(prev => ({
+          ...prev,
+          [sectionIndex]: {}
+        }))
+        
+        // Clear changed fields for empty section
+        setChangedFields(new Set())
+        setHasUnsavedChanges(false)
+        
+        // Remove from saved sections since there's no data
+        setSavedSections(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(sectionIndex)
+          return newSet
+        })
+      }
+    } catch (error) {
+      console.error(`Error loading section ${sectionIndex} data:`, error)
+    } finally {
+      setIsLoadingSection(false)
+    }
+  }
+
+  const nextSection = async () => {
+    if (currentSection < SECTIONS.length - 1) {
+      // Save current section if there are changes
+      const saved = await saveCurrentSectionIfChanged()
+      if (saved) {
+        const newSection = currentSection + 1
+        setCurrentSection(newSection)
+        // Load data for the new section
+        await loadSectionData(newSection)
+      }
+    }
+  }
+
+  const prevSection = async () => {
     if (currentSection > 0) {
-      setProgressCurrentSection(currentSection - 1)
+      // Save current section if there are changes
+      const saved = await saveCurrentSectionIfChanged()
+      if (saved) {
+        const newSection = currentSection - 1
+        setCurrentSection(newSection)
+        // Load data for the previous section
+        await loadSectionData(newSection)
+      }
     }
   }
 
@@ -2034,9 +2272,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           setReportStatus('submitted')
           setJustSubmittedReport(true)
           
-          // Clear auto-save data and progress tracking
-          clearLocalStorage()
-          clearProgress()
+          // Clear unsaved changes flag
           setHasUnsavedChanges(false)
           
           // Show success toast
@@ -2060,13 +2296,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
     }
   }
 
-  // Calculate progress based on completed sections and current progress
+  // Calculate progress based on current section
   const calculateProgress = () => {
-    const overallProgress = getOverallProgress()
-    if (overallProgress > 0) {
-      return overallProgress
-    }
-    // Fallback to simple calculation if no section progress available
     return ((currentSection + 1) / SECTIONS.length) * 100
   }
 
@@ -2094,16 +2325,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
   }
 
   // Update section progress when form data changes (throttled to prevent infinite loops)
-  useEffect(() => {
-    if (reportStatus !== 'submitted') {
-      const timeoutId = setTimeout(() => {
-        const progress = calculateSectionProgress(currentSection)
-        updateSectionProgress(currentSection, progress)
-      }, 2000) // Increased to 2 seconds to reduce frequency
-
-      return () => clearTimeout(timeoutId)
-    }
-  }, [formData, currentSection, reportStatus])
+  // Removed section progress tracking to disable caching
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
@@ -2215,10 +2437,10 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
       <h3 className="text-lg font-semibold text-primary-700 flex items-center gap-2">
         Section 1: Student Enrolment
         {savedSections.has(1) && (
-          <span className="text-green-600 text-sm font-normal">✅ Completed</span>
+          <span className="text-green-600 text-sm font-normal">✅ Saved</span>
         )}
-        {progressState.sectionProgress[1] && progressState.sectionProgress[1] < 100 && (
-          <span className="text-blue-600 text-sm font-normal">📝 In Progress ({progressState.sectionProgress[1]}%)</span>
+        {hasUnsavedChanges && (
+          <span className="text-amber-600 text-sm font-normal">📝 Unsaved Changes</span>
         )}
       </h3>
       
@@ -4606,29 +4828,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             </CardDescription>
           </div>
           
-          {/* Auto-save status indicator */}
-          {!previousReportData && reportStatus !== 'submitted' && (
-            <div className="flex flex-col items-end text-white/80 text-xs">
-              {isAutoSavingCombined && (
-                <div className="flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Saving...</span>
-                </div>
-              )}
-              {lastSaved && !isAutoSavingCombined && !hasUnsavedChanges && (
-                <div className="flex items-center gap-1 text-green-200">
-                  <Save className="h-3 w-3" />
-                  <span>Saved</span>
-                </div>
-              )}
-              {hasUnsavedChanges && !isAutoSavingCombined && (
-                <div className="flex items-center gap-1 text-yellow-200">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>Editing...</span>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Removed auto-save status indicator to disable caching */}
         </div>
 
         {/* Progress Bar */}
@@ -4636,15 +4836,13 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           <div className="flex justify-between text-xs sm:text-sm text-blue-100">
             <span>Progress</span>
             <div className="flex items-center gap-2">
-              <span>{getOverallProgress()}% Complete</span>
-              {progressState.completedSections.length > 0 && (
-                <span className="text-green-200">
-                  ({progressState.completedSections.length}/{SECTIONS.length} sections)
-                </span>
-              )}
+              <span>{Math.round(calculateProgress())}% Complete</span>
+              <span className="text-green-200">
+                (Section {currentSection + 1}/{SECTIONS.length})
+              </span>
             </div>
           </div>
-          <Progress value={getOverallProgress()} className="h-2 bg-white/20" />
+          <Progress value={calculateProgress()} className="h-2 bg-white/20" />
         </div>
       </CardHeader>
 
@@ -4662,10 +4860,14 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             type="button"
             variant="outline"
             onClick={prevSection}
-            disabled={currentSection === 0 || reportStatus === 'submitted'}
+            disabled={currentSection === 0 || reportStatus === 'submitted' || isSavingSection || isLoadingSection}
             className="order-2 sm:order-1 w-full sm:w-auto flex items-center gap-2"
           >
-            <ChevronLeft className="h-4 w-4" />
+            {isLoadingSection ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
             <span className="hidden sm:inline">Previous</span>
             <span className="sm:hidden">Prev</span>
           </Button>
@@ -4677,6 +4879,18 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             {reportStatus === 'submitted' && (
               <div className="text-xs text-green-600 font-medium">
                 ✅ Report Submitted - Read Only
+              </div>
+            )}
+            {reportStatus !== 'submitted' && hasUnsavedChanges && (
+              <div className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Unsaved changes
+              </div>
+            )}
+            {reportStatus !== 'submitted' && savedSections.has(currentSection) && !hasUnsavedChanges && (
+              <div className="text-xs text-green-600 font-medium flex items-center gap-1">
+                <Save className="h-3 w-3" />
+                Section saved
               </div>
             )}
             {/* Continue Later Button */}
@@ -4704,14 +4918,36 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               Report Submitted
             </div>
           ) : currentSection === SECTIONS.length - 1 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Report"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 order-3">
+              <Button
+                type="button"
+                onClick={async () => {
+                  // Save the current section first
+                  const success = await handleSectionSave(currentSection, formData, false)
+                  if (success) {
+                    toast({
+                      title: "Section saved",
+                      description: "You can review your report or submit it now.",
+                      duration: 3000,
+                    })
+                  }
+                }}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto border border-primary-600 text-primary-600 hover:bg-primary-50 transition-all duration-200 flex items-center gap-2"
+                variant="outline"
+              >
+                <Save className="h-4 w-4" />
+                Save & Preview
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              >
+                {isSubmitting ? "Submitting..." : "Submit Report"}
+              </Button>
+            </div>
           ) : currentSection === 0 ? (
             <Button
               type="button"
@@ -4932,6 +5168,22 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
             </Button>
+          ) : currentSection === 12 ? (
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={
+                isSubmitting || 
+                !reportId ||
+                !formData.curriculumResources.trim() ||
+                !formData.janitorialSupplies.trim() ||
+                !formData.otherIssues.trim()
+              }
+              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+            >
+              {isSubmitting ? "Saving..." : "Save & Continue"}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           ) : currentSection === 13 ? (
             justSubmittedReport ? (
               // Show View Report button after successful submission
@@ -4971,10 +5223,15 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             <Button
               type="button"
               onClick={nextSection}
+              disabled={isSavingSection || isLoadingSection}
               className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
             >
-              Next
-              <ChevronRight className="h-4 w-4" />
+              {isSavingSection ? "Saving..." : isLoadingSection ? "Loading..." : "Next"}
+              {isSavingSection || isLoadingSection ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>

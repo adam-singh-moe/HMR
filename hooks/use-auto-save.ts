@@ -15,7 +15,7 @@ export function useAutoSave({
   data,
   onSave,
   delay = 5000,
-  enabled = true,
+  enabled = false, // Disabled by default to prevent caching
   maxRetries = 3
 }: AutoSaveOptions) {
   const debouncedData = useDebounceValue(data, delay)
@@ -97,7 +97,7 @@ export function useAutoSave({
     }
   }, [onSave, maxRetries])
 
-  // Auto-save effect
+  // Auto-save effect (disabled by default)
   useEffect(() => {
     if (!enabled || isInitialLoad.current) {
       isInitialLoad.current = false
