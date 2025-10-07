@@ -14,6 +14,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase-client"
 import { EmailVerification } from "./email-verification"
+import { PasswordChangeForm } from "./password-change-form"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 
 function SubmitButton({ text }: { text: string }) {
@@ -57,6 +58,14 @@ function AuthFormContent() {
   const [pendingUserData, setPendingUserData] = useState<any>(null)
   const [initialVerificationToken, setInitialVerificationToken] = useState<string | null>(null)
   const [verificationType, setVerificationType] = useState<"signup" | "password_reset">("signup")
+  
+  // Password change states
+  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [passwordChangeUser, setPasswordChangeUser] = useState<{
+    userEmail: string
+    userName: string
+    userId: string
+  } | null>(null)
 
   const searchParams = useSearchParams()
 
@@ -200,20 +209,31 @@ function AuthFormContent() {
     const newEmail = e.target.value
     setEmail(newEmail)
     
-    // Debounce school detection
-    const timeoutId = setTimeout(() => {
-      detectSchoolFromEmail(newEmail)
-    }, 500)
-    
-    return () => clearTimeout(timeoutId)
+    // Only detect school during sign-up for head teachers
+    if (isSignUp && role === "head_teacher") {
+      // Debounce school detection
+      const timeoutId = setTimeout(() => {
+        detectSchoolFromEmail(newEmail)
+      }, 500)
+      
+      return () => clearTimeout(timeoutId)
+    } else {
+      // Clear any existing school detection errors during sign-in
+      if (!isSignUp) {
+        setDetectedSchool(null)
+        setSelectedSchool("")
+        setSelectedRegion("")
+        setError(null)
+      }
+    }
   }
 
   useEffect(() => {
-    // Re-detect school when schools data is loaded and email exists
-    if (schools.length > 0 && email && role === "head_teacher") {
+    // Only re-detect school when schools data is loaded and email exists during sign-up
+    if (schools.length > 0 && email && role === "head_teacher" && isSignUp) {
       detectSchoolFromEmail(email)
     }
-  }, [schools, email, role])
+  }, [schools, email, role, isSignUp])
 
   const handleSubmit = async (formData: FormData) => {
     setError(null)
@@ -267,7 +287,15 @@ function AuthFormContent() {
     }
 
     try {
-      let result: { error?: string; success?: boolean; requiresVerification?: boolean } | undefined
+      let result: { 
+        error?: string; 
+        success?: boolean; 
+        requiresVerification?: boolean;
+        requirePasswordChange?: boolean;
+        userEmail?: string;
+        userName?: string;
+        userId?: string;
+      } | undefined
 
       if (isSignUp) {
         formData.append("role", role)
@@ -326,6 +354,17 @@ function AuthFormContent() {
         }
       } else {
         result = await signIn(formData)
+      }
+
+      // Check if password change is required
+      if (result?.requirePasswordChange && result.userEmail && result.userName && result.userId) {
+        setPasswordChangeUser({
+          userEmail: result.userEmail,
+          userName: result.userName,
+          userId: result.userId
+        })
+        setShowPasswordChange(true)
+        return
       }
 
       // Only set error if there's actually an error returned
@@ -475,6 +514,20 @@ function AuthFormContent() {
   }
 
   // Show email verification component if in verification mode
+  if (showPasswordChange && passwordChangeUser) {
+    return (
+      <PasswordChangeForm
+        userEmail={passwordChangeUser.userEmail}
+        userName={passwordChangeUser.userName}
+        userId={passwordChangeUser.userId}
+        onBack={() => {
+          setShowPasswordChange(false)
+          setPasswordChangeUser(null)
+        }}
+      />
+    )
+  }
+
   if (showEmailVerification) {
     return (
       <EmailVerification
@@ -511,6 +564,27 @@ function AuthFormContent() {
                 ? "Register for your School Headteachers' Monthly Reporting Portal account" 
                 : "Access your School Headteachers' Monthly reporting portal account"}
           </CardDescription>
+          
+          {/* First-time login notice for Head Teachers */}
+          {!isSignUp && !isForgotPassword && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <div className="flex-shrink-0">
+                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">i</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-blue-800 mb-1">
+                    First-time Head Teachers
+                  </h4>
+                  <p className="text-sm text-blue-700">
+                    If you're logging in for the first time, use your <strong>school's email address</strong> and the default password: <code className="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">hnCf4MN</code>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form action={isForgotPassword ? handleForgotPassword : handleSubmit} className="grid gap-4">
