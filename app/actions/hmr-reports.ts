@@ -1689,7 +1689,7 @@ export async function getStaffMeetings(reportId: string) {
       }
     }
 
-    console.log("Raw staff meetings data from DB:", staffMeetings)
+    //console.log("Raw staff meetings data from DB:", staffMeetings)
     
     const result = {
       success: true,
@@ -1701,7 +1701,7 @@ export async function getStaffMeetings(reportId: string) {
       },
     }
     
-    console.log("Processed staff meetings data:", result.data)
+   // console.log("Processed staff meetings data:", result.data)
     return result
   } catch (error) {
     console.error("Error in getStaffMeetings:", error)
@@ -1955,7 +1955,7 @@ export async function getResourcesNeeded(reportId: string) {
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    console.log("Querying hmr_resources_needed with report_id:", reportId)
+    //console.log("Querying hmr_resources_needed with report_id:", reportId)
     
     const { data: resourcesNeeded, error } = await supabase
       .from("hmr_resources_needed")
@@ -1963,8 +1963,8 @@ export async function getResourcesNeeded(reportId: string) {
       .eq("report_id", reportId)
       .single()
 
-    console.log("Query result - error:", error)
-    console.log("Query result - data:", resourcesNeeded)
+  //  console.log("Query result - error:", error)
+   // console.log("Query result - data:", resourcesNeeded)
 
     if (error && error.code !== "PGRST116") {
       console.error("Error getting resources needed data:", error)
@@ -1983,11 +1983,11 @@ export async function getResourcesNeeded(reportId: string) {
       }
     }
 
-    console.log("Raw resources data from DB:", resourcesNeeded)
-    console.log("Available columns:", Object.keys(resourcesNeeded))
-    console.log("curriculum_resources value:", resourcesNeeded.curriculum_resources)
-    console.log("janitorial_supplies value:", resourcesNeeded.janitorial_supplies)
-    console.log("issues value:", resourcesNeeded.issues)
+    // console.log("Raw resources data from DB:", resourcesNeeded)
+    // console.log("Available columns:", Object.keys(resourcesNeeded))
+    // console.log("curriculum_resources value:", resourcesNeeded.curriculum_resources)
+    // console.log("janitorial_supplies value:", resourcesNeeded.janitorial_supplies)
+    // console.log("issues value:", resourcesNeeded.issues)
     
     const result = {
       success: true,
@@ -1998,7 +1998,7 @@ export async function getResourcesNeeded(reportId: string) {
       },
     }
     
-    console.log("Processed resources data:", result.data)
+   // console.log("Processed resources data:", result.data)
     return result
   } catch (error) {
     console.error("Error in getResourcesNeeded:", error)
@@ -2018,7 +2018,7 @@ export async function savePhysicalEducation(formData: FormData) {
     const activities = formData.get("activities") as string
     const challenges = formData.get("challenges") as string
 
-    console.log("Saving Physical Education data:", {
+   // console.log("Saving Physical Education data:", {
       reportId,
       activities,
       challenges
@@ -2088,7 +2088,7 @@ export async function getPhysicalEducation(reportId: string) {
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    console.log("Searching for Physical Education with reportId:", reportId)
+   // console.log("Searching for Physical Education with reportId:", reportId)
 
     const { data: physicalEducation, error } = await supabase
       .from("hmr_physical_education")
@@ -2096,8 +2096,8 @@ export async function getPhysicalEducation(reportId: string) {
       .eq("report_id", reportId)
       .maybeSingle()
 
-    console.log("Raw Physical Education data from DB:", physicalEducation)
-    console.log("Physical Education DB error:", error)
+  //  console.log("Raw Physical Education data from DB:", physicalEducation)
+   // console.log("Physical Education DB error:", error)
 
     if (error && error.code !== "PGRST116") {
       console.error("Error getting physical education data:", error)
@@ -2106,7 +2106,7 @@ export async function getPhysicalEducation(reportId: string) {
 
     if (!physicalEducation) {
       // Return default values if no data exists
-      console.log("No Physical Education data found, returning defaults")
+    //  console.log("No Physical Education data found, returning defaults")
       return {
         success: true,
         data: {
@@ -2116,10 +2116,10 @@ export async function getPhysicalEducation(reportId: string) {
       }
     }
 
-    console.log("Returning Physical Education data:", {
-      activities: physicalEducation.activities,
-      challenges: physicalEducation.challenges
-    })
+    // console.log("Returning Physical Education data:", {
+    //   activities: physicalEducation.activities,
+    //   challenges: physicalEducation.challenges
+    // })
 
     return {
       success: true,

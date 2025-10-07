@@ -205,12 +205,12 @@ export function EmailVerification({
       return
     }
 
-    console.log("Password reset attempt:", {
-      hasToken: !!verificationToken,
-      hasCode: !!verifiedCode,
-      hasPassword: !!newPassword,
-      codeValue: verifiedCode
-    })
+    // console.log("Password reset attempt:", {
+    //   hasToken: !!verificationToken,
+    //   hasCode: !!verifiedCode,
+    //   hasPassword: !!newPassword,
+    //   codeValue: verifiedCode
+    // })
 
     setIsVerifying(true)
 

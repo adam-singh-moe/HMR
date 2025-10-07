@@ -1740,9 +1740,9 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         setSavedSections((prev) => new Set(prev).add(12))
 
         // Submit the entire report (admin version)
-        console.log("Admin form submitting report with ID:", reportId)
+        //console.log("Admin form submitting report with ID:", reportId)
         const submitResult = await submitReport(reportId)
-        console.log("Submit result:", submitResult)
+       // console.log("Submit result:", submitResult)
         if (submitResult.success) {
           setReportStatus('submitted')
           setJustSubmittedReport(true)

@@ -1074,7 +1074,7 @@ export async function getSchoolsWithRegions() {
       return { schools: [], error: "Failed to fetch schools." }
     }
 
-    console.log(`getSchoolsWithRegions: Fetched ${schools?.length || 0} schools from database`)
+   // console.log(`getSchoolsWithRegions: Fetched ${schools?.length || 0} schools from database`)
 
     // Transform the data to flatten the region information
     const transformedSchools = schools?.map(school => ({
@@ -1084,7 +1084,7 @@ export async function getSchoolsWithRegions() {
       region_name: (school.sms_regions as any)?.name || 'No Region'
     })) || []
 
-    console.log(`getSchoolsWithRegions: Returning ${transformedSchools.length} transformed schools`)
+    //console.log(`getSchoolsWithRegions: Returning ${transformedSchools.length} transformed schools`)
     
     return { schools: transformedSchools, error: null }
   } catch (error) {
@@ -1339,12 +1339,12 @@ export async function getMissingMonthsForSchool(schoolId: string) {
     }
 
     // Debug logging
-    console.log(`School ${schoolId} has ${reports?.length || 0} reports in ${currentYear}`)
-    console.log('Reports found:', reports)
+    // console.log(`School ${schoolId} has ${reports?.length || 0} reports in ${currentYear}`)
+    // console.log('Reports found:', reports)
 
     // Get submitted months - convert text months to numbers
     const submittedMonths = new Set(reports?.map(report => parseInt(report.month)) || [])
-    console.log('Submitted months:', Array.from(submittedMonths))
+    //console.log('Submitted months:', Array.from(submittedMonths))
 
     // Generate list of missing months (from January to current month - 1)
     // Since it's October 1st, we should check Jan-Sep for missing reports
@@ -1370,7 +1370,7 @@ export async function getMissingMonthsForSchool(schoolId: string) {
       }
     }
 
-    console.log('Missing months:', missingMonths)
+    //console.log('Missing months:', missingMonths)
     return { missingMonths, error: null }
   } catch (error) {
     console.error("Error in getMissingMonthsForSchool:", error)

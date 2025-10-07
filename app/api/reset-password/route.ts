@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
   try {
     const { token, code, newPassword } = await request.json()
 
-    console.log("Reset password request received:", { 
-      hasToken: !!token, 
-      hasCode: !!code, 
-      hasPassword: !!newPassword,
-      tokenLength: token?.length,
-      codeValue: code,
-      passwordLength: newPassword?.length
-    })
+    // console.log("Reset password request received:", { 
+    //   hasToken: !!token, 
+    //   hasCode: !!code, 
+    //   hasPassword: !!newPassword,
+    //   tokenLength: token?.length,
+    //   codeValue: code,
+    //   passwordLength: newPassword?.length
+    // })
 
     if (!token || !code || !newPassword) {
       return NextResponse.json(

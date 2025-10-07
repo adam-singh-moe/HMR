@@ -31,12 +31,12 @@ export function PasswordChangeForm({ userEmail, userName, userId, requiresName, 
   const router = useRouter()
 
   // Debug logging
-  console.log("PasswordChangeForm rendered with props:", {
-    userEmail,
-    userName,
-    userId,
-    requiresName
-  })
+  // console.log("PasswordChangeForm rendered with props:", {
+  //   userEmail,
+  //   userName,
+  //   userId,
+  //   requiresName
+  // })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
