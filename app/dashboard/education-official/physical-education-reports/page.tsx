@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Activity, Users, MapPin, Calendar, AlertCircle, Filter, FileText, Download } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { getPhysicalEducationReports } from "@/app/actions/education-official-reports"
+import { Pagination } from "@/components/pagination"
 
 
 interface PhysicalEducationReport {
@@ -32,6 +33,8 @@ export default function PhysicalEducationReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
   const [selectedYear, setSelectedYear] = useState<string>("all")
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10) // 10 reports per page
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -69,7 +72,19 @@ export default function PhysicalEducationReportsPage() {
     }
 
     setFilteredReports(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
   }, [reports, selectedMonth, selectedYear])
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredReports.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const currentPageReports = filteredReports.slice(startIndex, endIndex)
+
+  // Pagination handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   // Get unique years from reports for year filter
   const availableYears = Array.from(new Set(reports.map(report => report.year))).sort((a, b) => b - a)
@@ -192,10 +207,10 @@ export default function PhysicalEducationReportsPage() {
       const tableWidth = 170
       const colWidths = {
         school: 35,
-        region: 25,
-        period: 22,
-        students: 15,
-        activities: 36,
+        region: 22,
+        period: 20,
+        students: 18,
+        activities: 38,
         challenges: 37
       }
       
@@ -262,7 +277,7 @@ export default function PhysicalEducationReportsPage() {
         })
 
         // Period
-        const periodText = `${getMonthName(report.month)} ${report.year}`
+        const periodText = `${getShortMonthName(report.month)} ${report.year}`
         doc.text(periodText, marginLeft + colWidths.school + colWidths.region + 2, contentY)
 
         // Students count
@@ -379,6 +394,14 @@ export default function PhysicalEducationReportsPage() {
     return monthNames[month - 1] || "Unknown"
   }
 
+  const getShortMonthName = (month: number) => {
+    const shortMonthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ]
+    return shortMonthNames[month - 1] || "Unknown"
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -478,26 +501,26 @@ export default function PhysicalEducationReportsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[150px]">School</TableHead>
-                    <TableHead className="min-w-[120px]">Region</TableHead>
-                    <TableHead className="min-w-[120px]">Report Period</TableHead>
-                    <TableHead className="min-w-[100px]">Students</TableHead>
-                    <TableHead className="min-w-[250px]">Activities Performed</TableHead>
-                    <TableHead className="min-w-[250px]">Major Challenges</TableHead>
+                    <TableHead className="min-w-[100px]">Region</TableHead>
+                    <TableHead className="min-w-[90px]">Period</TableHead>
+                    <TableHead className="min-w-[80px]">Students</TableHead>
+                    <TableHead className="min-w-[200px]">Activities Performed</TableHead>
+                    <TableHead className="min-w-[200px]">Major Challenges</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredReports.map((report) => (
+                  {currentPageReports.map((report) => (
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">
                         {report.school_name}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         {report.region_name}
                       </TableCell>
-                      <TableCell>
-                        {getMonthName(report.month)} {report.year}
+                      <TableCell className="whitespace-nowrap">
+                        {getShortMonthName(report.month)} {report.year}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           {report.total_students}
@@ -520,6 +543,19 @@ export default function PhysicalEducationReportsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {filteredReports.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredReports.length}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+          />
+        </div>
       )}
     </div>
   )
