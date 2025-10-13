@@ -220,23 +220,35 @@ export async function getSubmittedReportsWithSearchAndPagination({
       return { reports: [], totalCount: 0, totalPages: 0, error: "Failed to fetch reports." }
     }
 
+
+
     // Transform the nested data structure to flat structure expected by the client
-    const transformedReports = (reports || []).map((report: any) => ({
-      id: report.id,
-      school_id: report.school_id,
-      month: report.month,
-      year: report.year,
-      status: report.status,
-      created_at: report.created_at,
-      updated_at: report.updated_at,
-      school_name: report.sms_schools?.name || 'Unknown School',
-      region: report.sms_schools?.sms_regions?.name || 'Unknown Region',
-      head_teacher_name: report.hmr_users?.name || 'Unknown Teacher',
-      submitted_at: report.updated_at,
-    }))
+    const transformedReports = (reports || []).map((report: any) => {
+      const schoolName = report.sms_schools?.name || 'Unknown School'
+      const regionName = report.sms_schools?.sms_regions?.name || 'Unknown Region'
+      const teacherName = report.hmr_users?.name || 'Unknown Teacher'
+      
+
+      
+      return {
+        id: report.id,
+        school_id: report.school_id,
+        month: report.month,
+        year: report.year,
+        status: report.status,
+        created_at: report.created_at,
+        updated_at: report.updated_at,
+        school_name: schoolName,
+        region: regionName,
+        head_teacher_name: teacherName,
+        submitted_at: report.updated_at,
+      }
+    })
 
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / pageSize)
+
+
 
     return { 
       reports: transformedReports, 
@@ -256,12 +268,15 @@ export async function getSchoolsForSearch() {
   try {
     const user = await getUser()
 
+
+
     if (!user) {
       return { schools: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { schools: [], error: "Only Education Officials can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+
+      return { schools: [], error: "Only Education Officials and Admins can access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -272,6 +287,8 @@ export async function getSchoolsForSearch() {
       .select("school_id")
       .eq("status", "submitted")
       .is("deleted_on", null)
+
+
 
     if (reportError) {
       console.error("Error fetching report schools:", reportError)
@@ -284,27 +301,43 @@ export async function getSchoolsForSearch() {
       return { schools: [], error: null }
     }
 
-    // Get schools with regions
-    const { data: schools, error } = await supabase
-      .from("sms_schools")
-      .select(`
-        id,
-        name,
-        region_id,
-        sms_regions (
-          id,
-          name
-        )
-      `)
-      .in("id", schoolIds)
-      .order("name")
 
-    if (error) {
-      console.error("Error fetching schools for search:", error)
-      return { schools: [], error: "Failed to fetch schools." }
+    
+    // Batch process school IDs to avoid Supabase .in() limit
+    const batchSize = 100 // Safe batch size for Supabase .in() queries
+    const allSchools = []
+    
+    for (let i = 0; i < schoolIds.length; i += batchSize) {
+      const batchIds = schoolIds.slice(i, i + batchSize)
+
+      
+      const { data: batchSchools, error: batchError } = await supabase
+        .from("sms_schools")
+        .select(`
+          id,
+          name,
+          region_id,
+          sms_regions (
+            id,
+            name
+          )
+        `)
+        .in("id", batchIds)
+        .order("name")
+
+      if (batchError) {
+        console.error(`Error fetching schools batch ${Math.floor(i / batchSize) + 1}:`, batchError)
+        return { schools: [], error: "Failed to fetch schools." }
+      }
+      
+      if (batchSchools) {
+        allSchools.push(...batchSchools)
+      }
     }
 
-    return { schools: schools || [], error: null }
+
+
+    return { schools: allSchools || [], error: null }
   } catch (error) {
     console.error("Error in getSchoolsForSearch:", error)
     return { schools: [], error: "An unexpected error occurred." }

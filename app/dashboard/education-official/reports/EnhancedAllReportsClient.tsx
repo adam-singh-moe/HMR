@@ -447,26 +447,18 @@ export default function EnhancedAllReportsClient({
                 </TableHeader>
                 <TableBody>
                   {reports.map((report) => {
-                    const reportLink = `/dashboard/reports/view/${report.sms_schools?.id || report.school_id}/${report.month}-${report.year}?back=${encodeURIComponent('/dashboard/education-official/reports')}`
+                    const reportLink = `/dashboard/reports/view/${report.school_id}/${report.month}-${report.year}?back=${encodeURIComponent('/dashboard/education-official/reports')}`
                     
                     return (
                       <ClickableReportRow key={report.id} report={report}>
                         <TableCell className="font-medium">
                           <div>
-                            <div className="text-sm">{report.sms_schools?.name || "Unknown School"}</div>
+                            <div className="text-sm">{report.school_name || "Unknown School"}</div>
                             <div className="text-xs text-muted-foreground sm:hidden">
-                              {report.hmr_users?.name || "Head Teacher"}
+                              {report.head_teacher_name || "Head Teacher"}
                             </div>
                             <div className="text-xs text-muted-foreground lg:hidden">
-                              {(() => {
-                                const regions = report.sms_schools?.sms_regions as any
-                                // Handle both single object and array cases
-                                if (Array.isArray(regions)) {
-                                  return regions[0]?.name || "Unknown Region"
-                                } else {
-                                  return regions?.name || "Unknown Region"
-                                }
-                              })()}
+                              {report.region || "Unknown Region"}
                             </div>
                             <div className="text-xs text-muted-foreground md:hidden">
                               Submitted: {new Date(report.updated_at).toLocaleDateString("en-US", {
@@ -482,7 +474,7 @@ export default function EnhancedAllReportsClient({
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-sm">{report.hmr_users?.name || "Head Teacher"}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-sm">{report.head_teacher_name || "Head Teacher"}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm">
                           {(() => {
                             const regions = report.sms_schools?.sms_regions as any

@@ -82,28 +82,44 @@ function AllReportsPageContent() {
   useEffect(() => {
     async function fetchInitialData() {
       try {
-        // Fetch initial reports, schools, regions, and school levels in parallel
-        const [reportsResult, schoolsResult, regionsResult, schoolLevelsResult] = await Promise.all([
-          getSubmittedReportsWithSearchAndPagination({
-            page: 1,
-            pageSize: 25,
-            sortBy: "updated_at",
-            sortOrder: "desc"
-          }),
-          getSchoolsForSearch(),
-          getRegionsForFilter(),
-          getSchoolLevelsForFilter()
-        ])
+        console.log("Starting to fetch initial data...")
+        
+        // Fetch each one individually to see which one fails
+        console.log("Fetching reports...")
+        const reportsResult = await getSubmittedReportsWithSearchAndPagination({
+          page: 1,
+          pageSize: 25,
+          sortBy: "updated_at",
+          sortOrder: "desc"
+        })
+        console.log("Reports result:", reportsResult)
+        
+        console.log("Fetching schools...")
+        const schoolsResult = await getSchoolsForSearch()
+        console.log("Schools result:", schoolsResult)
+        
+        console.log("Fetching regions...")
+        const regionsResult = await getRegionsForFilter()
+        console.log("Regions result:", regionsResult)
+        
+        console.log("Fetching school levels...")
+        const schoolLevelsResult = await getSchoolLevelsForFilter()
+        console.log("School levels result:", schoolLevelsResult)
 
         if (reportsResult.error) {
-          setError(reportsResult.error)
+          console.error("Reports error:", reportsResult.error)
+          setError(`Reports: ${reportsResult.error}`)
         } else if (schoolsResult.error) {
-          setError(schoolsResult.error)
+          console.error("Schools error:", schoolsResult.error)
+          setError(`Schools: ${schoolsResult.error}`)
         } else if (regionsResult.error) {
-          setError(regionsResult.error)
+          console.error("Regions error:", regionsResult.error)
+          setError(`Regions: ${regionsResult.error}`)
         } else if (schoolLevelsResult.error) {
-          setError(schoolLevelsResult.error)
+          console.error("School levels error:", schoolLevelsResult.error)
+          setError(`School levels: ${schoolLevelsResult.error}`)
         } else {
+          console.log("All data fetched successfully, setting initial data...")
           setInitialData({
             reports: (reportsResult.reports || []) as Report[],
             totalCount: reportsResult.totalCount || 0,
@@ -114,7 +130,8 @@ function AllReportsPageContent() {
           })
         }
       } catch (err) {
-        setError('Failed to load reports')
+        console.error("Catch block error:", err)
+        setError(`Failed to load reports: ${err}`)
       } finally {
         setIsLoading(false)
       }
