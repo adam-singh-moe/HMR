@@ -615,7 +615,7 @@ function AuthFormContent() {
             {isSignUp && (
               <div className="grid gap-2">
                 <Label htmlFor="name" className="text-primary-700 font-medium">
-                  Headteacher's Full Name
+                 Head Teacher's / MOE Officer Full Name
                 </Label>
                 <Input
                   id="name"
@@ -628,7 +628,7 @@ function AuthFormContent() {
             )}
             <div className="grid gap-2">
               <Label htmlFor="email" className="text-primary-700 font-medium">
-                School's Email
+                School's Email / MOE Officer's Email
               </Label>
               <Input
                 id="email"
@@ -784,7 +784,8 @@ function AuthFormContent() {
                     {!email && role === "head_teacher" && (
                       <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
                         <p className="text-sm text-gray-700">
-                          Enter your email above to automatically detect your school
+                         Enter your email to detect your school automatically.(School detection works only for @moe.edu.gy emails)
+
                         </p>
                       </div>
                     )}
