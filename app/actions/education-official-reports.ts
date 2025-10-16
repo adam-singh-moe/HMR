@@ -135,7 +135,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Build the query
+    // Build the query with explicit region join
     let query = supabase
       .from("hmr_report")
       .select(`
@@ -153,7 +153,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
           id,
           name,
           region_id,
-          sms_regions (
+          sms_regions!inner (
             id,
             name
           )
@@ -225,10 +225,28 @@ export async function getSubmittedReportsWithSearchAndPagination({
     // Transform the nested data structure to flat structure expected by the client
     const transformedReports = (reports || []).map((report: any) => {
       const schoolName = report.sms_schools?.name || 'Unknown School'
-      const regionName = report.sms_schools?.sms_regions?.name || 'Unknown Region'
+      
+      // Handle region data - it might be an array or single object
+      let regionName = 'Unknown Region'
+      const regionData = report.sms_schools?.sms_regions
+      if (regionData) {
+        if (Array.isArray(regionData)) {
+          regionName = regionData[0]?.name || 'Unknown Region'
+        } else {
+          regionName = regionData.name || 'Unknown Region'
+        }
+      }
+      
       const teacherName = report.hmr_users?.name || 'Unknown Teacher'
       
-
+      // Add debugging log to see the structure
+      console.log('Report region data:', {
+        reportId: report.id,
+        schoolName,
+        regionData,
+        regionName,
+        fullSchoolData: report.sms_schools
+      })
       
       return {
         id: report.id,
@@ -242,6 +260,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
         region: regionName,
         head_teacher_name: teacherName,
         submitted_at: report.updated_at,
+        sms_schools: report.sms_schools, // Keep the original structure for client-side compatibility
       }
     })
 

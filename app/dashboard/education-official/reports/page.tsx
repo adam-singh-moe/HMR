@@ -16,6 +16,9 @@ interface Report {
   updated_at: any
   created_at: any
   headteacher_id: any
+  school_name?: string
+  region?: string
+  head_teacher_name?: string
   sms_schools?: { 
     id: any
     name: any

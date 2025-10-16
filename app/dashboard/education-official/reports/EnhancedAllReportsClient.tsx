@@ -23,6 +23,9 @@ interface Report {
   updated_at: any
   created_at: any
   headteacher_id: any
+  school_name?: string
+  region?: string
+  head_teacher_name?: string
   sms_schools?: { 
     id: any
     name: any
@@ -458,7 +461,20 @@ export default function EnhancedAllReportsClient({
                               {report.head_teacher_name || "Head Teacher"}
                             </div>
                             <div className="text-xs text-muted-foreground lg:hidden">
-                              {report.region || "Unknown Region"}
+                              {(() => {
+                                // Try the flattened region field first
+                                if (report.region && report.region !== "Unknown Region") {
+                                  return report.region
+                                }
+                                
+                                // Fall back to nested structure
+                                const regions = report.sms_schools?.sms_regions as any
+                                if (Array.isArray(regions)) {
+                                  return regions[0]?.name || "Unknown Region"
+                                } else {
+                                  return regions?.name || "Unknown Region"
+                                }
+                              })()}
                             </div>
                             <div className="text-xs text-muted-foreground md:hidden">
                               Submitted: {new Date(report.updated_at).toLocaleDateString("en-US", {
@@ -477,8 +493,13 @@ export default function EnhancedAllReportsClient({
                         <TableCell className="hidden sm:table-cell text-sm">{report.head_teacher_name || "Head Teacher"}</TableCell>
                         <TableCell className="hidden lg:table-cell text-sm">
                           {(() => {
+                            // Try the flattened region field first
+                            if (report.region && report.region !== "Unknown Region") {
+                              return report.region
+                            }
+                            
+                            // Fall back to nested structure
                             const regions = report.sms_schools?.sms_regions as any
-                            // Handle both single object and array cases
                             if (Array.isArray(regions)) {
                               return regions[0]?.name || "Unknown Region"
                             } else {
