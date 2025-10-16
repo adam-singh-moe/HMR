@@ -2442,7 +2442,17 @@ export async function getReportSectionData(reportId: string, sectionType: string
 
     if (error) {
       console.error(`Error fetching ${sectionType} data:`, error)
+      // For physical education section, if the table doesn't exist or there's no data,
+      // return empty data instead of an error to allow graceful handling
+      if (sectionType === "physical_education" && (error.code === "42P01" || error.message?.includes("does not exist"))) {
+        return { data: null, error: null }
+      }
       return { data: null, error: `Failed to fetch ${sectionType} data.` }
+    }
+
+    // If no data is found, return null data but no error (this is normal)
+    if (!data || data.length === 0) {
+      return { data: null, error: null }
     }
 
     return { data, error: null }

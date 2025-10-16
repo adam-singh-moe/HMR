@@ -1022,7 +1022,8 @@ function SectionContent({
         return (
           <div className="text-center py-8">
             <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground leading-6">No physical education data available for this report</p>
+            <p className="text-muted-foreground leading-6">No physical education section found for this report</p>
+            <p className="text-sm text-muted-foreground/80 mt-2">This report may not include physical education data or it was not filled out during submission.</p>
           </div>
         )
       }
@@ -1062,6 +1063,7 @@ function SectionContent({
             <div className="text-center py-8">
               <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground leading-6">No physical education information recorded for this report</p>
+              <p className="text-sm text-muted-foreground/80 mt-2">The physical education section was included but no specific activities or challenges were documented.</p>
             </div>
           )}
         </div>
@@ -1185,7 +1187,9 @@ function ViewFullReportPageContent({ params }: PageProps) {
         const result = await getReportSectionData(selectedReport.id, "physical_education")
         
         if (result.error) {
-          setError(result.error)
+          // Don't set error state for PE section - just return empty data
+          // This allows the component to show "No physical education section found" message
+          console.log("Physical Education section not found for report:", selectedReport.id)
           setSectionData(null)
         } else {
           setSectionData(result.data)
@@ -1223,7 +1227,9 @@ function ViewFullReportPageContent({ params }: PageProps) {
       const result = await getReportSectionData(selectedReport.id, sectionType)
       
       if (result.error) {
-        setError(result.error)
+        // For missing section data, just log it and return empty data rather than showing error
+        // This allows each section component to handle missing data gracefully
+        console.log(`Section '${sectionType}' not found for report:`, selectedReport.id, result.error)
         setSectionData(null)
       } else {
         setSectionData(result.data)

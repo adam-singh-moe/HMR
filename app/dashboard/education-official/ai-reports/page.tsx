@@ -175,22 +175,46 @@ export default function AIReportsPage() {
           <h1 className="text-3xl font-bold">AI-Powered Report Insights</h1>
           <p className="text-muted-foreground">Generate intelligent analysis and insights from educational reports using AI</p>
         </div>
-        <Badge variant="secondary" className="flex items-center gap-2">
+        {/* <Badge variant="secondary" className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
           Powered by Gemini AI
-        </Badge>
+        </Badge> */}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Configuration Panel */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Analysis Configuration
-              </CardTitle>
-            </CardHeader>
+      <div className="relative">
+        {/* Coming Soon Overlay */}
+        <div className="absolute inset-0 bg-gray-500/30 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-lg">
+          <Card className="max-w-md w-full mx-4 shadow-xl bg-white/95 backdrop-blur-sm">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 bg-blue-50 rounded-full">
+                    <Sparkles className="h-8 w-8 text-blue-500" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-3">Coming Soon</h2>
+                <p className="text-gray-600 mb-4 text-sm">
+                  AI-Powered Report Insights are currently under development. This feature will provide intelligent analysis from your educational reports.
+                </p>
+                {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                  <Zap className="h-3 w-3" />
+                  <span>Powered by Gemini AI</span>
+                </div> */}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Configuration Panel */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Analysis Configuration
+                </CardTitle>
+              </CardHeader>
             <CardContent className="space-y-4">
               {/* Report Type Selection */}
               <div>
@@ -395,6 +419,7 @@ export default function AIReportsPage() {
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </div>

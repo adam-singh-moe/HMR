@@ -239,14 +239,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
       
       const teacherName = report.hmr_users?.name || 'Unknown Teacher'
       
-      // Add debugging log to see the structure
-      console.log('Report region data:', {
-        reportId: report.id,
-        schoolName,
-        regionData,
-        regionName,
-        fullSchoolData: report.sms_schools
-      })
+
       
       return {
         id: report.id,
