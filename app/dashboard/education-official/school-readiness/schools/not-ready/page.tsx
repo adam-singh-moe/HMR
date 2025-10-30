@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { getSchoolsByReadinessStatus, getRegionsForFilter } from "@/app/actions/school-readiness-detailed-stats"
 import { Pagination } from "@/components/pagination"
 import { RegionFilter } from "@/components/region-filter"
+import { SchoolLevelFilter } from "@/components/school-level-filter"
 import Link from "next/link"
 import { ArrowLeft, MapPin, Calendar, XCircle, ChevronDown, CheckCircle2, Search } from "lucide-react"
 import { format } from "date-fns"
@@ -24,6 +25,7 @@ interface School {
   readiness_reason?: string
   readiness_checklist?: any
   readiness_updated_at?: string
+  school_level?: string
 }
 
 interface Region {
@@ -54,6 +56,7 @@ export default function NotReadySchoolsPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [selectedRegion, setSelectedRegion] = useState("all")
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>("")
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const pageSize = 20
@@ -64,6 +67,12 @@ export default function NotReadySchoolsPage() {
     const completed = Object.values(checklist).filter(Boolean).length
     const total = checklistItems.length
     return { completed, total, percentage: Math.round((completed / total) * 100) }
+  }
+
+  const handleSchoolLevelChange = (level: string) => {
+    setSelectedSchoolLevel(level)
+    setCurrentPage(1) // Reset to first page when filter changes
+    setSearchTerm("") // Clear search when level changes
   }
 
   // Close dropdown when clicking outside
@@ -83,24 +92,13 @@ export default function NotReadySchoolsPage() {
     }
   }, [expandedSchool])
 
-  // Debug function
-  async function runDebug() {
-    try {
-      const { debugSchoolReadiness } = await import("@/app/actions/debug-school-readiness")
-      const result = await debugSchoolReadiness()
-      alert(`Debug results logged to console. Found ${result.records?.length || 0} total records, ${result.notReadyRecords?.length || 0} not ready records.`)
-    } catch (err) {
-      console.error("Debug failed:", err)
-    }
-  }
-
   useEffect(() => {
     fetchRegions()
   }, [])
 
   useEffect(() => {
     fetchSchools(currentPage)
-  }, [currentPage, selectedRegion])
+  }, [currentPage, selectedRegion, selectedSchoolLevel])
 
   // Filter schools based on search term
   useEffect(() => {
@@ -131,7 +129,7 @@ export default function NotReadySchoolsPage() {
     try {
       setLoading(true)
       const regionId = selectedRegion === "all" ? undefined : selectedRegion
-      const result = await getSchoolsByReadinessStatus('not_ready', page, pageSize, regionId)
+      const result = await getSchoolsByReadinessStatus('not_ready', page, pageSize, regionId, selectedSchoolLevel || undefined)
       if (result.error) {
         setError(result.error)
       } else {
@@ -203,6 +201,32 @@ export default function NotReadySchoolsPage() {
         </div>
       </div>
 
+      {/* Filters - Always visible */}
+      <div className="space-y-6">
+        <div className="flex justify-end gap-2 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search schools by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+          <RegionFilter
+            regions={regions}
+            selectedRegion={selectedRegion}
+            onRegionChange={handleRegionChange}
+            disabled={loading}
+          />
+          <SchoolLevelFilter
+            selectedLevel={selectedSchoolLevel}
+            onLevelChange={handleSchoolLevelChange}
+            disabled={loading}
+          />
+        </div>
+      </div>
+
       {filteredSchools.length === 0 && !loading ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -226,24 +250,27 @@ export default function NotReadySchoolsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          <div className="flex justify-end gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search schools by name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
-              />
+        <div>
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  Showing {filteredSchools.length} schools not ready to reopen
+                </span>
+                {selectedRegion && (
+                  <Badge variant="outline">
+                    {selectedRegion}
+                  </Badge>
+                )}
+                {selectedSchoolLevel && (
+                  <Badge variant="outline">
+                    {selectedSchoolLevel}
+                  </Badge>
+                )}
+              </div>
             </div>
-            <RegionFilter
-              regions={regions}
-              selectedRegion={selectedRegion}
-              onRegionChange={handleRegionChange}
-              disabled={loading}
-            />
           </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredSchools.map((school) => (
               <Card key={school.id} className="border-l-4 border-l-red-500">

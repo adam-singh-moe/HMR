@@ -101,7 +101,8 @@ export async function getSchoolsByReadinessStatus(
   status: 'ready' | 'not_ready' | 'no_status',
   page: number = 1,
   pageSize: number = 20,
-  regionId?: string
+  regionId?: string,
+  schoolLevel?: string
 ) {
   try {
     const user = await getUser()
@@ -115,6 +116,19 @@ export async function getSchoolsByReadinessStatus(
 
     const supabase = createServiceRoleSupabaseClient()
     const offset = (page - 1) * pageSize
+
+    // Helper function to determine school level from name
+    const getSchoolLevelFromName = (schoolName: string): string => {
+      const name = schoolName.toLowerCase()
+      if (name.includes('primary')) return 'Primary'
+      if (name.includes('secondary')) return 'Secondary'
+      if (name.includes('nursery')) return 'Nursery'
+      if (name.includes('post secondary')) return 'Post Secondary'
+      if (name.includes('practical instruction centre') || name.includes('pic')) return 'Practical Instruction Centre'
+      if (name.includes('technical institute') || name.includes('technical')) return 'Technical Institutes'
+      if (name.includes('special education') || name.includes('special needs') || name.includes('sen')) return 'Special Education Needs'
+      return 'Other'
+    }
 
     // Debug: First let's see what's actually in the database
     const { data: allReadinessRecords, error: debugError } = await supabase
@@ -156,7 +170,7 @@ export async function getSchoolsByReadinessStatus(
 
       const totalPages = Math.ceil((totalCount || 0) / pageSize)
 
-      // Build the main query
+      // Build the main query to get all schools without filtering by level first
       const query = supabase
         .from("sms_schools")
         .select(`
@@ -169,7 +183,6 @@ export async function getSchoolsByReadinessStatus(
           )
         `)
         .order("name")
-        .range(offset, offset + pageSize - 1)
 
       if (schoolIdsWithStatus.length > 0) {
         query.not("id", "in", `(${schoolIdsWithStatus.join(',')})`)
@@ -179,14 +192,34 @@ export async function getSchoolsByReadinessStatus(
         query.eq("region_id", regionId)
       }
 
-      const { data: schools, error: schoolsError } = await query
+      const { data: allSchools, error: schoolsError } = await query
 
       if (schoolsError) {
         console.error("Error getting schools without status:", schoolsError)
         return { schools: [], totalCount: 0, totalPages: 0, error: "Failed to get schools without status." }
       }
 
-      return { schools: schools || [], totalCount: totalCount || 0, totalPages, error: null }
+      // Filter by school level if specified
+      let filteredSchools = allSchools || []
+      if (schoolLevel) {
+        filteredSchools = filteredSchools.filter(school => 
+          getSchoolLevelFromName(school.name) === schoolLevel
+        )
+      }
+
+      const actualTotalCount = filteredSchools.length
+      const actualTotalPages = Math.ceil(actualTotalCount / pageSize)
+
+      // Apply pagination to the filtered results
+      const paginatedSchools = filteredSchools.slice(offset, offset + pageSize)
+
+      // Add school level to each school
+      const schoolsWithLevel = paginatedSchools.map(school => ({
+        ...school,
+        school_level: getSchoolLevelFromName(school.name)
+      }))
+
+      return { schools: schoolsWithLevel, totalCount: actualTotalCount, totalPages: actualTotalPages, error: null }
     } else {
       // Get schools with specific readiness status (ready or not_ready)
       // First get the latest readiness record per school
@@ -262,11 +295,19 @@ export async function getSchoolsByReadinessStatus(
         filteredSchoolIds.has(r.school_id)
       )
 
-      const totalCount = schools?.length || 0
+      // Filter schools by level if specified
+      let levelFilteredSchools = schools || []
+      if (schoolLevel) {
+        levelFilteredSchools = levelFilteredSchools.filter(school => 
+          getSchoolLevelFromName(school.name) === schoolLevel
+        )
+      }
+
+      const totalCount = levelFilteredSchools.length
       const totalPages = Math.ceil(totalCount / pageSize)
 
       // Apply pagination to the filtered results
-      const paginatedSchools = schools?.slice(offset, offset + pageSize) || []
+      const paginatedSchools = levelFilteredSchools.slice(offset, offset + pageSize)
       const paginatedSchoolIds = new Set(paginatedSchools.map(s => s.id))
       const paginatedReadinessData = filteredReadinessData.filter(r => 
         paginatedSchoolIds.has(r.school_id)
@@ -280,7 +321,8 @@ export async function getSchoolsByReadinessStatus(
           readiness_status: readinessData?.status,
           readiness_reason: readinessData?.reason,
           readiness_checklist: readinessData?.checklist_items,
-          readiness_updated_at: readinessData?.created_at
+          readiness_updated_at: readinessData?.created_at,
+          school_level: getSchoolLevelFromName(school.name) // Add school level to response
         }
       })
 

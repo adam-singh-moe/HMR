@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { getSchoolsByReadinessStatus, getRegionsForFilter } from "@/app/actions/school-readiness-detailed-stats"
 import { Pagination } from "@/components/pagination"
 import { RegionFilter } from "@/components/region-filter"
+import { SchoolLevelFilter } from "@/components/school-level-filter"
 import Link from "next/link"
 import { ArrowLeft, MapPin, AlertTriangle, Search } from "lucide-react"
 
@@ -15,6 +16,7 @@ interface School {
   id: string
   name: string
   region_id: string
+  school_level?: string
   sms_regions: {
     id: string
     name: string
@@ -36,6 +38,7 @@ export default function NoStatusSchoolsPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const [selectedRegion, setSelectedRegion] = useState("all")
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
   const pageSize = 20
 
@@ -45,7 +48,7 @@ export default function NoStatusSchoolsPage() {
 
   useEffect(() => {
     fetchSchools(currentPage)
-  }, [currentPage, selectedRegion])
+  }, [currentPage, selectedRegion, selectedSchoolLevel])
 
   // Filter schools based on search term
   useEffect(() => {
@@ -76,12 +79,13 @@ export default function NoStatusSchoolsPage() {
     try {
       setLoading(true)
       const regionId = selectedRegion === "all" ? undefined : selectedRegion
-      const result = await getSchoolsByReadinessStatus('no_status', page, pageSize, regionId)
+      const schoolLevel = selectedSchoolLevel === "all" ? undefined : selectedSchoolLevel
+      const result = await getSchoolsByReadinessStatus('no_status', page, pageSize, regionId, schoolLevel)
       if (result.error) {
         setError(result.error)
       } else {
-        setSchools(result.schools)
-        setFilteredSchools(result.schools) // Initialize filtered schools
+        setSchools(result.schools as School[])
+        setFilteredSchools(result.schools as School[]) // Initialize filtered schools
         setTotalPages(result.totalPages)
         setTotalCount(result.totalCount)
       }
@@ -100,6 +104,11 @@ export default function NoStatusSchoolsPage() {
     setSelectedRegion(regionId)
     setCurrentPage(1) // Reset to first page when filter changes
     setSearchTerm("") // Clear search when region changes
+  }
+
+  const handleSchoolLevelChange = (level: string) => {
+    setSelectedSchoolLevel(level)
+    setCurrentPage(1) // Reset to first page when filter changes
   }
 
   if (loading) {
@@ -148,6 +157,44 @@ export default function NoStatusSchoolsPage() {
         </div>
       </div>
 
+      {/* Filters - Always visible */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex-1">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+            <div className="text-sm font-medium text-yellow-800">
+              These schools need to complete their readiness assessment
+            </div>
+          </div>
+          <p className="text-sm text-yellow-700 mt-1">
+            School administrators should log in to the system and complete their school readiness checklist.
+          </p>
+        </div>
+        
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search schools by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+          <RegionFilter
+            regions={regions}
+            selectedRegion={selectedRegion}
+            onRegionChange={handleRegionChange}
+            disabled={loading}
+          />
+          <SchoolLevelFilter
+            selectedLevel={selectedSchoolLevel}
+            onLevelChange={handleSchoolLevelChange}
+            disabled={loading}
+          />
+        </div>
+      </div>
+
       {filteredSchools.length === 0 && !loading ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -171,37 +218,24 @@ export default function NoStatusSchoolsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {/* Search and Filter Section */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex-1">
+        <div>
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                <div className="text-sm font-medium text-yellow-800">
-                  These schools need to complete their readiness assessment
-                </div>
+                <span className="text-sm text-gray-600">
+                  Showing {filteredSchools.length} schools without status updates
+                </span>
+                {selectedRegion && selectedRegion !== "all" && (
+                  <Badge variant="outline">
+                    {regions.find(r => r.id === selectedRegion)?.name || selectedRegion}
+                  </Badge>
+                )}
+                {selectedSchoolLevel && selectedSchoolLevel !== "all" && (
+                  <Badge variant="outline">
+                    {selectedSchoolLevel}
+                  </Badge>
+                )}
               </div>
-              <p className="text-sm text-yellow-700 mt-1">
-                School administrators should log in to the system and complete their school readiness checklist.
-              </p>
-            </div>
-            
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search schools by name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <RegionFilter
-                regions={regions}
-                selectedRegion={selectedRegion}
-                onRegionChange={handleRegionChange}
-                disabled={loading}
-              />
             </div>
           </div>
           
@@ -221,6 +255,12 @@ export default function NoStatusSchoolsPage() {
                     <div className="flex items-center gap-1 text-sm text-gray-600">
                       <MapPin className="w-3 h-3" />
                       <span className="truncate">{school.sms_regions?.name || 'Unknown Region'}</span>
+                      {school.school_level && (
+                        <>
+                          <span className="mx-1">•</span>
+                          <span className="text-blue-600 font-medium">{school.school_level}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
