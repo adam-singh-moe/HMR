@@ -9,8 +9,9 @@ interface EditUserPageProps {
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
+  const { id } = await params
   const [user, roles, regionsResult, schoolsResult] = await Promise.all([
-    getUserById(params.id),
+    getUserById(id),
     getRoles(),
     getRegions(),
     getSchools(1, 1000), // Get up to 1000 schools for the dropdown
