@@ -577,19 +577,20 @@ function AuthFormContent() {
           
           {/* First-time login notice for Head Teachers */}
           {!isSignUp && !isForgotPassword && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start space-x-2">
+            <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg flash-red">
+              <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">i</span>
+                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-bounce">
+                    <span className="text-white text-sm font-bold">!</span>
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-blue-800 mb-1">
-                    First-time Head Teachers
+                  <h4 className="text-base font-bold text-red-800 mb-2 uppercase tracking-wide text-center">
+                    FIRST-TIME HEAD TEACHERS - IMPORTANT!
                   </h4>
-                  <p className="text-sm text-blue-700">
-                    If you're logging in for the first time, use your <strong>school's email address</strong> and the default password: <code className="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">hnCf4MN</code>
+                  <p className="text-sm font-medium text-red-700 leading-relaxed text-center">
+                    If you're logging in for the first time, use your <strong className="text-red-900 bg-red-100 px-1 rounded">school's email address</strong> and the default password: 
+                    <code className="bg-red-200 px-2 py-1 rounded text-red-900 font-bold text-base ml-1">hnCf4MN</code>
                   </p>
                 </div>
               </div>
