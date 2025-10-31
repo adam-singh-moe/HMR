@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Check, Search, X, Loader2 } from "lucide-react"
+import { Check, Search, X, Loader2, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useOptimizedSchoolSearch } from "@/hooks/use-optimized-school-search"
+import { AddSchoolModal } from "./add-school-modal"
 
 interface School {
   id: string
@@ -50,6 +51,8 @@ interface OptimizedSchoolSearchProps {
   debounceMs?: number
   showRegion?: boolean
   allowClear?: boolean
+  allowAddNew?: boolean
+  onSchoolCreated?: () => void // Callback when a new school is created
 }
 
 export function SchoolSearch({
@@ -63,11 +66,15 @@ export function SchoolSearch({
   debounceMs = 300,
   showRegion = true,
   allowClear = true,
+  allowAddNew = false,
+  onSchoolCreated,
 }: OptimizedSchoolSearchProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [hasUserInput, setHasUserInput] = useState(false)
+  const [showAddNewForm, setShowAddNewForm] = useState(false)
+  const [isAddingSchool, setIsAddingSchool] = useState(false)
 
   const {
     searchQuery,
@@ -206,8 +213,18 @@ export function SchoolSearch({
 
   // Handle click outside to close dropdown
   useEffect(() => {
+    // Don't attach click outside handler if modal is open
+    if (showAddNewForm) {
+      return
+    }
+
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      
+      // Check if click is inside the search container
+      const isInsideContainer = containerRef.current && containerRef.current.contains(target)
+      
+      if (!isInsideContainer) {
         setShowDropdown(false)
         setHasUserInput(false)
       }
@@ -217,7 +234,29 @@ export function SchoolSearch({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [setShowDropdown])
+  }, [setShowDropdown, showAddNewForm])
+
+  // Handle new school addition
+  const handleAddNewSchoolSuccess = (schoolId: string, schoolName: string) => {
+    // Select the new school
+    setSelectedValue(schoolId)
+    setSearchQuery(schoolName)
+    onChange(schoolId)
+    setShowAddNewForm(false)
+    setShowDropdown(false)
+    setHasUserInput(false)
+  }
+
+  const handleAddNewSchoolCancel = () => {
+    setShowAddNewForm(false)
+  }
+
+  const handleRefreshSchools = () => {
+    // Call the callback to refresh parent's school list if provided
+    if (onSchoolCreated) {
+      onSchoolCreated()
+    }
+  }
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -229,7 +268,8 @@ export function SchoolSearch({
   }
 
   return (
-    <div className="relative w-full" ref={containerRef}>
+    <>
+      <div className="relative w-full" ref={containerRef}>
       <div className="relative">
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
           {isSearching ? (
@@ -309,8 +349,21 @@ export function SchoolSearch({
               </ul>
             </div>
           ) : searchQuery ? (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
-              No schools found matching "{searchQuery}"
+            <div className="space-y-2">
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                No schools found matching "{searchQuery}"
+              </div>
+              {allowAddNew && (
+                <div className="border-t border-gray-100">
+                  <div
+                    onClick={() => setShowAddNewForm(true)}
+                    className="px-3 py-2 text-sm cursor-pointer flex items-center gap-2 hover:bg-primary-50 transition-colors text-primary-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add "{searchQuery}" as new school
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="px-3 py-2 text-sm text-muted-foreground">
@@ -320,5 +373,15 @@ export function SchoolSearch({
         </div>
       )}
     </div>
+
+      {/* Add New School Modal */}
+      <AddSchoolModal
+        isVisible={showAddNewForm}
+        initialSchoolName={searchQuery}
+        onClose={handleAddNewSchoolCancel}
+        onSchoolAdded={handleAddNewSchoolSuccess}
+        onRefreshSchools={handleRefreshSchools}
+      />
+    </>
   )
 }

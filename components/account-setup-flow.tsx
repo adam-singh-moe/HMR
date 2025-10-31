@@ -7,6 +7,7 @@ import { School, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SchoolConfirmationForm } from "./school-confirmation-form"
 import { PasswordChangeForm } from "./password-change-form"
+import { useRouter } from "next/navigation"
 
 interface AccountSetupFlowProps {
   userEmail: string
@@ -33,6 +34,7 @@ export function AccountSetupFlow({
 }: AccountSetupFlowProps) {
   const [currentStep, setCurrentStep] = useState<SetupStep>("school-confirmation")
   const [confirmedSchoolId, setConfirmedSchoolId] = useState<string | null>(schoolId)
+  const router = useRouter()
 
   const handleSchoolConfirmationComplete = (schoolId: string) => {
     setConfirmedSchoolId(schoolId)
@@ -40,7 +42,8 @@ export function AccountSetupFlow({
   }
 
   const handlePasswordSetupComplete = () => {
-    onComplete()
+    // Don't call onComplete immediately - let the PasswordChangeForm handle auto-login
+    // The PasswordChangeForm will redirect to the appropriate dashboard automatically
   }
 
   const handleBackToSchoolConfirmation = () => {
@@ -156,7 +159,7 @@ export function AccountSetupFlow({
               userId={userId}
               requiresName={requiresName}
               onBack={handleBackToSchoolConfirmation}
-              onComplete={handlePasswordSetupComplete}
+              // Don't provide onComplete - let PasswordChangeForm handle auto-login redirect
             />
           )}
         </div>

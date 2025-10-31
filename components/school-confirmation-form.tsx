@@ -61,6 +61,29 @@ export function SchoolConfirmationForm({
     fetchSchools()
   }, [])
 
+  const refreshSchools = async () => {
+    try {
+      if (!supabase) return
+      
+      const { data: schoolsData } = await supabase
+        .from("sms_schools")
+        .select(`
+          id, 
+          name, 
+          region_id,
+          sms_regions (
+            id,
+            name
+          )
+        `)
+        .order("name")
+      
+      setSchools(schoolsData || [])
+    } catch (error) {
+      console.error("Error refreshing schools:", error)
+    }
+  }
+
   const handleConfirmSchool = async () => {
     setIsLoading(true)
     setError(null)
@@ -166,6 +189,8 @@ export function SchoolConfirmationForm({
                   placeholder="Search for your school..."
                   showRegion={true}
                   maxResults={1000}
+                  allowAddNew={true}
+                  onSchoolCreated={refreshSchools}
                 />
               </div>
 
