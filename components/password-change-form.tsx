@@ -17,9 +17,10 @@ interface PasswordChangeFormProps {
   userId: string
   requiresName: boolean
   onBack: () => void
+  onComplete?: () => void // Optional callback for when password change is complete
 }
 
-export function PasswordChangeForm({ userEmail, userName, userId, requiresName, onBack }: PasswordChangeFormProps) {
+export function PasswordChangeForm({ userEmail, userName, userId, requiresName, onBack, onComplete }: PasswordChangeFormProps) {
   const [fullName, setFullName] = useState(userName || "")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -67,16 +68,23 @@ export function PasswordChangeForm({ userEmail, userName, userId, requiresName, 
       setIsLoading(false)
     } else if (result.success) {
       setSuccess(true)
-      // Auto-redirect to appropriate dashboard if login was successful
-      if (result.autoLogin && result.redirectTo) {
+      // If onComplete callback is provided, use it instead of auto-redirect
+      if (onComplete) {
         setTimeout(() => {
-          router.push(result.redirectTo)
+          onComplete()
         }, 2000)
       } else {
-        // Redirect to login after a short delay
-        setTimeout(() => {
-          router.push("/auth")
-        }, 2000)
+        // Auto-redirect to appropriate dashboard if login was successful
+        if (result.autoLogin && result.redirectTo) {
+          setTimeout(() => {
+            router.push(result.redirectTo)
+          }, 2000)
+        } else {
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            router.push("/auth")
+          }, 2000)
+        }
       }
     }
   }

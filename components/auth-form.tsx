@@ -15,6 +15,8 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase-client"
 import { EmailVerification } from "./email-verification"
 import { PasswordChangeForm } from "./password-change-form"
+import { SchoolConfirmationForm } from "./school-confirmation-form"
+import { AccountSetupFlow } from "./account-setup-flow"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 
 function SubmitButton({ text }: { text: string }) {
@@ -66,6 +68,28 @@ function AuthFormContent() {
     userName: string | null
     userId: string
     requiresName: boolean
+  } | null>(null)
+
+  // School confirmation states for head teachers
+  const [showSchoolConfirmation, setShowSchoolConfirmation] = useState(false)
+  const [schoolConfirmationUser, setSchoolConfirmationUser] = useState<{
+    userEmail: string
+    userName: string | null
+    userId: string
+    requiresName: boolean
+    schoolId: string | null
+    schoolName: string | null
+  } | null>(null)
+
+  // Account setup flow state (for head teachers with tabbed interface)
+  const [showAccountSetup, setShowAccountSetup] = useState(false)
+  const [accountSetupUser, setAccountSetupUser] = useState<{
+    userEmail: string
+    userName: string | null
+    userId: string
+    requiresName: boolean
+    schoolId: string | null
+    schoolName: string | null
   } | null>(null)
 
   const searchParams = useSearchParams()
@@ -297,6 +321,9 @@ function AuthFormContent() {
         userName?: string;
         userId?: string;
         requiresName?: boolean;
+        userRole?: string;
+        schoolId?: string;
+        schoolName?: string;
       } | undefined
 
       if (isSignUp) {
@@ -366,14 +393,29 @@ function AuthFormContent() {
           requiresName: result.requiresName
         })
         
-        setPasswordChangeUser({
-          userEmail: result.userEmail,
-          userName: result.userName || null,
-          userId: result.userId,
-          requiresName: result.requiresName || false
-        })
-        setShowPasswordChange(true)
-        return
+        // For head teachers with default password, show account setup flow
+        if (result.userRole === "Head Teacher") {
+          setAccountSetupUser({
+            userEmail: result.userEmail,
+            userName: result.userName || null,
+            userId: result.userId,
+            requiresName: result.requiresName || false,
+            schoolId: result.schoolId || null,
+            schoolName: result.schoolName || null
+          })
+          setShowAccountSetup(true)
+          return
+        } else {
+          // For other roles, go directly to password change
+          setPasswordChangeUser({
+            userEmail: result.userEmail,
+            userName: result.userName || null,
+            userId: result.userId,
+            requiresName: result.requiresName || false
+          })
+          setShowPasswordChange(true)
+          return
+        }
       }
 
       // Only set error if there's actually an error returned
@@ -491,6 +533,43 @@ function AuthFormContent() {
     setVerificationType("signup")
   }
 
+  // Handle school confirmation completion
+  const handleSchoolConfirmationComplete = (confirmedSchoolId: string) => {
+    if (schoolConfirmationUser) {
+      // Move to password change with confirmed school
+      setPasswordChangeUser({
+        userEmail: schoolConfirmationUser.userEmail,
+        userName: schoolConfirmationUser.userName,
+        userId: schoolConfirmationUser.userId,
+        requiresName: schoolConfirmationUser.requiresName
+      })
+      setShowSchoolConfirmation(false)
+      setShowPasswordChange(true)
+    }
+  }
+
+  // Handle going back from school confirmation
+  const handleBackFromSchoolConfirmation = () => {
+    setShowSchoolConfirmation(false)
+    setSchoolConfirmationUser(null)
+    setError(null)
+  }
+
+  // Handle account setup flow completion
+  const handleAccountSetupComplete = () => {
+    setShowAccountSetup(false)
+    setAccountSetupUser(null)
+    // Redirect to dashboard or show success message
+    router.push("/dashboard")
+  }
+
+  // Handle going back from account setup
+  const handleBackFromAccountSetup = () => {
+    setShowAccountSetup(false)
+    setAccountSetupUser(null)
+    setError(null)
+  }
+
   const handleRoleChange = (value: "head_teacher" | "regional_officer" | "education_official") => {
     setRole(value)
     setSelectedRegion("") // Reset selected region when role changes
@@ -522,7 +601,37 @@ function AuthFormContent() {
     setVerificationEmail("")
   }
 
-  // Show email verification component if in verification mode
+  // Show account setup flow for head teachers with default password
+  if (showAccountSetup && accountSetupUser) {
+    return (
+      <AccountSetupFlow
+        userEmail={accountSetupUser.userEmail}
+        userName={accountSetupUser.userName}
+        userId={accountSetupUser.userId}
+        requiresName={accountSetupUser.requiresName}
+        schoolId={accountSetupUser.schoolId}
+        schoolName={accountSetupUser.schoolName}
+        onComplete={handleAccountSetupComplete}
+        onBack={handleBackFromAccountSetup}
+      />
+    )
+  }
+
+  // Show school confirmation component for head teachers with default password
+  if (showSchoolConfirmation && schoolConfirmationUser) {
+    return (
+      <SchoolConfirmationForm
+        userEmail={schoolConfirmationUser.userEmail}
+        userId={schoolConfirmationUser.userId}
+        currentSchoolId={schoolConfirmationUser.schoolId}
+        currentSchoolName={schoolConfirmationUser.schoolName}
+        onConfirm={handleSchoolConfirmationComplete}
+        onBack={handleBackFromSchoolConfirmation}
+      />
+    )
+  }
+
+  // Show password change component if in password change mode
   if (showPasswordChange && passwordChangeUser) {
     return (
       <PasswordChangeForm
