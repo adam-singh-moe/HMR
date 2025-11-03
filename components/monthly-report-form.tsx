@@ -936,13 +936,15 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
       if (reportId) {
         try {
           const result = await getReportStatus(reportId)
-          if (result.success) {
+          if (result && result.success) {
             // For previous reports, start with draft status to allow editing
             if (previousReportData) {
               setReportStatus('draft')
             } else {
               setReportStatus(result.status)
             }
+          } else if (result && result.error) {
+            console.error("Error from getReportStatus:", result.error)
           }
         } catch (error) {
           console.error("Error checking report status:", error)
@@ -4797,6 +4799,78 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
   }
 
   return (
+    <>
+    {/* Progress Tabs - Clean white design */}
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {previousReportData ? "Previous Report" : "Monthly School Report"}
+          </h2>
+          <div className="text-sm text-gray-600">
+            {Math.round(calculateProgress())}% Complete
+          </div>
+        </div>
+        
+        {previousReportData && (
+          <p className="text-gray-600 mb-4">
+            Submit report for {previousReportData.displayName}
+          </p>
+        )}
+        
+        {/* Progress Steps */}
+        <div className="overflow-x-auto">
+          <div className="flex items-center justify-between min-w-max px-2">
+            {SECTIONS.map((section, index) => {
+              const isCompleted = savedSections.has(index)
+              const isCurrent = index === currentSection
+              
+              return (
+                <div key={index} className="flex items-center">
+                  {/* Circle and Content */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() => setCurrentSection(index)}
+                      disabled={reportStatus === 'submitted'}
+                      className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
+                        ${isCurrent 
+                          ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
+                          : isCompleted 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        }
+                        ${reportStatus === 'submitted' ? 'cursor-not-allowed' : 'cursor-pointer'}
+                      `}
+                    >
+                      {isCompleted ? '✓' : index + 1}
+                    </button>
+                    
+                    <div className="text-center">
+                      <div className="text-xs font-medium text-gray-900 mb-1 max-w-[70px] leading-tight">
+                        {section.replace(/\s&\s/, '\n&\n')}
+                      </div>
+                      <div className={`text-xs ${isCurrent ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                        {isCompleted ? '100%' : isCurrent ? '50%' : '0%'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Connecting Line */}
+                  {index < SECTIONS.length - 1 && (
+                    <div className={`
+                      w-8 h-0.5 mx-2 mt-[-24px]
+                      ${savedSections.has(index) ? 'bg-green-500' : 'bg-gray-200'}
+                    `} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <Card className="gradient-card border-0 shadow-lg">
       <CardHeader className="gradient-header text-white rounded-t-lg p-4 sm:p-6">
         <div className="flex items-center gap-3">
@@ -4805,31 +4879,12 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg sm:text-xl">
-              {previousReportData ? "Previous Report" : "Monthly School Report"}
+              Section {currentSection + 1} of {SECTIONS.length}: {SECTIONS[currentSection]}
             </CardTitle>
             <CardDescription className="text-blue-100 text-sm sm:text-base">
-              {previousReportData 
-                ? `Submit report for ${previousReportData.displayName}`
-                : `Section ${currentSection + 1} of ${SECTIONS.length}: ${SECTIONS[currentSection]}`
-              }
+              Complete this section to continue with your report
             </CardDescription>
           </div>
-          
-          {/* Removed auto-save status indicator to disable caching */}
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-4 space-y-2">
-          <div className="flex justify-between text-xs sm:text-sm text-blue-100">
-            <span>Progress</span>
-            <div className="flex items-center gap-2">
-              <span>{Math.round(calculateProgress())}% Complete</span>
-              <span className="text-green-200">
-                (Section {currentSection + 1}/{SECTIONS.length})
-              </span>
-            </div>
-          </div>
-          <Progress value={calculateProgress()} className="h-2 bg-white/20" />
         </div>
       </CardHeader>
 
@@ -5224,5 +5279,6 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         </div>
       </CardContent>
     </Card>
+    </>
   )
 }
