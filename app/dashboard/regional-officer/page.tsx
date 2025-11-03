@@ -608,7 +608,9 @@ function RegionalOfficerDashboardContent() {
   // Helper functions for finance period filtering
   const getAvailableFinanceYears = () => {
     const years = Array.from(new Set(availableFinancePeriods.map(p => p.year)))
-    return years.sort((a, b) => b - a) // Most recent first
+    // Filter out invalid years (2028 and 1024) to improve data accuracy
+    const validYears = years.filter(year => year >= 2020 && year <= 2027)
+    return validYears.sort((a, b) => b - a) // Most recent first
   }
 
   const getAvailableFinanceMonths = () => {

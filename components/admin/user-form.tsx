@@ -131,7 +131,7 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
               </SelectTrigger>
               <SelectContent>
                 {regions.map((region) => (
-                  <SelectItem key={region.id} value={region.name}>
+                  <SelectItem key={region.id} value={region.id}>
                     {region.name}
                   </SelectItem>
                 ))}

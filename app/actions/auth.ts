@@ -197,22 +197,22 @@ export async function signIn(formData: FormData) {
 
   // Check if user is using default password
   if (password === "hnCf4MN") {
-    // Debug logging
-    // console.log("Default password detected for user:", {
-    //   email: user.email,
-    //   name: user.name,
-    //   nameIsNull: user.name === null,
-    //   nameIsEmpty: user.name === "",
-    //   nameIsUndefined: user.name === undefined,
-    //   requiresName: !user.name || user.name.trim() === ""
-    // })
+    // Get additional user data for head teachers
+    let schoolName = null
+    if (user.hmr_user_roles?.name === "Head Teacher" && user.school_id) {
+      const { data: schoolData } = await supabase.from("sms_schools").select("name").eq("id", user.school_id).single()
+      schoolName = schoolData?.name || null
+    }
     
     return { 
       requirePasswordChange: true, 
       userEmail: email,
       userName: user.name,
       userId: user.id,
-      requiresName: !user.name || user.name.trim() === ""
+      requiresName: !user.name || user.name.trim() === "",
+      userRole: user.hmr_user_roles?.name || null,
+      schoolId: user.school_id || null,
+      schoolName: schoolName
     }
   }
 

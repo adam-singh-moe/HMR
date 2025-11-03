@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { getSchoolsByReadinessStatus, getRegionsForFilter } from "@/app/actions/school-readiness-detailed-stats"
 import { Pagination } from "@/components/pagination"
 import { RegionFilter } from "@/components/region-filter"
+import { SchoolLevelFilter } from "@/components/school-level-filter"
 import Link from "next/link"
 import { ArrowLeft, MapPin, Calendar, CheckCircle, AlertCircle, ChevronDown, Search } from "lucide-react"
 import { format } from "date-fns"
@@ -24,6 +25,7 @@ interface School {
   readiness_reason?: string
   readiness_checklist?: any
   readiness_updated_at?: string
+  school_level?: string
 }
 
 interface Region {
@@ -53,6 +55,7 @@ export default function ReadySchoolsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selectedRegion, setSelectedRegion] = useState<string>("")
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>("")
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -62,6 +65,12 @@ export default function ReadySchoolsPage() {
     setSelectedRegion(regionId)
     setCurrentPage(1) // Reset to first page when filter changes
     setSearchTerm("") // Clear search when region changes
+  }
+
+  const handleSchoolLevelChange = (level: string) => {
+    setSelectedSchoolLevel(level)
+    setCurrentPage(1) // Reset to first page when filter changes
+    setSearchTerm("") // Clear search when level changes
   }
 
   const toggleSchoolExpansion = (schoolId: string) => {
@@ -81,13 +90,13 @@ export default function ReadySchoolsPage() {
       setLoading(true)
       try {
         const [schoolsResult, regionsResult] = await Promise.all([
-          getSchoolsByReadinessStatus("ready", currentPage, itemsPerPage, selectedRegion || undefined),
+          getSchoolsByReadinessStatus("ready", currentPage, itemsPerPage, selectedRegion || undefined, selectedSchoolLevel || undefined),
           getRegionsForFilter()
         ])
 
         if (!schoolsResult.error) {
-          setSchools(schoolsResult.schools || [])
-          setFilteredSchools(schoolsResult.schools || []) // Initialize filtered schools
+          setSchools(schoolsResult.schools as School[] || [])
+          setFilteredSchools(schoolsResult.schools as School[] || []) // Initialize filtered schools
           setTotalPages(schoolsResult.totalPages)
         } else {
           setError(schoolsResult.error || "Failed to fetch schools")
@@ -104,7 +113,7 @@ export default function ReadySchoolsPage() {
     }
 
     fetchData()
-  }, [currentPage, selectedRegion])
+  }, [currentPage, selectedRegion, selectedSchoolLevel])
 
   // Filter schools based on search term
   useEffect(() => {
@@ -149,8 +158,8 @@ export default function ReadySchoolsPage() {
         </div>
       </div>
 
-      {/* Search and Region Filter */}
-      <div className="flex justify-end gap-2">
+      {/* Search and Filters */}
+      <div className="flex justify-end gap-2 flex-wrap">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -166,11 +175,16 @@ export default function ReadySchoolsPage() {
           onRegionChange={handleRegionChange}
           disabled={loading}
         />
+        <SchoolLevelFilter
+          selectedLevel={selectedSchoolLevel}
+          onLevelChange={handleSchoolLevelChange}
+          disabled={loading}
+        />
       </div>
 
       {/* Results Summary */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <CheckCircle className="h-5 w-5 text-green-600" />
           <span className="text-lg font-medium">
             {filteredSchools.length > 0 ? `${filteredSchools.length} ready school${filteredSchools.length !== 1 ? 's' : ''}` : 'No ready schools found'}
@@ -178,6 +192,11 @@ export default function ReadySchoolsPage() {
           {selectedRegion && (
             <Badge variant="outline">
               {regions.find(r => r.id === selectedRegion)?.name || selectedRegion}
+            </Badge>
+          )}
+          {selectedSchoolLevel && (
+            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              {selectedSchoolLevel} Schools
             </Badge>
           )}
         </div>
@@ -203,7 +222,7 @@ export default function ReadySchoolsPage() {
 
       {/* Schools List */}
       {!error && (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredSchools.length > 0 ? (
             filteredSchools.map((school) => {
               const checklistProgress = getChecklistProgress(school.readiness_checklist)
@@ -231,6 +250,11 @@ export default function ReadySchoolsPage() {
                               }`} 
                             />
                           </Badge>
+                          {school.school_level && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {school.school_level}
+                            </Badge>
+                          )}
                         </div>
                         
                         <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -322,18 +346,30 @@ export default function ReadySchoolsPage() {
                     <p className="text-gray-600 mb-4">
                       {searchTerm 
                         ? `No schools match your search criteria.`
-                        : selectedRegion 
-                          ? `No schools in the selected region have been marked as ready to reopen yet.`
+                        : selectedRegion || selectedSchoolLevel
+                          ? `No schools match the selected filters.`
                           : `No schools have been marked as ready to reopen yet.`
                       }
                     </p>
-                    {selectedRegion && !searchTerm && (
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setSelectedRegion("")}
-                      >
-                        Clear Filter
-                      </Button>
+                    {(selectedRegion || selectedSchoolLevel) && !searchTerm && (
+                      <div className="flex gap-2 justify-center">
+                        {selectedRegion && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setSelectedRegion("")}
+                          >
+                            Clear Region Filter
+                          </Button>
+                        )}
+                        {selectedSchoolLevel && (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setSelectedSchoolLevel("")}
+                          >
+                            Clear Level Filter
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </CardContent>
