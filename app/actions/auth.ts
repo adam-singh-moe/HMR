@@ -406,3 +406,53 @@ export async function getUser() {
     return null
   }
 }
+
+export async function getUserSchoolInfo() {
+  try {
+    const user = await getUser()
+    if (!user || !user.school_id) {
+      return { school: null, error: "User not found or no school assigned" }
+    }
+
+    const supabase = createServerSupabaseClient()
+    const { data: school, error } = await supabase
+      .from('sms_schools')
+      .select(`
+        id, 
+        name, 
+        school_level_id,
+        sms_school_levels (
+          id,
+          name
+        )
+      `)
+      .eq('id', user.school_id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching school info:', error)
+      return { school: null, error: "Failed to fetch school information" }
+    }
+
+    // Transform the data to include level name
+    let schoolLevel = 'Unknown'
+    if (school.sms_school_levels) {
+      if (Array.isArray(school.sms_school_levels)) {
+        schoolLevel = school.sms_school_levels[0]?.name || 'Unknown'
+      } else {
+        schoolLevel = (school.sms_school_levels as any)?.name || 'Unknown'
+      }
+    }
+    
+    const schoolWithLevel = {
+      id: school.id,
+      name: school.name,
+      level: schoolLevel
+    }
+
+    return { school: schoolWithLevel, error: null }
+  } catch (err) {
+    console.error('Error in getUserSchoolInfo:', err)
+    return { school: null, error: "An unexpected error occurred" }
+  }
+}
