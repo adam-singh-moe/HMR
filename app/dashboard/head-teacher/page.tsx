@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { MonthlyReportForm } from "@/components/monthly-report-form"
 import { PreviousReportForm } from "@/components/previous-report-form"
+import { NurseryAssessmentForm } from "@/components/nursery-assessment-form"
 import { SchoolReadinessStatus } from "@/components/school-readiness-status"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -700,19 +701,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-center py-12">
-                      <div className="p-6 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-6">
-                        <BookOpenIcon className="h-16 w-16 text-purple-600" />
-                      </div>
-                      <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment Form Coming Soon</h3>
-                      <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                        The nursery assessment submission form is currently being developed. 
-                        This will include student development tracking, learning milestones, and progress monitoring.
-                      </p>
-                      <div className="mt-6 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium w-fit mx-auto">
-                        🚀 Feature in Development
-                      </div>
-                    </div>
+                    <NurseryAssessmentForm onSuccess={handleReportSuccess} />
                   </div>
                 )}
                 {currentTab === 'view-assessments' && (

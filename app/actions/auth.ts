@@ -421,7 +421,12 @@ export async function getUserSchoolInfo() {
         id, 
         name, 
         school_level_id,
+        region_id,
         sms_school_levels (
+          id,
+          name
+        ),
+        sms_regions (
           id,
           name
         )
@@ -434,7 +439,7 @@ export async function getUserSchoolInfo() {
       return { school: null, error: "Failed to fetch school information" }
     }
 
-    // Transform the data to include level name
+    // Transform the data to include level and region names
     let schoolLevel = 'Unknown'
     if (school.sms_school_levels) {
       if (Array.isArray(school.sms_school_levels)) {
@@ -443,14 +448,24 @@ export async function getUserSchoolInfo() {
         schoolLevel = (school.sms_school_levels as any)?.name || 'Unknown'
       }
     }
+
+    let regionName = 'Unknown Region'
+    if (school.sms_regions) {
+      if (Array.isArray(school.sms_regions)) {
+        regionName = school.sms_regions[0]?.name || 'Unknown Region'
+      } else {
+        regionName = (school.sms_regions as any)?.name || 'Unknown Region'
+      }
+    }
     
-    const schoolWithLevel = {
+    const schoolWithDetails = {
       id: school.id,
       name: school.name,
-      level: schoolLevel
+      level: schoolLevel,
+      region: regionName
     }
 
-    return { school: schoolWithLevel, error: null }
+    return { school: schoolWithDetails, error: null }
   } catch (err) {
     console.error('Error in getUserSchoolInfo:', err)
     return { school: null, error: "An unexpected error occurred" }

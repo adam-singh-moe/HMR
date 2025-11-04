@@ -4800,8 +4800,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
   return (
     <>
-    {/* Progress Tabs - Clean white design */}
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+    {/* Progress Tabs - Clean white design - Hidden on mobile */}
+    <div className="hidden sm:block bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">
