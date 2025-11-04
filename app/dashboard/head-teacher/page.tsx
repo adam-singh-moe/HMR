@@ -59,9 +59,17 @@ function HeadTeacherDashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Get tab from URL params, with fallback
-  const currentTab = searchParams.get('tab') || 'current-report'
+  // Get tab from URL params, with fallback based on main tab
   const currentMainTab = searchParams.get('mainTab') || 'dashboard'
+  const getDefaultTab = () => {
+    if (currentMainTab === 'nursery-assessment') {
+      return 'submit-assessment'
+    } else if (currentMainTab === 'monthly-reports') {
+      return 'current-report'
+    }
+    return 'current-report'
+  }
+  const currentTab = searchParams.get('tab') || getDefaultTab()
   
   // State for reports and loading
   const [reports, setReports] = useState<HmrReport[]>([])
@@ -93,7 +101,7 @@ function HeadTeacherDashboardContent() {
     if (newMainTab === 'monthly-reports') {
       params.set('tab', 'current-report')
     } else if (newMainTab === 'nursery-assessment') {
-      params.set('tab', 'nursery-assessment-form')
+      params.set('tab', 'submit-assessment')
     }
     router.replace(`/dashboard/head-teacher?${params.toString()}`)
   }
@@ -550,7 +558,7 @@ function HeadTeacherDashboardContent() {
                     </button>
                     
                     <button 
-                      onClick={() => {updateMainTab('nursery-assessment'); updateURL('submit-assessment')}}
+                      onClick={() => updateMainTab('nursery-assessment')}
                       className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
                     >
                       <div className="p-2 bg-green-100 rounded-lg">
@@ -576,10 +584,6 @@ function HeadTeacherDashboardContent() {
                   <h1 className="text-2xl font-bold text-gray-900">Monthly School Reports</h1>
                   <p className="text-gray-600 mt-1">Submit and manage monthly school reports and submissions</p>
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors">
-                  <FileTextIcon className="h-4 w-4" />
-                  Monthly Reports
-                </button>
               </div>
 
               {/* Sub-navigation */}
@@ -649,102 +653,113 @@ function HeadTeacherDashboardContent() {
 
           {/* Nursery Assessment Tab Content */}
           {currentMainTab === 'nursery-assessment' && (
-            <div className="space-y-4">
-              <Card className="gradient-card border-0 shadow-lg">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xl text-primary-700 flex items-center gap-2">
-                    <BookOpenIcon className="h-6 w-6" />
-                    Nursery Assessment Reports
-                  </CardTitle>
-                  <CardDescription className="text-primary-600">
-                    Specialized assessment and development tracking for nursery students
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Sub-navigation for Nursery Assessment */}
-                  <div className="flex flex-col sm:flex-row gap-3 p-2 bg-gray-50 rounded-lg border">
-                    <button
-                      onClick={() => updateURL('submit-assessment')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium transition-all duration-200 ${
-                        currentTab === 'submit-assessment'
-                          ? 'bg-purple-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 hover:bg-purple-50 hover:text-purple-600 border'
-                      }`}
-                    >
-                      <PlusCircleIcon className="h-4 w-4" />
-                      Submit Assessment
-                    </button>
-                    <button
-                      onClick={() => updateURL('view-assessments')}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium transition-all duration-200 ${
-                        currentTab === 'view-assessments'
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 border'
-                      }`}
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                      View Previous Assessments
-                    </button>
-                  </div>
+            <div className="space-y-6">
+              {/* Simple Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Nursery Assessment Reports</h1>
+                  <p className="text-gray-600 mt-1">Specialized assessment and development tracking for nursery students</p>
+                </div>
+              </div>
 
-                  {/* Content Area */}
-                  <div className="min-h-[400px]">
-                    {currentTab === 'submit-assessment' && (
-                      <div className="space-y-4">
-                        <div className="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
-                          <h3 className="font-semibold text-purple-800 mb-1">Submit Nursery Assessment</h3>
-                          <p className="text-purple-700 text-sm">Complete developmental assessments and learning milestone reports for nursery students.</p>
-                        </div>
-                        <div className="text-center py-12">
-                          <div className="p-6 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-6">
-                            <BookOpenIcon className="h-16 w-16 text-purple-600" />
-                          </div>
-                          <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment Form Coming Soon</h3>
-                          <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                            The nursery assessment submission form is currently being developed. 
-                            This will include student development tracking, learning milestones, and progress monitoring.
-                          </p>
-                          <div className="mt-6 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium w-fit mx-auto">
-                            🚀 Feature in Development
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {currentTab === 'view-assessments' && (
-                      <div className="space-y-4">
-                        <div className="border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
-                          <h3 className="font-semibold text-indigo-800 mb-1">View Previous Assessments</h3>
-                          <p className="text-indigo-700 text-sm">Browse and review previously submitted nursery assessments and student progress reports.</p>
-                        </div>
-                        <div className="text-center py-12">
-                          <div className="p-6 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-full w-fit mx-auto mb-6">
-                            <EyeIcon className="h-16 w-16 text-indigo-600" />
-                          </div>
-                          <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment History Coming Soon</h3>
-                          <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                            View, search, and manage your previously submitted nursery assessments. 
-                            Track student progress over time with detailed reporting tools.
-                          </p>
-                          <div className="mt-6 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium w-fit mx-auto">
-                            � Feature in Development
-                          </div>
+              {/* Sub-navigation */}
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+                <button
+                  onClick={() => updateURL('submit-assessment')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    currentTab === 'submit-assessment'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  Submit Assessment
+                </button>
+                <button
+                  onClick={() => updateURL('view-assessments')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    currentTab === 'view-assessments'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  View Previous Assessments
+                </button>
+              </div>
+
+              {/* Content Area - Clean and Simple */}
+              <div className="bg-white">
+                {currentTab === 'submit-assessment' && (
+                  <div>
+                    {/* Blue Header Band */}
+                    <div className="bg-blue-600 text-white p-6 rounded-lg mb-6">
+                      <div className="flex items-center gap-3">
+                        <BookOpenIcon className="h-6 w-6" />
+                        <div>
+                          <h2 className="text-xl font-semibold mb-1">Submit Nursery Assessment</h2>
+                          <p className="text-blue-100">Complete developmental assessments and learning milestone reports for nursery students.</p>
                         </div>
                       </div>
-                    )}
-                    {currentTab !== 'submit-assessment' && currentTab !== 'view-assessments' && (
-                      <div className="text-center py-16">
-                        <div className="p-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full w-fit mx-auto mb-6">
-                          <BookOpenIcon className="h-16 w-16 text-amber-600" />
-                        </div>
-                        <h3 className="text-2xl font-semibold mb-3 text-gray-800">Select an Option Above</h3>
-                        <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                          Choose either "Submit Assessment" or "View Previous Assessments" to get started with nursery assessment management.
-                        </p>
+                    </div>
+                    <div className="text-center py-12">
+                      <div className="p-6 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-6">
+                        <BookOpenIcon className="h-16 w-16 text-purple-600" />
                       </div>
-                    )}
+                      <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment Form Coming Soon</h3>
+                      <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+                        The nursery assessment submission form is currently being developed. 
+                        This will include student development tracking, learning milestones, and progress monitoring.
+                      </p>
+                      <div className="mt-6 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium w-fit mx-auto">
+                        🚀 Feature in Development
+                      </div>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+                {currentTab === 'view-assessments' && (
+                  <div>
+                    {/* Blue Header Band */}
+                    <div className="bg-blue-600 text-white p-6 rounded-lg mb-6">
+                      <div className="flex items-center gap-3">
+                        <EyeIcon className="h-6 w-6" />
+                        <div>
+                          <h2 className="text-xl font-semibold mb-1">View Previous Assessments</h2>
+                          <p className="text-blue-100">Browse and review previously submitted nursery assessments and student progress reports.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center py-12">
+                      <div className="p-6 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-full w-fit mx-auto mb-6">
+                        <EyeIcon className="h-16 w-16 text-indigo-600" />
+                      </div>
+                      <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment History Coming Soon</h3>
+                      <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+                        View, search, and manage your previously submitted nursery assessments. 
+                        Track student progress over time with detailed reporting tools.
+                      </p>
+                      <div className="mt-6 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium w-fit mx-auto">
+                        📊 Feature in Development
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {currentTab !== 'submit-assessment' && currentTab !== 'view-assessments' && (
+                  <div>
+                    <div className="mb-6">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-2">Nursery Assessment Management</h2>
+                      <p className="text-gray-600 text-sm">Choose an option from the navigation above to get started.</p>
+                    </div>
+                    <div className="text-center py-16">
+                      <div className="p-6 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full w-fit mx-auto mb-6">
+                        <BookOpenIcon className="h-16 w-16 text-amber-600" />
+                      </div>
+                      <h3 className="text-2xl font-semibold mb-3 text-gray-800">Select an Option Above</h3>
+                      <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
+                        Choose either "Submit Assessment" or "View Previous Assessments" to get started with nursery assessment management.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -980,10 +995,6 @@ function HeadTeacherDashboardContent() {
                   <h1 className="text-2xl font-bold text-gray-900">Monthly School Reports</h1>
                   <p className="text-gray-600 mt-1">Submit and manage monthly school reports and submissions</p>
                 </div>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors">
-                  <FileTextIcon className="h-4 w-4" />
-                  Monthly Reports
-                </button>
               </div>
 
               {/* Sub-navigation */}
@@ -1024,9 +1035,15 @@ function HeadTeacherDashboardContent() {
               <div className="bg-white">
                 {currentTab === 'current-report' && (
                   <div>
-                    <div className="mb-6">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-2">Submit Current Period Report</h2>
-                      <p className="text-gray-600 text-sm">Complete and submit your monthly report for the current reporting period.</p>
+                    {/* Blue Header Band */}
+                    <div className="bg-blue-600 text-white p-6 rounded-lg mb-6">
+                      <div className="flex items-center gap-3">
+                        <FileTextIcon className="h-6 w-6" />
+                        <div>
+                          <h2 className="text-xl font-semibold mb-1">Submit Current Period Report</h2>
+                          <p className="text-blue-100">Complete and submit your monthly report for the current reporting period.</p>
+                        </div>
+                      </div>
                     </div>
                     <MonthlyReportForm onSuccess={handleReportSuccess} />
                   </div>
