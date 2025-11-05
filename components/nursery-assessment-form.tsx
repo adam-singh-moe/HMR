@@ -41,6 +41,14 @@ interface FormData {
       range19to26Correct: number
     }
   }
+  // Section 4: Colour Identification responses
+  colourResponses: {
+    [questionId: string]: {
+      oneCorrect: number
+      twoCorrect: number
+      threeCorrect: number
+    }
+  }
 }
 
 interface SchoolInfo {
@@ -54,7 +62,7 @@ const SECTIONS = [
   "Basic Information",
   "Autobiographical Knowledge Assessment",
   "Alphabet Recitation and Identification",
-  "Development Tracking",
+  "Colour Identification",
   "Progress Monitoring"
 ]
 
@@ -81,7 +89,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     headTeacherName: "",
     assessmentType: "",
     autobiographicalResponses: {},
-    alphabetResponses: {}
+    alphabetResponses: {},
+    colourResponses: {}
   })
 
   // Helper function to handle response changes
@@ -120,6 +129,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
+  // Helper function to handle colour response changes
+  const handleColourResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      colourResponses: {
+        ...prev.colourResponses,
+        [questionId]: {
+          oneCorrect: 0,
+          twoCorrect: 0,
+          threeCorrect: 0,
+          ...prev.colourResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
   // Load school information
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -151,12 +177,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     loadSchoolInfo()
   }, [])
 
-  // Load questions when entering sections 2 or 3
+  // Load questions when entering sections 2, 3, or 4
   useEffect(() => {
     if (currentSection === 1) {
       loadQuestions("Autobiographical Knowledge")
     } else if (currentSection === 2) {
       loadQuestions("Alphabet Recitation and Identification")
+    } else if (currentSection === 3) {
+      loadQuestions("Colour Identification")
     }
   }, [currentSection])
 
@@ -585,6 +613,111 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
+  const renderColourIdentification = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-purple-900 mb-1">Instructions</h4>
+            <p className="text-sm text-purple-700">
+              Record the total number of students based on how many colors they got correct for each question.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-purple-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Response Categories Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* 1 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        1 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.colourResponses[question.id]?.oneCorrect || ""}
+                        onChange={(e) => handleColourResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* 2 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        2 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.colourResponses[question.id]?.twoCorrect || ""}
+                        onChange={(e) => handleColourResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* 3 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        3 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.colourResponses[question.id]?.threeCorrect || ""}
+                        onChange={(e) => handleColourResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {(formData.colourResponses[question.id]?.oneCorrect || 0) +
+                         (formData.colourResponses[question.id]?.twoCorrect || 0) +
+                         (formData.colourResponses[question.id]?.threeCorrect || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
@@ -594,13 +727,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       case 2:
         return renderAlphabetRecitation()
       case 3:
-        return (
-          <div className="text-center py-12">
-            <BookOpenIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Development Tracking Section</h3>
-            <p className="text-gray-600">This section will track student development.</p>
-          </div>
-        )
+        return renderColourIdentification()
       case 4:
         return (
           <div className="text-center py-12">
