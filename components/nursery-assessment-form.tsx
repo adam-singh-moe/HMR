@@ -49,6 +49,18 @@ interface FormData {
       threeCorrect: number
     }
   }
+  // Section 5: Quantity Differentiation and Counting Fluency responses
+  quantityCountingResponses: {
+    [questionId: string]: {
+      // For Quantity Differentiation
+      numberCorrect?: number
+      numberIncorrect?: number
+      // For Counting Fluency
+      range1to10Correct?: number
+      range11to20Correct?: number
+      range20PlusCorrect?: number
+    }
+  }
 }
 
 interface SchoolInfo {
@@ -63,7 +75,7 @@ const SECTIONS = [
   "Autobiographical Knowledge Assessment",
   "Alphabet Recitation and Identification",
   "Colour Identification",
-  "Progress Monitoring"
+  "Quantity Differentiation and Counting Fluency"
 ]
 
 const ASSESSMENT_TYPES = [
@@ -90,7 +102,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     assessmentType: "",
     autobiographicalResponses: {},
     alphabetResponses: {},
-    colourResponses: {}
+    colourResponses: {},
+    quantityCountingResponses: {}
   })
 
   // Helper function to handle response changes
@@ -146,6 +159,20 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
+  // Helper function to handle quantity/counting response changes
+  const handleQuantityCountingResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      quantityCountingResponses: {
+        ...prev.quantityCountingResponses,
+        [questionId]: {
+          ...prev.quantityCountingResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
   // Load school information
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -177,7 +204,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     loadSchoolInfo()
   }, [])
 
-  // Load questions when entering sections 2, 3, or 4
+  // Load questions when entering sections 2, 3, 4, or 5
   useEffect(() => {
     if (currentSection === 1) {
       loadQuestions("Autobiographical Knowledge")
@@ -185,6 +212,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       loadQuestions("Alphabet Recitation and Identification")
     } else if (currentSection === 3) {
       loadQuestions("Colour Identification")
+    } else if (currentSection === 4) {
+      loadQuestions("Quantity Differentiation and Counting Fluency")
     }
   }, [currentSection])
 
@@ -198,12 +227,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const loadQuestions = async (section: string) => {
     setQuestionsLoading(true)
     try {
-      console.log('Loading questions for section:', section)
+     // console.log('Loading questions for section:', section)
       const result = await getNurseryAssessmentQuestions(section)
-      console.log('Questions result:', result)
+     // console.log('Questions result:', result)
       if (!result.error) {
         setQuestions(result.questions)
-        console.log('Questions loaded:', result.questions.length)
+        // console.log('Questions loaded:', result.questions.length)
       } else {
         console.error("Error loading questions:", result.error)
         toast({
@@ -718,6 +747,144 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
+  const renderQuantityAndCounting = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-orange-900 mb-1">Instructions</h4>
+            <p className="text-sm text-orange-700">
+              Record the total number of students based on their performance for each question. For Quantity Differentiation, record correct/incorrect responses. For Counting Fluency, record based on the counting range achieved.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-orange-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Conditional Response Categories based on question type */}
+                  {question.questions.toLowerCase().includes('quantity') ? (
+                    // Quantity Differentiation options
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Number Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.numberCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'numberCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Number Incorrect
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.numberIncorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'numberIncorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Counting Fluency options
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 - 10 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.range1to10Correct || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range1to10Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          11 - 20 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.range11to20Correct || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range11to20Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          20 + Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.range20PlusCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range20PlusCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {question.questions.toLowerCase().includes('quantity') ? (
+                          (formData.quantityCountingResponses[question.id]?.numberCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.numberIncorrect || 0)
+                        ) : (
+                          (formData.quantityCountingResponses[question.id]?.range1to10Correct || 0) +
+                          (formData.quantityCountingResponses[question.id]?.range11to20Correct || 0) +
+                          (formData.quantityCountingResponses[question.id]?.range20PlusCorrect || 0)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
@@ -729,13 +896,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       case 3:
         return renderColourIdentification()
       case 4:
-        return (
-          <div className="text-center py-12">
-            <BookOpenIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Progress Monitoring Section</h3>
-            <p className="text-gray-600">This section will monitor student progress.</p>
-          </div>
-        )
+        return renderQuantityAndCounting()
       default:
         return null
     }
