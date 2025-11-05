@@ -32,6 +32,15 @@ interface FormData {
       noResponseGiven: number
     }
   }
+  // Section 3: Alphabet Recitation and Identification responses
+  alphabetResponses: {
+    [questionId: string]: {
+      range1to6Correct: number
+      range7to12Correct: number
+      range13to18Correct: number
+      range19to26Correct: number
+    }
+  }
 }
 
 interface SchoolInfo {
@@ -44,7 +53,7 @@ interface SchoolInfo {
 const SECTIONS = [
   "Basic Information",
   "Autobiographical Knowledge Assessment",
-  "Learning Milestones",
+  "Alphabet Recitation and Identification",
   "Development Tracking",
   "Progress Monitoring"
 ]
@@ -71,7 +80,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     schoolGrade: "",
     headTeacherName: "",
     assessmentType: "",
-    autobiographicalResponses: {}
+    autobiographicalResponses: {},
+    alphabetResponses: {}
   })
 
   // Helper function to handle response changes
@@ -86,6 +96,24 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           incorrectResponse: 0,
           noResponseGiven: 0,
           ...prev.autobiographicalResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
+  // Helper function to handle alphabet response changes
+  const handleAlphabetResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      alphabetResponses: {
+        ...prev.alphabetResponses,
+        [questionId]: {
+          range1to6Correct: 0,
+          range7to12Correct: 0,
+          range13to18Correct: 0,
+          range19to26Correct: 0,
+          ...prev.alphabetResponses[questionId],
           [category]: value
         }
       }
@@ -123,10 +151,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     loadSchoolInfo()
   }, [])
 
-  // Load questions when entering section 2
+  // Load questions when entering sections 2 or 3
   useEffect(() => {
     if (currentSection === 1) {
       loadQuestions("Autobiographical Knowledge")
+    } else if (currentSection === 2) {
+      loadQuestions("Alphabet Recitation and Identification")
     }
   }, [currentSection])
 
@@ -353,8 +383,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   {/* Response Categories Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Full Sentence Response */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                         Full Sentence Response
                       </Label>
                       <Input
@@ -363,13 +393,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.fullSentenceResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'fullSentenceResponse', parseInt(e.target.value) || 0)}
-                        className="w-full"
+                        className="w-16"
                       />
                     </div>
                     
                     {/* Single Word or Phrase Response */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                         Single Word or Phrase Response
                       </Label>
                       <Input
@@ -378,13 +408,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'singleWordOrPhraseResponse', parseInt(e.target.value) || 0)}
-                        className="w-full"
+                        className="w-16"
                       />
                     </div>
                     
                     {/* Incorrect Response */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                         Incorrect Response
                       </Label>
                       <Input
@@ -393,13 +423,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.incorrectResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                        className="w-full"
+                        className="w-16"
                       />
                     </div>
                     
                     {/* No Response Given */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                         No Response Given
                       </Label>
                       <Input
@@ -408,7 +438,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.noResponseGiven || ""}
                         onChange={(e) => handleResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                        className="w-full"
+                        className="w-16"
                       />
                     </div>
                   </div>
@@ -434,6 +464,127 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
+  const renderAlphabetRecitation = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-green-900 mb-1">Instructions</h4>
+            <p className="text-sm text-green-700">
+              Record the total number of students based on how many they got correct for each question.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-green-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Response Categories Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 1-6 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        1 - 6 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.range1to6Correct || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'range1to6Correct', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* 7-12 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        7 - 12 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.range7to12Correct || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'range7to12Correct', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* 13-18 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        13 - 18 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.range13to18Correct || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'range13to18Correct', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* 19-26 Correct */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        19 - 26 Correct
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.range19to26Correct || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'range19to26Correct', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {(formData.alphabetResponses[question.id]?.range1to6Correct || 0) +
+                         (formData.alphabetResponses[question.id]?.range7to12Correct || 0) +
+                         (formData.alphabetResponses[question.id]?.range13to18Correct || 0) +
+                         (formData.alphabetResponses[question.id]?.range19to26Correct || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
@@ -441,13 +592,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       case 1:
         return renderAutobiographicalKnowledge()
       case 2:
-        return (
-          <div className="text-center py-12">
-            <BookOpenIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Learning Milestones Section</h3>
-            <p className="text-gray-600">This section will track learning milestones.</p>
-          </div>
-        )
+        return renderAlphabetRecitation()
       case 3:
         return (
           <div className="text-center py-12">
