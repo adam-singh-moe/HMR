@@ -691,16 +691,7 @@ function HeadTeacherDashboardContent() {
               <div className="bg-white">
                 {currentTab === 'submit-assessment' && (
                   <div>
-                    {/* Blue Header Band */}
-                    <div className="bg-blue-600 text-white p-6 rounded-lg mb-6">
-                      <div className="flex items-center gap-3">
-                        <BookOpenIcon className="h-6 w-6" />
-                        <div>
-                          <h2 className="text-xl font-semibold mb-1">Submit Nursery Assessment</h2>
-                          <p className="text-blue-100">Complete developmental assessments and learning milestone reports for nursery students.</p>
-                        </div>
-                      </div>
-                    </div>
+                    
                     <NurseryAssessmentForm onSuccess={handleReportSuccess} />
                   </div>
                 )}

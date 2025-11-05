@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
+import { getNurseryAssessmentQuestions } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
 
 interface NurseryAssessmentFormProps {
@@ -22,6 +23,15 @@ interface FormData {
   schoolGrade: string
   headTeacherName: string
   assessmentType: string
+  // Section 2: Autobiographical Knowledge Assessment responses
+  autobiographicalResponses: { 
+    [questionId: string]: {
+      fullSentenceResponse: number
+      singleWordOrPhraseResponse: number
+      incorrectResponse: number
+      noResponseGiven: number
+    }
+  }
 }
 
 interface SchoolInfo {
@@ -33,7 +43,7 @@ interface SchoolInfo {
 
 const SECTIONS = [
   "Basic Information",
-  "Student Assessment",
+  "Autobiographical Knowledge Assessment",
   "Learning Milestones",
   "Development Tracking",
   "Progress Monitoring"
@@ -51,6 +61,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const [loading, setLoading] = useState(false)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
   const [savedSections, setSavedSections] = useState<Set<number>>(new Set())
+  const [questions, setQuestions] = useState<any[]>([])
+  const [questionsLoading, setQuestionsLoading] = useState(false)
   
   const [formData, setFormData] = useState<FormData>({
     schoolName: "",
@@ -58,8 +70,27 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     date: new Date().toISOString().split('T')[0], // Today's date
     schoolGrade: "",
     headTeacherName: "",
-    assessmentType: ""
+    assessmentType: "",
+    autobiographicalResponses: {}
   })
+
+  // Helper function to handle response changes
+  const handleResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      autobiographicalResponses: {
+        ...prev.autobiographicalResponses,
+        [questionId]: {
+          fullSentenceResponse: 0,
+          singleWordOrPhraseResponse: 0,
+          incorrectResponse: 0,
+          noResponseGiven: 0,
+          ...prev.autobiographicalResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
 
   // Load school information
   useEffect(() => {
@@ -92,11 +123,47 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     loadSchoolInfo()
   }, [])
 
+  // Load questions when entering section 2
+  useEffect(() => {
+    if (currentSection === 1) {
+      loadQuestions("Autobiographical Knowledge")
+    }
+  }, [currentSection])
+
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
+  }
+
+  const loadQuestions = async (section: string) => {
+    setQuestionsLoading(true)
+    try {
+      console.log('Loading questions for section:', section)
+      const result = await getNurseryAssessmentQuestions(section)
+      console.log('Questions result:', result)
+      if (!result.error) {
+        setQuestions(result.questions)
+        console.log('Questions loaded:', result.questions.length)
+      } else {
+        console.error("Error loading questions:", result.error)
+        toast({
+          title: "Error",
+          description: "Failed to load questions: " + result.error,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error loading questions:", error)
+      toast({
+        title: "Error", 
+        description: "Failed to load questions",
+        variant: "destructive",
+      })
+    } finally {
+      setQuestionsLoading(false)
+    }
   }
 
   const saveCurrentSection = async () => {
@@ -246,18 +313,133 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
+  const renderAutobiographicalKnowledge = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-blue-900 mb-1">Instructions</h4>
+            <p className="text-sm text-blue-700">
+              Record based on the responses made by the students, the total number for each category.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Response Categories Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Full Sentence Response */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Full Sentence Response
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.autobiographicalResponses[question.id]?.fullSentenceResponse || ""}
+                        onChange={(e) => handleResponseChange(question.id, 'fullSentenceResponse', parseInt(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    {/* Single Word or Phrase Response */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Single Word or Phrase Response
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || ""}
+                        onChange={(e) => handleResponseChange(question.id, 'singleWordOrPhraseResponse', parseInt(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    {/* Incorrect Response */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Incorrect Response
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.autobiographicalResponses[question.id]?.incorrectResponse || ""}
+                        onChange={(e) => handleResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    {/* No Response Given */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700">
+                        No Response Given
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.autobiographicalResponses[question.id]?.noResponseGiven || ""}
+                        onChange={(e) => handleResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {(formData.autobiographicalResponses[question.id]?.fullSentenceResponse || 0) +
+                         (formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || 0) +
+                         (formData.autobiographicalResponses[question.id]?.incorrectResponse || 0) +
+                         (formData.autobiographicalResponses[question.id]?.noResponseGiven || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
         return renderBasicInformation()
       case 1:
-        return (
-          <div className="text-center py-12">
-            <BookOpenIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Student Assessment Section</h3>
-            <p className="text-gray-600">This section will contain student assessment details.</p>
-          </div>
-        )
+        return renderAutobiographicalKnowledge()
       case 2:
         return (
           <div className="text-center py-12">
