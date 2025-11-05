@@ -23,6 +23,7 @@ interface FormData {
   schoolGrade: string
   headTeacherName: string
   assessmentType: string
+  enrollment: string
   // Section 2: Autobiographical Knowledge Assessment responses
   autobiographicalResponses: { 
     [questionId: string]: {
@@ -151,6 +152,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     schoolGrade: "",
     headTeacherName: "",
     assessmentType: "",
+    enrollment: "",
     autobiographicalResponses: {},
     alphabetResponses: {},
     colourResponses: {},
@@ -470,6 +472,22 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             value={formData.headTeacherName}
             readOnly
             className="bg-gray-50 cursor-not-allowed"
+          />
+        </div>
+
+        {/* Enrollment */}
+        <div className="space-y-2">
+          <Label htmlFor="enrollment" className="text-sm font-medium text-gray-700">
+            Enrollment
+          </Label>
+          <Input
+            id="enrollment"
+            type="number"
+            min="0"
+            placeholder="Enter number of students enrolled"
+            value={formData.enrollment}
+            onChange={(e) => handleInputChange('enrollment', e.target.value)}
+            className="w-full"
           />
         </div>
 
