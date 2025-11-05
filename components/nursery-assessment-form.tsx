@@ -61,6 +61,54 @@ interface FormData {
       range20PlusCorrect?: number
     }
   }
+  // Section 6: Shape Recognition and One on One Correspondence responses
+  shapeRecognitionResponses: {
+    [questionId: string]: {
+      // For Shape Recognition questions
+      oneCorrect?: number
+      twoCorrect?: number
+      threeCorrect?: number
+      // For other questions (One on One Correspondence, Number Identification)
+      range1to5Correct?: number
+      range6to10Correct?: number
+    }
+  }
+  // Section 7: Motor Skills responses
+  motorSkillsResponses: {
+    [questionId: string]: {
+      // For Picture of Yourself
+      range1to4Correct?: number
+      range5to8Correct?: number
+      // For Pencil Grip
+      cylindricalGrasp?: number
+      digital?: number
+      modifiedTripodGrasp?: number
+      tripod?: number
+      // For Letter Formation
+      scribbleUR?: number
+      scribbleR?: number
+      approximation?: number
+      name?: number
+    }
+  }
+  // Section 8: Gross Motor Skills responses
+  grossMotorSkillsResponses: {
+    [questionId: string]: {
+      // For throw and catch (1-5 times)
+      oneTime?: number
+      twoTimes?: number
+      threeTimes?: number
+      fourTimes?: number
+      fiveTimes?: number
+      // For one leg hop and two leg hop (1-3 times)
+      oneLegOneTime?: number
+      oneLegTwoTimes?: number
+      oneLegThreeTimes?: number
+      // For stand on one leg (left/right)
+      left?: number
+      right?: number
+    }
+  }
 }
 
 interface SchoolInfo {
@@ -75,7 +123,10 @@ const SECTIONS = [
   "Autobiographical Knowledge Assessment",
   "Alphabet Recitation and Identification",
   "Colour Identification",
-  "Quantity Differentiation and Counting Fluency"
+  "Quantity Differentiation and Counting Fluency",
+  "Shape Recognition and One on One Correspondence",
+  "Motor Skills",
+  "Gross Motor Skills"
 ]
 
 const ASSESSMENT_TYPES = [
@@ -103,7 +154,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     autobiographicalResponses: {},
     alphabetResponses: {},
     colourResponses: {},
-    quantityCountingResponses: {}
+    quantityCountingResponses: {},
+    shapeRecognitionResponses: {},
+    motorSkillsResponses: {},
+    grossMotorSkillsResponses: {}
   })
 
   // Helper function to handle response changes
@@ -173,6 +227,58 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
+  // Helper function to handle shape recognition response changes
+  const handleShapeRecognitionResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      shapeRecognitionResponses: {
+        ...prev.shapeRecognitionResponses,
+        [questionId]: {
+          ...prev.shapeRecognitionResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
+  // Helper function to handle motor skills response changes
+  const handleMotorSkillsResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      motorSkillsResponses: {
+        ...prev.motorSkillsResponses,
+        [questionId]: {
+          ...prev.motorSkillsResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
+  // Helper function to handle gross motor skills response changes
+  const handleGrossMotorSkillsResponseChange = (questionId: string, category: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      grossMotorSkillsResponses: {
+        ...prev.grossMotorSkillsResponses,
+        [questionId]: {
+          oneTime: 0,
+          twoTimes: 0,
+          threeTimes: 0,
+          fourTimes: 0,
+          fiveTimes: 0,
+          oneLegOneTime: 0,
+          oneLegTwoTimes: 0,
+          oneLegThreeTimes: 0,
+          left: 0,
+          right: 0,
+          ...prev.grossMotorSkillsResponses[questionId],
+          [category]: value
+        }
+      }
+    }))
+  }
+
   // Load school information
   useEffect(() => {
     const loadSchoolInfo = async () => {
@@ -204,7 +310,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     loadSchoolInfo()
   }, [])
 
-  // Load questions when entering sections 2, 3, 4, or 5
+  // Load questions when entering sections 2, 3, 4, 5, 6, 7, or 8
   useEffect(() => {
     if (currentSection === 1) {
       loadQuestions("Autobiographical Knowledge")
@@ -214,6 +320,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       loadQuestions("Colour Identification")
     } else if (currentSection === 4) {
       loadQuestions("Quantity Differentiation and Counting Fluency")
+    } else if (currentSection === 5) {
+      loadQuestions("Shape Recognition and One on One Correspondence")
+    } else if (currentSection === 6) {
+      loadQuestions("Motor Skills")
+    } else if (currentSection === 7) {
+      loadQuestions("Gross Motor Skills")
     }
   }, [currentSection])
 
@@ -885,6 +997,603 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
+  const renderShapeRecognition = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-indigo-900 mb-1">Instructions</h4>
+            <p className="text-sm text-indigo-700">
+              Record the total number of students based on their correct and incorrect responses for each shape recognition and one-to-one correspondence question.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-indigo-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Conditional Response Categories based on question type */}
+                  {question.questions.toLowerCase().includes('shape') ? (
+                    // Shape Recognition options (1, 2, 3 correct)
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.oneCorrect || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          2 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.twoCorrect || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          3 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.threeCorrect || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Other questions options (1-5 correct, 6-10 correct)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 - 5 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.range1to5Correct || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'range1to5Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          6 - 10 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.range6to10Correct || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'range6to10Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {question.questions.toLowerCase().includes('shape') ? (
+                          (formData.shapeRecognitionResponses[question.id]?.oneCorrect || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.twoCorrect || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.threeCorrect || 0)
+                        ) : (
+                          (formData.shapeRecognitionResponses[question.id]?.range1to5Correct || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.range6to10Correct || 0)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  const renderMotorSkills = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-teal-900 mb-1">Instructions</h4>
+            <p className="text-sm text-teal-700">
+              Record the total number of students based on their correct and incorrect responses for each motor skills assessment question.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-teal-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Conditional Response Categories based on question type */}
+                  {question.questions.toLowerCase().includes('picture') ? (
+                    // Picture of Yourself options (1-4 correct, 5-8 correct)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 - 4 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.range1to4Correct || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'range1to4Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          5 - 8 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.range5to8Correct || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'range5to8Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip') ? (
+                    // Pencil Grip options
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Cylindrical Grasp
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.cylindricalGrasp || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'cylindricalGrasp', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Digital
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.digital || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'digital', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Modified Tripod Grasp
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.modifiedTripodGrasp || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'modifiedTripodGrasp', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Tripod
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.tripod || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'tripod', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
+                    // Letter Formation options
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Scribble (UR)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.scribbleUR || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'scribbleUR', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Scribble (R)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.scribbleR || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'scribbleR', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Approximation
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.approximation || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'approximation', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Name
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.name || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'name', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Default fallback (should not be reached)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="text-gray-500">No options available for this question type</div>
+                    </div>
+                  )}
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {question.questions.toLowerCase().includes('picture') ? (
+                          (formData.motorSkillsResponses[question.id]?.range1to4Correct || 0) +
+                          (formData.motorSkillsResponses[question.id]?.range5to8Correct || 0)
+                        ) : question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip') ? (
+                          (formData.motorSkillsResponses[question.id]?.cylindricalGrasp || 0) +
+                          (formData.motorSkillsResponses[question.id]?.digital || 0) +
+                          (formData.motorSkillsResponses[question.id]?.modifiedTripodGrasp || 0) +
+                          (formData.motorSkillsResponses[question.id]?.tripod || 0)
+                        ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
+                          (formData.motorSkillsResponses[question.id]?.scribbleUR || 0) +
+                          (formData.motorSkillsResponses[question.id]?.scribbleR || 0) +
+                          (formData.motorSkillsResponses[question.id]?.approximation || 0) +
+                          (formData.motorSkillsResponses[question.id]?.name || 0)
+                        ) : 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  const renderGrossMotorSkills = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <BookOpenIcon className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-emerald-900 mb-1">Instructions</h4>
+            <p className="text-sm text-emerald-700">
+              Record the total number of students based on their performance for each gross motor skills assessment question. Scoring varies by activity: Throw/Catch (1-5 times), Hop activities (1-3 times), Stand on One Leg (Left/Right).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {questionsLoading ? (
+        <div className="text-center py-8">
+          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <p className="text-gray-600">Loading assessment questions...</p>
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-8">
+          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {questions.map((question, index) => (
+            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-emerald-600">{index + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  
+                  {/* Conditional Response Categories based on question type */}
+                  {(question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) ? (
+                    // Throw and Catch: 1-5 Times
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 Time
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.oneTime || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneTime', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          2 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.twoTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'twoTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          3 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.threeTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'threeTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          4 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.fourTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'fourTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          5 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.fiveTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'fiveTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (question.questions.toLowerCase().includes('hop')) ? (
+                    // One/Two Leg Hop: 1-3 Times
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          1 Time
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.oneLegOneTime || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegOneTime', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          2 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.oneLegTwoTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegTwoTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          3 Times
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.oneLegThreeTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegThreeTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (question.questions.toLowerCase().includes('stand')) ? (
+                    // Stand on One Leg: Left/Right
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Left
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.left || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'left', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Right
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.right || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'right', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Default: Number Correct/Incorrect (fallback)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Number Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.oneTime || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneTime', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Number Incorrect
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.twoTimes || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'twoTimes', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Total Count Display */}
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Total Students:</span>
+                      <span className="font-medium text-gray-900">
+                        {(() => {
+                          const responses = formData.grossMotorSkillsResponses[question.id] || {}
+                          if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
+                            return (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0)
+                          } else if (question.questions.toLowerCase().includes('hop')) {
+                            return (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0)
+                          } else if (question.questions.toLowerCase().includes('stand')) {
+                            return (responses.left || 0) + (responses.right || 0)
+                          } else {
+                            return (responses.oneTime || 0) + (responses.twoTimes || 0)
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const renderCurrentSection = () => {
     switch (currentSection) {
       case 0:
@@ -897,6 +1606,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         return renderColourIdentification()
       case 4:
         return renderQuantityAndCounting()
+      case 5:
+        return renderShapeRecognition()
+      case 6:
+        return renderMotorSkills()
+      case 7:
+        return renderGrossMotorSkills()
       default:
         return null
     }
