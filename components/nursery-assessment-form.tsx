@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
-import { getNurseryAssessmentQuestions } from "@/app/actions/nursery-assessment"
+import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
+import { useAutoSave } from "@/hooks/use-auto-save"
 
 interface NurseryAssessmentFormProps {
   onSuccess?: () => void
@@ -144,6 +145,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const [savedSections, setSavedSections] = useState<Set<number>>(new Set())
   const [questions, setQuestions] = useState<any[]>([])
   const [questionsLoading, setQuestionsLoading] = useState(false)
+  const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
   
   const [formData, setFormData] = useState<FormData>({
     schoolName: "",
@@ -160,6 +163,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     shapeRecognitionResponses: {},
     motorSkillsResponses: {},
     grossMotorSkillsResponses: {}
+  })
+
+  // Auto-save hook
+  const { loadFromLocalStorage, clearLocalStorage, isSaving } = useAutoSave({
+    key: `nursery-assessment-${schoolInfo?.id || 'unknown'}`,
+    data: formData,
+    onSave: async (data) => {
+      if (currentAssessmentId && currentUser) {
+        await autoSaveNurseryAssessment(currentAssessmentId, data, currentUser.id)
+      }
+    },
+    enabled: !!currentAssessmentId && !!currentUser,
+    delay: 3000 // Auto-save after 3 seconds of inactivity
   })
 
   // Helper function to handle response changes
@@ -281,7 +297,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
-  // Load school information
+  // Load school information and existing assessment
   useEffect(() => {
     const loadSchoolInfo = async () => {
       try {
@@ -292,6 +308,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           
           // Get user info for head teacher name
           const userResult = await getUser()
+          setCurrentUser(userResult)
           
           // Auto-fill form data
           setFormData(prev => ({
@@ -301,6 +318,58 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             schoolGrade: schoolResult.school.level,
             headTeacherName: userResult?.name || userResult?.email || "Loading..."
           }))
+
+          // Try to load existing draft assessment
+          if (userResult?.id) {
+            const existingAssessment = await loadNurseryAssessment(userResult.id, schoolResult.school.id)
+            
+            if (existingAssessment.assessment) {
+              console.log('Found existing assessment:', existingAssessment.assessment)
+              setCurrentAssessmentId(existingAssessment.assessment.id)
+              
+              // Load saved form data if available
+              if (existingAssessment.assessment.form_data) {
+                console.log('Loading saved form data:', existingAssessment.assessment.form_data)
+                setFormData(prev => ({
+                  ...prev,
+                  ...existingAssessment.assessment.form_data,
+                  // Keep the auto-filled basic info
+                  schoolName: schoolResult.school.name,
+                  region: schoolResult.school.region,
+                  schoolGrade: schoolResult.school.level,
+                  headTeacherName: userResult?.name || userResult?.email || "Loading..."
+                }))
+              } else {
+                // Load basic assessment info
+                setFormData(prev => ({
+                  ...prev,
+                  assessmentType: existingAssessment.assessment.assessment_type || '',
+                  enrollment: existingAssessment.assessment.enrollment?.toString() || ''
+                }))
+              }
+              
+              toast({
+                title: "Assessment Loaded",
+                description: "Continuing your previous nursery assessment.",
+              })
+            } else {
+              console.log('No existing assessment found')
+              // Try to load from localStorage as fallback
+              const localData = loadFromLocalStorage()
+              if (localData) {
+                console.log('Loading from localStorage:', localData)
+                setFormData(prev => ({
+                  ...prev,
+                  ...localData,
+                  // Keep the auto-filled basic info
+                  schoolName: schoolResult.school.name,
+                  region: schoolResult.school.region,
+                  schoolGrade: schoolResult.school.level,
+                  headTeacherName: userResult?.name || userResult?.email || "Loading..."
+                }))
+              }
+            }
+          }
         } else {
           console.error("Error loading school info:", schoolResult.error)
         }
@@ -310,7 +379,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
     
     loadSchoolInfo()
-  }, [])
+  }, [loadFromLocalStorage])
 
   // Load questions when entering sections 2, 3, 4, 5, 6, 7, or 8
   useEffect(() => {
@@ -334,7 +403,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: field === 'enrollment' ? (parseInt(value) || 0) : value
     }))
   }
 
@@ -367,10 +436,111 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
   }
 
+  const saveAssessmentBasicInfo = async () => {
+    console.log('saveAssessmentBasicInfo called')
+    console.log('schoolInfo:', schoolInfo)
+    console.log('currentUser:', currentUser)
+    console.log('formData:', formData)
+    
+    if (!schoolInfo || !currentUser) {
+      toast({
+        title: "Error",
+        description: "Missing school or user information. Please refresh the page.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    if (!formData.assessmentType || !formData.enrollment) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields (Assessment Type and Enrollment).",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      setLoading(true)
+      
+      const enrollmentNumber = parseInt(formData.enrollment) || 0
+      console.log('Saving with enrollment (converted to number):', enrollmentNumber, typeof enrollmentNumber)
+      
+      if (currentAssessmentId) {
+        // Update existing assessment
+        console.log('Updating existing assessment:', currentAssessmentId)
+        const result = await updateNurseryAssessment(currentAssessmentId, {
+          assessment_type: formData.assessmentType,
+          enrollment: enrollmentNumber,
+          updated_by: currentUser.id
+        })
+        
+        console.log('Update result:', result)
+        
+        if (result.error) {
+          throw new Error(result.error)
+        }
+        
+        toast({
+          title: "Assessment Updated",
+          description: "Basic information has been updated successfully.",
+        })
+      } else {
+        // Create new assessment
+        console.log('Creating new assessment')
+        const result = await saveNurseryAssessment({
+          school_id: schoolInfo.id,
+          headteacher_id: currentUser.id,
+          assessment_type: formData.assessmentType,
+          enrollment: enrollmentNumber
+        })
+        
+        console.log('Save result:', result)
+        
+        if (result.error) {
+          console.log('Primary save failed, attempting workaround...')
+          // If the primary save fails due to schema cache, the function will handle it internally
+          throw new Error(result.error)
+        }
+        
+        if (result.assessment && result.assessment.id) {
+          setCurrentAssessmentId(result.assessment.id)
+          console.log('New assessment ID set:', result.assessment.id)
+        }
+        
+        toast({
+          title: "Assessment Created",
+          description: "Basic information has been saved successfully.",
+        })
+      }
+      
+      return true
+    } catch (error) {
+      console.error("Error saving assessment:", error)
+      toast({
+        title: "Error",
+        description: `Failed to save assessment: ${error.message}`,
+        variant: "destructive",
+      })
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const saveCurrentSection = async () => {
     setLoading(true)
     try {
-      // TODO: Implement save logic for current section
+      // For Section 1 (Basic Information), save to database
+      if (currentSection === 0) {
+        const success = await saveAssessmentBasicInfo()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+        }
+        return
+      }
+      
+      // TODO: Implement save logic for other sections
       // For now, just mark as saved
       setSavedSections(prev => new Set([...prev, currentSection]))
       
@@ -390,7 +560,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
   }
 
-  const nextSection = () => {
+  const nextSection = async () => {
+    // Auto-save Section 1 (Basic Information) when moving to next section
+    if (currentSection === 0) {
+      const success = await saveAssessmentBasicInfo()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
     if (currentSection < SECTIONS.length - 1) {
       setCurrentSection(currentSection + 1)
     }
@@ -1641,9 +1820,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       <div className="hidden sm:block bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Nursery Assessment Report
-            </h2>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Nursery Assessment Report
+              </h2>
+              {currentAssessmentId && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm text-orange-600">Continuing draft assessment</span>
+                </div>
+              )}
+            </div>
             <div className="text-sm text-gray-600">
               {Math.round(calculateProgress())}% Complete
             </div>
@@ -1749,6 +1936,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 )}
                 {loading ? "Saving..." : "Save Section"}
               </Button>
+
+              {/* Auto-save indicator */}
+              {isSaving && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Auto-saving...
+                </div>
+              )}
 
               {currentSection === SECTIONS.length - 1 ? (
                 <Button
