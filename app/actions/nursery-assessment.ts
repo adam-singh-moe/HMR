@@ -37,6 +37,33 @@ export async function getNurseryAssessmentQuestions(section: string) {
   }
 }
 
+// Load saved responses for an assessment
+export async function loadNurseryAssessmentResponses(assessment_id: string) {
+  try {
+    console.log('Loading assessment responses for assessment_id:', assessment_id)
+    const supabase = createServiceRoleSupabaseClient()
+    
+    const { data: responses, error } = await supabase
+      .from('hmr_nursery_assessment_answers')
+      .select('*')
+      .eq('assessment_id', assessment_id)
+      .order('created_at', { ascending: true })
+
+    console.log('Assessment responses loaded:', responses)
+    console.log('Responses load error:', error)
+
+    if (error) {
+      console.error('Error loading assessment responses:', error)
+      return { responses: [], error: "Failed to load responses: " + error.message }
+    }
+
+    return { responses: responses || [], error: null }
+  } catch (err) {
+    console.error('Error in loadNurseryAssessmentResponses:', err)
+    return { responses: [], error: "An unexpected error occurred while loading responses" }
+  }
+}
+
 // Load existing nursery assessment for a user/school
 export async function loadNurseryAssessment(headteacher_id: string, school_id: string) {
   try {
@@ -499,5 +526,36 @@ export async function saveEnrollmentOnly(assessmentId: string, enrollment: numbe
   } catch (err) {
     console.error('Error in saveEnrollmentOnly:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+
+// Function to load saved responses from the answers table
+export async function loadSavedResponses(assessmentId: string) {
+  try {
+    console.log('Loading saved responses for assessment:', assessmentId)
+    const supabase = createServiceRoleSupabaseClient()
+    
+    const { data, error } = await supabase
+      .from('hmr_nursery_assessment_answers')
+      .select(`
+        *,
+        hmr_nursery_assessment_questions_options!inner(
+          options,
+          section
+        )
+      `)
+      .eq('assessment_id', assessmentId)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error loading saved responses:', error)
+      return { responses: [], error: error.message }
+    }
+
+    console.log('Loaded responses from database:', data)
+    return { responses: data || [], error: null }
+  } catch (err) {
+    console.error('Error in loadSavedResponses:', err)
+    return { responses: [], error: 'An unexpected error occurred' }
   }
 }

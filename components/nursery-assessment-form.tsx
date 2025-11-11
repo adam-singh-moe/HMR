@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
-import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions } from "@/app/actions/nursery-assessment"
+import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
 import { useAutoSave } from "@/hooks/use-auto-save"
 
@@ -165,6 +165,252 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     motorSkillsResponses: {},
     grossMotorSkillsResponses: {}
   })
+
+  // Helper function to map loaded responses to form state
+  const mapResponsestoFormData = (responses: any[]) => {
+    const responseMap: any = {
+      autobiographicalResponses: {},
+      alphabetResponses: {},
+      colourResponses: {},
+      quantityCountingResponses: {},
+      shapeRecognitionResponses: {},
+      motorSkillsResponses: {},
+      grossMotorSkillsResponses: {}
+    }
+
+    console.log('Processing responses for mapping:', responses.length)
+
+    // Map responses by question_id and option_id
+    responses.forEach(response => {
+      const questionId = response.question_id
+      const optionId = response.option_id
+      const answer = parseInt(response.answer) || 0
+
+      console.log(`Mapping: questionId=${questionId}, optionId=${optionId}, answer=${answer}`)
+
+      // Section 2: Autobiographical Knowledge Assessment
+      if (optionId === '1e3164fd-8dc4-4169-ad42-1d6ec4e4e267') { // Full Sentence Response
+        if (!responseMap.autobiographicalResponses[questionId]) {
+          responseMap.autobiographicalResponses[questionId] = { fullSentenceResponse: 0, singleWordOrPhraseResponse: 0, incorrectResponse: 0, noResponseGiven: 0 }
+        }
+        responseMap.autobiographicalResponses[questionId].fullSentenceResponse = answer
+      } else if (optionId === '4a0b9823-f028-42e3-9c26-a138b0722cd8') { // Single Word or Phrase Response
+        if (!responseMap.autobiographicalResponses[questionId]) {
+          responseMap.autobiographicalResponses[questionId] = { fullSentenceResponse: 0, singleWordOrPhraseResponse: 0, incorrectResponse: 0, noResponseGiven: 0 }
+        }
+        responseMap.autobiographicalResponses[questionId].singleWordOrPhraseResponse = answer
+      } else if (optionId === 'bbd10cc4-0edc-4e50-b80b-e903573a04ca') { // Incorrect Response
+        if (!responseMap.autobiographicalResponses[questionId]) {
+          responseMap.autobiographicalResponses[questionId] = { fullSentenceResponse: 0, singleWordOrPhraseResponse: 0, incorrectResponse: 0, noResponseGiven: 0 }
+        }
+        responseMap.autobiographicalResponses[questionId].incorrectResponse = answer
+      } else if (optionId === 'c457615a-a63a-44bd-9ffe-5a5973cc75c7') { // No Response Given
+        if (!responseMap.autobiographicalResponses[questionId]) {
+          responseMap.autobiographicalResponses[questionId] = { fullSentenceResponse: 0, singleWordOrPhraseResponse: 0, incorrectResponse: 0, noResponseGiven: 0 }
+        }
+        responseMap.autobiographicalResponses[questionId].noResponseGiven = answer
+
+      // Section 3: Alphabet Recitation and Identification
+      } else if (optionId === '689f84cf-2e07-44ff-8d36-e7f9457979f8') { // 1-6 Correct
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+        }
+        responseMap.alphabetResponses[questionId].range1to6Correct = answer
+      } else if (optionId === 'b5f8ffa7-a703-43ed-9a3e-4e4716d7a028') { // 7-12 Correct
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+        }
+        responseMap.alphabetResponses[questionId].range7to12Correct = answer
+      } else if (optionId === '1189716c-57c4-4136-8475-5866acb3de3a') { // 13-18 Correct
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+        }
+        responseMap.alphabetResponses[questionId].range13to18Correct = answer
+      } else if (optionId === '644cb1ba-cd4d-43d9-b014-ecaf8e13edd9') { // 19-26 Correct
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+        }
+        responseMap.alphabetResponses[questionId].range19to26Correct = answer
+
+      // Section 4: Colour Identification
+      } else if (optionId === '16ef329d-748d-43e3-90fe-587fe8f9541e') { // 1 Correct
+        if (!responseMap.colourResponses[questionId]) {
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+        }
+        responseMap.colourResponses[questionId].oneCorrect = answer
+      } else if (optionId === '4d479a15-4fbc-4da2-a8ce-51da25cb37c8') { // 2 Correct
+        if (!responseMap.colourResponses[questionId]) {
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+        }
+        responseMap.colourResponses[questionId].twoCorrect = answer
+      } else if (optionId === 'b47fe6cf-8e87-4927-94d2-1463c50b65a9') { // 3 Correct
+        if (!responseMap.colourResponses[questionId]) {
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+        }
+        responseMap.colourResponses[questionId].threeCorrect = answer
+
+      // Section 5: Quantity Differentiation and Counting Fluency
+      } else if (optionId === 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3') { // Number Correct (Quantity)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].numberCorrect = answer
+      } else if (optionId === '1125b912-003e-4911-b653-18087f8c89a4') { // Number Incorrect (Quantity)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].numberIncorrect = answer
+      } else if (optionId === '13da4461-dcac-472f-91f4-5a3ab7e44168') { // 1-10 Correct (Counting)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].range1to10Correct = answer
+      } else if (optionId === '8824fccf-fa0b-4675-bca1-8cc4a54c996e') { // 11-20 Correct (Counting)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].range11to20Correct = answer
+      } else if (optionId === 'ba0ca8fc-e152-4a9a-aa4a-d6bc9217e0a5') { // 20+ Correct (Counting)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].range20PlusCorrect = answer
+
+      // Section 6: Shape Recognition and One on One Correspondence
+      } else if (optionId === 'd4abf4a1-4b44-44af-bc02-efc3d74be0e3') { // 1 Correct (Shape)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].oneCorrect = answer
+      } else if (optionId === '0a7e66fe-56ec-4b8e-ac1f-b161de32a1d3') { // 2 Correct (Shape)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].twoCorrect = answer
+      } else if (optionId === 'd5513101-0748-4d8f-afec-f46f8240be20') { // 3 Correct (Shape)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].threeCorrect = answer
+      } else if (optionId === '2d47b560-bac0-42b7-8fe3-a471bd19f14e') { // 1-5 Correct (One on One)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].range1to5Correct = answer
+      } else if (optionId === '12ab8b04-82a9-4726-b941-317458e86559') { // 6-10 Correct (One on One)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].range6to10Correct = answer
+
+      // Section 7: Motor Skills
+      } else if (optionId === '16e7f2c4-776e-432e-9b96-af8aa4cacdfa') { // 1-4 Correct (Picture)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].range1to4Correct = answer
+      } else if (optionId === 'f3c2c73c-6ff6-438e-9c15-7efe0b326379') { // 5-8 Correct (Picture)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].range5to8Correct = answer
+      } else if (optionId === '23d85ccf-8b1c-4fc0-9a37-fd309b389f7e') { // Cylindrical Grasp (Pencil Grip)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].cylindricalGrasp = answer
+      } else if (optionId === 'e390cf3e-32aa-403f-9d57-80a5ab61bf6a') { // Digital (Pencil Grip)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].digital = answer
+      } else if (optionId === '63020f32-d2d5-4bd4-bc5e-cf69cfa26c7e') { // Modified Tripod Grasp (Pencil Grip)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].modifiedTripodGrasp = answer
+      } else if (optionId === '10738f03-47e5-4ec9-b30d-668e42c48dd6') { // Tripod (Pencil Grip)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].tripod = answer
+      } else if (optionId === '0a8be88c-5dd4-4694-9351-dbb80e031b68') { // Scribble UR (Letter Formation)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].scribbleUR = answer
+      } else if (optionId === 'bf43cfde-5b39-4ab2-8736-90d2f60e0504') { // Scribble R (Letter Formation)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].scribbleR = answer
+      } else if (optionId === '05db3c6c-7a0c-4904-add3-fc719f7acba4') { // Approximation (Letter Formation)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].approximation = answer
+      } else if (optionId === '7533234a-1598-4176-a8ed-8a5e5cb77193') { // Name (Letter Formation)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].name = answer
+
+      // Section 8: Gross Motor Skills
+      } else if (optionId === '62b6e481-811e-43ee-88a3-0a1d8f53aa12') { // 1 Time (Throw/Catch)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].oneTime = answer
+      } else if (optionId === 'e3e921e1-5296-4c15-bce8-72289447df1e') { // 2 Times (Throw/Catch)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].twoTimes = answer
+      } else if (optionId === '0f460701-938e-4c32-97aa-1ad7b35499cc') { // 3 Times (Throw/Catch)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].threeTimes = answer
+      } else if (optionId === '46e086cf-f773-4578-aa07-ad694a6a91c7') { // 4 Times (Throw/Catch)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].fourTimes = answer
+      } else if (optionId === 'cfbbace8-c1b2-4d17-aefd-657736332adb') { // 5 Times (Throw/Catch)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].fiveTimes = answer
+      } else if (optionId === '62b6e481-811e-43ee-88a3-0a1d8f53aa12') { // One Leg 1 Time (Hop) - reusing same ID
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].oneLegOneTime = answer
+      } else if (optionId === 'e3e921e1-5296-4c15-bce8-72289447df1e') { // One Leg 2 Times (Hop) - reusing same ID
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].oneLegTwoTimes = answer
+      } else if (optionId === '0f460701-938e-4c32-97aa-1ad7b35499cc') { // One Leg 3 Times (Hop) - reusing same ID
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].oneLegThreeTimes = answer
+      } else if (optionId === '339fb99d-50ad-4eac-b3af-b69ed44605fc') { // Left (Stand on one leg)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].left = answer
+      } else if (optionId === '5f106448-51de-47a2-a7ce-edf46884aaef') { // Right (Stand on one leg)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].right = answer
+      }
+    })
+
+    return responseMap
+  }
 
   // Auto-save hook
   const { loadFromLocalStorage, clearLocalStorage, isSaving } = useAutoSave({
@@ -462,6 +708,243 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
   }
 
+  // Function to save Section 6 responses to database
+  const saveSection6Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 6 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 6 responses to database...')
+      
+      // Iterate through all shape recognition responses and save them
+      for (const [questionId, responses] of Object.entries(formData.shapeRecognitionResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Shape Recognition and One on One Correspondence
+            let optionId = ''
+            
+            switch (category) {
+              case 'oneCorrect':
+                optionId = 'd4abf4a1-4b44-44af-bc02-efc3d74be0e3' // 1 Correct
+                break
+              case 'twoCorrect':
+                optionId = '0a7e66fe-56ec-4b8e-ac1f-b161de32a1d3' // 2 Correct
+                break
+              case 'threeCorrect':
+                optionId = 'd5513101-0748-4d8f-afec-f46f8240be20' // 3 Correct
+                break
+              case 'range1to5Correct':
+                optionId = '2d47b560-bac0-42b7-8fe3-a471bd19f14e' // 1 - 5 Correct
+                break
+              case 'range6to10Correct':
+                optionId = '12ab8b04-82a9-4726-b941-317458e86559' // 6 - 10 Correct
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 6 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 6 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 6 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  // Function to save Section 7 responses to database
+  const saveSection7Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 7 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 7 responses to database...')
+      
+      // Iterate through all motor skills responses and save them
+      for (const [questionId, responses] of Object.entries(formData.motorSkillsResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Motor Skills
+            let optionId = ''
+            
+            switch (category) {
+              case 'range1to4Correct':
+                optionId = '16e7f2c4-776e-432e-9b96-af8aa4cacdfa' // 1 - 4 Correct
+                break
+              case 'range5to8Correct':
+                optionId = 'f3c2c73c-6ff6-438e-9c15-7efe0b326379' // 5 - 8 Correct
+                break
+              case 'cylindricalGrasp':
+                optionId = '23d85ccf-8b1c-4fc0-9a37-fd309b389f7e' // Cylindrical Grasp
+                break
+              case 'digital':
+                optionId = 'e390cf3e-32aa-403f-9d57-80a5ab61bf6a' // Digital
+                break
+              case 'modifiedTripodGrasp':
+                optionId = '63020f32-d2d5-4bd4-bc5e-cf69cfa26c7e' // Modified Tripod Grasp
+                break
+              case 'tripod':
+                optionId = '10738f03-47e5-4ec9-b30d-668e42c48dd6' // Tripod
+                break
+              case 'scribbleUR':
+                optionId = '0a8be88c-5dd4-4694-9351-dbb80e031b68' // Scribble (UR)
+                break
+              case 'scribbleR':
+                optionId = 'bf43cfde-5b39-4ab2-8736-90d2f60e0504' // Scribble (R)
+                break
+              case 'approximation':
+                optionId = '05db3c6c-7a0c-4904-add3-fc719f7acba4' // Approximation
+                break
+              case 'name':
+                optionId = '7533234a-1598-4176-a8ed-8a5e5cb77193' // Name
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 7 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 7 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 7 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  // Function to save Section 8 responses to database
+  const saveSection8Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 8 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 8 responses to database...')
+      
+      // Iterate through all gross motor skills responses and save them
+      for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Gross Motor Skills
+            let optionId = ''
+            
+            switch (category) {
+              case 'oneTime':
+                optionId = '62b6e481-811e-43ee-88a3-0a1d8f53aa12' // 1 Time
+                break
+              case 'twoTimes':
+                optionId = 'e3e921e1-5296-4c15-bce8-72289447df1e' // 2 Times
+                break
+              case 'threeTimes':
+                optionId = '0f460701-938e-4c32-97aa-1ad7b35499cc' // 3 Times
+                break
+              case 'fourTimes':
+                optionId = '46e086cf-f773-4578-aa07-ad694a6a91c7' // 4 Times
+                break
+              case 'fiveTimes':
+                optionId = 'cfbbace8-c1b2-4d17-aefd-657736332adb' // 5 Times
+                break
+              case 'oneLegOneTime':
+                optionId = '62b6e481-811e-43ee-88a3-0a1d8f53aa12' // 1 Time (reused for One Leg Hop)
+                break
+              case 'oneLegTwoTimes':
+                optionId = 'e3e921e1-5296-4c15-bce8-72289447df1e' // 2 Times (reused for One Leg Hop)
+                break
+              case 'oneLegThreeTimes':
+                optionId = '0f460701-938e-4c32-97aa-1ad7b35499cc' // 3 Times (reused for One Leg Hop)
+                break
+              case 'left':
+                optionId = '339fb99d-50ad-4eac-b3af-b69ed44605fc' // Left
+                break
+              case 'right':
+                optionId = '5f106448-51de-47a2-a7ce-edf46884aaef' // Right
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 8 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 8 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 8 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
   // Helper function to handle alphabet response changes
   const handleAlphabetResponseChange = (questionId: string, category: string, value: number) => {
     setFormData(prev => ({
@@ -593,30 +1076,65 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               console.log('Found existing assessment:', existingAssessment.assessment)
               setCurrentAssessmentId(existingAssessment.assessment.id)
               
-              // Load saved form data if available
+              // Load saved responses from answers table
+              const responsesResult = await loadSavedResponses(existingAssessment.assessment.id)
+              if (responsesResult.responses && responsesResult.responses.length > 0) {
+                console.log('Loading saved responses:', responsesResult.responses)
+                const mappedResponses = mapResponsestoFormData(responsesResult.responses)
+                console.log('Mapped responses:', mappedResponses)
+                
+                setFormData(prev => ({
+                  ...prev,
+                  ...mappedResponses,
+                  // Keep the auto-filled basic info
+                  schoolName: schoolResult.school.name,
+                  region: schoolResult.school.region,
+                  schoolGrade: schoolResult.school.level,
+                  headTeacherName: userResult?.name || userResult?.email || "Loading...",
+                  // Load basic assessment info
+                  assessmentType: existingAssessment.assessment.assessment_type || prev.assessmentType,
+                  enrollment: existingAssessment.assessment.enrollment?.toString() || prev.enrollment
+                }))
+              } else {
+                // No responses saved yet, just load basic info
+                setFormData(prev => ({
+                  ...prev,
+                  // Keep the auto-filled basic info
+                  schoolName: schoolResult.school.name,
+                  region: schoolResult.school.region,
+                  schoolGrade: schoolResult.school.level,
+                  headTeacherName: userResult?.name || userResult?.email || "Loading...",
+                  // Load basic assessment info
+                  assessmentType: existingAssessment.assessment.assessment_type || '',
+                  enrollment: existingAssessment.assessment.enrollment?.toString() || ''
+                }))
+              }
+              
+              // Load saved form data from JSON field if available (for any other data)
               if (existingAssessment.assessment.form_data) {
-                console.log('Loading saved form data:', existingAssessment.assessment.form_data)
+                console.log('Also loading saved form_data JSON:', existingAssessment.assessment.form_data)
                 setFormData(prev => ({
                   ...prev,
                   ...existingAssessment.assessment.form_data,
+                  // Preserve what we just loaded from responses table
+                  autobiographicalResponses: prev.autobiographicalResponses,
+                  alphabetResponses: prev.alphabetResponses,
+                  colourResponses: prev.colourResponses,
+                  quantityCountingResponses: prev.quantityCountingResponses,
+                  shapeRecognitionResponses: prev.shapeRecognitionResponses,
+                  motorSkillsResponses: prev.motorSkillsResponses,
+                  grossMotorSkillsResponses: prev.grossMotorSkillsResponses,
                   // Keep the auto-filled basic info
                   schoolName: schoolResult.school.name,
                   region: schoolResult.school.region,
                   schoolGrade: schoolResult.school.level,
                   headTeacherName: userResult?.name || userResult?.email || "Loading..."
                 }))
-              } else {
-                // Load basic assessment info
-                setFormData(prev => ({
-                  ...prev,
-                  assessmentType: existingAssessment.assessment.assessment_type || '',
-                  enrollment: existingAssessment.assessment.enrollment?.toString() || ''
-                }))
               }
               
               toast({
                 title: "Assessment Loaded",
-                description: "Continuing your previous nursery assessment.",
+                description: "Continuing your previous nursery assessment with saved responses.",
               })
             } else {
               console.log('No existing assessment found')
@@ -862,6 +1380,45 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         return
       }
       
+      // For Section 6 (Shape Recognition and One on One Correspondence), save responses
+      if (currentSection === 5) {
+        const success = await saveSection6Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
+      // For Section 7 (Motor Skills), save responses
+      if (currentSection === 6) {
+        const success = await saveSection7Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
+      // For Section 8 (Gross Motor Skills), save responses
+      if (currentSection === 7) {
+        const success = await saveSection8Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
       // TODO: Implement save logic for other sections
       // For now, just mark as saved
       setSavedSections(prev => new Set([...prev, currentSection]))
@@ -928,6 +1485,33 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       setSavedSections(prev => new Set([...prev, currentSection]))
     }
     
+    // Auto-save Section 6 (Shape Recognition and One on One Correspondence) when moving to next section
+    if (currentSection === 5) {
+      const success = await saveSection6Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 7 (Motor Skills) when moving to next section
+    if (currentSection === 6) {
+      const success = await saveSection7Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 8 (Gross Motor Skills) when moving to next section (final section)
+    if (currentSection === 7) {
+      const success = await saveSection8Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
     if (currentSection < SECTIONS.length - 1) {
       setCurrentSection(currentSection + 1)
     }
@@ -941,6 +1525,71 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   const calculateProgress = () => {
     return (savedSections.size / SECTIONS.length) * 100
+  }
+
+  const submitAssessment = async () => {
+    if (!currentAssessmentId || !currentUser) {
+      toast({
+        title: "Error",
+        description: "Assessment ID or user information is missing. Please save Section 1 first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setLoading(true)
+      console.log('Submitting assessment:', currentAssessmentId)
+
+      // First, auto-save the current section if it's Section 8 (final section)
+      if (currentSection === 7) {
+        const success = await saveSection8Responses()
+        if (!success) {
+          return // Don't proceed if save failed
+        }
+        setSavedSections(prev => new Set([...prev, currentSection]))
+      }
+
+      // Update the assessment status to "submitted"
+      const result = await updateNurseryAssessment(currentAssessmentId, {
+        status: 'submitted',
+        updated_by: currentUser.id
+      })
+
+      if (result.error) {
+        console.error('Failed to submit assessment:', result.error)
+        toast({
+          title: "Submission Failed",
+          description: "Failed to submit the assessment. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      console.log('Assessment submitted successfully:', result.assessment)
+      
+      // Clear local storage since assessment is now submitted
+      clearLocalStorage()
+      
+      // Show success message
+      toast({
+        title: "Assessment Submitted",
+        description: "Your nursery assessment has been submitted successfully.",
+      })
+
+      // Call the onSuccess callback if provided
+      onSuccess?.()
+
+    } catch (error) {
+      console.error('Error submitting assessment:', error)
+      toast({
+        title: "Submission Error",
+        description: "An unexpected error occurred while submitting the assessment.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const renderBasicInformation = () => (
@@ -2305,17 +2954,18 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
               {currentSection === SECTIONS.length - 1 ? (
                 <Button
-                  onClick={() => {
-                    // TODO: Handle final submission
-                    toast({
-                      title: "Assessment Submitted",
-                      description: "Your nursery assessment has been submitted successfully.",
-                    })
-                    onSuccess?.()
-                  }}
-                  className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200"
+                  onClick={submitAssessment}
+                  disabled={loading}
+                  className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
                 >
-                  Submit Assessment
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Assessment"
+                  )}
                 </Button>
               ) : (
                 <Button
