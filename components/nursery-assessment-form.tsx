@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
-import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment } from "@/app/actions/nursery-assessment"
+import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
 import { useAutoSave } from "@/hooks/use-auto-save"
 
@@ -144,6 +144,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
   const [savedSections, setSavedSections] = useState<Set<number>>(new Set())
   const [questions, setQuestions] = useState<any[]>([])
+  const [questionOptions, setQuestionOptions] = useState<{ [questionId: string]: any[] }>({})
   const [questionsLoading, setQuestionsLoading] = useState(false)
   const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -180,6 +181,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   // Helper function to handle response changes
   const handleResponseChange = (questionId: string, category: string, value: number) => {
+    // Only update local state - no immediate database save
     setFormData(prev => ({
       ...prev,
       autobiographicalResponses: {
@@ -194,6 +196,270 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
     }))
+  }
+
+  // Function to save Section 2 responses to database
+  const saveSection2Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 2 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 2 responses to database...')
+      
+      // Iterate through all autobiographical responses and save them
+      for (const [questionId, responses] of Object.entries(formData.autobiographicalResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database
+            let optionId = ''
+            
+            switch (category) {
+              case 'fullSentenceResponse':
+                optionId = '1e3164fd-8dc4-4169-ad42-1d6ec4e4e267'
+                break
+              case 'singleWordOrPhraseResponse':
+                optionId = '4a0b9823-f028-42e3-9c26-a138b0722cd8'
+                break
+              case 'incorrectResponse':
+                optionId = 'bbd10cc4-0edc-4e50-b80b-e903573a04ca'
+                break
+              case 'noResponseGiven':
+                optionId = 'c457615a-a63a-44bd-9ffe-5a5973cc75c7'
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 2 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 2 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 2 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  // Function to save Section 3 responses to database
+  const saveSection3Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 3 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 3 responses to database...')
+      
+      // Iterate through all alphabet responses and save them
+      for (const [questionId, responses] of Object.entries(formData.alphabetResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Alphabet Recitation and Identification
+            let optionId = ''
+            
+            switch (category) {
+              case 'range1to6Correct':
+                optionId = '689f84cf-2e07-44ff-8d36-e7f9457979f8' // 1 - 6 Correct
+                break
+              case 'range7to12Correct':
+                optionId = 'b5f8ffa7-a703-43ed-9a3e-4e4716d7a028' // 7 - 12 Correct
+                break
+              case 'range13to18Correct':
+                optionId = '1189716c-57c4-4136-8475-5866acb3de3a' // 13 - 18 Correct
+                break
+              case 'range19to26Correct':
+                optionId = '644cb1ba-cd4d-43d9-b014-ecaf8e13edd9' // 19 - 26 Correct
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 3 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 3 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 3 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  // Function to save Section 4 responses to database
+  const saveSection4Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 4 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 4 responses to database...')
+      
+      // Iterate through all colour responses and save them
+      for (const [questionId, responses] of Object.entries(formData.colourResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Colour Identification
+            let optionId = ''
+            
+            switch (category) {
+              case 'oneCorrect':
+                optionId = '16ef329d-748d-43e3-90fe-587fe8f9541e' // 1 Correct
+                break
+              case 'twoCorrect':
+                optionId = '4d479a15-4fbc-4da2-a8ce-51da25cb37c8' // 2 Correct
+                break
+              case 'threeCorrect':
+                optionId = 'b47fe6cf-8e87-4927-94d2-1463c50b65a9' // 3 Correct
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 4 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 4 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 4 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  // Function to save Section 5 responses to database
+  const saveSection5Responses = async () => {
+    if (!currentAssessmentId) {
+      toast({
+        title: "Please Save Section 1",
+        description: "You need to save Section 1 (Basic Information) before saving Section 5 responses.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    try {
+      console.log('Saving Section 5 responses to database...')
+      
+      // Iterate through all quantity counting responses and save them
+      for (const [questionId, responses] of Object.entries(formData.quantityCountingResponses)) {
+        for (const [category, value] of Object.entries(responses)) {
+          if (value > 0) { // Only save non-zero values
+            // Use the actual option IDs from your database for Quantity Differentiation and Counting Fluency
+            let optionId = ''
+            
+            switch (category) {
+              case 'numberCorrect':
+                optionId = 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3' // Number Correct
+                break
+              case 'numberIncorrect':
+                optionId = '1125b912-003e-4911-b653-18087f8c89a4' // Number Incorrect
+                break
+              case 'range1to10Correct':
+                optionId = '13da4461-dcac-472f-91f4-5a3ab7e44168' // 1 - 10 Correct
+                break
+              case 'range11to20Correct':
+                optionId = '8824fccf-fa0b-4675-bca1-8cc4a54c996e' // 11 - 20 Correct
+                break
+              case 'range20PlusCorrect':
+                optionId = 'ba0ca8fc-e152-4a9a-aa4a-d6bc9217e0a5' // 20 + Correct
+                break
+              default:
+                continue
+            }
+
+            const result = await saveAssessmentAnswer({
+              assessment_id: currentAssessmentId,
+              question_id: questionId,
+              option_id: optionId,
+              answer: value as number
+            })
+
+            if (!result.success) {
+              console.error('Failed to save answer:', result.error)
+              throw new Error(`Failed to save response for question ${questionId}`)
+            }
+          }
+        }
+      }
+
+      console.log('Section 5 responses saved successfully!')
+      return true
+    } catch (error) {
+      console.error('Error saving Section 5 responses:', error)
+      toast({
+        title: "Save Error",
+        description: "Failed to save Section 5 responses. Please try again.",
+        variant: "destructive",
+      })
+      return false
+    }
   }
 
   // Helper function to handle alphabet response changes
@@ -410,12 +676,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const loadQuestions = async (section: string) => {
     setQuestionsLoading(true)
     try {
-     // console.log('Loading questions for section:', section)
+      console.log('Loading questions for section:', section)
       const result = await getNurseryAssessmentQuestions(section)
-     // console.log('Questions result:', result)
-      if (!result.error) {
+      console.log('Questions result:', result)
+      
+      if (!result.error && result.questions.length > 0) {
         setQuestions(result.questions)
-        // console.log('Questions loaded:', result.questions.length)
+        console.log('Questions loaded:', result.questions.length)
+        
+        // No need to load options since we're using fixed option IDs for Autobiographical Knowledge
+        console.log('Using fixed option IDs for Autobiographical Knowledge questions')
       } else {
         console.error("Error loading questions:", result.error)
         toast({
@@ -540,6 +810,58 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         return
       }
       
+      // For Section 2 (Autobiographical Knowledge Assessment), save responses
+      if (currentSection === 1) {
+        const success = await saveSection2Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
+      // For Section 3 (Alphabet Recitation and Identification), save responses
+      if (currentSection === 2) {
+        const success = await saveSection3Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
+      // For Section 4 (Colour Identification), save responses
+      if (currentSection === 3) {
+        const success = await saveSection4Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
+      // For Section 5 (Quantity Differentiation and Counting Fluency), save responses
+      if (currentSection === 4) {
+        const success = await saveSection5Responses()
+        if (success) {
+          setSavedSections(prev => new Set([...prev, currentSection]))
+          toast({
+            title: "Section Saved",
+            description: `${SECTIONS[currentSection]} has been saved successfully.`,
+          })
+        }
+        return
+      }
+      
       // TODO: Implement save logic for other sections
       // For now, just mark as saved
       setSavedSections(prev => new Set([...prev, currentSection]))
@@ -564,6 +886,42 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     // Auto-save Section 1 (Basic Information) when moving to next section
     if (currentSection === 0) {
       const success = await saveAssessmentBasicInfo()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 2 (Autobiographical Knowledge) when moving to next section
+    if (currentSection === 1) {
+      const success = await saveSection2Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 3 (Alphabet Recitation and Identification) when moving to next section
+    if (currentSection === 2) {
+      const success = await saveSection3Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 4 (Colour Identification) when moving to next section
+    if (currentSection === 3) {
+      const success = await saveSection4Responses()
+      if (!success) {
+        return // Don't proceed if save failed
+      }
+      setSavedSections(prev => new Set([...prev, currentSection]))
+    }
+    
+    // Auto-save Section 5 (Quantity Differentiation and Counting Fluency) when moving to next section
+    if (currentSection === 4) {
+      const success = await saveSection5Responses()
       if (!success) {
         return // Don't proceed if save failed
       }

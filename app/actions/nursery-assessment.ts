@@ -371,6 +371,117 @@ export async function testEnrollmentColumn() {
   }
 }
 
+// Save individual assessment answer
+export async function saveAssessmentAnswer(answerData: {
+  assessment_id: string
+  question_id: string
+  option_id: string
+  answer: number
+}) {
+  try {
+    console.log('Saving assessment answer:', answerData)
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Validate that we have required data
+    if (!answerData.assessment_id || !answerData.question_id || !answerData.option_id) {
+      console.error('Missing required fields:', answerData)
+      return { success: false, error: 'Missing required fields' }
+    }
+    
+    // Check if answer already exists
+    const { data: existingAnswer, error: checkError } = await supabase
+      .from('hmr_nursery_assessment_answers')
+      .select('*')
+      .eq('assessment_id', answerData.assessment_id)
+      .eq('question_id', answerData.question_id)
+      .eq('option_id', answerData.option_id)
+      .maybeSingle()
+
+    console.log('Existing answer check:', existingAnswer, checkError)
+
+    if (checkError) {
+      console.error('Error checking existing answer:', checkError)
+      return { success: false, error: checkError.message }
+    }
+
+    if (existingAnswer) {
+      // Update existing answer
+      const { data, error } = await supabase
+        .from('hmr_nursery_assessment_answers')
+        .update({
+          answer: answerData.answer,
+          created_at: new Date().toISOString()
+        })
+        .eq('id', existingAnswer.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error updating answer:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('Answer updated successfully:', data)
+      return { success: true, data, error: null }
+    } else {
+      // Create new answer
+      const insertData = {
+        assessment_id: answerData.assessment_id,
+        question_id: answerData.question_id,
+        option_id: answerData.option_id,
+        answer: answerData.answer,
+        created_at: new Date().toISOString()
+      }
+      
+      console.log('Inserting new answer:', insertData)
+      
+      const { data, error } = await supabase
+        .from('hmr_nursery_assessment_answers')
+        .insert(insertData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating answer:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('Answer created successfully:', data)
+      return { success: true, data, error: null }
+    }
+  } catch (err) {
+    console.error('Error in saveAssessmentAnswer:', err)
+    return { success: false, error: "An unexpected error occurred while saving answer" }
+  }
+}
+
+// Get options for questions - use actual database table
+export async function getQuestionOptions(questionIds: string[]) {
+  try {
+    console.log('Fetching options for questions:', questionIds)
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Use the correct table name from your database
+    const { data, error } = await supabase
+      .from('hmr_nursery_assessment_questions_options')
+      .select('*')
+      .eq('section', 'Autobiographical Knowledge')  // Filter by section since your table doesn't link to specific questions
+      .order('created_at', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching options:', error)
+      return { options: [], error: error.message }
+    }
+    
+    console.log('All options from database:', data)
+    console.log('Options structure sample:', data?.[0])
+    return { options: data || [], error: null }
+  } catch (err) {
+    console.error('Error in getQuestionOptions:', err)
+    return { options: [], error: "An unexpected error occurred" }
+  }
+}
+
 // Simple function to test enrollment saving
 export async function saveEnrollmentOnly(assessmentId: string, enrollment: number) {
   try {
