@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, JSX } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -35,10 +35,11 @@ import {
   ChevronsUpDown,
   Menu,
   X,
-  Download
+  Printer
 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { notFound } from "next/navigation"
+import { format } from "date-fns"
 import { getReportBySchoolAndMonth, getReportSectionData, getAvailableMonthsForSchool, getStaffing } from "@/app/actions/hmr-reports"
 import { getSchoolsWithSubmittedReports } from "@/app/actions/schools-with-reports"
 import { generateIndividualReportPDF } from "@/app/actions/export-individual-report"
@@ -1092,7 +1093,7 @@ export default function ViewFullReportPage({ params }: PageProps) {
   )
 }
 
-function ViewFullReportPageContent({ params }: PageProps) {
+function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [schoolId, setSchoolId] = useState<string>("")
@@ -1189,7 +1190,7 @@ function ViewFullReportPageContent({ params }: PageProps) {
         if (result.error) {
           // Don't set error state for PE section - just return empty data
           // This allows the component to show "No physical education section found" message
-          console.log("Physical Education section not found for report:", selectedReport.id)
+         // console.log("Physical Education section not found for report:", selectedReport.id)
           setSectionData(null)
         } else {
           setSectionData(result.data)
@@ -1229,7 +1230,7 @@ function ViewFullReportPageContent({ params }: PageProps) {
       if (result.error) {
         // For missing section data, just log it and return empty data rather than showing error
         // This allows each section component to handle missing data gracefully
-        console.log(`Section '${sectionType}' not found for report:`, selectedReport.id, result.error)
+       // console.log(`Section '${sectionType}' not found for report:`, selectedReport.id, result.error)
         setSectionData(null)
       } else {
         setSectionData(result.data)
@@ -1465,32 +1466,45 @@ function ViewFullReportPageContent({ params }: PageProps) {
   }, [handleBack, isMobileSidebarOpen])
 
   const handleExportPDF = async () => {
+    if (!selectedReport) return
+    
     try {
       setIsExporting(true)
       
+      // Get the report HTML content first
       const result = await generateIndividualReportPDF(schoolId, month)
       
-      if (result.success && result.htmlContent) {
-        // Create a new window/tab with the HTML content
-        const printWindow = window.open('', '_blank')
+      if (result.success && 'htmlContent' in result && result.htmlContent) {
+        // Create a new window for print preview
+        const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes')
+        
         if (printWindow) {
-          printWindow.document.write(result.htmlContent)
+          // Write the HTML content to the new window
+          printWindow.document.write((result as any).htmlContent)
           printWindow.document.close()
           
-          // Wait for content to load then trigger print
+          // Wait for content to load, then trigger print preview
           printWindow.onload = () => {
             setTimeout(() => {
               printWindow.print()
-              printWindow.close()
             }, 500)
           }
+          
+          // For browsers that don't support onload properly
+          setTimeout(() => {
+            if (printWindow.document.readyState === 'complete') {
+              printWindow.print()
+            }
+          }, 1000)
+        } else {
+          alert('Unable to open print preview. Please check your browser\'s popup blocker settings.')
         }
       } else {
-        alert(`Export failed: ${result.error}`)
+        alert(`Export failed: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Export error:', error)
-      alert('Failed to export report. Please try again.')
+      alert('Failed to open print preview. Please try again.')
     } finally {
       setIsExporting(false)
     }
@@ -1545,13 +1559,13 @@ function ViewFullReportPageContent({ params }: PageProps) {
                 {isExporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Download className="h-4 w-4" aria-hidden="true" />
+                  <Printer className="h-4 w-4" aria-hidden="true" />
                 )}
                 <span className="hidden sm:inline">
-                  {isExporting ? 'Generating...' : 'Export PDF'}
+                  {isExporting ? 'Opening Preview...' : 'Print Preview'}
                 </span>
                 <span className="sm:hidden">
-                  {isExporting ? 'Generating...' : 'Export'}
+                  {isExporting ? 'Opening...' : 'Print'}
                 </span>
               </Button>
               

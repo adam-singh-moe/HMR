@@ -21,23 +21,27 @@ const sectionNames = [
   "Accident and Safety",
   "Staff Meeting",
   "Physical Facilities",
-  "Resource Needed"
+  "Repairs Needed",
+  "Resource Needed",
+  "Physical Education"
 ]
 
 const sectionTypeMap = [
   null, // Basic Information - no API needed
-  "student_enrollment",
-  "attendance", 
-  "staffing",
-  "staff_development",
-  "supervision",
-  "curriculum",
-  "finance",
-  "income",
-  "accident_safety",
-  "staff_meetings",
-  "facilities",
-  "resources_needed"
+  "student_enrollment", // Student Enrollment
+  "attendance", // Attendance  
+  "staffing", // Staffing and Vacancy
+  "staff_development", // Staff Development
+  "supervision", // Supervision
+  "curriculum", // Curriculum Monitoring
+  "finance", // Finance
+  "income", // Income Sources
+  "accident_safety", // Accident and Safety
+  "staff_meetings", // Staff Meeting
+  "facilities", // Physical Facilities
+  "repairs", // Repairs
+  "resources_needed", // Resource Needed
+  "physical_education" // Physical Education
 ]
 
 export async function generateIndividualReportPDF(schoolId: string, monthParam: string) {
@@ -99,23 +103,198 @@ function generateReportHTML(report: any, schoolData: any, headTeacher: any, sect
   const pageStyle = `
     @page {
       size: A4;
-      margin: 1in;
+      margin: 20mm;
+    }
+    
+    @media print {
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      
+      .page-break:first-child {
+        page-break-before: auto;
+        break-before: auto;
+      }
+      
+      .avoid-page-break {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      
+      body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Arial', sans-serif;
+      line-height: 1.4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
     }
     
     .page-break {
       page-break-before: always;
+      break-before: page;
     }
     
     .page-break:first-child {
       page-break-before: auto;
+      break-before: auto;
     }
     
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
+    .section {
+      padding: 20px;
       margin: 0;
-      padding: 0;
+      background: white;
+      min-height: 400px;
+      max-width: 800px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #1e40af;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .title {
+      color: #1e40af;
+      font-size: 22px;
+      font-weight: bold;
+      margin: 0 0 5px 0;
+    }
+    
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .section-title {
+      background: #1e40af !important;
+      color: white !important;
+      padding: 12px;
+      margin: 15px 0 20px 0;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .info-item {
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    
+    .info-value {
+      color: #1f2937;
+      font-size: 13px;
+      padding: 6px 10px;
+      background: #f9fafb !important;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+    
+    .supervision-item, .teacher-item {
+      margin-bottom: 15px;
+      padding: 12px;
+      background: #f8fafc !important;
+      border-radius: 6px;
+      border-left: 3px solid #1e40af;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .teacher-grid, .teacher-grid-wide {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    
+    .teacher-status-category {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    .teacher-status-category h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .no-data {
+      text-align: center;
+      color: #6b7280;
+      font-style: italic;
+      padding: 15px;
+      background: #f9fafb !important;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      margin: 15px 0;
+      font-size: 12px;
+    }
+    
+    .badge {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      padding: 3px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 11px;
+    }
+    
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    
+    th {
+      background: #f3f4f6 !important;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
     }
     
     .header {
@@ -641,50 +820,55 @@ function generateSectionContent(section: ReportSection, report: any, schoolData:
         return '<div class="no-data">No supervision data available for this report</div>'
       }
       
-      const supervisionData = Array.isArray(section.data) ? section.data[0] : section.data
-      return `
-        <div class="space-y-4">
-          <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Head Teacher Supervision</h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Lessons Observed</div>
-              <div class="info-value">${supervisionData.hmLessonsObserved || 'N/A'}</div>
+      if (Array.isArray(section.data)) {
+        let supervisionHtml = '<div class="space-y-4">'
+        
+        section.data.forEach((supervision, index) => {
+          supervisionHtml += `
+            <div class="supervision-item" style="margin-bottom: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #1e40af;">
+              <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 15px;">${supervision.role || "Supervision"}</h4>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Lessons Observed</div>
+                  <div class="info-value">${supervision.lesson_observed || 0}</div>
+                </div>
+              </div>
+              
+              ${supervision.positive_findings ? `
+                <div style="margin-top: 15px;">
+                  <div class="info-label">Positive Findings</div>
+                  <div style="margin-top: 5px; padding: 10px; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 6px;">
+                    ${supervision.positive_findings}
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${supervision.negative_findings ? `
+                <div style="margin-top: 15px;">
+                  <div class="info-label">Negative Findings</div>
+                  <div style="margin-top: 5px; padding: 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px;">
+                    ${supervision.negative_findings}
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${supervision.follow_up_actions ? `
+                <div style="margin-top: 15px;">
+                  <div class="info-label">Follow-up Actions</div>
+                  <div style="margin-top: 5px; padding: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+                    ${supervision.follow_up_actions}
+                  </div>
+                </div>
+              ` : ''}
             </div>
-            <div class="info-item">
-              <div class="info-label">Positive Findings</div>
-              <div class="info-value">${supervisionData.hmPositiveFindings || 'N/A'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Negative Findings</div>
-              <div class="info-value">${supervisionData.hmNegativeFindings || 'N/A'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Follow-up Actions</div>
-              <div class="info-value">${supervisionData.hmFollowUpActions || 'N/A'}</div>
-            </div>
-          </div>
-          
-          <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 15px; margin-top: 30px;">Deputy Head Teacher Supervision</h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">Lessons Observed</div>
-              <div class="info-value">${supervisionData.dhmLessonsObserved || 'N/A'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Positive Findings</div>
-              <div class="info-value">${supervisionData.dhmPositiveFindings || 'N/A'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Negative Findings</div>
-              <div class="info-value">${supervisionData.dhmNegativeFindings || 'N/A'}</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">Follow-up Actions</div>
-              <div class="info-value">${supervisionData.dhmFollowUpActions || 'N/A'}</div>
-            </div>
-          </div>
-        </div>
-      `
+          `
+        })
+        
+        supervisionHtml += '</div>'
+        return supervisionHtml
+      } else {
+        return '<div class="no-data">No supervision data available for this report</div>'
+      }
 
     case 6: // Curriculum Monitoring
       if (!section.data || (Array.isArray(section.data) && section.data.length === 0)) {
@@ -696,13 +880,17 @@ function generateSectionContent(section: ReportSection, report: any, schoolData:
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">Teachers without Lesson Plans</div>
-            <div class="info-value">${curriculumData.teachersNoLessonPlans || 'N/A'}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">Actions Taken</div>
-            <div class="info-value">${curriculumData.curriculumActionsTaken || 'N/A'}</div>
+            <div class="info-value">${curriculumData.teachers_no_lesson_plans || '0'}</div>
           </div>
         </div>
+        ${curriculumData.actions_taken ? `
+          <div style="margin-top: 20px;">
+            <div class="info-label">Actions Taken</div>
+            <div style="margin-top: 10px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+              ${curriculumData.actions_taken}
+            </div>
+          </div>
+        ` : ''}
       `
 
     case 7: // Finance
@@ -823,17 +1011,21 @@ function generateSectionContent(section: ReportSection, report: any, schoolData:
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">General Staff Meeting Held</div>
-            <div class="info-value">${meetingData.generalMeetingHeld ? 'Yes' : 'No'}</div>
+            <div class="info-value">${meetingData.general_meeting ? 'Yes' : 'No'}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Key Issues Discussed</div>
-            <div class="info-value">${meetingData.keyIssuesDiscussed || 'N/A'}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">Decisions Implemented</div>
-            <div class="info-value">${meetingData.decisionsImplemented || 'N/A'}</div>
+            <div class="info-label">Implementation Percentage</div>
+            <div class="info-value">${meetingData.percentage_decisions_implemented || 0}%</div>
           </div>
         </div>
+        ${meetingData.key_issues ? `
+          <div style="margin-top: 20px;">
+            <div class="info-label">Key Issues Discussed</div>
+            <div style="margin-top: 10px; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+              ${meetingData.key_issues}
+            </div>
+          </div>
+        ` : ''}
       `
 
     case 11: // Physical Facilities
@@ -841,63 +1033,205 @@ function generateSectionContent(section: ReportSection, report: any, schoolData:
         return '<div class="no-data">No physical facilities data available for this report</div>'
       }
       
-      const facilitiesData = Array.isArray(section.data) ? section.data[0] : section.data
+      const facilitiesArray = Array.isArray(section.data) ? section.data : [section.data]
+      const teacherFacilities = facilitiesArray.find(f => f.role === 'Teacher')
+      const studentFacilities = facilitiesArray.find(f => f.role === 'Student')
+      
       return `
         <div class="space-y-4">
           <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 15px;">Teacher Facilities</h4>
           <div class="info-grid">
             <div class="info-item">
-              <div class="info-label">Functional Toilets</div>
-              <div class="info-value">${facilitiesData.teacherToiletsFunctional || 'N/A'}</div>
+              <div class="info-label">Functional Washrooms</div>
+              <div class="info-value">${teacherFacilities?.percentage_functional_washroom || 0}%</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Functional Sinks</div>
-              <div class="info-value">${facilitiesData.teacherSinksFunctional || 'N/A'}</div>
+              <div class="info-label">Working Sinks</div>
+              <div class="info-value">${teacherFacilities?.percentage_working_sinks || 0}%</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Functional Taps</div>
-              <div class="info-value">${facilitiesData.teacherTapsFunctional || 'N/A'}</div>
+              <div class="info-label">Working Taps</div>
+              <div class="info-value">${teacherFacilities?.percentage_working_taps || 0}%</div>
             </div>
           </div>
           
           <h4 style="color: #1e40af; font-size: 16px; font-weight: 600; margin-bottom: 15px; margin-top: 30px;">Student Facilities</h4>
           <div class="info-grid">
             <div class="info-item">
-              <div class="info-label">Functional Toilets</div>
-              <div class="info-value">${facilitiesData.studentToiletsFunctional || 'N/A'}</div>
+              <div class="info-label">Functional Washrooms</div>
+              <div class="info-value">${studentFacilities?.percentage_functional_washroom || 0}%</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Functional Sinks</div>
-              <div class="info-value">${facilitiesData.studentSinksFunctional || 'N/A'}</div>
+              <div class="info-label">Working Sinks</div>
+              <div class="info-value">${studentFacilities?.percentage_working_sinks || 0}%</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Functional Taps</div>
-              <div class="info-value">${facilitiesData.studentTapsFunctional || 'N/A'}</div>
+              <div class="info-label">Working Taps</div>
+              <div class="info-value">${studentFacilities?.percentage_working_taps || 0}%</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Overcrowded Classrooms</div>
+              <div class="info-value">${studentFacilities?.percentage_overcrowded_classroom || 0}%</div>
             </div>
           </div>
         </div>
       `
 
-    case 12: // Resource Needed
+    case 12: // Repairs Needed
+      if (!section.data || (Array.isArray(section.data) && section.data.length === 0)) {
+        return '<div class="no-data">No repairs needed data available for this report</div>'
+      }
+      
+      if (Array.isArray(section.data)) {
+        let repairsHtml = '<div class="space-y-4">'
+        
+        section.data.forEach((repair, index) => {
+          repairsHtml += `
+            <div style="margin-bottom: 20px; padding: 15px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px;">
+              <h5 style="color: #92400e; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                ${repair.repair_area || 'Repair Required'}
+              </h5>
+              <p style="color: #374151; line-height: 1.6;">
+                ${repair.details || 'No details provided'}
+              </p>
+            </div>
+          `
+        })
+        
+        repairsHtml += '</div>'
+        return repairsHtml
+      } else {
+        return `
+          <div style="padding: 15px; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px;">
+            <h5 style="color: #92400e; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+              ${section.data.repair_area || 'Repair Required'}
+            </h5>
+            <p style="color: #374151; line-height: 1.6;">
+              ${section.data.details || 'No details provided'}
+            </p>
+          </div>
+        `
+      }
+
+    case 13: // Resource Needed
       if (!section.data || (Array.isArray(section.data) && section.data.length === 0)) {
         return '<div class="no-data">No resource needs data available for this report</div>'
       }
       
       const resourceData = Array.isArray(section.data) ? section.data[0] : section.data
       return `
+        <div class="space-y-4">
+          ${resourceData.curriculum_resources ? `
+            <div style="padding: 15px; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 8px;">
+              <h5 style="color: #166534; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Curriculum Resources</h5>
+              <p style="color: #374151; line-height: 1.6;">${resourceData.curriculum_resources}</p>
+            </div>
+          ` : ''}
+          
+          ${resourceData.janitorial_supplies ? `
+            <div style="padding: 15px; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px;">
+              <h5 style="color: #1e40af; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Janitorial Supplies</h5>
+              <p style="color: #374151; line-height: 1.6;">${resourceData.janitorial_supplies}</p>
+            </div>
+          ` : ''}
+          
+          ${resourceData.issues ? `
+            <div style="padding: 15px; background: #fce7f3; border: 1px solid #f9a8d4; border-radius: 8px;">
+              <h5 style="color: #be185d; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Other Issues</h5>
+              <p style="color: #374151; line-height: 1.6;">${resourceData.issues}</p>
+            </div>
+          ` : ''}
+          
+          ${!resourceData.curriculum_resources && !resourceData.janitorial_supplies && !resourceData.issues ? 
+            '<div class="no-data">No resource requirements recorded for this report</div>' : ''
+          }
+        </div>
+      `
+
+    case 14: // Physical Education
+      if (!section.data || (Array.isArray(section.data) && section.data.length === 0)) {
+        return '<div class="no-data">No physical education data available for this report</div>'
+      }
+      
+      const peData = Array.isArray(section.data) ? section.data[0] : section.data
+      
+      // Handle activities array
+      let activitiesList = 'N/A'
+      if (peData.activities) {
+        if (Array.isArray(peData.activities)) {
+          activitiesList = peData.activities.join(', ') || 'N/A'
+        } else if (typeof peData.activities === 'string') {
+          // Try to parse as JSON if it's a string
+          try {
+            const parsed = JSON.parse(peData.activities)
+            activitiesList = Array.isArray(parsed) ? parsed.join(', ') : peData.activities
+          } catch {
+            activitiesList = peData.activities
+          }
+        }
+      }
+      
+      // Handle challenges array
+      let challengesList = 'N/A'
+      if (peData.challenges) {
+        if (Array.isArray(peData.challenges)) {
+          challengesList = peData.challenges.join(', ') || 'N/A'
+        } else if (typeof peData.challenges === 'string') {
+          // Try to parse as JSON if it's a string
+          try {
+            const parsed = JSON.parse(peData.challenges)
+            challengesList = Array.isArray(parsed) ? parsed.join(', ') : peData.challenges
+          } catch {
+            challengesList = peData.challenges
+          }
+        }
+      }
+      
+      return `
         <div class="info-grid">
           <div class="info-item">
-            <div class="info-label">Curriculum Resources</div>
-            <div class="info-value">${resourceData.curriculumResources || 'N/A'}</div>
+            <div class="info-label">Physical Education Activities</div>
+            <div class="info-value">${activitiesList}</div>
           </div>
           <div class="info-item">
-            <div class="info-label">Janitorial Supplies</div>
-            <div class="info-value">${resourceData.janitorialSupplies || 'N/A'}</div>
+            <div class="info-label">Major Challenges</div>
+            <div class="info-value">${challengesList}</div>
           </div>
-          <div class="info-item">
-            <div class="info-label">Other Issues</div>
-            <div class="info-value">${resourceData.otherIssues || 'N/A'}</div>
-          </div>
+        </div>
+      `
+
+    case 15: // Innovation
+      if (!section.data || (Array.isArray(section.data) && section.data.length === 0)) {
+        return '<div class="no-data">No innovation data available for this report</div>'
+      }
+      
+      const innovationData = Array.isArray(section.data) ? section.data[0] : section.data
+      return `
+        <div class="space-y-4">
+          ${innovationData.brief_innovation_description ? `
+            <div style="padding: 15px; background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px;">
+              <h5 style="color: #0369a1; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Innovation Description</h5>
+              <p style="color: #374151; line-height: 1.6;">${innovationData.brief_innovation_description}</p>
+            </div>
+          ` : ''}
+          
+          ${innovationData.innovation_impact_on_learning ? `
+            <div style="padding: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;">
+              <h5 style="color: #166534; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Impact on Learning</h5>
+              <p style="color: #374151; line-height: 1.6;">${innovationData.innovation_impact_on_learning}</p>
+            </div>
+          ` : ''}
+          
+          ${innovationData.innovation_outcome ? `
+            <div style="padding: 15px; background: #fefce8; border: 1px solid #fde047; border-radius: 8px;">
+              <h5 style="color: #ca8a04; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Outcome</h5>
+              <p style="color: #374151; line-height: 1.6;">${innovationData.innovation_outcome}</p>
+            </div>
+          ` : ''}
+          
+          ${!innovationData.brief_innovation_description && !innovationData.innovation_impact_on_learning && !innovationData.innovation_outcome ? 
+            '<div class="no-data">No innovations recorded for this report</div>' : ''
+          }
         </div>
       `
 
