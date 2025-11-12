@@ -632,21 +632,10 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       schools: school ? { name: school.name, region: school.region_id, level: school.school_level_id } : null
     }
 
-    // Get all responses for this assessment
+    // Get all responses for this assessment - using simple query
     const { data: responses, error: responsesError } = await supabase
       .from('hmr_nursery_assessment_answers')
-      .select(`
-        *,
-        questions:question_id (
-          section,
-          question_text,
-          question_type
-        ),
-        options:option_id (
-          option_text,
-          section
-        )
-      `)
+      .select('*')
       .eq('assessment_id', assessmentId)
       .order('created_at', { ascending: true })
 
@@ -655,10 +644,45 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       return { assessment: assessmentWithSchool, responses: [], error: responsesError.message }
     }
 
-    console.log('Fetched assessment details:', { assessment: assessmentWithSchool, responses })
-    return { assessment: assessmentWithSchool, responses: responses || [], error: null }
+    // Get all questions and options separately
+    const { data: allQuestions, error: questionsError } = await supabase
+      .from('hmr_nursery_assessment_questions')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    const { data: allOptions, error: optionsError } = await supabase
+      .from('hmr_nursery_assessment_questions_options')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (questionsError) {
+      console.error('Error fetching questions:', questionsError)
+      return { assessment: assessmentWithSchool, responses: [], error: questionsError.message }
+    }
+
+    if (optionsError) {
+      console.error('Error fetching options:', optionsError)
+      return { assessment: assessmentWithSchool, responses: [], error: optionsError.message }
+    }
+
+    // Map responses with question and option data
+    const enrichedResponses = responses?.map(response => {
+      const question = allQuestions?.find(q => q.id === response.question_id)
+      const option = allOptions?.find(o => o.id === response.option_id)
+      
+      return {
+        ...response,
+        question_text: question?.questions || 'Question not found',
+        question_section: question?.section || 'Unknown section',
+        option_text: option?.options || 'Option not found',
+        option_section: option?.section || 'Unknown section'
+      }
+    }) || []
+
+    console.log('Fetched assessment details:', { assessment: assessmentWithSchool, responses: enrichedResponses })
+    return { assessment: assessmentWithSchool, responses: enrichedResponses, questions: allQuestions || [], options: allOptions || [], error: null }
   } catch (err) {
     console.error('Error in getNurseryAssessmentDetails:', err)
-    return { assessment: null, responses: [], error: 'An unexpected error occurred' }
+    return { assessment: null, responses: [], questions: [], options: [], error: 'An unexpected error occurred' }
   }
 }
