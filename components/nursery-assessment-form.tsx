@@ -444,6 +444,22 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
+  // Validation function to check if question totals match enrollment
+  const validateQuestionTotals = (responses: { [key: string]: number }, questionTitle: string) => {
+    const total = Object.values(responses).reduce((sum, value) => sum + value, 0)
+    const enrollment = parseInt(formData.enrollment) || 0
+    
+    if (total !== enrollment) {
+      toast({
+        title: "Validation Error",
+        description: `${questionTitle}: Total responses (${total}) must equal enrollment (${enrollment}). Please check your entries.`,
+        variant: "destructive",
+      })
+      return false
+    }
+    return true
+  }
+
   // Function to save Section 2 responses to database
   const saveSection2Responses = async () => {
     if (!currentAssessmentId) {
@@ -453,6 +469,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         variant: "destructive",
       })
       return false
+    }
+
+    // Validate all questions in Section 2 before saving
+    for (const [questionId, responses] of Object.entries(formData.autobiographicalResponses)) {
+      const questionTitle = `Question ${Object.keys(formData.autobiographicalResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
     }
 
     try {
@@ -521,6 +545,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       return false
     }
 
+    // Validate all questions in Section 3 before saving
+    for (const [questionId, responses] of Object.entries(formData.alphabetResponses)) {
+      const questionTitle = `Alphabet Question ${Object.keys(formData.alphabetResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
+    }
+
     try {
       console.log('Saving Section 3 responses to database...')
       
@@ -587,6 +619,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       return false
     }
 
+    // Validate all questions in Section 4 before saving
+    for (const [questionId, responses] of Object.entries(formData.colourResponses)) {
+      const questionTitle = `Colour Question ${Object.keys(formData.colourResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
+    }
+
     try {
       console.log('Saving Section 4 responses to database...')
       
@@ -648,6 +688,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         variant: "destructive",
       })
       return false
+    }
+
+    // Validate all questions in Section 5 before saving
+    for (const [questionId, responses] of Object.entries(formData.quantityCountingResponses)) {
+      const questionTitle = `Quantity Question ${Object.keys(formData.quantityCountingResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
     }
 
     try {
@@ -719,6 +767,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       return false
     }
 
+    // Validate all questions in Section 6 before saving
+    for (const [questionId, responses] of Object.entries(formData.shapeRecognitionResponses)) {
+      const questionTitle = `Shape Recognition Question ${Object.keys(formData.shapeRecognitionResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
+    }
+
     try {
       console.log('Saving Section 6 responses to database...')
       
@@ -786,6 +842,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         variant: "destructive",
       })
       return false
+    }
+
+    // Validate all questions in Section 7 before saving
+    for (const [questionId, responses] of Object.entries(formData.motorSkillsResponses)) {
+      const questionTitle = `Motor Skills Question ${Object.keys(formData.motorSkillsResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
     }
 
     try {
@@ -870,6 +934,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         variant: "destructive",
       })
       return false
+    }
+
+    // Validate all questions in Section 8 before saving
+    for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
+      const questionTitle = `Gross Motor Skills Question ${Object.keys(formData.grossMotorSkillsResponses).indexOf(questionId) + 1}`
+      if (!validateQuestionTotals(responses, questionTitle)) {
+        return false
+      }
     }
 
     try {
@@ -1439,79 +1511,445 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
   }
 
+  // Section completion validation functions (silent - no toast messages)
+  const checkSection1Complete = () => {
+    const required = ['schoolName', 'region', 'date', 'schoolGrade', 'headTeacherName', 'assessmentType', 'enrollment']
+    const missing = required.filter(field => !formData[field as keyof typeof formData] || formData[field as keyof typeof formData] === '')
+    return missing.length === 0
+  }
+
+  const checkSection2Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 2 (autobiographical)
+    const responses = formData.autobiographicalResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      const total = (questionResponses.fullSentenceResponse || 0) + (questionResponses.singleWordOrPhraseResponse || 0) + 
+                   (questionResponses.incorrectResponse || 0) + (questionResponses.noResponseGiven || 0)
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection3Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 3 (alphabet)
+    const responses = formData.alphabetResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      const total = (questionResponses.range1to6Correct || 0) + (questionResponses.range7to12Correct || 0) + 
+                   (questionResponses.range13to18Correct || 0) + (questionResponses.range19to26Correct || 0)
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection4Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 4 (colour)
+    const responses = formData.colourResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      const total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0)
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection5Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 5 (quantity/counting)
+    const responses = formData.quantityCountingResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      let total = 0
+      if (questionResponses.numberCorrect !== undefined || questionResponses.numberIncorrect !== undefined) {
+        total = (questionResponses.numberCorrect || 0) + (questionResponses.numberIncorrect || 0)
+      } else {
+        total = (questionResponses.range1to10Correct || 0) + (questionResponses.range11to20Correct || 0) + (questionResponses.range20PlusCorrect || 0)
+      }
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection6Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 6 (shape recognition)
+    const responses = formData.shapeRecognitionResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      let total = 0
+      if (questionResponses.oneCorrect !== undefined || questionResponses.twoCorrect !== undefined || questionResponses.threeCorrect !== undefined) {
+        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0)
+      } else {
+        total = (questionResponses.range1to5Correct || 0) + (questionResponses.range6to10Correct || 0)
+      }
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection7Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 7 (motor skills)
+    const responses = formData.motorSkillsResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      let total = 0
+      if (questionResponses.range1to4Correct !== undefined || questionResponses.range5to8Correct !== undefined) {
+        total = (questionResponses.range1to4Correct || 0) + (questionResponses.range5to8Correct || 0)
+      } else if (questionResponses.cylindricalGrasp !== undefined) {
+        total = (questionResponses.cylindricalGrasp || 0) + (questionResponses.digital || 0) + (questionResponses.modifiedTripodGrasp || 0) + (questionResponses.tripod || 0)
+      } else if (questionResponses.scribbleUR !== undefined) {
+        total = (questionResponses.scribbleUR || 0) + (questionResponses.scribbleR || 0) + (questionResponses.approximation || 0) + (questionResponses.name || 0)
+      }
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  const checkSection8Complete = () => {
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    // Check if any responses exist for section 8 (gross motor skills)
+    const responses = formData.grossMotorSkillsResponses
+    if (!responses || Object.keys(responses).length === 0) return false
+
+    // Check each question has valid total
+    for (const [questionId, questionResponses] of Object.entries(responses)) {
+      if (!questionResponses) return false
+      let total = 0
+      if (questionResponses.oneTime !== undefined && questionResponses.fiveTimes !== undefined) {
+        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0) + (questionResponses.threeTimes || 0) + (questionResponses.fourTimes || 0) + (questionResponses.fiveTimes || 0)
+      } else if (questionResponses.oneLegOneTime !== undefined) {
+        total = (questionResponses.oneLegOneTime || 0) + (questionResponses.oneLegTwoTimes || 0) + (questionResponses.oneLegThreeTimes || 0)
+      } else if (questionResponses.left !== undefined || questionResponses.right !== undefined) {
+        total = (questionResponses.left || 0) + (questionResponses.right || 0)
+      } else {
+        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0)
+      }
+      if (total !== enrollment) return false
+    }
+    return true
+  }
+
+  // Section validation functions with toast messages (for Next button click)
+  const validateSection1 = () => {
+    const required = ['schoolName', 'region', 'date', 'schoolGrade', 'headTeacherName', 'assessmentType', 'enrollment']
+    const missing = required.filter(field => !formData[field as keyof typeof formData] || formData[field as keyof typeof formData] === '')
+    
+    if (missing.length > 0) {
+      toast({
+        title: "Section 1 Incomplete",
+        description: `Please complete all required fields: ${missing.join(', ')}`,
+        variant: "destructive",
+      })
+      return false
+    }
+    return true
+  }
+
+  const validateSection2 = () => {
+    if (!section2Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) {
+      toast({
+        title: "Section 2 Incomplete", 
+        description: "Please complete Section 1 first to set enrollment.",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    for (const question of section2Questions) {
+      const responses = formData.autobiographicalResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 2 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const total = (responses.fullSentenceResponse || 0) + (responses.singleWordOrPhraseResponse || 0) + 
+                   (responses.incorrectResponse || 0) + (responses.noResponseGiven || 0)
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 2 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection3 = () => {
+    if (!section3Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section3Questions) {
+      const responses = formData.alphabetResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 3 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const total = (responses.range1to6Correct || 0) + (responses.range7to12Correct || 0) + 
+                   (responses.range13to18Correct || 0) + (responses.range19to26Correct || 0)
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 3 Incomplete", 
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection4 = () => {
+    if (!section4Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section4Questions) {
+      const responses = formData.colourResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 4 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0)
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 4 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection5 = () => {
+    if (!section5Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section5Questions) {
+      const responses = formData.quantityCountingResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 5 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      let total = 0
+      if (question.questions.toLowerCase().includes('quantity')) {
+        total = (responses.numberCorrect || 0) + (responses.numberIncorrect || 0)
+      } else {
+        total = (responses.range1to10Correct || 0) + (responses.range11to20Correct || 0) + (responses.range20PlusCorrect || 0)
+      }
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 5 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection6 = () => {
+    if (!section6Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section6Questions) {
+      const responses = formData.shapeRecognitionResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 6 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      let total = 0
+      if (question.questions.toLowerCase().includes('shape')) {
+        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0)
+      } else {
+        total = (responses.range1to5Correct || 0) + (responses.range6to10Correct || 0)
+      }
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 6 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection7 = () => {
+    if (!section7Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section7Questions) {
+      const responses = formData.motorSkillsResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 7 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      let total = 0
+      if (question.questions.toLowerCase().includes('picture')) {
+        total = (responses.range1to4Correct || 0) + (responses.range5to8Correct || 0)
+      } else if (question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip')) {
+        total = (responses.cylindricalGrasp || 0) + (responses.digital || 0) + (responses.modifiedTripodGrasp || 0) + (responses.tripod || 0)
+      } else if (question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation')) {
+        total = (responses.scribbleUR || 0) + (responses.scribbleR || 0) + (responses.approximation || 0) + (responses.name || 0)
+      }
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 7 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateSection8 = () => {
+    if (!section8Questions.length) return true
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+
+    for (const question of section8Questions) {
+      const responses = formData.grossMotorSkillsResponses[question.id]
+      if (!responses) {
+        toast({
+          title: "Section 8 Incomplete",
+          description: `Please complete all responses for: ${question.questions}`,
+          variant: "destructive",
+        })
+        return false
+      }
+
+      let total = 0
+      if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0)
+      } else if (question.questions.toLowerCase().includes('hop')) {
+        total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0)
+      } else if (question.questions.toLowerCase().includes('stand')) {
+        total = (responses.left || 0) + (responses.right || 0)
+      } else {
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0)
+      }
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 8 Incomplete",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
+          variant: "destructive",
+        })
+        return false
+      }
+    }
+    return true
+  }
+
+  // Function to check if current section has been saved
+  const isCurrentSectionComplete = () => {
+    return savedSections.has(currentSection)
+  }
+
   const nextSection = async () => {
-    // Auto-save Section 1 (Basic Information) when moving to next section
-    if (currentSection === 0) {
-      const success = await saveAssessmentBasicInfo()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
+    // Check if current section is saved before proceeding
+    if (!savedSections.has(currentSection)) {
+      toast({
+        title: "Save Required",
+        description: "Please save the current section before proceeding to the next.",
+        variant: "destructive",
+      })
+      return
     }
-    
-    // Auto-save Section 2 (Autobiographical Knowledge) when moving to next section
-    if (currentSection === 1) {
-      const success = await saveSection2Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 3 (Alphabet Recitation and Identification) when moving to next section
-    if (currentSection === 2) {
-      const success = await saveSection3Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 4 (Colour Identification) when moving to next section
-    if (currentSection === 3) {
-      const success = await saveSection4Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 5 (Quantity Differentiation and Counting Fluency) when moving to next section
-    if (currentSection === 4) {
-      const success = await saveSection5Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 6 (Shape Recognition and One on One Correspondence) when moving to next section
-    if (currentSection === 5) {
-      const success = await saveSection6Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 7 (Motor Skills) when moving to next section
-    if (currentSection === 6) {
-      const success = await saveSection7Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
-    // Auto-save Section 8 (Gross Motor Skills) when moving to next section (final section)
-    if (currentSection === 7) {
-      const success = await saveSection8Responses()
-      if (!success) {
-        return // Don't proceed if save failed
-      }
-      setSavedSections(prev => new Set([...prev, currentSection]))
-    }
-    
+
+    // Simply move to next section (no auto-saving)
     if (currentSection < SECTIONS.length - 1) {
       setCurrentSection(currentSection + 1)
     }
@@ -1824,7 +2262,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         {(formData.autobiographicalResponses[question.id]?.fullSentenceResponse || 0) +
                          (formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || 0) +
                          (formData.autobiographicalResponses[question.id]?.incorrectResponse || 0) +
-                         (formData.autobiographicalResponses[question.id]?.noResponseGiven || 0)}
+                         (formData.autobiographicalResponses[question.id]?.noResponseGiven || 0)}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -1945,7 +2383,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         {(formData.alphabetResponses[question.id]?.range1to6Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range7to12Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range13to18Correct || 0) +
-                         (formData.alphabetResponses[question.id]?.range19to26Correct || 0)}
+                         (formData.alphabetResponses[question.id]?.range19to26Correct || 0)}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2050,7 +2488,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       <span className="font-medium text-gray-900">
                         {(formData.colourResponses[question.id]?.oneCorrect || 0) +
                          (formData.colourResponses[question.id]?.twoCorrect || 0) +
-                         (formData.colourResponses[question.id]?.threeCorrect || 0)}
+                         (formData.colourResponses[question.id]?.threeCorrect || 0)}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2188,7 +2626,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           (formData.quantityCountingResponses[question.id]?.range1to10Correct || 0) +
                           (formData.quantityCountingResponses[question.id]?.range11to20Correct || 0) +
                           (formData.quantityCountingResponses[question.id]?.range20PlusCorrect || 0)
-                        )}
+                        )}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2326,7 +2764,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         ) : (
                           (formData.shapeRecognitionResponses[question.id]?.range1to5Correct || 0) +
                           (formData.shapeRecognitionResponses[question.id]?.range6to10Correct || 0)
-                        )}
+                        )}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2544,7 +2982,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           (formData.motorSkillsResponses[question.id]?.scribbleR || 0) +
                           (formData.motorSkillsResponses[question.id]?.approximation || 0) +
                           (formData.motorSkillsResponses[question.id]?.name || 0)
-                        ) : 0}
+                        ) : 0}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2785,7 +3223,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           } else {
                             return (responses.oneTime || 0) + (responses.twoTimes || 0)
                           }
-                        })()}
+                        })()}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2970,10 +3408,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               ) : (
                 <Button
                   onClick={nextSection}
-                  disabled={currentSection === SECTIONS.length - 1}
-                  className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                  disabled={currentSection === SECTIONS.length - 1 || !isCurrentSectionComplete()}
+                  className={`w-full sm:w-auto transition-all duration-200 flex items-center gap-2 ${
+                    !isCurrentSectionComplete() 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'gradient-button text-white hover:shadow-lg'
+                  }`}
                 >
-                  Next
+                  {!isCurrentSectionComplete() ? 'Save Section First' : 'Next'}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
