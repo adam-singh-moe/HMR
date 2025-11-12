@@ -686,3 +686,80 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
     return { assessment: null, responses: [], questions: [], options: [], error: 'An unexpected error occurred' }
   }
 }
+
+// Function to check submitted assessments for the current academic year
+export async function checkYearlyAssessmentLimits(headteacherId: string, schoolId: string) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Get current academic year (assuming academic year starts in September)
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const academicYearStart = new Date(now.getMonth() >= 8 ? currentYear : currentYear - 1, 8, 1) // September 1st
+    const academicYearEnd = new Date(now.getMonth() >= 8 ? currentYear + 1 : currentYear, 7, 31) // July 31st
+    
+    console.log('Academic year range:', { academicYearStart, academicYearEnd })
+    
+    // Get all submitted assessments for this academic year
+    const { data: assessments, error } = await supabase
+      .from('hmr_nursery_assessment')
+      .select('assessment_type, created_at')
+      .eq('headteacher_id', headteacherId)
+      .eq('school_id', schoolId)
+      .eq('status', 'submitted')
+      .gte('created_at', academicYearStart.toISOString())
+      .lt('created_at', academicYearEnd.toISOString())
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error checking yearly assessment limits:', error)
+      return { 
+        submittedTypes: [], 
+        availableTypes: [],
+        allThreeSubmitted: false,
+        error: error.message 
+      }
+    }
+
+    // Define all assessment types
+    const allTypes = [
+      "assessment-1-year-1",
+      "assessment-2-year-2", 
+      "assessment-3-year-2"
+    ]
+
+    // Get submitted assessment types
+    const submittedTypes = assessments?.map(a => a.assessment_type) || []
+    
+    // Get available assessment types (not yet submitted)
+    const availableTypes = allTypes.filter(type => !submittedTypes.includes(type))
+    
+    // Check if all three assessments are submitted
+    const allThreeSubmitted = submittedTypes.length >= 3
+
+    console.log('Assessment limits check:', {
+      submittedTypes,
+      availableTypes,
+      allThreeSubmitted,
+      totalSubmitted: submittedTypes.length
+    })
+
+    return {
+      submittedTypes,
+      availableTypes,
+      allThreeSubmitted,
+      totalSubmitted: submittedTypes.length,
+      academicYearStart: academicYearStart.toISOString(),
+      academicYearEnd: academicYearEnd.toISOString(),
+      error: null
+    }
+  } catch (err) {
+    console.error('Error in checkYearlyAssessmentLimits:', err)
+    return {
+      submittedTypes: [],
+      availableTypes: [],
+      allThreeSubmitted: false,
+      error: 'An unexpected error occurred'
+    }
+  }
+}

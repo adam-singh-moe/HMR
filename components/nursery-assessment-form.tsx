@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
-import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses } from "@/app/actions/nursery-assessment"
+import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses, checkYearlyAssessmentLimits } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
 import { useAutoSave } from "@/hooks/use-auto-save"
 
@@ -148,6 +148,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const [questionsLoading, setQuestionsLoading] = useState(false)
   const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [yearlyLimits, setYearlyLimits] = useState<{
+    allThreeSubmitted: boolean
+    availableTypes: string[]
+    submittedTypes: string[]
+  }>({
+    allThreeSubmitted: false,
+    availableTypes: ["assessment-1-year-1", "assessment-2-year-2", "assessment-3-year-2"],
+    submittedTypes: []
+  })
   
   const [formData, setFormData] = useState<FormData>({
     schoolName: "",
@@ -1140,6 +1149,18 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             headTeacherName: userResult?.name || userResult?.email || "Loading..."
           }))
 
+          // Check yearly assessment limits
+          if (userResult?.id) {
+            const limitsResult = await checkYearlyAssessmentLimits(userResult.id, schoolResult.school.id)
+            if (!limitsResult.error) {
+              setYearlyLimits({
+                allThreeSubmitted: limitsResult.allThreeSubmitted,
+                availableTypes: limitsResult.availableTypes,
+                submittedTypes: limitsResult.submittedTypes
+              })
+            }
+          }
+
           // Try to load existing draft assessment
           if (userResult?.id) {
             const existingAssessment = await loadNurseryAssessment(userResult.id, schoolResult.school.id)
@@ -2120,21 +2141,40 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           <Label htmlFor="assessmentType" className="text-sm font-medium text-gray-700">
             Assessment Type <span className="text-red-500">*</span>
           </Label>
-          <Select 
-            value={formData.assessmentType} 
-            onValueChange={(value) => handleInputChange('assessmentType', value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select assessment type" />
-            </SelectTrigger>
-            <SelectContent>
-              {ASSESSMENT_TYPES.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {yearlyLimits.allThreeSubmitted ? (
+            <div className="p-3 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-600">
+              All assessments completed for this academic year
+            </div>
+          ) : (
+            <Select 
+              value={formData.assessmentType} 
+              onValueChange={(value) => handleInputChange('assessmentType', value)}
+              disabled={yearlyLimits.allThreeSubmitted}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select assessment type" />
+              </SelectTrigger>
+              <SelectContent>
+                {ASSESSMENT_TYPES.filter(type => yearlyLimits.availableTypes.includes(type.value)).map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+                {yearlyLimits.submittedTypes.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-xs text-gray-500 border-t border-gray-200 mt-1">
+                      Already Submitted:
+                    </div>
+                    {ASSESSMENT_TYPES.filter(type => yearlyLimits.submittedTypes.includes(type.value)).map((type) => (
+                      <SelectItem key={`submitted-${type.value}`} value={type.value} disabled>
+                        {type.label} ✓
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -3261,6 +3301,36 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   return (
     <>
+      {/* All Assessments Submitted Message */}
+      {yearlyLimits.allThreeSubmitted && (
+        <Card className="mb-6 border-l-4 border-l-blue-500 bg-blue-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-blue-900 flex items-center gap-2">
+              <FileTextIcon className="h-5 w-5" />
+              All Nursery Assessments Completed
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              You have successfully submitted all three nursery assessments for this academic year. 
+              New assessment forms will be available at the start of the next academic year.
+              <div className="mt-2 text-sm">
+                <strong>Submitted assessments:</strong>
+                <ul className="list-disc list-inside mt-1">
+                  {yearlyLimits.submittedTypes.map(type => {
+                    const typeInfo = ASSESSMENT_TYPES.find(t => t.value === type)
+                    return (
+                      <li key={type}>{typeInfo?.label || type}</li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      {/* Form Container with Disabled State */}
+      <div className={yearlyLimits.allThreeSubmitted ? "opacity-60 pointer-events-none" : ""}>
+        
       {/* Progress Tabs - Hidden on mobile */}
       <div className="hidden sm:block bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
         <div className="p-4">
@@ -3370,7 +3440,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
                 onClick={saveCurrentSection}
-                disabled={loading}
+                disabled={loading || yearlyLimits.allThreeSubmitted}
                 variant="outline"
                 className="w-full sm:w-auto border border-primary-600 text-primary-600 hover:bg-primary-50 transition-all duration-200 flex items-center gap-2"
               >
@@ -3393,7 +3463,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               {currentSection === SECTIONS.length - 1 ? (
                 <Button
                   onClick={submitAssessment}
-                  disabled={loading}
+                  disabled={loading || yearlyLimits.allThreeSubmitted}
                   className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
                 >
                   {loading ? (
@@ -3408,14 +3478,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               ) : (
                 <Button
                   onClick={nextSection}
-                  disabled={currentSection === SECTIONS.length - 1 || !isCurrentSectionComplete()}
+                  disabled={currentSection === SECTIONS.length - 1 || !isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted}
                   className={`w-full sm:w-auto transition-all duration-200 flex items-center gap-2 ${
-                    !isCurrentSectionComplete() 
+                    (!isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted)
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                       : 'gradient-button text-white hover:shadow-lg'
                   }`}
                 >
-                  {!isCurrentSectionComplete() ? 'Save Section First' : 'Next'}
+                  {(!isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted) ? 'Save Section First' : 'Next'}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
@@ -3423,6 +3493,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           </div>
         </CardContent>
       </Card>
+      
+      </div> {/* End of disabled form container */}
     </>
   )
 }
