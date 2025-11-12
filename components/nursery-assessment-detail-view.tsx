@@ -135,10 +135,164 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
     }
   }
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    if (!assessment || !responses) return
+    
     setIsExporting(true)
-    window.print()
-    setTimeout(() => setIsExporting(false), 1000)
+    
+    try {
+      // Dynamically import jsPDF and html2canvas
+      const { default: jsPDF } = await import('jspdf')
+      const html2canvas = await import('html2canvas')
+      
+      // Create a new jsPDF instance
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      let currentY = 20
+      
+      // Add header
+      pdf.setFontSize(20)
+      pdf.setTextColor(40, 40, 40)
+      pdf.text('Nursery Assessment Report', pageWidth / 2, currentY, { align: 'center' })
+      currentY += 15
+      
+      // Add school information
+      pdf.setFontSize(14)
+      pdf.setTextColor(80, 80, 80)
+      pdf.text(`School: ${assessment.schools?.name || 'N/A'}`, 20, currentY)
+      currentY += 8
+      pdf.text(`Region: ${assessment.schools?.region || 'N/A'}`, 20, currentY)
+      currentY += 8
+      pdf.text(`Assessment Period: ${format(new Date(assessment.created_at), 'MMMM yyyy')}`, 20, currentY)
+      currentY += 8
+      pdf.text(`Assessment Type: ${assessment.assessment_type || 'N/A'}`, 20, currentY)
+      currentY += 8
+      pdf.text(`Total Enrollment: ${assessment.enrollment || 0} students`, 20, currentY)
+      currentY += 8
+      pdf.text(`Date Submitted: ${format(new Date(assessment.created_at), 'PPP')}`, 20, currentY)
+      currentY += 15
+      
+      // Group responses by section
+      const groupedResponses = responses.reduce((acc, response) => {
+        const section = response.question_section
+        if (!acc[section]) {
+          acc[section] = []
+        }
+        acc[section].push(response)
+        return acc
+      }, {} as Record<string, AssessmentResponse[]>)
+      
+      // Add each section
+      for (const [sectionName, sectionResponses] of Object.entries(groupedResponses)) {
+        // Check if we need a new page
+        if (currentY > pageHeight - 40) {
+          pdf.addPage()
+          currentY = 20
+        }
+        
+        // Section header
+        pdf.setFontSize(16)
+        pdf.setTextColor(60, 60, 160)
+        pdf.text(sectionName, 20, currentY)
+        currentY += 12
+        
+        // Group responses by question
+        const questionGroups = sectionResponses.reduce((acc, response) => {
+          const questionId = response.question_id
+          if (!acc[questionId]) {
+            acc[questionId] = {
+              question: response.question_text,
+              responses: []
+            }
+          }
+          acc[questionId].responses.push(response)
+          return acc
+        }, {} as Record<string, { question: string, responses: AssessmentResponse[] }>)
+        
+        // Add each question
+        for (const [questionId, group] of Object.entries(questionGroups)) {
+          // Check if we need a new page
+          if (currentY > pageHeight - 60) {
+            pdf.addPage()
+            currentY = 20
+          }
+          
+          // Question title
+          pdf.setFontSize(12)
+          pdf.setTextColor(40, 40, 40)
+          const questionLines = pdf.splitTextToSize(`Q: ${group.question}`, pageWidth - 40)
+          pdf.text(questionLines, 20, currentY)
+          currentY += questionLines.length * 6 + 5
+          
+          // Calculate total
+          const questionTotal = group.responses.reduce((sum, r) => sum + (r.answer || 0), 0)
+          const enrollment = assessment?.enrollment || 0
+          const isValid = questionTotal === enrollment
+          
+          // Add total line
+          pdf.setFontSize(10)
+          if (isValid) {
+            pdf.setTextColor(34, 139, 34) // Green for valid
+          } else {
+            pdf.setTextColor(220, 20, 60) // Red for invalid
+          }
+          pdf.text(`Total Students: ${questionTotal}/${enrollment} ${isValid ? '✓' : '⚠'}`, 25, currentY)
+          currentY += 8
+          
+          // Add responses
+          pdf.setFontSize(10)
+          pdf.setTextColor(80, 80, 80)
+          group.responses.forEach(response => {
+            pdf.text(`• ${response.option_text}: ${response.answer} students`, 25, currentY)
+            currentY += 6
+          })
+          
+          currentY += 8 // Add space after each question
+        }
+        
+        currentY += 10 // Add space after each section
+      }
+      
+      // Add footer
+      const totalPages = pdf.internal.getNumberOfPages()
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i)
+        pdf.setFontSize(8)
+        pdf.setTextColor(120, 120, 120)
+        pdf.text(
+          `Page ${i} of ${totalPages} - Generated on ${format(new Date(), 'PPP')}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        )
+      }
+      
+      // Save the PDF
+      const fileName = `Nursery_Assessment_${assessment.schools?.name?.replace(/\s+/g, '_') || 'Report'}_${format(new Date(), 'yyyy-MM-dd')}.pdf`
+      pdf.save(fileName)
+      
+      toast({
+        title: "PDF Exported Successfully",
+        description: `Assessment report has been saved as ${fileName}`,
+        variant: "default",
+      })
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast({
+        title: "Export Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const toggleMobileSidebar = () => {
