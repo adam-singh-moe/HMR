@@ -227,4 +227,67 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Print styles for nursery assessment reports */
+  @media print {
+    @page {
+      margin: 1in;
+      size: A4;
+    }
+    
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    
+    .print\\:hidden {
+      display: none !important;
+    }
+    
+    .print\\:block {
+      display: block !important;
+    }
+    
+    .print\\:max-w-full {
+      max-width: 100% !important;
+    }
+    
+    .print\\:max-h-full {
+      max-height: 100% !important;
+    }
+    
+    .print\\:overflow-visible {
+      overflow: visible !important;
+    }
+    
+    .print\\:space-y-4 > * + * {
+      margin-top: 1rem !important;
+    }
+    
+    /* Hide dialog overlay and make content full width */
+    [data-radix-popper-content-wrapper] {
+      position: static !important;
+      transform: none !important;
+    }
+    
+    [role="dialog"] {
+      position: static !important;
+      transform: none !important;
+      max-width: none !important;
+      max-height: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    
+    /* Ensure proper page breaks */
+    .space-y-6 > * {
+      page-break-inside: avoid;
+    }
+    
+    h3, h4 {
+      page-break-after: avoid;
+    }
+  }
 }

@@ -176,8 +176,10 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
         </div>
       </div>
 
-      {/* Draft Reports Section */}
-      {(loadingDraftReports || draftReports.length > 0) && (
+      {/* Content with padding */}
+      <div className="px-6 space-y-6">
+        {/* Draft Reports Section */}
+        {(loadingDraftReports || draftReports.length > 0) && (
         <Card className="gradient-card border-0 shadow-md">
           <CardHeader>
             <CardTitle className="text-primary-700 flex items-center gap-2">
@@ -314,6 +316,7 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { MonthlyReportForm } from "@/components/monthly-report-form"
 import { PreviousReportForm } from "@/components/previous-report-form"
 import { NurseryAssessmentForm } from "@/components/nursery-assessment-form"
+import { NurseryAssessmentsList } from "@/components/nursery-assessments-list"
 import { SchoolReadinessStatus } from "@/components/school-readiness-status"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -110,9 +111,9 @@ function HeadTeacherDashboardContent() {
   // Function to fetch school information
   const fetchSchoolInfo = async () => {
     try {
-      console.log('Fetching school info...')
+      //console.log('Fetching school info...')
       const result = await getUserSchoolInfo()
-      console.log('School info result:', result)
+     // console.log('School info result:', result)
       
       if (result.error) {
         console.error('Error fetching school info:', result.error)
@@ -120,11 +121,11 @@ function HeadTeacherDashboardContent() {
       }
 
       if (result.school) {
-        console.log('School data:', result.school)
-        console.log('School level:', result.school.level)
+       // console.log('School data:', result.school)
+       // console.log('School level:', result.school.level)
         setSchoolInfo(result.school)
         const isNursery = result.school.level?.toLowerCase() === 'nursery'
-        console.log('Is nursery school?', isNursery)
+       // console.log('Is nursery school?', isNursery)
         setIsNurserySchool(isNursery)
       }
     } catch (err) {
@@ -171,6 +172,12 @@ function HeadTeacherDashboardContent() {
     updateURL('view-reports') // Switch to view previous reports tab to show the submitted report
   }
 
+  // Function to handle successful nursery assessment submission
+  const handleNurseryAssessmentSuccess = () => {
+    router.refresh() // Refresh the page to update the status
+    updateURL('view-assessments') // Switch to view previous assessments tab to show the submitted assessment
+  }
+
   useEffect(() => {
     fetchSchoolInfo()
     fetchReports()
@@ -186,7 +193,7 @@ function HeadTeacherDashboardContent() {
 
   // Render function for view reports content
   const renderViewReportsContent = () => (
-    <div className="grid gap-4">
+    <div className="grid gap-4 px-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <h2 className="text-lg sm:text-xl md:text-2xl font-semibold tracking-tight text-primary-700">
           View Previous Reports
@@ -692,7 +699,7 @@ function HeadTeacherDashboardContent() {
                 {currentTab === 'submit-assessment' && (
                   <div>
                     
-                    <NurseryAssessmentForm onSuccess={handleReportSuccess} />
+                    <NurseryAssessmentForm onSuccess={handleNurseryAssessmentSuccess} />
                   </div>
                 )}
                 {currentTab === 'view-assessments' && (
@@ -707,19 +714,8 @@ function HeadTeacherDashboardContent() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-center py-12">
-                      <div className="p-6 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-full w-fit mx-auto mb-6">
-                        <EyeIcon className="h-16 w-16 text-indigo-600" />
-                      </div>
-                      <h3 className="text-2xl font-semibold mb-3 text-gray-800">Assessment History Coming Soon</h3>
-                      <p className="text-gray-600 max-w-md mx-auto leading-relaxed">
-                        View, search, and manage your previously submitted nursery assessments. 
-                        Track student progress over time with detailed reporting tools.
-                      </p>
-                      <div className="mt-6 px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium w-fit mx-auto">
-                        📊 Feature in Development
-                      </div>
-                    </div>
+                    
+                    <NurseryAssessmentsList />
                   </div>
                 )}
                 {currentTab !== 'submit-assessment' && currentTab !== 'view-assessments' && (

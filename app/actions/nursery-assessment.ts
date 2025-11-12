@@ -559,3 +559,106 @@ export async function loadSavedResponses(assessmentId: string) {
     return { responses: [], error: 'An unexpected error occurred' }
   }
 }
+
+// Function to fetch submitted nursery assessments for a user
+export async function getSubmittedNurseryAssessments(userId: string) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // First get assessments without foreign key joins to test basic query
+    const { data: assessments, error } = await supabase
+      .from('hmr_nursery_assessment')
+      .select('*')
+      .eq('headteacher_id', userId)
+      .eq('status', 'submitted')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching submitted assessments:', error)
+      return { assessments: [], error: error.message }
+    }
+
+    // Now fetch school data separately for each assessment
+    const assessmentsWithSchools = await Promise.all(
+      assessments.map(async (assessment) => {
+        const { data: school } = await supabase
+          .from('sms_schools')
+          .select('name, region_id')
+          .eq('id', assessment.school_id)
+          .single()
+
+        return {
+          ...assessment,
+          schools: school ? { name: school.name, region: school.region_id } : null
+        }
+      })
+    )
+
+    console.log('Fetched submitted assessments:', assessmentsWithSchools)
+    return { assessments: assessmentsWithSchools || [], error: null }
+  } catch (err) {
+    console.error('Error in getSubmittedNurseryAssessments:', err)
+    return { assessments: [], error: 'An unexpected error occurred' }
+  }
+}
+
+// Function to get detailed assessment data for viewing/printing
+export async function getNurseryAssessmentDetails(assessmentId: string) {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Get assessment basic info first
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('hmr_nursery_assessment')
+      .select('*')
+      .eq('id', assessmentId)
+      .single()
+
+    if (assessmentError) {
+      console.error('Error fetching assessment:', assessmentError)
+      return { assessment: null, responses: [], error: assessmentError.message }
+    }
+
+    // Get school data separately
+    const { data: school } = await supabase
+      .from('sms_schools')
+      .select('name, region_id, school_level_id')
+      .eq('id', assessment.school_id)
+      .single()
+
+    // Attach school data to assessment
+    const assessmentWithSchool = {
+      ...assessment,
+      schools: school ? { name: school.name, region: school.region_id, level: school.school_level_id } : null
+    }
+
+    // Get all responses for this assessment
+    const { data: responses, error: responsesError } = await supabase
+      .from('hmr_nursery_assessment_answers')
+      .select(`
+        *,
+        questions:question_id (
+          section,
+          question_text,
+          question_type
+        ),
+        options:option_id (
+          option_text,
+          section
+        )
+      `)
+      .eq('assessment_id', assessmentId)
+      .order('created_at', { ascending: true })
+
+    if (responsesError) {
+      console.error('Error fetching responses:', responsesError)
+      return { assessment: assessmentWithSchool, responses: [], error: responsesError.message }
+    }
+
+    console.log('Fetched assessment details:', { assessment: assessmentWithSchool, responses })
+    return { assessment: assessmentWithSchool, responses: responses || [], error: null }
+  } catch (err) {
+    console.error('Error in getNurseryAssessmentDetails:', err)
+    return { assessment: null, responses: [], error: 'An unexpected error occurred' }
+  }
+}
