@@ -1778,3 +1778,192 @@ export async function getPhysicalEducationReports() {
     return { reports: [], error: "An unexpected error occurred." }
   }
 }
+
+export async function getRegionalPhysicalEducationReports({
+  searchTerm = "",
+  selectedRegionId = "",
+  selectedMonth = "",
+  selectedYear = "",
+  page = 1,
+  pageSize = 25
+}: {
+  searchTerm?: string
+  selectedRegionId?: string
+  selectedMonth?: string
+  selectedYear?: string
+  page?: number
+  pageSize?: number
+} = {}) {
+  try {
+    console.log("getRegionalPhysicalEducationReports called with params:", {
+      searchTerm, selectedRegionId, selectedMonth, selectedYear, page, pageSize
+    })
+
+    const user = await getUser()
+
+    if (!user) {
+      console.log("No user found")
+      return { reports: [], totalCount: 0, totalPages: 0, error: "User not authenticated." }
+    }
+
+    console.log("User authenticated:", { role: user.role, region: user.region_name })
+
+    if (user.role !== "Regional Officer" && user.role !== "Education Official" && user.role !== "Admin") {
+      console.log("User role not authorized:", user.role)
+      return { reports: [], totalCount: 0, totalPages: 0, error: "Only Regional Officers, Education Officials and Admins can access this data." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Build the query step by step
+    let query = supabase
+      .from("hmr_physical_education")
+      .select(`
+        id,
+        report_id,
+        activities,
+        challenges,
+        created_at,
+        hmr_report!inner (
+          id,
+          month,
+          year,
+          school_id,
+          status,
+          sms_schools!inner (
+            id,
+            name,
+            region_id,
+            sms_regions (
+              id,
+              name
+            )
+          ),
+          hmr_student_enrollment (
+            total_students
+          )
+        )
+      `, { count: 'exact' })
+      .eq('hmr_report.status', 'submitted')
+      .is('hmr_report.deleted_on', null)
+
+    // Filter by region for Regional Officers
+    if (user.role === "Regional Officer" && user.region_name) {
+      console.log("Adding region filter for:", user.region_name)
+      query = query.eq('hmr_report.sms_schools.sms_regions.name', user.region_name)
+    }
+
+    // Apply additional filters
+    if (searchTerm.trim()) {
+      console.log("Adding search filter for:", searchTerm)
+      query = query.ilike('hmr_report.sms_schools.name', `%${searchTerm}%`)
+    }
+
+    if (selectedMonth && selectedMonth !== "all") {
+      console.log("Adding month filter for:", selectedMonth)
+      query = query.eq('hmr_report.month', parseInt(selectedMonth))
+    }
+
+    if (selectedYear && selectedYear !== "all") {
+      console.log("Adding year filter for:", selectedYear)
+      query = query.eq('hmr_report.year', parseInt(selectedYear))
+    }
+
+    // Add ordering
+    query = query.order('created_at', { ascending: false })
+
+    console.log("Executing main query...")
+    const { data: peReports, error: queryError, count } = await query
+
+    console.log("Query result:", { 
+      dataLength: peReports?.length || 0, 
+      count, 
+      error: queryError?.message || null 
+    })
+
+    if (queryError) {
+      console.error("Database query error:", queryError)
+      return { 
+        reports: [], 
+        totalCount: 0, 
+        totalPages: 0, 
+        error: `Database error: ${queryError.message}` 
+      }
+    }
+
+    if (!peReports || peReports.length === 0) {
+      console.log("No PE reports found")
+      return { 
+        reports: [], 
+        totalCount: 0, 
+        totalPages: 0, 
+        error: null 
+      }
+    }
+
+    // Transform the data to match the expected format
+    const transformedReports = peReports.map((peReport: any) => {
+      const report = peReport.hmr_report
+      const school = report?.sms_schools
+      const region = school?.sms_regions
+      const enrollment = report?.hmr_student_enrollment?.[0]
+      
+      // Create period string (month and year concatenated)
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ]
+      const monthName = monthNames[(report?.month || 1) - 1] || 'Unknown'
+      const period = `${monthName} ${report?.year || ''}`
+
+      return {
+        id: peReport.id,
+        report_id: peReport.report_id,
+        school_id: report?.school_id,
+        month: report?.month,
+        year: report?.year,
+        status: report?.status || 'submitted',
+        school_name: school?.name || 'Unknown School',
+        region_name: region?.name || 'Unknown Region',
+        period: period,
+        total_students: enrollment?.total_students || 0,
+        activities: peReport.activities || '',
+        challenges: peReport.challenges || '',
+        created_at: peReport.created_at
+      }
+    })
+
+    console.log("Data transformed, count:", transformedReports.length)
+
+    // Apply pagination
+    const totalCount = count || transformedReports.length
+    const totalPages = Math.ceil(totalCount / pageSize)
+    const offset = (page - 1) * pageSize
+    const paginatedReports = transformedReports.slice(offset, offset + pageSize)
+
+    console.log("Final result:", { 
+      totalCount, 
+      totalPages, 
+      currentPage: page,
+      paginatedLength: paginatedReports.length 
+    })
+
+    return { 
+      reports: paginatedReports, 
+      totalCount, 
+      totalPages, 
+      currentPage: page,
+      pageSize,
+      error: null 
+    }
+
+  } catch (error) {
+    console.error("Unexpected error in getRegionalPhysicalEducationReports:", error)
+    return { 
+      reports: [], 
+      totalCount: 0, 
+      totalPages: 0, 
+      error: `An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    }
+  }
+}

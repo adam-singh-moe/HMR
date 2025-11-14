@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AuthWrapper } from "@/components/auth-wrapper"
+import { RegionalPEReportsContent } from "./pe-reports/page"
 import {
   BarChart,
   Bar,
@@ -834,7 +835,7 @@ function RegionalOfficerDashboardContent() {
       </div>
 
       <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 bg-primary-50 border border-primary-200 h-auto">
+        <TabsList className="grid w-full grid-cols-3 bg-primary-50 border border-primary-200 h-auto">
           <TabsTrigger 
             value="overview" 
             className="data-[state=active]:bg-primary-600 data-[state=active]:text-white text-xs sm:text-sm py-2 sm:py-3"
@@ -848,6 +849,13 @@ function RegionalOfficerDashboardContent() {
           >
             <span className="hidden sm:inline">Submitted Reports</span>
             <span className="sm:hidden">Reports</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="pe-reports" 
+            className="data-[state=active]:bg-primary-600 data-[state=active]:text-white text-xs sm:text-sm py-2 sm:py-3"
+          >
+            <span className="hidden sm:inline">PE Reports</span>
+            <span className="sm:hidden">PE Reports</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1849,6 +1857,10 @@ function RegionalOfficerDashboardContent() {
               </Card>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="pe-reports" className="space-y-4 lg:space-y-6">
+          <RegionalPEReportsContent />
         </TabsContent>
 
       </Tabs>
