@@ -7,6 +7,7 @@ import { FileText, School, Users, TrendingUp, Eye, Calendar } from "lucide-react
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { SchoolReadinessIndicator } from "@/components/school-readiness-indicator"
 import Link from "next/link"
 
 export default async function EducationOfficialPage() {
@@ -75,6 +76,17 @@ export default async function EducationOfficialPage() {
   // Show full dashboard for verified users
   return (
     <div className="space-y-4 lg:space-y-6">
+
+      {/* Header Section with School Readiness */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl lg:text-2xl font-bold text-gray-900">System Overview</h2>
+          <p className="text-muted-foreground">Monitor key metrics and performance indicators</p>
+        </div>
+        <div className="flex-shrink-0">
+          <SchoolReadinessIndicator />
+        </div>
+      </div>
 
       {/* Error Alerts */}
       {(reportCountsError || schoolCountError || expenditureError || attendanceError || recentReportsError || regionStatsError) && (
