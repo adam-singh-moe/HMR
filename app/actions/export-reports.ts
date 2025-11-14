@@ -6,13 +6,14 @@ export async function generateReportsPDF(filters?: {
   searchTerm?: string
   selectedRegionId?: string
   selectedSchoolLevel?: string
-  fromDate?: string
+  selectedMonth?: string
+  selectedYear?: string
 }) {
   try {
     let reports: any[] = []
     let error: string | null = null
 
-    if (filters && (filters.searchTerm || filters.selectedRegionId || filters.selectedSchoolLevel || filters.fromDate)) {
+    if (filters && (filters.searchTerm || filters.selectedRegionId || filters.selectedSchoolLevel || filters.selectedMonth || filters.selectedYear)) {
       // Use filtered reports with a very high limit to get all results
       const result = await getSubmittedReportsWithSearchAndPagination({
         searchTerm: filters.searchTerm || "",
@@ -20,7 +21,8 @@ export async function generateReportsPDF(filters?: {
         pageSize: 999999, // Very high limit to get all results
         selectedRegionId: filters.selectedRegionId || "",
         selectedSchoolLevel: filters.selectedSchoolLevel || "",
-        fromDate: filters.fromDate || ""
+        selectedMonth: filters.selectedMonth || "",
+        selectedYear: filters.selectedYear || ""
       })
       reports = result.reports
       error = result.error

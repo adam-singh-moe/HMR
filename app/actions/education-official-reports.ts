@@ -104,8 +104,8 @@ export async function getSubmittedReportsWithSearchAndPagination({
   selectedSchoolId = "",
   selectedRegionId = "",
   selectedSchoolLevel = "",
-  fromDate = "",
-  toDate = "",
+  selectedMonth = "",
+  selectedYear = "",
   page = 1,
   pageSize = 25,
   sortBy = "updated_at",
@@ -115,8 +115,8 @@ export async function getSubmittedReportsWithSearchAndPagination({
   selectedSchoolId?: string
   selectedRegionId?: string
   selectedSchoolLevel?: string
-  fromDate?: string
-  toDate?: string
+  selectedMonth?: string
+  selectedYear?: string
   page?: number
   pageSize?: number
   sortBy?: string
@@ -182,13 +182,14 @@ export async function getSubmittedReportsWithSearchAndPagination({
       query = query.eq("school_level", selectedSchoolLevel)
     }
 
-    // Apply date range filter if provided
-    if (fromDate && toDate) {
-      query = query.gte("created_at", fromDate).lte("created_at", toDate)
-    } else if (fromDate) {
-      query = query.gte("created_at", fromDate)
-    } else if (toDate) {
-      query = query.lte("created_at", toDate)
+    // Apply month filter if provided
+    if (selectedMonth && selectedMonth !== "all") {
+      query = query.eq("month", parseInt(selectedMonth))
+    }
+
+    // Apply year filter if provided
+    if (selectedYear && selectedYear !== "all") {
+      query = query.eq("year", parseInt(selectedYear))
     }
 
     // Apply search term if provided

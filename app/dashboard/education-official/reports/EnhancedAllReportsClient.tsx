@@ -93,7 +93,8 @@ export default function EnhancedAllReportsClient({
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedRegionId, setSelectedRegionId] = useState("")
   const [selectedSchoolLevel, setSelectedSchoolLevel] = useState("")
-  const [fromDate, setFromDate] = useState("")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [totalCount, setTotalCount] = useState(initialTotalCount)
@@ -117,8 +118,8 @@ export default function EnhancedAllReportsClient({
           selectedSchoolId: "",
           selectedRegionId,
           selectedSchoolLevel,
-          fromDate,
-          toDate: "",
+          selectedMonth,
+          selectedYear,
           page: currentPage,
           pageSize,
           sortBy,
@@ -141,14 +142,14 @@ export default function EnhancedAllReportsClient({
     }
 
     fetchReports()
-  }, [debouncedSearchTerm, selectedRegionId, selectedSchoolLevel, fromDate, currentPage, pageSize, sortBy, sortOrder])
+  }, [debouncedSearchTerm, selectedRegionId, selectedSchoolLevel, selectedMonth, selectedYear, currentPage, pageSize, sortBy, sortOrder])
 
   // Reset to first page when search or filters change
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1)
     }
-  }, [debouncedSearchTerm, selectedRegionId, selectedSchoolLevel, fromDate])
+  }, [debouncedSearchTerm, selectedRegionId, selectedSchoolLevel, selectedMonth, selectedYear])
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -186,7 +187,8 @@ export default function EnhancedAllReportsClient({
         searchTerm: searchTerm,
         selectedRegionId: selectedRegionId && selectedRegionId !== "all" ? selectedRegionId : undefined,
         selectedSchoolLevel: selectedSchoolLevel && selectedSchoolLevel !== "all" ? selectedSchoolLevel : undefined,
-        fromDate: fromDate || undefined
+        selectedMonth: selectedMonth && selectedMonth !== "all" ? selectedMonth : undefined,
+        selectedYear: selectedYear && selectedYear !== "all" ? selectedYear : undefined
       }
       
       const result = await generateReportsPDF(currentFilters)
@@ -229,10 +231,11 @@ export default function EnhancedAllReportsClient({
     setSearchTerm("")
     setSelectedRegionId("")
     setSelectedSchoolLevel("")
-    setFromDate("")
+    setSelectedMonth("")
+    setSelectedYear("")
   }
 
-  const hasActiveFilters = searchTerm || (selectedRegionId && selectedRegionId !== "all") || (selectedSchoolLevel && selectedSchoolLevel !== "all") || fromDate
+  const hasActiveFilters = searchTerm || (selectedRegionId && selectedRegionId !== "all") || (selectedSchoolLevel && selectedSchoolLevel !== "all") || (selectedMonth && selectedMonth !== "all") || (selectedYear && selectedYear !== "all")
 
   if (error) {
     return (
@@ -286,10 +289,10 @@ export default function EnhancedAllReportsClient({
         <CardContent className="p-4 sm:p-6">
           {/* Search and Filter Controls */}
           <div className="mb-6 space-y-4">
-            {/* First Row - Search */}
-            <div className="grid grid-cols-1 gap-4">
-              {/* Search Input */}
-              <div className="relative max-w-md">
+            {/* All filters in one row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3">
+              {/* Search Input - Takes more space */}
+              <div className="relative lg:col-span-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   type="text"
@@ -299,15 +302,12 @@ export default function EnhancedAllReportsClient({
                   className="pl-10"
                 />
               </div>
-            </div>
 
-            {/* Second Row - Additional Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Region Filter */}
-              <div>
+              <div className="lg:col-span-2">
                 <Select value={selectedRegionId || undefined} onValueChange={(value) => setSelectedRegionId(value || "")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by region..." />
+                    <SelectValue placeholder="Region..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Regions</SelectItem>
@@ -321,10 +321,10 @@ export default function EnhancedAllReportsClient({
               </div>
 
               {/* School Level Filter */}
-              <div>
+              <div className="lg:col-span-2">
                 <Select value={selectedSchoolLevel || undefined} onValueChange={(value) => setSelectedSchoolLevel(value || "")}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by school level..." />
+                    <SelectValue placeholder="Level..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Levels</SelectItem>
@@ -337,14 +337,48 @@ export default function EnhancedAllReportsClient({
                 </Select>
               </div>
 
-              {/* From Date Filter */}
-              <div>
-                <Input
-                  type="date"
-                  placeholder="From date..."
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
+              {/* Month Filter */}
+              <div className="lg:col-span-2">
+                <Select value={selectedMonth || undefined} onValueChange={(value) => setSelectedMonth(value || "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Month..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    <SelectItem value="1">January</SelectItem>
+                    <SelectItem value="2">February</SelectItem>
+                    <SelectItem value="3">March</SelectItem>
+                    <SelectItem value="4">April</SelectItem>
+                    <SelectItem value="5">May</SelectItem>
+                    <SelectItem value="6">June</SelectItem>
+                    <SelectItem value="7">July</SelectItem>
+                    <SelectItem value="8">August</SelectItem>
+                    <SelectItem value="9">September</SelectItem>
+                    <SelectItem value="10">October</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">December</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Year Filter */}
+              <div className="lg:col-span-2">
+                <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value || "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Year..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {Array.from({ length: 10 }, (_, i) => {
+                      const year = new Date().getFullYear() - i
+                      return (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
