@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Loader2, Activity, Users, MapPin, Calendar, AlertCircle, Filter, FileText, Download } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Loader2, Activity, Users, MapPin, Calendar, AlertCircle, Filter, FileText, Download, Search, X } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { getPhysicalEducationReports } from "@/app/actions/education-official-reports"
+import { getPhysicalEducationReports, getRegionsForFilter } from "@/app/actions/education-official-reports"
 import { Pagination } from "@/components/pagination"
 
 
@@ -17,7 +18,9 @@ interface PhysicalEducationReport {
   report_id: string
   month: number
   year: number
+  region_id: string
   region_name: string
+  school_id: string
   school_name: string
   total_students: number
   activities: string
@@ -25,55 +28,89 @@ interface PhysicalEducationReport {
   created_at: string
 }
 
+interface Region {
+  id: string
+  name: string
+}
+
 export default function PhysicalEducationReportsPage() {
   const [reports, setReports] = useState<PhysicalEducationReport[]>([])
   const [filteredReports, setFilteredReports] = useState<PhysicalEducationReport[]>([])
+  const [regions, setRegions] = useState<Region[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
   const [selectedYear, setSelectedYear] = useState<string>("all")
+  const [selectedRegion, setSelectedRegion] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState<string>("")
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10) // 10 reports per page
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-        const result = await getPhysicalEducationReports()
+        const [reportsResult, regionsResult] = await Promise.all([
+          getPhysicalEducationReports(),
+          getRegionsForFilter()
+        ])
         
-        if (result.error) {
-          setError(result.error)
+        if (reportsResult.error) {
+          setError(reportsResult.error)
         } else {
-          setReports(result.reports)
-          setFilteredReports(result.reports)
+          setReports(reportsResult.reports)
+        }
+
+        if (regionsResult.error) {
+          console.error("Failed to load regions:", regionsResult.error)
+        } else {
+          setRegions(regionsResult.regions)
         }
       } catch (error) {
-        console.error("Error fetching physical education reports:", error)
-        setError("Failed to load physical education reports")
+        console.error("Error fetching data:", error)
+        setError("Failed to load data")
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchReports()
+    fetchData()
   }, [])
 
   // Filter reports when filters change
   useEffect(() => {
     let filtered = reports
 
+    // Apply month filter
     if (selectedMonth !== "all") {
       filtered = filtered.filter(report => report.month === parseInt(selectedMonth))
     }
 
+    // Apply year filter
     if (selectedYear !== "all") {
       filtered = filtered.filter(report => report.year === parseInt(selectedYear))
     }
 
+    // Apply region filter
+    if (selectedRegion !== "all") {
+      filtered = filtered.filter(report => report.region_id === selectedRegion)
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase()
+      filtered = filtered.filter(report => 
+        report.school_name.toLowerCase().includes(searchLower) ||
+        report.region_name.toLowerCase().includes(searchLower) ||
+        report.activities.toLowerCase().includes(searchLower) ||
+        report.challenges.toLowerCase().includes(searchLower)
+      )
+    }
+
     setFilteredReports(filtered)
     setCurrentPage(1) // Reset to first page when filters change
-  }, [reports, selectedMonth, selectedYear])
+  }, [reports, selectedMonth, selectedYear, selectedRegion, searchQuery])
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredReports.length / pageSize)
@@ -88,6 +125,17 @@ export default function PhysicalEducationReportsPage() {
 
   // Get unique years from reports for year filter
   const availableYears = Array.from(new Set(reports.map(report => report.year))).sort((a, b) => b - a)
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedMonth("all")
+    setSelectedYear("all")
+    setSelectedRegion("all")
+    setSearchQuery("")
+  }
+
+  // Check if any filters are active
+  const hasActiveFilters = selectedMonth !== "all" || selectedYear !== "all" || selectedRegion !== "all" || searchQuery.trim() !== ""
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -419,62 +467,121 @@ export default function PhysicalEducationReportsPage() {
         {/* Filters and Generate Report Button */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Filters:</span>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Month</label>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-full sm:w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Months</SelectItem>
-                        {monthNames.map((month, index) => (
-                          <SelectItem key={index + 1} value={(index + 1).toString()}>
-                            {month}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {/* All Controls in One Row */}
+            <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-end">
+              {/* Filters Label and Icon */}
+              <div className="flex items-center gap-2 lg:mb-6">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filters:</span>
+              </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Year</label>
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                      <SelectTrigger className="w-full sm:w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Years</SelectItem>
-                        {availableYears.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* Search Input */}
+              <div className="space-y-1 w-full lg:w-90">
+                <label className="text-xs text-muted-foreground lg:hidden">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by school name, region, activities, or challenges..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchQuery && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              <Button 
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center gap-2"
-              >
-                {isGeneratingPDF ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Generate Report
-              </Button>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground lg:hidden">Region</label>
+                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {regions.map((region) => (
+                      <SelectItem key={region.id} value={region.id}>
+                        {region.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground lg:hidden">Month</label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {monthNames.map((month, index) => (
+                      <SelectItem key={index + 1} value={(index + 1).toString()}>
+                        {month}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground lg:hidden">Year</label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-full sm:w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
+                <div className="space-y-1">
+                  <label className="text-xs text-transparent lg:hidden">Clear</label>
+                  <Button 
+                    variant="outline" 
+                    onClick={clearAllFilters}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+
+              {/* Generate Report Button */}
+              <div className="space-y-1 lg:ml-auto">
+                <label className="text-xs text-transparent lg:hidden">Generate</label>
+                <Button 
+                  onClick={generatePDF}
+                  disabled={isGeneratingPDF}
+                  className="flex items-center gap-2"
+                >
+                  {isGeneratingPDF ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Generate Report
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

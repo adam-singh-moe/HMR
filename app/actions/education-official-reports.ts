@@ -1696,7 +1696,7 @@ export async function getPhysicalEducationReports() {
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Fetch physical education reports with related data
+    // Fetch physical education reports with related data including enrollment in one query
     const { data: physicalEducationData, error } = await supabase
       .from("hmr_physical_education")
       .select(`
@@ -1719,6 +1719,9 @@ export async function getPhysicalEducationReports() {
               id,
               name
             )
+          ),
+          hmr_student_enrollment (
+            total_students
           )
         )
       `)
@@ -1735,40 +1738,33 @@ export async function getPhysicalEducationReports() {
       return { reports: [], error: null }
     }
 
-    // Get report IDs to fetch student enrollment data
-    const reportIds = physicalEducationData.map(pe => pe.report_id)
-
-    // Fetch student enrollment data for these reports
-    const { data: enrollmentData, error: enrollmentError } = await supabase
-      .from("hmr_student_enrollment")
-      .select("report_id, total_students")
-      .in("report_id", reportIds)
-
-    if (enrollmentError) {
-      console.error("Error fetching enrollment data:", enrollmentError)
-      // Continue without enrollment data
-    }
-
-    // Create a map of report_id to total_students for quick lookup
-    const enrollmentMap = new Map()
-    enrollmentData?.forEach(enrollment => {
-      enrollmentMap.set(enrollment.report_id, enrollment.total_students || 0)
-    })
-
     // Transform the data for the table
     const transformedReports = physicalEducationData.map(pe => {
       const report = pe.hmr_report as any
       const school = report?.sms_schools as any
       const region = school?.sms_regions as any
+      const enrollment = report?.hmr_student_enrollment as any
+      
+      // Get total_students from enrollment data
+      let totalStudents = 0
+      if (Array.isArray(enrollment) && enrollment.length > 0) {
+        totalStudents = enrollment[0].total_students || 0
+      } else if (enrollment && enrollment.total_students) {
+        totalStudents = enrollment.total_students || 0
+      }
+      
+      console.log(`Report ${pe.report_id}: School ${school?.name}, Students: ${totalStudents}`)
       
       return {
         id: pe.id,
         report_id: pe.report_id,
         month: report?.month || 0,
         year: report?.year || 0,
+        region_id: school?.region_id || '',
         region_name: region?.name || 'Unknown Region',
+        school_id: school?.id || '',
         school_name: school?.name || 'Unknown School',
-        total_students: enrollmentMap.get(pe.report_id) || 0,
+        total_students: totalStudents,
         activities: pe.activities || '',
         challenges: pe.challenges || '',
         created_at: pe.created_at
