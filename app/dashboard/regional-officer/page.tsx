@@ -591,8 +591,13 @@ function RegionalOfficerDashboardContent() {
 
   // Helper functions for attendance trends filtering
   const getAvailableYears = () => {
-    const years = Array.from(new Set(attendanceTrendsData.map(d => d.year)))
-    return years.sort((a, b) => b - a) // Most recent first
+    const currentYear = new Date().getFullYear()
+    const dataYears = Array.from(new Set(attendanceTrendsData.map(d => d.year)))
+    
+    // Always include current year even if no data exists
+    const allYears = Array.from(new Set([currentYear, ...dataYears]))
+    
+    return allYears.sort((a, b) => b - a) // Most recent first
   }
 
   const getFilteredAttendanceData = () => {

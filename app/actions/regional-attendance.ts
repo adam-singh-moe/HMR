@@ -76,61 +76,52 @@ export async function getRegionalAttendanceTrends() {
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // First, let's get the report IDs for this region to debug the relationship
-    const { data: debugReports, error: debugError } = await supabase
+    // Use a direct query similar to your SQL - much simpler and more reliable
+    const { data: attendanceTrendsData, error } = await supabase
       .from("hmr_report")
       .select(`
-        id,
         month,
         year,
-        status,
-        sms_schools!inner(
-          id,
-          name,
-          region_id
+        region_id,
+        hmr_attendance!inner (
+          role,
+          attendance_rate,
+          punctuality_rate
         )
       `)
-      .eq("sms_schools.region_id", user.region)
+      .eq("region_id", user.region)
       .eq("status", "submitted")
       .is("deleted_on", null)
+      .order("year", { ascending: true })
+      .order("month", { ascending: true })
 
-    // Fetch attendance and punctuality data with report and school information
-    const { data: attendanceData, error } = await supabase
-      .from("hmr_attendance")
-      .select(`
-        attendance_rate,
-        punctuality_rate,
-        role,
-        report_id,
-        hmr_report!inner(
-          id,
-          month,
-          year,
-          status,
-          sms_schools!inner(
-            id,
-            name,
-            region_id
-          )
-        )
-      `)
-      .eq("hmr_report.sms_schools.region_id", user.region)
-      .eq("hmr_report.status", "submitted")
-      .is("hmr_report.deleted_on", null)
-      .order("hmr_report(year)", { ascending: true })
-      .order("hmr_report(month)", { ascending: true })
+    console.log("Debug: Direct query attendance trends found:", attendanceTrendsData?.length || 0)
 
     if (error) {
-      console.error("Error fetching regional attendance trends:", error)
+      console.error("Error fetching attendance trends with direct query:", error)
       return { trendsData: [], error: "Failed to fetch attendance trends." }
     }
 
-    if (!attendanceData || attendanceData.length === 0) {
+    if (!attendanceTrendsData || attendanceTrendsData.length === 0) {
+      console.log("Debug: No attendance trends data found")
       return { trendsData: [], error: null }
     }
 
-    // Process the data to calculate monthly averages for the line chart
-    const monthlyTrends = processAttendanceTrendsData(attendanceData)
+    // Check for 2025 data specifically
+    const data2025 = attendanceTrendsData.filter(record => 
+      parseInt(record.year) === 2025 || record.year === '2025'
+    )
+    console.log("Debug: 2025 attendance records found:", data2025.length)
+    if (data2025.length > 0) {
+      console.log("Debug: 2025 data sample:", data2025.slice(0, 3))
+    }
+    
+    // Check all unique years in the data
+    const allYears = new Set(attendanceTrendsData.map(record => record.year))
+    console.log("Debug: All years in attendance data:", Array.from(allYears).sort())
+
+    // Process the data to calculate monthly averages (same as your SQL query logic)
+    const monthlyTrends = processAttendanceTrendsDataDirect(attendanceTrendsData)
 
     return {
       trendsData: monthlyTrends,
@@ -195,36 +186,33 @@ function processAttendanceData(rawData: any[]) {
   })
 }
 
-function processAttendanceTrendsData(rawData: any[]) {
-  // Group data by month-year
+function processAttendanceTrendsDataDirect(rawData: any[]) {
+  // Group data by month-year, similar to your SQL GROUP BY
   const monthlyGroups: { [key: string]: any[] } = {}
   
   rawData.forEach(record => {
-    const report = record.hmr_report
-    if (!report) {
-      return
-    }
-    
-    // Validate that month and year are valid numbers
-    if (!report.month || !report.year || isNaN(report.month) || isNaN(report.year)) {
-      return
-    }
-    
-    const monthYear = `${report.month}-${report.year}`
+    const monthYear = `${record.month}-${record.year}`
     
     if (!monthlyGroups[monthYear]) {
       monthlyGroups[monthYear] = []
     }
-    monthlyGroups[monthYear].push(record)
+    
+    // Flatten the attendance records from the nested structure
+    record.hmr_attendance.forEach((attendanceRecord: any) => {
+      monthlyGroups[monthYear].push({
+        ...attendanceRecord,
+        month: record.month,
+        year: record.year
+      })
+    })
   })
 
-  // Only process months that actually have data
+  // Calculate averages for each month (exactly like your SQL query)
   const monthlyTrends = Object.entries(monthlyGroups)
-    .filter(([monthYear, records]) => records.length > 0) // Only include months with actual data
     .map(([monthYear, records]) => {
       const [month, year] = monthYear.split('-').map(Number)
       
-      // Additional validation
+      // Validate month and year
       if (isNaN(month) || isNaN(year) || month < 1 || month > 12) {
         return null
       }
@@ -233,7 +221,7 @@ function processAttendanceTrendsData(rawData: any[]) {
       const studentRecords = records.filter(r => r.role === 'student')
       const teacherRecords = records.filter(r => r.role === 'teacher')
       
-      // Calculate attendance averages
+      // Calculate attendance averages (AVG function equivalent)
       const studentAttendance = studentRecords.length > 0 
         ? Math.round(studentRecords.reduce((sum, r) => sum + (r.attendance_rate || 0), 0) / studentRecords.length)
         : 0
@@ -242,7 +230,7 @@ function processAttendanceTrendsData(rawData: any[]) {
         ? Math.round(teacherRecords.reduce((sum, r) => sum + (r.attendance_rate || 0), 0) / teacherRecords.length)
         : 0
 
-      // Calculate punctuality averages
+      // Calculate punctuality averages (AVG function equivalent)
       const studentPunctuality = studentRecords.length > 0 
         ? Math.round(studentRecords.reduce((sum, r) => sum + (r.punctuality_rate || 0), 0) / studentRecords.length)
         : 0
@@ -271,7 +259,7 @@ function processAttendanceTrendsData(rawData: any[]) {
     })
     .filter(trend => trend !== null) // Remove any null entries from validation failures
 
-  // Sort by year and month
+  // Sort by year and month (ORDER BY equivalent)
   const sortedTrends = monthlyTrends.sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
     return a.monthIndex - b.monthIndex

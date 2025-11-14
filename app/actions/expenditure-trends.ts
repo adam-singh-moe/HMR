@@ -20,46 +20,41 @@ export async function getExpenditureTrends() {
     // Get the current year
     const currentYear = new Date().getFullYear()
 
-    // First, get all reports for the current year in the region
-    const { data: reports, error: reportsError } = await supabase
-      .from("hmr_report")
-      .select(`
-        id,
-        month,
-        year,
-        school_id,
-        sms_schools!inner(id, name, region_id)
-      `)
-      .eq("sms_schools.region_id", user.region)
-      .eq("year", currentYear)
-      .order("month", { ascending: true })
+    console.log("Debug: Fetching expenditure trends for year:", currentYear, "region:", user.region)
 
-    if (reportsError) {
-      console.error("Error fetching reports:", reportsError)
-      return { expenditures: [], error: "Failed to fetch reports." }
-    }
-
-    if (!reports || reports.length === 0) {
-      return { expenditures: [], error: null }
-    }
-
-    // Get report IDs
-    const reportIds = reports.map(r => r.id)
-
-    // Now get finance data for these reports
-    const { data: financeData, error: financeError } = await supabase
+    // Use a simpler approach that matches your working SQL query
+    const { data: expenditureData, error } = await supabase
       .from("hmr_finance")
-      .select("report_id, total_expenditure")
-      .in("report_id", reportIds)
+      .select(`
+        total_expenditure,
+        report_id,
+        hmr_report!inner (
+          id,
+          month,
+          year,
+          region_id,
+          status,
+          sms_schools (
+            id,
+            name
+          )
+        )
+      `)
+      .eq("hmr_report.region_id", user.region)
+      .eq("hmr_report.year", currentYear)
+      .eq("hmr_report.status", "submitted")
+      .is("hmr_report.deleted_on", null)
       .not("total_expenditure", "is", null)
 
-    if (financeError) {
-      console.error("Error fetching finance data:", financeError)
+    console.log("Debug: Raw expenditure data found:", expenditureData?.length || 0)
+
+    if (error) {
+      console.error("Error fetching expenditure data:", error)
       return { expenditures: [], error: "Failed to fetch expenditure data." }
     }
 
-    if (!financeData || financeData.length === 0) {
-      // Return empty data structure instead of error to show empty chart
+    if (!expenditureData || expenditureData.length === 0) {
+      console.log("Debug: No expenditure data found for", currentYear)
       return { 
         expenditures: [], 
         topSchools: [],
@@ -67,11 +62,13 @@ export async function getExpenditureTrends() {
       }
     }
 
-    // Create a map of report_id to expenditure
-    const expenditureMap = new Map()
-    financeData.forEach(finance => {
-      expenditureMap.set(finance.report_id, parseFloat(finance.total_expenditure) || 0)
-    })
+    console.log("Debug: Sample expenditure data:", expenditureData.slice(0, 3))
+
+    // Check for 2025 data specifically
+    const data2025 = expenditureData.filter(record => 
+      record.hmr_report && (parseInt(record.hmr_report.year) === 2025 || record.hmr_report.year === '2025')
+    )
+    console.log("Debug: 2025 expenditure records found:", data2025.length)
 
     // Transform data for chart display
     const monthNames = [
@@ -79,14 +76,16 @@ export async function getExpenditureTrends() {
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ]
 
-    // Group data by month and school
+    // Group data by month and school (similar to your SQL GROUP BY)
     const expenditureByMonth = new Map()
 
-    reports.forEach((report: any) => {
-      const expenditure = expenditureMap.get(report.id)
-      if (expenditure) {
+    expenditureData.forEach((record: any) => {
+      const expenditure = record.total_expenditure ? parseFloat(record.total_expenditure) : 0
+      const report = record.hmr_report
+      
+      if (expenditure > 0 && report) {
         const month = monthNames[report.month - 1]
-        const schoolName = report.sms_schools.name
+        const schoolName = report.sms_schools?.name || 'Unknown School'
 
         if (!expenditureByMonth.has(month)) {
           expenditureByMonth.set(month, { month, total: 0, schools: new Map() })
@@ -121,11 +120,11 @@ export async function getExpenditureTrends() {
 
     // Get school names for legend (top 5 schools by total expenditure)
     const schoolTotals = new Map()
-    reports.forEach((report: any) => {
-      const expenditure = expenditureMap.get(report.id)
-      if (expenditure) {
-        const schoolName = report.sms_schools.name
-        
+    expenditureData.forEach((record: any) => {
+      const expenditure = record.total_expenditure ? parseFloat(record.total_expenditure) : 0
+      const schoolName = record.hmr_report?.sms_schools?.name || 'Unknown School'
+      
+      if (expenditure > 0) {
         if (!schoolTotals.has(schoolName)) {
           schoolTotals.set(schoolName, 0)
         }
@@ -137,6 +136,9 @@ export async function getExpenditureTrends() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([schoolName]) => schoolName.length > 15 ? schoolName.substring(0, 15) + "..." : schoolName)
+
+    console.log("Debug: Chart data processed:", chartData.length, "months")
+    console.log("Debug: Top schools:", topSchools)
 
     return { 
       expenditures: chartData, 

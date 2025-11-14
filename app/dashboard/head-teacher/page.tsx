@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, UsersIcon, GraduationCapIcon, FileTextIcon, TrendingUpIcon, Loader2, Eye, RefreshCw, BookOpenIcon, PlusCircleIcon, ClockIcon, EyeIcon, BarChart3Icon } from "lucide-react"
 import { getHmrReports } from "@/app/actions/hmr-reports"
+import { getSubmittedNurseryAssessments } from "@/app/actions/nursery-assessment"
 import { getUser, getUserSchoolInfo } from "@/app/actions/auth"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AuthWrapper } from "@/components/auth-wrapper"
+import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 type HmrReport = {
   id: string
@@ -60,6 +62,7 @@ export default function HeadTeacherDashboard() {
 function HeadTeacherDashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   
   // Get tab from URL params, with fallback based on main tab
   const currentMainTab = searchParams.get('mainTab') || 'dashboard'
@@ -79,6 +82,11 @@ function HeadTeacherDashboardContent() {
   const [error, setError] = useState<string | null>(null)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
   const [isNurserySchool, setIsNurserySchool] = useState(false)
+  
+  // State for nursery assessments
+  const [nurseryAssessments, setNurseryAssessments] = useState<any[]>([])
+  const [nurseryAssessmentsLoading, setNurseryAssessmentsLoading] = useState(false)
+  const [nurseryAssessmentsError, setNurseryAssessmentsError] = useState<string | null>(null)
   
   // Function to update URL parameters and handle tab changes
   const updateURL = (newTab: string, mainTab?: string) => {
@@ -158,6 +166,30 @@ function HeadTeacherDashboardContent() {
     }
   }
   
+  // Function to fetch nursery assessments
+  const fetchNurseryAssessments = async () => {
+    if (!user?.id) return
+    
+    try {
+      setNurseryAssessmentsLoading(true)
+      setNurseryAssessmentsError(null)
+
+      const result = await getSubmittedNurseryAssessments(user.id)
+
+      if (result.error) {
+        console.error("Error from getSubmittedNurseryAssessments:", result.error)
+        setNurseryAssessmentsError(result.error)
+      } else {
+        setNurseryAssessments(result.assessments)
+      }
+    } catch (err) {
+      console.error("Error in fetchNurseryAssessments:", err)
+      setNurseryAssessmentsError("Failed to load nursery assessments")
+    } finally {
+      setNurseryAssessmentsLoading(false)
+    }
+  }
+  
   // Function to handle report viewing
   const handleViewReport = (report: HmrReport) => {
     const monthParam = `${report.month}-${report.year}`
@@ -181,7 +213,10 @@ function HeadTeacherDashboardContent() {
   useEffect(() => {
     fetchSchoolInfo()
     fetchReports()
-  }, [])
+    if (user?.id) {
+      fetchNurseryAssessments()
+    }
+  }, [user?.id])
 
   const formatReportMonth = (month: number, year: number) => {
     return `${monthNames[month - 1]} ${year}`
@@ -189,6 +224,133 @@ function HeadTeacherDashboardContent() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
+  }
+
+  // Calculate compliance percentage based on current year reports
+  const calculateCompliancePercentage = () => {
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth() + 1
+    
+    // Get all submitted reports for current year
+    const currentYearReports = reports.filter(report => report.year === currentYear)
+    
+    // Expected reports (from January to previous month)
+    const expectedReports = Math.max(currentMonth - 1, 0) // Don't count current month
+    const actualReports = currentYearReports.length
+    
+    if (expectedReports === 0) return 100 // No reports expected yet
+    return Math.min(Math.round((actualReports / expectedReports) * 100), 100)
+  }
+
+  // Calculate nursery assessment completion percentage
+  const calculateNurseryAssessmentPercentage = () => {
+    if (!isNurserySchool) return 0
+    
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    
+    // Count assessments for current year
+    const currentYearAssessments = nurseryAssessments.filter(assessment => {
+      const assessmentDate = new Date(assessment.created_at)
+      return assessmentDate.getFullYear() === currentYear
+    })
+    
+    // Typically expect 3 assessments per year (Assessment 1, 2, and 3)
+    const expectedAssessments = 3
+    const actualAssessments = currentYearAssessments.length
+    
+    return Math.min(Math.round((actualAssessments / expectedAssessments) * 100), 100)
+  }
+
+  // Calculate missed/overdue reports - match logic from getMissingMonthsForSchool
+  const calculateOverdueReports = () => {
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear() // 2025
+    const currentMonth = currentDate.getMonth() + 1 // November = 11
+    
+    // Get all submitted reports for current year
+    const currentYearReports = reports.filter(report => report.year === currentYear)
+    
+    // Create set of submitted month-year combinations
+    const submittedMonthYears = new Set(
+      currentYearReports.map(report => `${report.month}-${report.year}`)
+    )
+    
+    // Count missing months from January to previous month (not including current month)
+    let missingCount = 0
+    const endMonth = currentMonth - 1 // Only check up to the previous month (October)
+    
+    for (let month = 1; month <= endMonth; month++) {
+      const monthYearKey = `${month}-${currentYear}`
+      if (!submittedMonthYears.has(monthYearKey)) {
+        missingCount++
+      }
+    }
+    
+    console.log('Debug Overdue Calculation (Fixed):', {
+      currentDate: currentDate.toISOString(),
+      currentYear,
+      currentMonth,
+      endMonth,
+      submittedReports: currentYearReports.map(r => ({ month: r.month, year: r.year })),
+      submittedMonthYears: Array.from(submittedMonthYears),
+      missingCount,
+      checkingMonths: Array.from({length: endMonth}, (_, i) => i + 1)
+    })
+    
+    return missingCount
+  }
+
+  // Calculate report statistics for current academic year
+  const getReportStatistics = () => {
+    const overdueCount = calculateOverdueReports()
+    const submittedCount = reports.length
+    // For now, we'll keep draft as 0 since we're only fetching submitted reports
+    // In a real implementation, you'd fetch draft reports separately
+    const draftCount = 0
+    const totalExpected = overdueCount + submittedCount + draftCount
+    
+    return {
+      submitted: submittedCount,
+      draft: draftCount,
+      overdue: overdueCount,
+      submittedPercentage: totalExpected > 0 ? Math.round((submittedCount / totalExpected) * 100) : 100,
+      draftPercentage: totalExpected > 0 ? Math.round((draftCount / totalExpected) * 100) : 0,
+      overduePercentage: totalExpected > 0 ? Math.round((overdueCount / totalExpected) * 100) : 0
+    }
+  }
+
+  // Generate monthly submission data for charts
+  const generateMonthlySubmissionData = () => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    
+    // Get last 6 months of data
+    const chartData = []
+    for (let i = 5; i >= 0; i--) {
+      const targetDate = new Date(currentYear, currentDate.getMonth() - i, 1)
+      const targetMonth = targetDate.getMonth() + 1
+      const targetYear = targetDate.getFullYear()
+      
+      const monthlyReports = reports.filter(report => 
+        report.month === targetMonth && report.year === targetYear
+      ).length
+      
+      const monthlyAssessments = isNurserySchool ? nurseryAssessments.filter(assessment => {
+        const assessmentDate = new Date(assessment.created_at)
+        return assessmentDate.getMonth() + 1 === targetMonth && assessmentDate.getFullYear() === targetYear
+      }).length : 0
+      
+      chartData.push({
+        month: monthNames[targetDate.getMonth()],
+        monthlyReports,
+        nurseryAssessments: monthlyAssessments
+      })
+    }
+    
+    return chartData
   }
 
   // Render function for view reports content
@@ -383,7 +545,11 @@ function HeadTeacherDashboardContent() {
               </div>
 
               {/* Stats Overview Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className={`grid gap-6 ${
+                isNurserySchool 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' 
+                  : 'grid-cols-1 md:grid-cols-3'
+              }`}>
                 {/* Overall Compliance */}
                 <Card className="bg-white border border-gray-200 shadow-sm">
                   <CardContent className="p-6">
@@ -393,9 +559,9 @@ function HeadTeacherDashboardContent() {
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           <span className="text-sm text-gray-600">Overall Compliance</span>
                         </div>
-                        <p className="text-sm text-gray-500 mb-3">Average across all reports</p>
+                        <p className="text-sm text-gray-500 mb-3">Academic year compliance rate</p>
                         <p className="text-3xl font-bold text-gray-900">
-                          {reports.length > 0 ? Math.round((reports.length / Math.max(reports.length, 1)) * 100) : 0}%
+                          {calculateCompliancePercentage()}%
                         </p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
@@ -424,24 +590,26 @@ function HeadTeacherDashboardContent() {
                   </CardContent>
                 </Card>
 
-                {/* Assessment Status */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Assessment Status</span>
+                {/* Assessment Status - Only show for nursery schools */}
+                {isNurserySchool && (
+                  <Card className="bg-white border border-gray-200 shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                            <span className="text-sm text-gray-600">Assessment Status</span>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-3">Nursery assessments completed</p>
+                          <p className="text-3xl font-bold text-gray-900">{calculateNurseryAssessmentPercentage()}%</p>
                         </div>
-                        <p className="text-sm text-gray-500 mb-3">Nursery assessments completed</p>
-                        <p className="text-3xl font-bold text-gray-900">85%</p>
+                        <div className="p-3 bg-orange-100 rounded-lg">
+                          <BookOpenIcon className="h-6 w-6 text-orange-600" />
+                        </div>
                       </div>
-                      <div className="p-3 bg-orange-100 rounded-lg">
-                        <BookOpenIcon className="h-6 w-6 text-orange-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Recent Activity */}
                 <Card className="bg-white border border-gray-200 shadow-sm">
@@ -481,42 +649,49 @@ function HeadTeacherDashboardContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {/* Submitted Reports */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Submitted: {reports.length}</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {reports.length > 0 ? '100%' : '0%'}
-                        </span>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: reports.length > 0 ? '100%' : '0%' }}
-                        ></div>
-                      </div>
+                      {(() => {
+                        const stats = getReportStatistics()
+                        return (
+                          <>
+                            {/* Submitted Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Submitted: {stats.submitted}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {stats.submittedPercentage}%
+                              </span>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${stats.submittedPercentage}%` }}
+                              ></div>
+                            </div>
 
-                      {/* Draft Reports */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Draft: 0</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">0%</span>
-                      </div>
+                            {/* Draft Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Draft: {stats.draft}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">{stats.draftPercentage}%</span>
+                            </div>
 
-                      {/* Overdue Reports */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Overdue: 0</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">0%</span>
-                      </div>
+                            {/* Overdue Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Overdue: {stats.overdue}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">{stats.overduePercentage}%</span>
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
@@ -525,18 +700,45 @@ function HeadTeacherDashboardContent() {
                 <Card className="bg-white border border-gray-200 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold text-gray-900">Monthly Submissions</CardTitle>
+                    <p className="text-sm text-gray-500">Last 6 months activity</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <TrendingUpIcon className="h-8 w-8 text-blue-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Consistent Progress</h3>
-                        <p className="text-gray-600 text-sm">
-                          You're maintaining a good submission schedule. Keep up the excellent work!
-                        </p>
-                      </div>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={generateMonthlySubmissionData()}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis 
+                            dataKey="month" 
+                            stroke="#666"
+                            fontSize={12}
+                          />
+                          <YAxis 
+                            stroke="#666"
+                            fontSize={12}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Bar 
+                            dataKey="monthlyReports" 
+                            fill="#3b82f6" 
+                            radius={[4, 4, 0, 0]}
+                            name="Monthly Reports"
+                          />
+                          {isNurserySchool && (
+                            <Bar 
+                              dataKey="nurseryAssessments" 
+                              fill="#f59e0b" 
+                              radius={[4, 4, 0, 0]}
+                              name="Nursery Assessments"
+                            />
+                          )}
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
@@ -551,7 +753,11 @@ function HeadTeacherDashboardContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className={`grid gap-4 ${
+                    isNurserySchool 
+                      ? 'grid-cols-1 sm:grid-cols-2' 
+                      : 'grid-cols-1'
+                  }`}>
                     <button 
                       onClick={() => {updateMainTab('monthly-reports'); updateURL('current-report')}}
                       className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left"
@@ -565,18 +771,20 @@ function HeadTeacherDashboardContent() {
                       </div>
                     </button>
                     
-                    <button 
-                      onClick={() => updateMainTab('nursery-assessment')}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
-                    >
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <BookOpenIcon className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">Submit Assessment</h3>
-                        <p className="text-sm text-gray-600">Complete nursery assessments</p>
-                      </div>
-                    </button>
+                    {isNurserySchool && (
+                      <button 
+                        onClick={() => updateMainTab('nursery-assessment')}
+                        className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
+                      >
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <BookOpenIcon className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">Submit Assessment</h3>
+                          <p className="text-sm text-gray-600">Complete nursery assessments</p>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -860,8 +1068,8 @@ function HeadTeacherDashboardContent() {
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           <span className="text-sm text-gray-600">Submission Rate</span>
                         </div>
-                        <p className="text-sm text-gray-500 mb-3">Reports submitted on time</p>
-                        <p className="text-3xl font-bold text-gray-900">95%</p>
+                        <p className="text-sm text-gray-500 mb-3">Academic year compliance rate</p>
+                        <p className="text-3xl font-bold text-gray-900">{calculateCompliancePercentage()}%</p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
                         <TrendingUpIcon className="h-6 w-6 text-green-600" />
@@ -908,24 +1116,49 @@ function HeadTeacherDashboardContent() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {/* Submitted Reports */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Submitted: {reports.length}</span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {reports.length > 0 ? '100%' : '0%'}
-                        </span>
-                      </div>
-                      
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: reports.length > 0 ? '100%' : '0%' }}
-                        ></div>
-                      </div>
+                      {(() => {
+                        const stats = getReportStatistics()
+                        return (
+                          <>
+                            {/* Submitted Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Submitted: {stats.submitted}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {stats.submittedPercentage}%
+                              </span>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${stats.submittedPercentage}%` }}
+                              ></div>
+                            </div>
+
+                            {/* Draft Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Draft: {stats.draft}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">{stats.draftPercentage}%</span>
+                            </div>
+
+                            {/* Overdue Reports */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">Overdue: {stats.overdue}</span>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">{stats.overduePercentage}%</span>
+                            </div>
+                          </>
+                        )
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
