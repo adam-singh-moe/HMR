@@ -881,14 +881,10 @@ function HeadTeacherDashboardContent() {
               {/* Sub-navigation */}
               <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
                 <button
-                  onClick={() => updateURL('submit-assessment')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                    currentTab === 'submit-assessment'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                  }`}
+                  disabled
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 opacity-50 cursor-not-allowed bg-gray-300 text-gray-500`}
                 >
-                  Submit Assessment
+                  Submit Assessment <span className="text-xs text-gray-400">(Coming Soon)</span>
                 </button>
                 <button
                   onClick={() => updateURL('view-assessments')}
