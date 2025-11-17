@@ -4,7 +4,7 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 
 export async function getNurseryAssessmentQuestions(section: string) {
   try {
-    console.log('Fetching questions for section:', section)
+   // console.log('Fetching questions for section:', section)
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
     
     // First, let's try to get all questions to see if table exists
@@ -13,8 +13,8 @@ export async function getNurseryAssessmentQuestions(section: string) {
       .select('*')
       .limit(5)
     
-    console.log('All questions test:', allQuestions)
-    console.log('All questions error:', allError)
+   // console.log('All questions test:', allQuestions)
+   // console.log('All questions error:', allError)
     
     const { data: questions, error } = await supabase
       .from('hmr_nursery_assessment_questions')
@@ -22,8 +22,8 @@ export async function getNurseryAssessmentQuestions(section: string) {
       .eq('section', section)
       .order('created_at', { ascending: true })
 
-    console.log('Questions fetched for section "' + section + '":', questions)
-    console.log('Error:', error)
+   // console.log('Questions fetched for section "' + section + '":', questions)
+    // console.log('Error:', error)
 
     if (error) {
       console.error('Error fetching questions:', error)
@@ -40,7 +40,7 @@ export async function getNurseryAssessmentQuestions(section: string) {
 // Load saved responses for an assessment
 export async function loadNurseryAssessmentResponses(assessment_id: string) {
   try {
-    console.log('Loading assessment responses for assessment_id:', assessment_id)
+   // console.log('Loading assessment responses for assessment_id:', assessment_id)
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: responses, error } = await supabase
@@ -49,8 +49,8 @@ export async function loadNurseryAssessmentResponses(assessment_id: string) {
       .eq('assessment_id', assessment_id)
       .order('created_at', { ascending: true })
 
-    console.log('Assessment responses loaded:', responses)
-    console.log('Responses load error:', error)
+  //  console.log('Assessment responses loaded:', responses)
+  //  console.log('Responses load error:', error)
 
     if (error) {
       console.error('Error loading assessment responses:', error)
@@ -67,7 +67,7 @@ export async function loadNurseryAssessmentResponses(assessment_id: string) {
 // Load existing nursery assessment for a user/school
 export async function loadNurseryAssessment(headteacher_id: string, school_id: string) {
   try {
-    console.log('Loading existing assessment for:', { headteacher_id, school_id })
+    //console.log('Loading existing assessment for:', { headteacher_id, school_id })
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
@@ -80,8 +80,8 @@ export async function loadNurseryAssessment(headteacher_id: string, school_id: s
       .limit(1)
       .maybeSingle()
 
-    console.log('Existing assessment loaded:', data)
-    console.log('Load error:', error)
+   // console.log('Existing assessment loaded:', data)
+    // console.log('Load error:', error)
 
     if (error) {
       console.error('Error loading assessment:', error)
@@ -103,7 +103,7 @@ export async function saveNurseryAssessment(assessmentData: {
   enrollment: number
 }) {
   try {
-    console.log('Saving nursery assessment:', assessmentData)
+   // console.log('Saving nursery assessment:', assessmentData)
     const supabase = createServiceRoleSupabaseClient()
     
     // Ensure enrollment is a valid number
@@ -112,7 +112,7 @@ export async function saveNurseryAssessment(assessmentData: {
       return { assessment: null, error: "Invalid enrollment value" }
     }
     
-    console.log('Validated enrollment value:', enrollmentValue, typeof enrollmentValue)
+    //console.log('Validated enrollment value:', enrollmentValue, typeof enrollmentValue)
     
     const insertData = {
       school_id: assessmentData.school_id,
@@ -124,7 +124,7 @@ export async function saveNurseryAssessment(assessmentData: {
       updated_by: assessmentData.headteacher_id
     }
     
-    console.log('Insert data:', insertData)
+  //  console.log('Insert data:', insertData)
     
     const { data, error } = await supabase
       .from('hmr_nursery_assessment')
@@ -132,8 +132,8 @@ export async function saveNurseryAssessment(assessmentData: {
       .select()
       .single()
 
-    console.log('Assessment saved:', data)
-    console.log('Save error:', error)
+   // console.log('Assessment saved:', data)
+    // console.log('Save error:', error)
 
     if (error) {
       console.error('Error saving assessment:', error)
@@ -158,7 +158,7 @@ export async function updateNurseryAssessment(
   }
 ) {
   try {
-    console.log('Updating nursery assessment:', assessmentId, updateData)
+    //console.log('Updating nursery assessment:', assessmentId, updateData)
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase

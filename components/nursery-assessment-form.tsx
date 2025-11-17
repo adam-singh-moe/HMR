@@ -3439,17 +3439,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
-                onClick={saveCurrentSection}
-                disabled={loading || yearlyLimits.allThreeSubmitted}
+                disabled={true}
                 variant="outline"
-                className="w-full sm:w-auto border border-primary-600 text-primary-600 hover:bg-primary-50 transition-all duration-200 flex items-center gap-2"
+                className="w-full sm:w-auto border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed opacity-50"
               >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                {loading ? "Saving..." : "Save Section"}
+                <Save className="h-4 w-4" />
+                Save Section <span className="text-xs">(Coming Soon)</span>
               </Button>
 
               {/* Auto-save indicator */}
