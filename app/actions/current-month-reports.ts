@@ -5,17 +5,27 @@ import { getUser } from "./auth"
 
 export async function getCurrentMonthSchools() {
   try {
+    console.log("getCurrentMonthSchools: Starting function")
     const user = await getUser()
+    console.log("getCurrentMonthSchools: User data:", user ? { role: user.role, region: user.region, email: user.email } : null)
 
-    if (!user || user.role !== "Regional Officer") {
+    if (!user) {
+      console.log("getCurrentMonthSchools: No user found")
+      return { schools: [], error: "User not authenticated. Please log in again." }
+    }
+
+    if (user.role !== "Regional Officer") {
+      console.log("getCurrentMonthSchools: User role not Regional Officer:", user.role)
       return { schools: [], error: "Only Regional Officers can access school reports." }
     }
 
     if (!user.region) {
+      console.log("getCurrentMonthSchools: No region assigned to user")
       return { schools: [], error: "Regional Officer has no region assigned." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
+    console.log("getCurrentMonthSchools: Created Supabase client")
 
     // Get previous month and year (current reporting period)
     const now = new Date()
@@ -28,6 +38,8 @@ export async function getCurrentMonthSchools() {
       reportingYear = reportingYear - 1
     }
 
+    console.log("getCurrentMonthSchools: Reporting period:", { month: reportingMonth, year: reportingYear })
+
     // Calculate due date: Reports for the previous month are due at the end of the current month
     // For example: June 2025 reports are due July 31, 2025
     const dueDateMonth = now.getMonth() + 1 // Current month (1-indexed)
@@ -36,19 +48,28 @@ export async function getCurrentMonthSchools() {
     const dueDate = `${dueDateYear}-${dueDateMonth.toString().padStart(2, "0")}-${lastDayOfDueMonth}`
 
     // Fetch all schools in the regional officer's region
+    console.log("getCurrentMonthSchools: Fetching schools for region:", user.region)
     const { data: schools, error: schoolsError } = await supabase
       .from("sms_schools")
-      .select("id, name, region_id, level")
+      .select(`
+        id, 
+        name, 
+        region_id,
+        school_level_id,
+        sms_school_levels!inner(name)
+      `)
       .eq("region_id", user.region)
       .order("name")
 
     if (schoolsError) {
       console.error("Error fetching schools:", schoolsError)
-      return { schools: [], error: "Failed to fetch schools." }
+      return { schools: [], error: `Failed to fetch schools: ${schoolsError.message}` }
     }
 
+    console.log("getCurrentMonthSchools: Found schools:", schools ? schools.length : 0)
+
     if (!schools || schools.length === 0) {
-      return { schools: [], error: "No schools found in your region." }
+      return { schools: [], error: `No schools found in region ${user.region}.` }
     }
 
     // Get school IDs
@@ -231,7 +252,7 @@ export async function getCurrentMonthSchools() {
         headTeacherEmail: headTeacherEmail,
         headTeacherId: headTeacherId,
         region: `Region ${school.region_id}`,
-        level: school.level || "",
+        level: school.sms_school_levels?.name || "",
         dueDate,
         status,
         submittedDate,
@@ -239,9 +260,11 @@ export async function getCurrentMonthSchools() {
       }
     })
 
+    console.log("getCurrentMonthSchools: Returning transformed schools:", transformedSchools.length)
     return { schools: transformedSchools, error: null }
   } catch (error) {
     console.error("Error in getCurrentMonthSchools:", error)
-    return { schools: [], error: "An unexpected error occurred." }
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred."
+    return { schools: [], error: `Database error: ${errorMessage}` }
   }
 }

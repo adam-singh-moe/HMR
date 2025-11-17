@@ -1307,7 +1307,10 @@ function RegionalOfficerDashboardContent() {
                               <SelectItem value="Primary">Primary</SelectItem>
                               <SelectItem value="Secondary">Secondary</SelectItem>
                               <SelectItem value="Nursery">Nursery</SelectItem>
-                              <SelectItem value="All-Age">All-Age</SelectItem>
+                              <SelectItem value="Post Secondary">Post Secondary</SelectItem>
+                              <SelectItem value="Technical Institutes">Technical Institutes</SelectItem>
+                              <SelectItem value="Practical Instruction Centre">Practical Instruction Centre</SelectItem>
+                              <SelectItem value="Special Education Needs">Special Education Needs</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1315,7 +1318,7 @@ function RegionalOfficerDashboardContent() {
                           <Button
                             onClick={loadCurrentMonthSchools}
                             disabled={isLoadingCurrentMonth}
-                            className="bg-primary-600 hover:bg-primary-700 text-white px-12 py-1 text-sm"
+                            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-1 text-sm"
                             size="sm"
                           >
                             {isLoadingCurrentMonth ? (
