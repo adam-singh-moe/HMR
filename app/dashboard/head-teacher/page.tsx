@@ -14,6 +14,7 @@ import { CalendarIcon, UsersIcon, GraduationCapIcon, FileTextIcon, TrendingUpIco
 import { getHmrReports } from "@/app/actions/hmr-reports"
 import { getSubmittedNurseryAssessments } from "@/app/actions/nursery-assessment"
 import { getUser, getUserSchoolInfo } from "@/app/actions/auth"
+import { getHeadTeacherDashboardTrends } from "@/app/actions/head-teacher-trends"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
@@ -87,6 +88,15 @@ function HeadTeacherDashboardContent() {
   const [nurseryAssessments, setNurseryAssessments] = useState<any[]>([])
   const [nurseryAssessmentsLoading, setNurseryAssessmentsLoading] = useState(false)
   const [nurseryAssessmentsError, setNurseryAssessmentsError] = useState<string | null>(null)
+  
+  // State for dashboard trends
+  const [trendsData, setTrendsData] = useState<any>({
+    enrollmentTrends: [],
+    attendanceTrends: [],
+    punctualityTrends: [],
+    expenditureTrends: []
+  })
+  const [trendsLoading, setTrendsLoading] = useState(false)
   
   // Function to update URL parameters and handle tab changes
   const updateURL = (newTab: string, mainTab?: string) => {
@@ -210,9 +220,27 @@ function HeadTeacherDashboardContent() {
     updateURL('view-assessments') // Switch to view previous assessments tab to show the submitted assessment
   }
 
+  // Function to fetch trends data
+  const fetchTrendsData = async () => {
+    setTrendsLoading(true)
+    try {
+      const result = await getHeadTeacherDashboardTrends()
+      if (result.error) {
+        console.error('Error fetching trends:', result.error)
+      } else {
+        setTrendsData(result)
+      }
+    } catch (error) {
+      console.error('Error fetching trends data:', error)
+    } finally {
+      setTrendsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchSchoolInfo()
     fetchReports()
+    fetchTrendsData()
     if (user?.id) {
       fetchNurseryAssessments()
     }
@@ -288,16 +316,16 @@ function HeadTeacherDashboardContent() {
       }
     }
     
-    console.log('Debug Overdue Calculation (Fixed):', {
-      currentDate: currentDate.toISOString(),
-      currentYear,
-      currentMonth,
-      endMonth,
-      submittedReports: currentYearReports.map(r => ({ month: r.month, year: r.year })),
-      submittedMonthYears: Array.from(submittedMonthYears),
-      missingCount,
-      checkingMonths: Array.from({length: endMonth}, (_, i) => i + 1)
-    })
+    // console.log('Debug Overdue Calculation (Fixed):', {
+    //   currentDate: currentDate.toISOString(),
+    //   currentYear,
+    //   currentMonth,
+    //   endMonth,
+    //   submittedReports: currentYearReports.map(r => ({ month: r.month, year: r.year })),
+    //   submittedMonthYears: Array.from(submittedMonthYears),
+    //   missingCount,
+    //   checkingMonths: Array.from({length: endMonth}, (_, i) => i + 1)
+    // })
     
     return missingCount
   }
@@ -640,106 +668,212 @@ function HeadTeacherDashboardContent() {
                 </Card>
               </div>
 
-              {/* Charts Section */}
+              {/* Charts Section - Monthly Trends */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Report Status Distribution */}
+                {/* Monthly Enrollment Trends */}
                 <Card className="bg-white border border-gray-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Report Status Distribution</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Monthly Enrollment Trends</CardTitle>
+                    <p className="text-sm text-gray-500">Student enrollment for each month of {new Date().getFullYear()}</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {(() => {
-                        const stats = getReportStatistics()
-                        return (
-                          <>
-                            {/* Submitted Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Submitted: {stats.submitted}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">
-                                {stats.submittedPercentage}%
-                              </span>
-                            </div>
-                            
-                            {/* Progress Bar */}
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${stats.submittedPercentage}%` }}
-                              ></div>
-                            </div>
-
-                            {/* Draft Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Draft: {stats.draft}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">{stats.draftPercentage}%</span>
-                            </div>
-
-                            {/* Overdue Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Overdue: {stats.overdue}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">{stats.overduePercentage}%</span>
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </div>
+                    {trendsLoading ? (
+                      <div className="h-64 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={trendsData.enrollmentTrends}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                              dataKey="month" 
+                              stroke="#666"
+                              fontSize={12}
+                            />
+                            <YAxis 
+                              stroke="#666"
+                              fontSize={12}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="enrollment" 
+                              stroke="#3b82f6" 
+                              strokeWidth={3}
+                              dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                              name="Students Enrolled"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
-                {/* Monthly Trend */}
+                {/* Monthly Attendance Trends */}
                 <Card className="bg-white border border-gray-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Monthly Submissions</CardTitle>
-                    <p className="text-sm text-gray-500">Last 6 months activity</p>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Attendance Trends</CardTitle>
+                    <p className="text-sm text-gray-500">Student and teacher attendance rates for {new Date().getFullYear()}</p>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={generateMonthlySubmissionData()}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis 
-                            dataKey="month" 
-                            stroke="#666"
-                            fontSize={12}
-                          />
-                          <YAxis 
-                            stroke="#666"
-                            fontSize={12}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'white',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px'
-                            }}
-                          />
-                          <Bar 
-                            dataKey="monthlyReports" 
-                            fill="#3b82f6" 
-                            radius={[4, 4, 0, 0]}
-                            name="Monthly Reports"
-                          />
-                          {isNurserySchool && (
-                            <Bar 
-                              dataKey="nurseryAssessments" 
-                              fill="#f59e0b" 
-                              radius={[4, 4, 0, 0]}
-                              name="Nursery Assessments"
+                    {trendsLoading ? (
+                      <div className="h-64 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={trendsData.attendanceTrends}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                              dataKey="month" 
+                              stroke="#666"
+                              fontSize={12}
                             />
-                          )}
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
+                            <YAxis 
+                              stroke="#666"
+                              fontSize={12}
+                              domain={[0, 100]}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value, name) => [`${value}%`, name]}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="studentAttendance" 
+                              stroke="#10b981" 
+                              strokeWidth={2}
+                              dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
+                              name="Student Attendance"
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="teacherAttendance" 
+                              stroke="#f59e0b" 
+                              strokeWidth={2}
+                              dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
+                              name="Teacher Attendance"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Monthly Punctuality Trends */}
+                <Card className="bg-white border border-gray-200 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Punctuality Trends</CardTitle>
+                    <p className="text-sm text-gray-500">Student and teacher punctuality rates for {new Date().getFullYear()}</p>
+                  </CardHeader>
+                  <CardContent>
+                    {trendsLoading ? (
+                      <div className="h-64 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={trendsData.punctualityTrends}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                              dataKey="month" 
+                              stroke="#666"
+                              fontSize={12}
+                            />
+                            <YAxis 
+                              stroke="#666"
+                              fontSize={12}
+                              domain={[0, 100]}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value, name) => [`${value}%`, name]}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="studentPunctuality" 
+                              stroke="#8b5cf6" 
+                              strokeWidth={2}
+                              dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 3 }}
+                              name="Student Punctuality"
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="teacherPunctuality" 
+                              stroke="#ef4444" 
+                              strokeWidth={2}
+                              dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
+                              name="Teacher Punctuality"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Monthly Expenditure Trends */}
+                <Card className="bg-white border border-gray-200 shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Monthly Expenditure Trends</CardTitle>
+                    <p className="text-sm text-gray-500">School expenditure for each month of {new Date().getFullYear()}</p>
+                  </CardHeader>
+                  <CardContent>
+                    {trendsLoading ? (
+                      <div className="h-64 flex items-center justify-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={trendsData.expenditureTrends}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                              dataKey="month" 
+                              stroke="#666"
+                              fontSize={12}
+                            />
+                            <YAxis 
+                              stroke="#666"
+                              fontSize={12}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px'
+                              }}
+                              formatter={(value) => [`$${value?.toLocaleString()}`, 'Total Expenditure']}
+                            />
+                            <Bar 
+                              dataKey="expenditure" 
+                              fill="#dc2626" 
+                              radius={[4, 4, 0, 0]}
+                              name="Total Expenditure"
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>

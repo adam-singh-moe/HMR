@@ -171,8 +171,8 @@ export async function updateNurseryAssessment(
       .select()
       .single()
 
-    console.log('Assessment updated:', data)
-    console.log('Update error:', error)
+    // console.log('Assessment updated:', data)
+    // console.log('Update error:', error)
 
     if (error) {
       console.error('Error updating assessment:', error)
@@ -196,7 +196,7 @@ export async function testNurseryAssessmentTable() {
       .select('*')
       .limit(1)
     
-    console.log('Table test result:', data, error)
+   // console.log('Table test result:', data, error)
     return { success: !error, error: error?.message }
   } catch (err) {
     console.error('Table test error:', err)
@@ -209,18 +209,18 @@ export async function inspectTableStructure() {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    console.log('=== INSPECTING HMR_NURSERY_ASSESSMENT TABLE ===')
+  //  console.log('=== INSPECTING HMR_NURSERY_ASSESSMENT TABLE ===')
     
     const { data: existingRecords, error: queryError } = await supabase
       .from('hmr_nursery_assessment')
       .select('*')
       .limit(5)
     
-    console.log('Existing records query result:', queryError)
-    console.log('Number of records found:', existingRecords?.length || 0)
+    // console.log('Existing records query result:', queryError)
+    // console.log('Number of records found:', existingRecords?.length || 0)
     
     if (existingRecords && existingRecords.length > 0) {
-      console.log('Available columns from existing data:')
+     // console.log('Available columns from existing data:')
       const columns = Object.keys(existingRecords[0])
       columns.forEach((col, index) => {
         console.log(`${index + 1}. ${col} = ${existingRecords[0][col]}`)
@@ -229,7 +229,7 @@ export async function inspectTableStructure() {
     
     const testColumns = ['id', 'school_id', 'headteacher_id', 'assessment_type', 'status', 'created_at', 'updated_at', 'updated_by', 'enrollment', 'form_data']
     
-    console.log('Testing individual columns:')
+  //  console.log('Testing individual columns:')
     for (const column of testColumns) {
       try {
         const { data: colTest, error: colError } = await supabase
@@ -268,7 +268,7 @@ export async function saveNurseryAssessmentRaw(assessmentData: {
   enrollment: number
 }) {
   try {
-    console.log('Saving nursery assessment with raw SQL:', assessmentData)
+   // console.log('Saving nursery assessment with raw SQL:', assessmentData)
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase.rpc('create_nursery_assessment', {
@@ -279,7 +279,7 @@ export async function saveNurseryAssessmentRaw(assessmentData: {
     })
 
     if (error) {
-      console.log('RPC function not available, trying direct SQL...')
+    //  console.log('RPC function not available, trying direct SQL...')
       
       // Fallback to direct SQL query
       const { data: sqlData, error: sqlError } = await supabase
@@ -303,7 +303,7 @@ export async function saveNurseryAssessmentRaw(assessmentData: {
       return { assessment: sqlData?.[0] || null, error: null }
     }
 
-    console.log('Assessment saved via RPC:', data)
+   // console.log('Assessment saved via RPC:', data)
     return { assessment: data, error: null }
   } catch (err) {
     console.error('Error in saveNurseryAssessmentRaw:', err)
@@ -318,7 +318,7 @@ export async function autoSaveNurseryAssessment(
   updated_by: string
 ) {
   try {
-    console.log('Auto-saving assessment:', assessmentId)
+   //console.log('Auto-saving assessment:', assessmentId)
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
@@ -337,7 +337,7 @@ export async function autoSaveNurseryAssessment(
       return { success: false, error: error.message }
     }
 
-    console.log('Auto-save successful')
+    //console.log('Auto-save successful')
     return { success: true, error: null }
   } catch (err) {
     console.error('Error in autoSaveNurseryAssessment:', err)
@@ -350,7 +350,7 @@ export async function testEnrollmentColumn() {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    console.log('=== TESTING ENROLLMENT COLUMN ===')
+    //console.log('=== TESTING ENROLLMENT COLUMN ===')
     
     // Try to insert a test record with enrollment
     const testData = {
@@ -363,7 +363,7 @@ export async function testEnrollmentColumn() {
       updated_by: 'test-teacher-123'
     }
     
-    console.log('Attempting to insert test record:', testData)
+    //console.log('Attempting to insert test record:', testData)
     
     const { data, error } = await supabase
       .from('hmr_nursery_assessment')
@@ -371,7 +371,7 @@ export async function testEnrollmentColumn() {
       .select()
       .single()
     
-    console.log('Test insert result:', { data, error })
+   // console.log('Test insert result:', { data, error })
     
     if (data) {
       // Clean up test record
@@ -380,7 +380,7 @@ export async function testEnrollmentColumn() {
         .delete()
         .eq('id', data.id)
       
-      console.log('Test record cleaned up')
+      //console.log('Test record cleaned up')
     }
     
     return {
@@ -406,7 +406,7 @@ export async function saveAssessmentAnswer(answerData: {
   answer: number
 }) {
   try {
-    console.log('Saving assessment answer:', answerData)
+    //console.log('Saving assessment answer:', answerData)
     const supabase = createServiceRoleSupabaseClient()
     
     // Validate that we have required data
@@ -424,7 +424,7 @@ export async function saveAssessmentAnswer(answerData: {
       .eq('option_id', answerData.option_id)
       .maybeSingle()
 
-    console.log('Existing answer check:', existingAnswer, checkError)
+  //  console.log('Existing answer check:', existingAnswer, checkError)
 
     if (checkError) {
       console.error('Error checking existing answer:', checkError)
@@ -448,7 +448,7 @@ export async function saveAssessmentAnswer(answerData: {
         return { success: false, error: error.message }
       }
 
-      console.log('Answer updated successfully:', data)
+    //  console.log('Answer updated successfully:', data)
       return { success: true, data, error: null }
     } else {
       // Create new answer
@@ -473,7 +473,7 @@ export async function saveAssessmentAnswer(answerData: {
         return { success: false, error: error.message }
       }
 
-      console.log('Answer created successfully:', data)
+     // console.log('Answer created successfully:', data)
       return { success: true, data, error: null }
     }
   } catch (err) {
@@ -485,7 +485,7 @@ export async function saveAssessmentAnswer(answerData: {
 // Get options for questions - use actual database table
 export async function getQuestionOptions(questionIds: string[]) {
   try {
-    console.log('Fetching options for questions:', questionIds)
+   // console.log('Fetching options for questions:', questionIds)
     const supabase = createServiceRoleSupabaseClient()
     
     // Use the correct table name from your database
@@ -500,8 +500,8 @@ export async function getQuestionOptions(questionIds: string[]) {
       return { options: [], error: error.message }
     }
     
-    console.log('All options from database:', data)
-    console.log('Options structure sample:', data?.[0])
+    // console.log('All options from database:', data)
+    // console.log('Options structure sample:', data?.[0])
     return { options: data || [], error: null }
   } catch (err) {
     console.error('Error in getQuestionOptions:', err)
@@ -521,7 +521,7 @@ export async function saveEnrollmentOnly(assessmentId: string, enrollment: numbe
       .select()
       .single()
 
-    console.log('Enrollment update result:', data, error)
+   // console.log('Enrollment update result:', data, error)
     return { success: !error, data, error: error?.message }
   } catch (err) {
     console.error('Error in saveEnrollmentOnly:', err)
@@ -532,7 +532,7 @@ export async function saveEnrollmentOnly(assessmentId: string, enrollment: numbe
 // Function to load saved responses from the answers table
 export async function loadSavedResponses(assessmentId: string) {
   try {
-    console.log('Loading saved responses for assessment:', assessmentId)
+  //  console.log('Loading saved responses for assessment:', assessmentId)
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
@@ -552,7 +552,7 @@ export async function loadSavedResponses(assessmentId: string) {
       return { responses: [], error: error.message }
     }
 
-    console.log('Loaded responses from database:', data)
+  //  console.log('Loaded responses from database:', data)
     return { responses: data || [], error: null }
   } catch (err) {
     console.error('Error in loadSavedResponses:', err)
@@ -594,7 +594,7 @@ export async function getSubmittedNurseryAssessments(userId: string) {
       })
     )
 
-    console.log('Fetched submitted assessments:', assessmentsWithSchools)
+    //console.log('Fetched submitted assessments:', assessmentsWithSchools)
     return { assessments: assessmentsWithSchools || [], error: null }
   } catch (err) {
     console.error('Error in getSubmittedNurseryAssessments:', err)
@@ -679,7 +679,7 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       }
     }) || []
 
-    console.log('Fetched assessment details:', { assessment: assessmentWithSchool, responses: enrichedResponses })
+    //console.log('Fetched assessment details:', { assessment: assessmentWithSchool, responses: enrichedResponses })
     return { assessment: assessmentWithSchool, responses: enrichedResponses, questions: allQuestions || [], options: allOptions || [], error: null }
   } catch (err) {
     console.error('Error in getNurseryAssessmentDetails:', err)
@@ -698,7 +698,7 @@ export async function checkYearlyAssessmentLimits(headteacherId: string, schoolI
     const academicYearStart = new Date(now.getMonth() >= 8 ? currentYear : currentYear - 1, 8, 1) // September 1st
     const academicYearEnd = new Date(now.getMonth() >= 8 ? currentYear + 1 : currentYear, 7, 31) // July 31st
     
-    console.log('Academic year range:', { academicYearStart, academicYearEnd })
+   // console.log('Academic year range:', { academicYearStart, academicYearEnd })
     
     // Get all submitted assessments for this academic year
     const { data: assessments, error } = await supabase
@@ -737,12 +737,12 @@ export async function checkYearlyAssessmentLimits(headteacherId: string, schoolI
     // Check if all three assessments are submitted
     const allThreeSubmitted = submittedTypes.length >= 3
 
-    console.log('Assessment limits check:', {
-      submittedTypes,
-      availableTypes,
-      allThreeSubmitted,
-      totalSubmitted: submittedTypes.length
-    })
+    // console.log('Assessment limits check:', {
+    //   submittedTypes,
+    //   availableTypes,
+    //   allThreeSubmitted,
+    //   totalSubmitted: submittedTypes.length
+    // })
 
     return {
       submittedTypes,

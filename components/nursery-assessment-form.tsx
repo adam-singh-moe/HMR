@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
 import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses, checkYearlyAssessmentLimits } from "@/app/actions/nursery-assessment"
@@ -106,9 +106,10 @@ interface FormData {
       oneLegOneTime?: number
       oneLegTwoTimes?: number
       oneLegThreeTimes?: number
-      // For stand on one leg (left/right)
+      // For stand on one leg (left/right/both)
       left?: number
       right?: number
+      both?: number
     }
   }
 }
@@ -130,6 +131,15 @@ const SECTIONS = [
   "Motor Skills",
   "Gross Motor Skills"
 ]
+
+// Helper function to get sections based on assessment type
+const getAvailableSections = (assessmentType: string) => {
+  if (assessmentType === 'assessment-1-year-1') {
+    // Exclude Gross Motor Skills for Assessment 1 - Year 1
+    return SECTIONS.slice(0, -1)
+  }
+  return SECTIONS
+}
 
 const ASSESSMENT_TYPES = [
   { value: "assessment-1-year-1", label: "Assessment 1 - Year 1" },
@@ -187,7 +197,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       grossMotorSkillsResponses: {}
     }
 
-    console.log('Processing responses for mapping:', responses.length)
+   // console.log('Processing responses for mapping:', responses.length)
 
     // Map responses by question_id and option_id
     responses.forEach(response => {
@@ -195,7 +205,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       const optionId = response.option_id
       const answer = parseInt(response.answer) || 0
 
-      console.log(`Mapping: questionId=${questionId}, optionId=${optionId}, answer=${answer}`)
+     // console.log(`Mapping: questionId=${questionId}, optionId=${optionId}, answer=${answer}`)
 
       // Section 2: Autobiographical Knowledge Assessment
       if (optionId === '1e3164fd-8dc4-4169-ad42-1d6ec4e4e267') { // Full Sentence Response
@@ -489,7 +499,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 2 responses to database...')
+     // console.log('Saving Section 2 responses to database...')
       
       // Iterate through all autobiographical responses and save them
       for (const [questionId, responses] of Object.entries(formData.autobiographicalResponses)) {
@@ -530,7 +540,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 2 responses saved successfully!')
+     // console.log('Section 2 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 2 responses:', error)
@@ -563,7 +573,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 3 responses to database...')
+     // console.log('Saving Section 3 responses to database...')
       
       // Iterate through all alphabet responses and save them
       for (const [questionId, responses] of Object.entries(formData.alphabetResponses)) {
@@ -604,7 +614,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 3 responses saved successfully!')
+     // console.log('Section 3 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 3 responses:', error)
@@ -637,7 +647,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 4 responses to database...')
+     // console.log('Saving Section 4 responses to database...')
       
       // Iterate through all colour responses and save them
       for (const [questionId, responses] of Object.entries(formData.colourResponses)) {
@@ -675,7 +685,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 4 responses saved successfully!')
+    //  console.log('Section 4 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 4 responses:', error)
@@ -708,7 +718,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 5 responses to database...')
+     // console.log('Saving Section 5 responses to database...')
       
       // Iterate through all quantity counting responses and save them
       for (const [questionId, responses] of Object.entries(formData.quantityCountingResponses)) {
@@ -752,7 +762,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 5 responses saved successfully!')
+      //console.log('Section 5 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 5 responses:', error)
@@ -785,7 +795,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 6 responses to database...')
+     // console.log('Saving Section 6 responses to database...')
       
       // Iterate through all shape recognition responses and save them
       for (const [questionId, responses] of Object.entries(formData.shapeRecognitionResponses)) {
@@ -829,7 +839,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 6 responses saved successfully!')
+     // console.log('Section 6 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 6 responses:', error)
@@ -862,7 +872,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 7 responses to database...')
+   //   console.log('Saving Section 7 responses to database...')
       
       // Iterate through all motor skills responses and save them
       for (const [questionId, responses] of Object.entries(formData.motorSkillsResponses)) {
@@ -921,7 +931,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 7 responses saved successfully!')
+    //  console.log('Section 7 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 7 responses:', error)
@@ -954,7 +964,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-      console.log('Saving Section 8 responses to database...')
+    //  console.log('Saving Section 8 responses to database...')
       
       // Iterate through all gross motor skills responses and save them
       for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
@@ -1013,7 +1023,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         }
       }
 
-      console.log('Section 8 responses saved successfully!')
+     // console.log('Section 8 responses saved successfully!')
       return true
     } catch (error) {
       console.error('Error saving Section 8 responses:', error)
@@ -1120,12 +1130,18 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           oneLegThreeTimes: 0,
           left: 0,
           right: 0,
+          both: 0,
           ...prev.grossMotorSkillsResponses[questionId],
           [category]: value
         }
       }
     }))
   }
+
+  // Get sections based on assessment type
+  const availableSections = useMemo(() => {
+    return getAvailableSections(formData.assessmentType)
+  }, [formData.assessmentType])
 
   // Load school information and existing assessment
   useEffect(() => {
@@ -1166,7 +1182,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             const existingAssessment = await loadNurseryAssessment(userResult.id, schoolResult.school.id)
             
             if (existingAssessment.assessment) {
-              console.log('Found existing assessment:', existingAssessment.assessment)
+           //   console.log('Found existing assessment:', existingAssessment.assessment)
               setCurrentAssessmentId(existingAssessment.assessment.id)
               
               // Load saved responses from answers table
@@ -1205,7 +1221,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               
               // Load saved form data from JSON field if available (for any other data)
               if (existingAssessment.assessment.form_data) {
-                console.log('Also loading saved form_data JSON:', existingAssessment.assessment.form_data)
+               // console.log('Also loading saved form_data JSON:', existingAssessment.assessment.form_data)
                 setFormData(prev => ({
                   ...prev,
                   ...existingAssessment.assessment.form_data,
@@ -1230,11 +1246,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 description: "Continuing your previous nursery assessment with saved responses.",
               })
             } else {
-              console.log('No existing assessment found')
+             // console.log('No existing assessment found')
               // Try to load from localStorage as fallback
               const localData = loadFromLocalStorage()
               if (localData) {
-                console.log('Loading from localStorage:', localData)
+               // console.log('Loading from localStorage:', localData)
                 setFormData(prev => ({
                   ...prev,
                   ...localData,
@@ -1287,16 +1303,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const loadQuestions = async (section: string) => {
     setQuestionsLoading(true)
     try {
-      console.log('Loading questions for section:', section)
+     // console.log('Loading questions for section:', section)
       const result = await getNurseryAssessmentQuestions(section)
-      console.log('Questions result:', result)
+     // console.log('Questions result:', result)
       
       if (!result.error && result.questions.length > 0) {
         setQuestions(result.questions)
-        console.log('Questions loaded:', result.questions.length)
+      //  console.log('Questions loaded:', result.questions.length)
         
         // No need to load options since we're using fixed option IDs for Autobiographical Knowledge
-        console.log('Using fixed option IDs for Autobiographical Knowledge questions')
+       // console.log('Using fixed option IDs for Autobiographical Knowledge questions')
       } else {
         console.error("Error loading questions:", result.error)
         toast({
@@ -1318,10 +1334,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const saveAssessmentBasicInfo = async () => {
-    console.log('saveAssessmentBasicInfo called')
-    console.log('schoolInfo:', schoolInfo)
-    console.log('currentUser:', currentUser)
-    console.log('formData:', formData)
+    // console.log('saveAssessmentBasicInfo called')
+    // console.log('schoolInfo:', schoolInfo)
+    // console.log('currentUser:', currentUser)
+    // console.log('formData:', formData)
     
     if (!schoolInfo || !currentUser) {
       toast({
@@ -1345,18 +1361,18 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       setLoading(true)
       
       const enrollmentNumber = parseInt(formData.enrollment) || 0
-      console.log('Saving with enrollment (converted to number):', enrollmentNumber, typeof enrollmentNumber)
+     // console.log('Saving with enrollment (converted to number):', enrollmentNumber, typeof enrollmentNumber)
       
       if (currentAssessmentId) {
         // Update existing assessment
-        console.log('Updating existing assessment:', currentAssessmentId)
+       // console.log('Updating existing assessment:', currentAssessmentId)
         const result = await updateNurseryAssessment(currentAssessmentId, {
           assessment_type: formData.assessmentType,
           enrollment: enrollmentNumber,
           updated_by: currentUser.id
         })
         
-        console.log('Update result:', result)
+        //console.log('Update result:', result)
         
         if (result.error) {
           throw new Error(result.error)
@@ -1368,7 +1384,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         })
       } else {
         // Create new assessment
-        console.log('Creating new assessment')
+        //console.log('Creating new assessment')
         const result = await saveNurseryAssessment({
           school_id: schoolInfo.id,
           headteacher_id: currentUser.id,
@@ -1376,17 +1392,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           enrollment: enrollmentNumber
         })
         
-        console.log('Save result:', result)
+        //console.log('Save result:', result)
         
         if (result.error) {
-          console.log('Primary save failed, attempting workaround...')
+         // console.log('Primary save failed, attempting workaround...')
           // If the primary save fails due to schema cache, the function will handle it internally
           throw new Error(result.error)
         }
         
         if (result.assessment && result.assessment.id) {
           setCurrentAssessmentId(result.assessment.id)
-          console.log('New assessment ID set:', result.assessment.id)
+          //console.log('New assessment ID set:', result.assessment.id)
         }
         
         toast({
@@ -1971,8 +1987,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     // Simply move to next section (no auto-saving)
-    if (currentSection < SECTIONS.length - 1) {
-      setCurrentSection(currentSection + 1)
+    if (currentSection < availableSections.length - 1) {
+      // Skip Section 7 (Gross Motor Skills) if Assessment 1 - Year 1
+      let nextSectionIndex = currentSection + 1
+      if (formData.assessmentType === 'assessment-1-year-1' && nextSectionIndex === 7) {
+        // Already handled by availableSections.length check above
+        return
+      }
+      setCurrentSection(nextSectionIndex)
     }
   }
 
@@ -1983,7 +2005,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const calculateProgress = () => {
-    return (savedSections.size / SECTIONS.length) * 100
+    return (savedSections.size / availableSections.length) * 100
   }
 
   const submitAssessment = async () => {
@@ -2315,35 +2337,41 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
-  const renderAlphabetRecitation = () => (
-    <div className="space-y-6">
-      {/* Instructions */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-green-900 mb-1">Instructions</h4>
-            <p className="text-sm text-green-700">
-              Record the total number of students based on how many they got correct for each question.
-            </p>
+  const renderAlphabetRecitation = () => {
+    // Filter questions based on assessment type
+    const filteredQuestions = formData.assessmentType === 'assessment-1-year-1' 
+      ? questions.filter((question, index) => index === 0 || index === 2) // Show questions 1 and 3 (Alphabet Recitation and Letter Identification Lowercase)
+      : questions // Show all questions for Year 2
+    
+    return (
+      <div className="space-y-6">
+        {/* Instructions */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <BookOpenIcon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-medium text-green-900 mb-1">Instructions</h4>
+              <p className="text-sm text-green-700">
+                Record the total number of students based on how many they got correct for each question.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {questionsLoading ? (
-        <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {questions.map((question, index) => (
+        {questionsLoading ? (
+          <div className="text-center py-8">
+            <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-600">Loading assessment questions...</p>
+          </div>
+        ) : filteredQuestions.length === 0 ? (
+          <div className="text-center py-8">
+            <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
+            <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredQuestions.map((question, index) => (
             <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -2434,7 +2462,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         </div>
       )}
     </div>
-  )
+    )
+  }
 
   const renderColourIdentification = () => (
     <div className="space-y-6">
@@ -3044,7 +3073,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           <div>
             <h4 className="font-medium text-emerald-900 mb-1">Instructions</h4>
             <p className="text-sm text-emerald-700">
-              Record the total number of students based on their performance for each gross motor skills assessment question. Scoring varies by activity: Throw/Catch (1-5 times), Hop activities (1-3 times), Stand on One Leg (Left/Right).
+              Record the total number of students based on their performance for each gross motor skills assessment question. Scoring varies by activity: Throw/Catch (1-5 times), Hop activities (1-3 times), Stand on One Leg (Left/Right/Both).
             </p>
           </div>
         </div>
@@ -3186,11 +3215,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       </div>
                     </div>
                   ) : (question.questions.toLowerCase().includes('stand')) ? (
-                    // Stand on One Leg: Left/Right
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    // Stand on One Leg: Left/Right/Both
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                          Left
+                          Left Only
                         </Label>
                         <Input
                           type="number"
@@ -3203,7 +3232,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       </div>
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                          Right
+                          Right Only
                         </Label>
                         <Input
                           type="number"
@@ -3211,6 +3240,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.right || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'right', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Both
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.both || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'both', parseInt(e.target.value) || 0)}
                           className="w-16"
                         />
                       </div>
@@ -3293,6 +3335,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       case 6:
         return renderMotorSkills()
       case 7:
+        // Hide Gross Motor Skills section for Assessment 1 - Year 1
+        if (formData.assessmentType === 'assessment-1-year-1') {
+          return null
+        }
         return renderGrossMotorSkills()
       default:
         return null
@@ -3354,7 +3400,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           {/* Progress Steps */}
           <div className="overflow-x-auto">
             <div className="flex items-center justify-between min-w-max px-2">
-              {SECTIONS.map((section, index) => {
+              {availableSections.map((section, index) => {
                 const isCompleted = savedSections.has(index)
                 const isCurrent = index === currentSection
                 
@@ -3389,7 +3435,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                     </div>
                     
                     {/* Connecting Line */}
-                    {index < SECTIONS.length - 1 && (
+                    {index < availableSections.length - 1 && (
                       <div className={`
                         w-8 h-0.5 mx-2 mt-[-24px]
                         ${savedSections.has(index) ? 'bg-green-500' : 'bg-gray-200'}
@@ -3411,7 +3457,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             </div>
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg sm:text-xl">
-                Section {currentSection + 1} of {SECTIONS.length}: {SECTIONS[currentSection]}
+                Section {currentSection + 1} of {availableSections.length}: {availableSections[currentSection]}
               </CardTitle>
               <CardDescription className="text-blue-100 text-sm sm:text-base">
                 Complete this section to continue with your assessment
@@ -3455,7 +3501,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 </div>
               )}
 
-              {currentSection === SECTIONS.length - 1 ? (
+              {currentSection === availableSections.length - 1 ? (
                 <Button
                   onClick={submitAssessment}
                   disabled={loading || yearlyLimits.allThreeSubmitted}
@@ -3473,7 +3519,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               ) : (
                 <Button
                   onClick={nextSection}
-                  disabled={currentSection === SECTIONS.length - 1 || !isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted}
+                  disabled={currentSection === availableSections.length - 1 || !isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted}
                   className={`w-full sm:w-auto transition-all duration-200 flex items-center gap-2 ${
                     (!isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted)
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
