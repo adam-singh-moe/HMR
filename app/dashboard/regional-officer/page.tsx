@@ -67,6 +67,7 @@ type CurrentMonthSchool = {
   headTeacherEmail: string
   headTeacherId: string | null
   region: string
+  level: string
   dueDate: string
   status: string
   submittedDate: string | null
@@ -108,6 +109,7 @@ function RegionalOfficerDashboardContent() {
   // State variables
   const [searchTerm, setSearchTerm] = useState<string>("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [schoolLevelFilter, setSchoolLevelFilter] = useState<string>("all")
   const [previousReportsSearch, setPreviousReportsSearch] = useState<string>("")
   const [previousReportsYear, setPreviousReportsYear] = useState<string>("all")
   const [previousReportsMonth, setPreviousReportsMonth] = useState<string>("all")
@@ -496,7 +498,8 @@ function RegionalOfficerDashboardContent() {
       school.schoolName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       school.headTeacher.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || school.status === statusFilter
-    return matchesSearch && matchesStatus
+    const matchesLevel = schoolLevelFilter === "all" || school.level === schoolLevelFilter
+    return matchesSearch && matchesStatus && matchesLevel
   })
 
   // Calculate pagination for current month schools
@@ -569,7 +572,7 @@ function RegionalOfficerDashboardContent() {
   // Reset current month pagination when filters change
   useEffect(() => {
     setCurrentMonthPage(1)
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, statusFilter, schoolLevelFilter])
 
   // Reset current month pagination when page size changes
   useEffect(() => {
@@ -805,61 +808,59 @@ function RegionalOfficerDashboardContent() {
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="gradient-header rounded-lg lg:rounded-xl p-4 sm:p-6 text-white shadow-lg">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 bg-white/20 rounded-lg flex-shrink-0">
-            <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Regional Officer Dashboard</h1>
-            <p className="text-blue-100 text-sm sm:text-base">Monitor school performance and manage report submissions across your region</p>
-          </div>
-          
-          {/* School Readiness Indicator */}
-          <div 
-            onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
-            className="cursor-pointer bg-white/20 hover:bg-white/30 transition-all duration-200 rounded-lg p-3 sm:p-4 text-center border border-white/30 hover:border-white/50"
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <School className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-xs sm:text-sm font-medium">School Readiness</span>
-            </div>
-            <div className="text-lg sm:text-xl font-bold">
-              {schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}
-            </div>
-            <div className="text-xs text-blue-100">
-              View Details
-            </div>
-          </div>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-blue-600">Regional Officer Dashboard</h1>
+        <p className="text-gray-500 mt-1">Monitor reports and school performance across the system</p>
       </div>
 
       <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 bg-primary-50 border border-primary-200 h-auto">
-          <TabsTrigger 
-            value="overview" 
-            className="data-[state=active]:bg-primary-600 data-[state=active]:text-white text-xs sm:text-sm py-2 sm:py-3"
-          >
-            <span className="hidden sm:inline">Dashboard Overview</span>
-            <span className="sm:hidden">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="reports" 
-            className="data-[state=active]:bg-primary-600 data-[state=active]:text-white text-xs sm:text-sm py-2 sm:py-3"
-          >
-            <span className="hidden sm:inline">Submitted Reports</span>
-            <span className="sm:hidden">Reports</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="pe-reports" 
-            className="data-[state=active]:bg-primary-600 data-[state=active]:text-white text-xs sm:text-sm py-2 sm:py-3"
-          >
-            <span className="hidden sm:inline">PE Reports</span>
-            <span className="sm:hidden">PE Reports</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="w-fit p-1 bg-white rounded-lg shadow-sm border h-auto flex-wrap">
+            <TabsTrigger 
+              value="overview" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Dashboard Overview</span>
+              <span className="sm:hidden">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reports" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Submitted Reports</span>
+              <span className="sm:hidden">Reports</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pe-reports" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">PE Reports</span>
+              <span className="sm:hidden">PE</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-600">System Overview</h2>
+              <p className="text-gray-500 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
+            </div>
+            <div 
+              onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
+              className="cursor-pointer bg-red-500 hover:bg-red-600 transition-all duration-200 rounded-full px-3 sm:px-4 py-2 text-center text-white shadow-lg hover:shadow-xl"
+            >
+              <div className="flex items-center gap-2">
+                <School className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="text-xs sm:text-sm font-medium">School Readiness</span>
+              </div>
+              <div className="text-sm sm:text-lg font-bold">
+                {schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}
+              </div>
+            </div>
+          </div>
+          
           {/* Key Metrics */}
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="gradient-card border-0 shadow-md">
@@ -1252,6 +1253,8 @@ function RegionalOfficerDashboardContent() {
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4 lg:space-y-6">
+          {/* Page Header */}
+          
           {/* Toggle Section */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1271,7 +1274,7 @@ function RegionalOfficerDashboardContent() {
             <Card className="gradient-card border-0 shadow-md">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 flex-1 w-full lg:w-auto">
+                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 flex-1 w-full lg:w-auto">
                     {showCurrentMonth ? (
                       <>
                         <div>
@@ -1294,16 +1297,30 @@ function RegionalOfficerDashboardContent() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="sm:col-span-2 lg:col-span-2">
+                        <div>
+                          <Select value={schoolLevelFilter} onValueChange={setSchoolLevelFilter}>
+                            <SelectTrigger className="border-primary-200 focus:border-primary-500">
+                              <SelectValue placeholder="Filter by Level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Levels</SelectItem>
+                              <SelectItem value="Primary">Primary</SelectItem>
+                              <SelectItem value="Secondary">Secondary</SelectItem>
+                              <SelectItem value="Nursery">Nursery</SelectItem>
+                              <SelectItem value="All-Age">All-Age</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="sm:col-span-2 lg:col-span-2 flex justify-start">
                           <Button
                             onClick={loadCurrentMonthSchools}
                             disabled={isLoadingCurrentMonth}
-                            className="bg-primary-600 hover:bg-primary-700 text-white w-full"
+                            className="bg-primary-600 hover:bg-primary-700 text-white px-12 py-1 text-sm"
                             size="sm"
                           >
                             {isLoadingCurrentMonth ? (
                               <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                                 <span className="hidden sm:inline">Loading...</span>
                                 <span className="sm:hidden">Loading</span>
                               </>
@@ -1860,6 +1877,12 @@ function RegionalOfficerDashboardContent() {
         </TabsContent>
 
         <TabsContent value="pe-reports" className="space-y-4 lg:space-y-6">
+          {/* Page Header */}
+          <div>
+            <h2 className="text-2xl font-bold text-blue-600">PE Reports</h2>
+            <p className="text-gray-500">Monitor physical education program reports and activities</p>
+          </div>
+          
           <RegionalPEReportsContent />
         </TabsContent>
 

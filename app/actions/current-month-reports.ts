@@ -38,7 +38,7 @@ export async function getCurrentMonthSchools() {
     // Fetch all schools in the regional officer's region
     const { data: schools, error: schoolsError } = await supabase
       .from("sms_schools")
-      .select("id, name, region_id")
+      .select("id, name, region_id, level")
       .eq("region_id", user.region)
       .order("name")
 
@@ -231,6 +231,7 @@ export async function getCurrentMonthSchools() {
         headTeacherEmail: headTeacherEmail,
         headTeacherId: headTeacherId,
         region: `Region ${school.region_id}`,
+        level: school.level || "",
         dueDate,
         status,
         submittedDate,
