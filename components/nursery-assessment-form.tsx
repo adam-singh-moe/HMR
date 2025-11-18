@@ -55,8 +55,10 @@ interface FormData {
   quantityCountingResponses: {
     [questionId: string]: {
       // For Quantity Differentiation
-      numberCorrect?: number
-      numberIncorrect?: number
+      oneCorrect?: number
+      twoCorrect?: number
+      threeCorrect?: number
+      allFourCorrect?: number
       // For Counting Fluency
       range1to10Correct?: number
       range11to20Correct?: number
@@ -269,16 +271,26 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         responseMap.colourResponses[questionId].threeCorrect = answer
 
       // Section 5: Quantity Differentiation and Counting Fluency
-      } else if (optionId === 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3') { // Number Correct (Quantity)
+      } else if (optionId === 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3') { // 1 Correct (Quantity)
         if (!responseMap.quantityCountingResponses[questionId]) {
           responseMap.quantityCountingResponses[questionId] = {}
         }
-        responseMap.quantityCountingResponses[questionId].numberCorrect = answer
-      } else if (optionId === '1125b912-003e-4911-b653-18087f8c89a4') { // Number Incorrect (Quantity)
+        responseMap.quantityCountingResponses[questionId].oneCorrect = answer
+      } else if (optionId === '1125b912-003e-4911-b653-18087f8c89d4') { // 2 Correct (Quantity)
         if (!responseMap.quantityCountingResponses[questionId]) {
           responseMap.quantityCountingResponses[questionId] = {}
         }
-        responseMap.quantityCountingResponses[questionId].numberIncorrect = answer
+        responseMap.quantityCountingResponses[questionId].twoCorrect = answer
+      } else if (optionId === '42ae4fdf-8f98-4bdd-b2ea-7daaddfea03f') { // 3 Correct (Quantity)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].threeCorrect = answer
+      } else if (optionId === '858e70df-5431-4fc6-ad81-ad8cbfbaceb8') { // All 4 Correct (Quantity)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].allFourCorrect = answer
       } else if (optionId === '13da4461-dcac-472f-91f4-5a3ab7e44168') { // 1-10 Correct (Counting)
         if (!responseMap.quantityCountingResponses[questionId]) {
           responseMap.quantityCountingResponses[questionId] = {}
@@ -728,11 +740,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             let optionId = ''
             
             switch (category) {
-              case 'numberCorrect':
-                optionId = 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3' // Number Correct
+              case 'oneCorrect':
+                optionId = 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3' // 1 Correct
                 break
-              case 'numberIncorrect':
-                optionId = '1125b912-003e-4911-b653-18087f8c89a4' // Number Incorrect
+              case 'twoCorrect':
+                optionId = '1125b912-003e-4911-b653-18087f8c89a4' // 2 Correct
+                break
+              case 'threeCorrect':
+                optionId = '42ae4fdf-8f98-4bdd-b2ea-7daaddfeaf3f' // 3 Correct
+                break
+              case 'allFourCorrect':
+                optionId = '858e70df-5431-4fc6-ad81-ad8cbfbaceb8' // All 4 Correct
                 break
               case 'range1to10Correct':
                 optionId = '13da4461-dcac-472f-91f4-5a3ab7e44168' // 1 - 10 Correct
@@ -1620,8 +1638,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     for (const [questionId, questionResponses] of Object.entries(responses)) {
       if (!questionResponses) return false
       let total = 0
-      if (questionResponses.numberCorrect !== undefined || questionResponses.numberIncorrect !== undefined) {
-        total = (questionResponses.numberCorrect || 0) + (questionResponses.numberIncorrect || 0)
+      if (questionResponses.oneCorrect !== undefined || questionResponses.twoCorrect !== undefined || questionResponses.threeCorrect !== undefined || questionResponses.allFourCorrect !== undefined) {
+        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0) + (questionResponses.allFourCorrect || 0)
       } else {
         total = (questionResponses.range1to10Correct || 0) + (questionResponses.range11to20Correct || 0) + (questionResponses.range20PlusCorrect || 0)
       }
@@ -1839,7 +1857,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('quantity')) {
-        total = (responses.numberCorrect || 0) + (responses.numberIncorrect || 0)
+        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0) + (responses.allFourCorrect || 0)
       } else {
         total = (responses.range1to10Correct || 0) + (responses.range11to20Correct || 0) + (responses.range20PlusCorrect || 0)
       }
@@ -2613,27 +2631,53 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                          Number Correct
+                          1 Correct
                         </Label>
                         <Input
                           type="number"
                           min="0"
                           placeholder="0"
-                          value={formData.quantityCountingResponses[question.id]?.numberCorrect || ""}
-                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'numberCorrect', parseInt(e.target.value) || 0)}
+                          value={formData.quantityCountingResponses[question.id]?.oneCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
                           className="w-16"
                         />
                       </div>
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                          Number Incorrect
+                          2 Correct
                         </Label>
                         <Input
                           type="number"
                           min="0"
                           placeholder="0"
-                          value={formData.quantityCountingResponses[question.id]?.numberIncorrect || ""}
-                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'numberIncorrect', parseInt(e.target.value) || 0)}
+                          value={formData.quantityCountingResponses[question.id]?.twoCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          3 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.threeCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          All 4 Correct
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.allFourCorrect || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'allFourCorrect', parseInt(e.target.value) || 0)}
                           className="w-16"
                         />
                       </div>
@@ -2689,8 +2733,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       <span className="text-gray-600">Total Students:</span>
                       <span className="font-medium text-gray-900">
                         {question.questions.toLowerCase().includes('quantity') ? (
-                          (formData.quantityCountingResponses[question.id]?.numberCorrect || 0) +
-                          (formData.quantityCountingResponses[question.id]?.numberIncorrect || 0)
+                          (formData.quantityCountingResponses[question.id]?.oneCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.twoCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.threeCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.allFourCorrect || 0)
                         ) : (
                           (formData.quantityCountingResponses[question.id]?.range1to10Correct || 0) +
                           (formData.quantityCountingResponses[question.id]?.range11to20Correct || 0) +
