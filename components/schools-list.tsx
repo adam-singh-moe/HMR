@@ -68,6 +68,8 @@ const clearCache = () => {
 export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRegion, setSelectedRegion] = useState<string>("all")
+  const [selectedSchoolLevel, setSelectedSchoolLevel] = useState<string>("all")
+  const [selectedGrade, setSelectedGrade] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(15)
   const [schools, setSchools] = useState<School[]>(initialSchools)
@@ -137,7 +139,41 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
       }))
   }, [schools])
 
-  // Filter schools based on search query and selected region
+  // Get unique school levels for the filter dropdown with counts
+  const schoolLevels = useMemo(() => {
+    const levelCounts = schools.reduce((acc, school) => {
+      if (school.schoolLevel) {
+        acc[school.schoolLevel] = (acc[school.schoolLevel] || 0) + 1
+      }
+      return acc
+    }, {} as Record<string, number>)
+    
+    return Object.keys(levelCounts)
+      .sort()
+      .map(level => ({
+        name: level,
+        count: levelCounts[level]
+      }))
+  }, [schools])
+
+  // Get unique grades for the filter dropdown with counts
+  const grades = useMemo(() => {
+    const gradeCounts = schools.reduce((acc, school) => {
+      if (school.grade) {
+        acc[school.grade] = (acc[school.grade] || 0) + 1
+      }
+      return acc
+    }, {} as Record<string, number>)
+    
+    return Object.keys(gradeCounts)
+      .sort()
+      .map(grade => ({
+        name: grade,
+        count: gradeCounts[grade]
+      }))
+  }, [schools])
+
+  // Filter schools based on search query and selected filters
   const filteredSchools = useMemo(() => {
     return schools.filter(school => {
       const searchLower = searchQuery.toLowerCase().trim()
@@ -145,9 +181,11 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
         school.name.toLowerCase().includes(searchLower) ||
         school.region.toLowerCase().includes(searchLower)
       const matchesRegion = selectedRegion === "all" || school.region === selectedRegion
-      return matchesSearch && matchesRegion
+      const matchesSchoolLevel = selectedSchoolLevel === "all" || school.schoolLevel === selectedSchoolLevel
+      const matchesGrade = selectedGrade === "all" || school.grade === selectedGrade
+      return matchesSearch && matchesRegion && matchesSchoolLevel && matchesGrade
     })
-  }, [schools, searchQuery, selectedRegion])
+  }, [schools, searchQuery, selectedRegion, selectedSchoolLevel, selectedGrade])
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredSchools.length / itemsPerPage)
@@ -191,126 +229,118 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
   const clearFilters = () => {
     setSearchQuery("")
     setSelectedRegion("all")
+    setSelectedSchoolLevel("all")
+    setSelectedGrade("all")
     setCurrentPage(1)
   }
 
-  const hasActiveFilters = searchQuery !== "" || selectedRegion !== "all"
+  const hasActiveFilters = searchQuery !== "" || selectedRegion !== "all" || selectedSchoolLevel !== "all" || selectedGrade !== "all"
 
   return (
-    <div className="space-y-4">
-      {/* Filters and Search */}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+            <School className="h-5 w-5 sm:h-6 sm:w-6" />
+            Schools Overview
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">
+            View detailed reports, statistics, and analytics for each school.
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Search & Filter Schools
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search Input */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search schools by name or region... (Ctrl+K)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Filters:</span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative flex-1 sm:min-w-96">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search schools by name, region..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-
-              {/* Region Filter */}
-              <div className="w-full sm:w-64">
-                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
-                    {regions.map((region) => (
-                      <SelectItem key={region.name} value={region.name}>
-                        {region.name} ({region.count})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Items per page selector */}
-              <div className="w-full sm:w-32">
-                <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="15">15 per page</SelectItem>
-                    <SelectItem value="25">25 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Clear Filters Button */}
-              {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
-                  onClick={clearFilters}
-                  className="flex items-center gap-2 whitespace-nowrap"
-                >
-                  <X className="h-4 w-4" />
-                  Clear
-                </Button>
-              )}
-
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {regions.map((region) => (
+                    <SelectItem key={region.name} value={region.name}>
+                      {region.name} ({region.count})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedSchoolLevel} onValueChange={setSelectedSchoolLevel}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="All School Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All School Levels</SelectItem>
+                  {schoolLevels.map((level) => (
+                    <SelectItem key={level.name} value={level.name}>
+                      {level.name} ({level.count})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                <SelectTrigger className="sm:w-40">
+                  <SelectValue placeholder="All Grades" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Grades</SelectItem>
+                  {grades.map((grade) => (
+                    <SelectItem key={grade.name} value={grade.name}>
+                      {grade.name} ({grade.count})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
               {/* Refresh Button */}
               <Button 
-                variant="outline" 
                 onClick={refreshSchools}
                 disabled={isLoading}
-                className="flex items-center gap-2 whitespace-nowrap"
+                className="flex items-center gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
             </div>
-
-            {/* Results Summary with Pagination Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1}-{Math.min(endIndex, filteredSchools.length)} of {filteredSchools.length} schools
-                {hasActiveFilters && (
-                  <span className="ml-2 text-blue-600">
-                    (filtered from {schools.length} total)
-                  </span>
-                )}
-                {lastUpdated && (
-                  <span className="ml-2 text-xs text-gray-500">
-                    • Last updated: {lastUpdated.toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
-              {totalPages > 1 && (
-                <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </div>
-              )}
-            </div>
           </div>
+          
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear All Filters
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Schools Grid */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <School className="h-5 w-5" />
-            Schools Overview
-          </CardTitle>
-        </CardHeader>
         <CardContent>
           {filteredSchools.length === 0 ? (
             <div className="text-center py-8">
@@ -325,14 +355,7 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
               )}
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Instruction Text */}
-              <div className="bg-muted/50 rounded-lg p-4 border border-dashed border-muted-foreground/20">
-                <p className="text-sm text-muted-foreground text-center">
-                  💡 <strong>Tip:</strong> Click on any school card below to view detailed reports, statistics, and analytics for that school.
-                </p>
-              </div>
-              
+            <div className="space-y-6 pt-4">              
               {/* Schools Grid */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {paginatedSchools.map((school) => (
@@ -390,16 +413,27 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
                 ))}
               </div>
 
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages} • {filteredSchools.length} total schools
-                    <span className="hidden sm:inline text-xs ml-2">
-                      (Use ← → arrow keys to navigate)
-                    </span>
-                  </div>
-                  
+              {/* Pagination and Page Size Controls */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
+                {/* Page Size Control */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Show:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">per page</span>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -477,8 +511,8 @@ export function SchoolsList({ schools: initialSchools }: SchoolsListProps) {
                       Last
                     </Button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </CardContent>

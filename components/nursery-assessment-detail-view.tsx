@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
 
 interface AssessmentResponse {
   id: string
@@ -64,6 +65,7 @@ const sectionIcons = [
 export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentDetailViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { toast } = useToast()
   const [assessment, setAssessment] = useState<DetailedAssessment | null>(null)
   const [responses, setResponses] = useState<AssessmentResponse[]>([])
   const [loading, setLoading] = useState(true)
@@ -130,8 +132,14 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
     if (backUrl) {
       router.push(decodeURIComponent(backUrl))
     } else {
-      // Default back to nursery assessment list
-      router.push('/dashboard/head-teacher?tab=view-assessments&subtab=view-assessments&mainTab=nursery-assessment')
+      // Check the current path to determine the appropriate back location
+      const currentPath = window.location.pathname
+      if (currentPath.includes('/education-official/')) {
+        router.push('/dashboard/education-official/nursery-assessment')
+      } else {
+        // Default back to head teacher nursery assessment list
+        router.push('/dashboard/head-teacher?tab=view-assessments&subtab=view-assessments&mainTab=nursery-assessment')
+      }
     }
   }
 

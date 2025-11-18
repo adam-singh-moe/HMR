@@ -172,8 +172,13 @@ export default function AIReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">AI-Powered Report Insights</h1>
-          <p className="text-muted-foreground">Generate intelligent analysis and insights from educational reports using AI</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+            <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
+            AI-Powered Report Insights
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">
+            Generate intelligent analysis and insights from educational reports using AI
+          </p>
         </div>
         {/* <Badge variant="secondary" className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />

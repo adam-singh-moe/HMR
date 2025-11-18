@@ -578,18 +578,25 @@ export async function getSubmittedNurseryAssessments(userId: string) {
       return { assessments: [], error: error.message }
     }
 
-    // Now fetch school data separately for each assessment
+    // Now fetch school data with region names
     const assessmentsWithSchools = await Promise.all(
       assessments.map(async (assessment) => {
         const { data: school } = await supabase
           .from('sms_schools')
-          .select('name, region_id')
+          .select(`
+            name, 
+            region_id,
+            sms_regions!inner(name)
+          `)
           .eq('id', assessment.school_id)
           .single()
 
         return {
           ...assessment,
-          schools: school ? { name: school.name, region: school.region_id } : null
+          schools: school ? { 
+            name: school.name, 
+            region: (school.sms_regions as any)?.name || 'Unknown Region'
+          } : null
         }
       })
     )
@@ -770,5 +777,63 @@ export async function checkYearlyAssessmentLimits(headteacherId: string, schoolI
       allThreeSubmitted: false,
       error: 'An unexpected error occurred'
     }
+  }
+}
+
+// Function to get all nursery assessments for education officials
+export async function getAllNurseryAssessments() {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Get all submitted assessments
+    const { data: assessments, error } = await supabase
+      .from('hmr_nursery_assessment')
+      .select('*')
+      .eq('status', 'submitted')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching all nursery assessments:', error)
+      return { assessments: [], error: error.message }
+    }
+
+    // Fetch school data and region names for each assessment
+    const assessmentsWithDetails = await Promise.all(
+      assessments.map(async (assessment) => {
+        const { data: school } = await supabase
+          .from('sms_schools')
+          .select(`
+            name, 
+            region_id,
+            sms_regions!inner(name)
+          `)
+          .eq('id', assessment.school_id)
+          .single()
+
+        // Fetch head teacher details
+        const { data: headTeacher } = await supabase
+          .from('hmr_users')
+          .select('name, email')
+          .eq('id', assessment.headteacher_id)
+          .single()
+
+        return {
+          ...assessment,
+          schools: school ? { 
+            name: school.name, 
+            region: (school.sms_regions as any)?.name || 'Unknown Region'
+          } : null,
+          headteacher: headTeacher ? {
+            name: headTeacher.name || headTeacher.email,
+            email: headTeacher.email
+          } : null
+        }
+      })
+    )
+
+    return { assessments: assessmentsWithDetails || [], error: null }
+  } catch (err) {
+    console.error('Error in getAllNurseryAssessments:', err)
+    return { assessments: [], error: 'An unexpected error occurred' }
   }
 }

@@ -455,13 +455,12 @@ export default function PhysicalEducationReportsPage() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-primary-700">Physical Education Reports</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-primary-700 flex items-center gap-2">
+              <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+              Physical Education Reports
+            </h1>
             <p className="text-muted-foreground">View physical education activities and challenges from all schools</p>
           </div>
-          <Badge variant="secondary" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            {filteredReports.length} Reports
-          </Badge>
         </div>
 
         {/* Filters and Generate Report Button */}

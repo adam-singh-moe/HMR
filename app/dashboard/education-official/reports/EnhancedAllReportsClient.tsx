@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Download, Loader2, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, X } from "lucide-react"
+import { Download, Loader2, Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, X, FileText, Filter } from "lucide-react"
 import Link from "next/link"
 import { getSubmittedReportsWithSearchAndPagination, getSchoolsForSearch, getRegionsForFilter, getSchoolLevelsForFilter } from "@/app/actions/education-official-reports"
 import { generateReportsPDF } from "@/app/actions/export-reports"
@@ -255,44 +255,30 @@ export default function EnhancedAllReportsClient({
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="pb-3 sm:pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg sm:text-xl text-primary-700">All Reports</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                View and manage all submitted reports across the system ({totalCount} reports)
-              </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+            All Reports
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">
+            View and manage all submitted reports across the system ({totalCount} reports)
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Filters:</span>
             </div>
-            <Button 
-              variant="outline" 
-              className="bg-primary-50 border-primary-200 text-primary-700 hover:bg-primary-100 w-full sm:w-auto" 
-              size="sm"
-              onClick={handleExportPDF}
-              disabled={isExporting || reports.length === 0}
-            >
-              {isExporting ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-              ) : (
-                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              )}
-              <span className="hidden sm:inline">
-                {isExporting ? 'Generating...' : 'Export CSV'}
-              </span>
-              <span className="sm:hidden">
-                {isExporting ? 'Generating...' : 'Export'}
-              </span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          {/* Search and Filter Controls */}
-          <div className="mb-6 space-y-4">
-            {/* All filters in one row */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3">
-              {/* Search Input - Takes more space */}
-              <div className="relative lg:col-span-4">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              <div className="relative sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   type="text"
@@ -302,126 +288,107 @@ export default function EnhancedAllReportsClient({
                   className="pl-10"
                 />
               </div>
-
-              {/* Region Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedRegionId || undefined} onValueChange={(value) => setSelectedRegionId(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Region..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
-                    {regions.map((region) => (
-                      <SelectItem key={region.id} value={region.id}>
-                        {region.name}
+              <Select value={selectedRegionId || undefined} onValueChange={(value) => setSelectedRegionId(value || "")}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {regions.map((region) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedSchoolLevel || undefined} onValueChange={(value) => setSelectedSchoolLevel(value || "")}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  {schoolLevels.map((level) => (
+                    <SelectItem key={level.id} value={level.id}>
+                      {level.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth || undefined} onValueChange={(value) => setSelectedMonth(value || "")}>
+                <SelectTrigger className="sm:w-48">
+                  <SelectValue placeholder="All Months" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  <SelectItem value="1">January</SelectItem>
+                  <SelectItem value="2">February</SelectItem>
+                  <SelectItem value="3">March</SelectItem>
+                  <SelectItem value="4">April</SelectItem>
+                  <SelectItem value="5">May</SelectItem>
+                  <SelectItem value="6">June</SelectItem>
+                  <SelectItem value="7">July</SelectItem>
+                  <SelectItem value="8">August</SelectItem>
+                  <SelectItem value="9">September</SelectItem>
+                  <SelectItem value="10">October</SelectItem>
+                  <SelectItem value="11">November</SelectItem>
+                  <SelectItem value="12">December</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value || "")}>
+                <SelectTrigger className="sm:w-40">
+                  <SelectValue placeholder="All Years" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() - i
+                    return (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* School Level Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedSchoolLevel || undefined} onValueChange={(value) => setSelectedSchoolLevel(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Level..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Levels</SelectItem>
-                    {schoolLevels.map((level) => (
-                      <SelectItem key={level.id} value={level.id}>
-                        {level.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Month Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedMonth || undefined} onValueChange={(value) => setSelectedMonth(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Month..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Months</SelectItem>
-                    <SelectItem value="1">January</SelectItem>
-                    <SelectItem value="2">February</SelectItem>
-                    <SelectItem value="3">March</SelectItem>
-                    <SelectItem value="4">April</SelectItem>
-                    <SelectItem value="5">May</SelectItem>
-                    <SelectItem value="6">June</SelectItem>
-                    <SelectItem value="7">July</SelectItem>
-                    <SelectItem value="8">August</SelectItem>
-                    <SelectItem value="9">September</SelectItem>
-                    <SelectItem value="10">October</SelectItem>
-                    <SelectItem value="11">November</SelectItem>
-                    <SelectItem value="12">December</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Year Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Year..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    {Array.from({ length: 10 }, (_, i) => {
-                      const year = new Date().getFullYear() - i
-                      return (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Clear Filters Button */}
-            {hasActiveFilters && (
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
-
-            {/* Page Size Selection */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Show:</span>
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-muted-foreground">per page</span>
-              </div>
-
-              {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} results
-              </div>
-            </div>
+            <Button 
+              onClick={handleExportPDF}
+              disabled={isExporting || reports.length === 0}
+              className="flex items-center gap-2 flex-shrink-0"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </>
+              )}
+            </Button>
           </div>
+          
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear All Filters
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
+      <Card className="gradient-card border-0 shadow-lg">
+        <CardContent className="p-0">
           {/* Table */}
           {isLoading ? (
             <div className="text-center py-8">
@@ -574,9 +541,27 @@ export default function EnhancedAllReportsClient({
             </div>
           )}
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
+          {/* Pagination and Page Size Controls */}
+          <div className="mt-6 px-4 sm:px-6 pb-4 sm:pb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Page Size Control */}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">per page</span>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -625,12 +610,13 @@ export default function EnhancedAllReportsClient({
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
+            )}
 
-              <div className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </div>
+            {/* Page Info */}
+            <div className="text-sm text-muted-foreground">
+              {totalPages > 1 ? `Page ${currentPage} of ${totalPages}` : `${totalCount} results`}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
     </div>

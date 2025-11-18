@@ -80,7 +80,10 @@ export default async function EducationOfficialPage() {
       {/* Header Section with School Readiness */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-gray-900">System Overview</h2>
+          <h2 className="text-xl lg:text-2xl font-bold text-blue-600 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
+            System Overview
+          </h2>
           <p className="text-muted-foreground">Monitor key metrics and performance indicators</p>
         </div>
         <div className="flex-shrink-0">
