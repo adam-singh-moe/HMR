@@ -20,7 +20,7 @@ export async function getExpenditureTrends() {
     // Get the current year
     const currentYear = new Date().getFullYear()
 
-    console.log("Debug: Fetching expenditure trends for year:", currentYear, "region:", user.region)
+   // console.log("Debug: Fetching expenditure trends for year:", currentYear, "region:", user.region)
 
     // Use a simpler approach that matches your working SQL query
     const { data: expenditureData, error } = await supabase
@@ -46,7 +46,7 @@ export async function getExpenditureTrends() {
       .is("hmr_report.deleted_on", null)
       .not("total_expenditure", "is", null)
 
-    console.log("Debug: Raw expenditure data found:", expenditureData?.length || 0)
+   // console.log("Debug: Raw expenditure data found:", expenditureData?.length || 0)
 
     if (error) {
       console.error("Error fetching expenditure data:", error)
@@ -54,7 +54,7 @@ export async function getExpenditureTrends() {
     }
 
     if (!expenditureData || expenditureData.length === 0) {
-      console.log("Debug: No expenditure data found for", currentYear)
+     // console.log("Debug: No expenditure data found for", currentYear)
       return { 
         expenditures: [], 
         topSchools: [],
@@ -62,13 +62,13 @@ export async function getExpenditureTrends() {
       }
     }
 
-    console.log("Debug: Sample expenditure data:", expenditureData.slice(0, 3))
+   // console.log("Debug: Sample expenditure data:", expenditureData.slice(0, 3))
 
     // Check for 2025 data specifically
     const data2025 = expenditureData.filter(record => 
       record.hmr_report && (parseInt(record.hmr_report.year) === 2025 || record.hmr_report.year === '2025')
     )
-    console.log("Debug: 2025 expenditure records found:", data2025.length)
+   // console.log("Debug: 2025 expenditure records found:", data2025.length)
 
     // Transform data for chart display
     const monthNames = [
@@ -137,8 +137,8 @@ export async function getExpenditureTrends() {
       .slice(0, 5)
       .map(([schoolName]) => schoolName.length > 15 ? schoolName.substring(0, 15) + "..." : schoolName)
 
-    console.log("Debug: Chart data processed:", chartData.length, "months")
-    console.log("Debug: Top schools:", topSchools)
+   // console.log("Debug: Chart data processed:", chartData.length, "months")
+    // console.log("Debug: Top schools:", topSchools)
 
     return { 
       expenditures: chartData, 

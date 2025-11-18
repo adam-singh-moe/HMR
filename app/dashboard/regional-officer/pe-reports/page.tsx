@@ -85,8 +85,8 @@ function RegionalPEReportsContent() {
 
   const loadInitialData = async () => {
     try {
-      console.log("Loading initial data for regional PE reports...")
-      console.log("User:", user)
+     // console.log("Loading initial data for regional PE reports...")
+     // console.log("User:", user)
       // For regional officer, they can only see their region's data
       // We don't need to load all regions since they're automatically filtered
     } catch (error) {
@@ -99,15 +99,15 @@ function RegionalPEReportsContent() {
     setError(null)
 
     try {
-      console.log("Fetching PE reports with params:", {
-        searchTerm: debouncedSearchTerm,
-        selectedRegionId,
-        selectedMonth,
-        selectedYear,
-        currentPage,
-        pageSize,
-        userRegion: user?.region_name
-      })
+      // console.log("Fetching PE reports with params:", {
+      //   searchTerm: debouncedSearchTerm,
+      //   selectedRegionId,
+      //   selectedMonth,
+      //   selectedYear,
+      //   currentPage,
+      //   pageSize,
+      //   userRegion: user?.region_name
+      // })
 
       // Use the education official reports action but filter by regional officer's region
       const result = await getRegionalPhysicalEducationReports({
@@ -119,7 +119,7 @@ function RegionalPEReportsContent() {
         pageSize
       })
 
-      console.log("PE Reports result:", result)
+     // console.log("PE Reports result:", result)
 
       if (result.error) {
         console.error("PE Reports error:", result.error)
@@ -128,11 +128,11 @@ function RegionalPEReportsContent() {
         setTotalCount(0)
         setTotalPages(0)
       } else {
-        console.log("PE Reports success:", {
-          reportsCount: result.reports?.length || 0,
-          totalCount: result.totalCount,
-          totalPages: result.totalPages
-        })
+        // console.log("PE Reports success:", {
+        //   reportsCount: result.reports?.length || 0,
+        //   totalCount: result.totalCount,
+        //   totalPages: result.totalPages
+        // })
         setReports(result.reports || [])
         setTotalCount(result.totalCount || 0)
         setTotalPages(result.totalPages || 0)

@@ -85,29 +85,29 @@ function AllReportsPageContent() {
   useEffect(() => {
     async function fetchInitialData() {
       try {
-        console.log("Starting to fetch initial data...")
+       // console.log("Starting to fetch initial data...")
         
         // Fetch each one individually to see which one fails
-        console.log("Fetching reports...")
+        //console.log("Fetching reports...")
         const reportsResult = await getSubmittedReportsWithSearchAndPagination({
           page: 1,
           pageSize: 25,
           sortBy: "updated_at",
           sortOrder: "desc"
         })
-        console.log("Reports result:", reportsResult)
+       // console.log("Reports result:", reportsResult)
         
-        console.log("Fetching schools...")
+       // console.log("Fetching schools...")
         const schoolsResult = await getSchoolsForSearch()
-        console.log("Schools result:", schoolsResult)
+        //console.log("Schools result:", schoolsResult)
         
-        console.log("Fetching regions...")
+      //  console.log("Fetching regions...")
         const regionsResult = await getRegionsForFilter()
-        console.log("Regions result:", regionsResult)
+      //  console.log("Regions result:", regionsResult)
         
-        console.log("Fetching school levels...")
+      //  console.log("Fetching school levels...")
         const schoolLevelsResult = await getSchoolLevelsForFilter()
-        console.log("School levels result:", schoolLevelsResult)
+      //  console.log("School levels result:", schoolLevelsResult)
 
         if (reportsResult.error) {
           console.error("Reports error:", reportsResult.error)
@@ -122,7 +122,7 @@ function AllReportsPageContent() {
           console.error("School levels error:", schoolLevelsResult.error)
           setError(`School levels: ${schoolLevelsResult.error}`)
         } else {
-          console.log("All data fetched successfully, setting initial data...")
+         // console.log("All data fetched successfully, setting initial data...")
           setInitialData({
             reports: (reportsResult.reports || []) as Report[],
             totalCount: reportsResult.totalCount || 0,

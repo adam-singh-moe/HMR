@@ -95,7 +95,7 @@ export async function getRegionalAttendanceTrends() {
       .order("year", { ascending: true })
       .order("month", { ascending: true })
 
-    console.log("Debug: Direct query attendance trends found:", attendanceTrendsData?.length || 0)
+   // console.log("Debug: Direct query attendance trends found:", attendanceTrendsData?.length || 0)
 
     if (error) {
       console.error("Error fetching attendance trends with direct query:", error)
@@ -103,7 +103,7 @@ export async function getRegionalAttendanceTrends() {
     }
 
     if (!attendanceTrendsData || attendanceTrendsData.length === 0) {
-      console.log("Debug: No attendance trends data found")
+      //console.log("Debug: No attendance trends data found")
       return { trendsData: [], error: null }
     }
 
@@ -111,14 +111,14 @@ export async function getRegionalAttendanceTrends() {
     const data2025 = attendanceTrendsData.filter(record => 
       parseInt(record.year) === 2025 || record.year === '2025'
     )
-    console.log("Debug: 2025 attendance records found:", data2025.length)
+   // console.log("Debug: 2025 attendance records found:", data2025.length)
     if (data2025.length > 0) {
-      console.log("Debug: 2025 data sample:", data2025.slice(0, 3))
+      //console.log("Debug: 2025 data sample:", data2025.slice(0, 3))
     }
     
     // Check all unique years in the data
     const allYears = new Set(attendanceTrendsData.map(record => record.year))
-    console.log("Debug: All years in attendance data:", Array.from(allYears).sort())
+    //console.log("Debug: All years in attendance data:", Array.from(allYears).sort())
 
     // Process the data to calculate monthly averages (same as your SQL query logic)
     const monthlyTrends = processAttendanceTrendsDataDirect(attendanceTrendsData)

@@ -24,8 +24,8 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
     // Fetch relevant report data based on reportType and filters
     const reportData = await fetchReportData(reportType, filters)
 
-    console.log("Report data type:", typeof reportData, "Is array:", Array.isArray(reportData))
-    console.log("Report data length:", reportData?.length)
+    //console.log("Report data type:", typeof reportData, "Is array:", Array.isArray(reportData))
+    //console.log("Report data length:", reportData?.length)
 
     if (!reportData || !Array.isArray(reportData) || reportData.length === 0) {
       return { insight: null, error: "No report data found for the selected criteria." }
@@ -323,7 +323,7 @@ async function fetchAllReportsData(supabase: any, filters?: any) {
   try {
     // For "all reports", only fetch a summary from the most important sections 
     // to prevent overwhelming data loads
-    console.log("Fetching combined reports data with limits...")
+   // console.log("Fetching combined reports data with limits...")
     
     // Fetch only the most critical sections with error handling
     const [studentEnrollment, attendance, staffingResult, finance] = await Promise.allSettled([

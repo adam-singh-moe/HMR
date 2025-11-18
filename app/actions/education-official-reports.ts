@@ -1754,7 +1754,7 @@ export async function getPhysicalEducationReports() {
         totalStudents = enrollment.total_students || 0
       }
       
-      console.log(`Report ${pe.report_id}: School ${school?.name}, Students: ${totalStudents}`)
+     // console.log(`Report ${pe.report_id}: School ${school?.name}, Students: ${totalStudents}`)
       
       return {
         id: pe.id,
@@ -1806,10 +1806,10 @@ export async function getRegionalPhysicalEducationReports({
       return { reports: [], totalCount: 0, totalPages: 0, error: "User not authenticated." }
     }
 
-    console.log("User authenticated:", { role: user.role, region: user.region_name })
+   // console.log("User authenticated:", { role: user.role, region: user.region_name })
 
     if (user.role !== "Regional Officer" && user.role !== "Education Official" && user.role !== "Admin") {
-      console.log("User role not authorized:", user.role)
+     // console.log("User role not authorized:", user.role)
       return { reports: [], totalCount: 0, totalPages: 0, error: "Only Regional Officers, Education Officials and Admins can access this data." }
     }
 
@@ -1849,13 +1849,13 @@ export async function getRegionalPhysicalEducationReports({
 
     // Filter by region for Regional Officers
     if (user.role === "Regional Officer" && user.region_name) {
-      console.log("Adding region filter for:", user.region_name)
+     // console.log("Adding region filter for:", user.region_name)
       query = query.eq('hmr_report.sms_schools.sms_regions.name', user.region_name)
     }
 
     // Apply additional filters
     if (searchTerm.trim()) {
-      console.log("Adding search filter for:", searchTerm)
+      //console.log("Adding search filter for:", searchTerm)
       query = query.ilike('hmr_report.sms_schools.name', `%${searchTerm}%`)
     }
 
@@ -1865,21 +1865,21 @@ export async function getRegionalPhysicalEducationReports({
     }
 
     if (selectedYear && selectedYear !== "all") {
-      console.log("Adding year filter for:", selectedYear)
+      //console.log("Adding year filter for:", selectedYear)
       query = query.eq('hmr_report.year', parseInt(selectedYear))
     }
 
     // Add ordering
     query = query.order('created_at', { ascending: false })
 
-    console.log("Executing main query...")
+   // console.log("Executing main query...")
     const { data: peReports, error: queryError, count } = await query
 
-    console.log("Query result:", { 
-      dataLength: peReports?.length || 0, 
-      count, 
-      error: queryError?.message || null 
-    })
+    // console.log("Query result:", { 
+    //   dataLength: peReports?.length || 0, 
+    //   count, 
+    //   error: queryError?.message || null 
+    // })
 
     if (queryError) {
       console.error("Database query error:", queryError)
@@ -1892,7 +1892,7 @@ export async function getRegionalPhysicalEducationReports({
     }
 
     if (!peReports || peReports.length === 0) {
-      console.log("No PE reports found")
+     // console.log("No PE reports found")
       return { 
         reports: [], 
         totalCount: 0, 
@@ -1933,7 +1933,7 @@ export async function getRegionalPhysicalEducationReports({
       }
     })
 
-    console.log("Data transformed, count:", transformedReports.length)
+   // console.log("Data transformed, count:", transformedReports.length)
 
     // Apply pagination
     const totalCount = count || transformedReports.length
@@ -1941,12 +1941,12 @@ export async function getRegionalPhysicalEducationReports({
     const offset = (page - 1) * pageSize
     const paginatedReports = transformedReports.slice(offset, offset + pageSize)
 
-    console.log("Final result:", { 
-      totalCount, 
-      totalPages, 
-      currentPage: page,
-      paginatedLength: paginatedReports.length 
-    })
+    // console.log("Final result:", { 
+    //   totalCount, 
+    //   totalPages, 
+    //   currentPage: page,
+    //   paginatedLength: paginatedReports.length 
+    // })
 
     return { 
       reports: paginatedReports, 
