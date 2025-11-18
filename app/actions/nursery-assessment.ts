@@ -781,11 +781,11 @@ export async function checkYearlyAssessmentLimits(headteacherId: string, schoolI
 }
 
 // Function to get all nursery assessments for education officials
-export async function getAllNurseryAssessments() {
+export async function getAllNurseryAssessments(regionName?: string) {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    // Get all submitted assessments
+    // Get all submitted assessments - keep it simple
     const { data: assessments, error } = await supabase
       .from('hmr_nursery_assessment')
       .select('*')
@@ -797,41 +797,56 @@ export async function getAllNurseryAssessments() {
       return { assessments: [], error: error.message }
     }
 
-    // Fetch school data and region names for each assessment
-    const assessmentsWithDetails = await Promise.all(
-      assessments.map(async (assessment) => {
-        const { data: school } = await supabase
-          .from('sms_schools')
-          .select(`
-            name, 
-            region_id,
-            sms_regions!inner(name)
-          `)
-          .eq('id', assessment.school_id)
-          .single()
+    if (!assessments || assessments.length === 0) {
+      return { assessments: [], error: null }
+    }
 
-        // Fetch head teacher details
-        const { data: headTeacher } = await supabase
-          .from('hmr_users')
-          .select('name, email')
-          .eq('id', assessment.headteacher_id)
-          .single()
+    // Get all unique school IDs and head teacher IDs
+    const schoolIds = [...new Set(assessments.map(a => a.school_id).filter(Boolean))]
+    const headteacherIds = [...new Set(assessments.map(a => a.headteacher_id).filter(Boolean))]
 
-        return {
-          ...assessment,
-          schools: school ? { 
-            name: school.name, 
-            region: (school.sms_regions as any)?.name || 'Unknown Region'
-          } : null,
-          headteacher: headTeacher ? {
-            name: headTeacher.name || headTeacher.email,
-            email: headTeacher.email
-          } : null
-        }
-      })
-    )
+    // Fetch all schools in batch
+    const { data: schools } = await supabase
+      .from('sms_schools')
+      .select('id, name, region_id, sms_regions!inner(name)')
+      .in('id', schoolIds)
 
-    return { assessments: assessmentsWithDetails || [], error: null }
+    // Fetch all head teachers in batch  
+    const { data: headteachers } = await supabase
+      .from('hmr_users')
+      .select('id, name, email')
+      .in('id', headteacherIds)
+
+    // Create lookup maps for faster access
+    const schoolMap = new Map(schools?.map(school => [school.id, school]) || [])
+    const headteacherMap = new Map(headteachers?.map(ht => [ht.id, ht]) || [])
+
+    // Combine data efficiently
+    const assessmentsWithDetails = assessments.map(assessment => {
+      const school = schoolMap.get(assessment.school_id)
+      const headteacher = headteacherMap.get(assessment.headteacher_id)
+      
+      return {
+        ...assessment,
+        schools: school ? { 
+          name: school.name, 
+          region: (school.sms_regions as any)?.name || 'Unknown Region'
+        } : null,
+        headteacher: headteacher ? {
+          name: headteacher.name || headteacher.email,
+          email: headteacher.email
+        } : null
+      }
+    })
+
+    // Filter by region if provided
+    const filteredAssessments = regionName 
+      ? assessmentsWithDetails.filter(assessment => 
+          assessment.schools?.region === regionName
+        )
+      : assessmentsWithDetails
+
+    return { assessments: filteredAssessments, error: null }
   } catch (err) {
     console.error('Error in getAllNurseryAssessments:', err)
     return { assessments: [], error: 'An unexpected error occurred' }

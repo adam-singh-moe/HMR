@@ -42,6 +42,13 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUp,
+  BookOpen,
+  User,
+  Calendar,
+  Filter,
+  TrendingUp,
+  History,
+  Activity,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -57,6 +64,9 @@ import { getSchoolReadinessPercentage } from "@/app/actions/regional-officer-sch
 import { toast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useRouter, useSearchParams } from "next/navigation"
+import { getAllNurseryAssessments } from "@/app/actions/nursery-assessment"
+import Link from "next/link"
+import { format } from "date-fns"
 
 // Data will be loaded from actual database
 
@@ -172,6 +182,16 @@ function RegionalOfficerDashboardContent() {
   // Scroll to top button state
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false)
 
+  // Nursery assessment state
+  const [nurseryAssessments, setNurseryAssessments] = useState<any[]>([])
+  const [isLoadingNurseryAssessments, setIsLoadingNurseryAssessments] = useState<boolean>(false)
+  const [nurseryAssessmentsError, setNurseryAssessmentsError] = useState<string | null>(null)
+  const [nurseryAssessmentSearch, setNurseryAssessmentSearch] = useState<string>("")
+  const [nurseryAssessmentRegionFilter, setNurseryAssessmentRegionFilter] = useState<string>("all")
+  const [nurseryAssessmentTypeFilter, setNurseryAssessmentTypeFilter] = useState<string>("all")
+  const [nurseryAssessmentYearFilter, setNurseryAssessmentYearFilter] = useState<string>("all")
+  const [nurseryAssessmentsLoaded, setNurseryAssessmentsLoaded] = useState<boolean>(false)
+
   // Load all dashboard data in parallel when component mounts
   useEffect(() => {
     loadAllDashboardData()
@@ -183,6 +203,79 @@ function RegionalOfficerDashboardContent() {
       loadSchoolReadinessPercentage()
     }
   }, [user?.region_name])
+
+  // Load nursery assessments for the regional officer's region
+  const loadNurseryAssessments = async (forceReload = false) => {
+    if (!user?.region_name) return
+    
+    // Prevent double loading
+    if (isLoadingNurseryAssessments) return
+    
+    // Skip loading if data already exists and not forcing reload
+    if (nurseryAssessmentsLoaded && !forceReload) return
+    
+    setIsLoadingNurseryAssessments(true)
+    setNurseryAssessmentsError(null)
+
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setIsLoadingNurseryAssessments(false)
+      setNurseryAssessmentsError("Request timed out. Please try refreshing.")
+    }, 30000) // 30 second timeout
+
+    try {
+      console.log('Loading nursery assessments for region:', user.region_name)
+      const result = await getAllNurseryAssessments(user.region_name)
+      
+      clearTimeout(timeoutId) // Clear timeout on success
+
+      if (result.error) {
+        setNurseryAssessmentsError(result.error)
+        setNurseryAssessments([])
+      } else {
+        setNurseryAssessments(result.assessments)
+        setNurseryAssessmentsLoaded(true)
+        console.log('Loaded', result.assessments.length, 'nursery assessments')
+      }
+    } catch (error) {
+      clearTimeout(timeoutId) // Clear timeout on error
+      console.error("Error loading nursery assessments:", error)
+      setNurseryAssessmentsError("Failed to load nursery assessments")
+      setNurseryAssessments([])
+    } finally {
+      setIsLoadingNurseryAssessments(false)
+    }
+  }
+
+  // Load nursery assessments when user is available or tab changes to nursery-assessment
+  useEffect(() => {
+    // Only load if user has region, tab is active, and data hasn't been loaded yet
+    if (user?.region_name && currentTab === 'nursery-assessment' && !nurseryAssessmentsLoaded) {
+      loadNurseryAssessments()
+    }
+  }, [user?.region_name, currentTab])
+
+  // Simple preload without complex dependencies to avoid loops
+  useEffect(() => {
+    // Disable preloading for now to debug the issue
+    // if (user?.region_name && !nurseryAssessmentsLoaded) {
+    //   const preloadTimer = setTimeout(() => {
+    //     if (!nurseryAssessmentsLoaded && !isLoadingNurseryAssessments) {
+    //       loadNurseryAssessments()
+    //     }
+    //   }, 3000)
+      
+    //   return () => clearTimeout(preloadTimer)
+    // }
+  }, [user?.region_name]) // Only depend on region_name
+
+  // Emergency reset function
+  const resetNurseryAssessments = () => {
+    setIsLoadingNurseryAssessments(false)
+    setNurseryAssessmentsLoaded(false)
+    setNurseryAssessments([])
+    setNurseryAssessmentsError(null)
+  }
 
   // Scroll to top button functionality
   useEffect(() => {
@@ -593,6 +686,48 @@ function RegionalOfficerDashboardContent() {
     return monthNames[monthNum - 1]
   }
 
+  // Helper functions for nursery assessments
+  const getNurseryAssessmentTypeColor = (assessmentType: string) => {
+    if (assessmentType?.includes('assessment-1-year-1')) {
+      return 'bg-green-100 text-green-800 border-green-200'
+    } else if (assessmentType?.includes('assessment-2-year-2')) {
+      return 'bg-orange-100 text-orange-800 border-orange-200'
+    } else if (assessmentType?.includes('assessment-3-year-2')) {
+      return 'bg-purple-100 text-purple-800 border-purple-200'
+    }
+    return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
+
+  const formatNurseryAssessmentType = (assessmentType: string) => {
+    if (assessmentType?.includes('assessment-1-year-1')) {
+      return 'Assessment 1 - Year 1'
+    } else if (assessmentType?.includes('assessment-2-year-2')) {
+      return 'Assessment 2 - Year 2'
+    } else if (assessmentType?.includes('assessment-3-year-2')) {
+      return 'Assessment 3 - Year 2'
+    }
+    return assessmentType || 'N/A'
+  }
+
+  // Filter nursery assessments
+  const filteredNurseryAssessments = nurseryAssessments.filter((assessment) => {
+    const matchesSearch =
+      assessment.schools?.name?.toLowerCase().includes(nurseryAssessmentSearch.toLowerCase()) ||
+      assessment.headteacher?.name?.toLowerCase().includes(nurseryAssessmentSearch.toLowerCase())
+    
+    const matchesType = nurseryAssessmentTypeFilter === "all" || 
+      formatNurseryAssessmentType(assessment.assessment_type) === nurseryAssessmentTypeFilter
+    
+    const assessmentYear = new Date(assessment.created_at).getFullYear().toString()
+    const matchesYear = nurseryAssessmentYearFilter === "all" || assessmentYear === nurseryAssessmentYearFilter
+    
+    return matchesSearch && matchesType && matchesYear
+  })
+
+  // Get unique assessment types and years for filters
+  const nurseryAssessmentTypes = [...new Set(nurseryAssessments.map(a => formatNurseryAssessmentType(a.assessment_type)).filter(Boolean))]
+  const nurseryAssessmentYears = [...new Set(nurseryAssessments.map(a => new Date(a.created_at).getFullYear()).filter(Boolean))]
+
   // Helper functions for attendance trends filtering
   const getAvailableYears = () => {
     const currentYear = new Date().getFullYear()
@@ -834,8 +969,15 @@ function RegionalOfficerDashboardContent() {
               value="pe-reports" 
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
             >
-              <span className="hidden sm:inline">PE Reports</span>
+              <span className="hidden sm:inline">Regional PE Reports</span>
               <span className="sm:hidden">PE</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="nursery-assessment" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">Nursery Assessment</span>
+              <span className="sm:hidden">Nursery</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -844,7 +986,10 @@ function RegionalOfficerDashboardContent() {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-blue-600">System Overview</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
+                System Overview
+              </h2>
               <p className="text-gray-500 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
             </div>
             <div 
@@ -1259,8 +1404,18 @@ function RegionalOfficerDashboardContent() {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-primary-700">
-                  {showCurrentMonth ? "Current Month Report Status" : "Historical Monthly Reports"}
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-primary-700 flex items-center gap-2">
+                  {showCurrentMonth ? (
+                    <>
+                      <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
+                      Current Month Report Status
+                    </>
+                  ) : (
+                    <>
+                      <History className="h-5 w-5 sm:h-6 sm:w-6" />
+                      Historical Monthly Reports
+                    </>
+                  )}
                 </h2>
                 <p className="text-muted-foreground text-sm sm:text-base">
                   {showCurrentMonth
@@ -1702,7 +1857,10 @@ function RegionalOfficerDashboardContent() {
                 <CardHeader className="pb-3 sm:pb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg sm:text-xl text-primary-700">Historical Monthly Reports</CardTitle>
+                      <CardTitle className="text-lg sm:text-xl text-primary-700 flex items-center gap-2">
+                        <History className="h-5 w-5 sm:h-6 sm:w-6" />
+                        Historical Monthly Reports
+                      </CardTitle>
                       <CardDescription className="text-sm">
                         {isLoadingReports
                           ? "Loading reports..."
@@ -1882,11 +2040,231 @@ function RegionalOfficerDashboardContent() {
         <TabsContent value="pe-reports" className="space-y-4 lg:space-y-6">
           {/* Page Header */}
           <div>
-            <h2 className="text-2xl font-bold text-blue-600">PE Reports</h2>
-            <p className="text-gray-500">Monitor physical education program reports and activities</p>
+            <h2 className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+              <Activity className="h-6 w-6" />
+              Regional Physical Education Reports
+            </h2>
+            <p className="text-gray-500">Monitor physical education program reports and activities in your region</p>
           </div>
           
           <RegionalPEReportsContent />
+        </TabsContent>
+
+        <TabsContent value="nursery-assessment" className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
+                Nursery Assessments - {user?.region_name || 'Your Region'}
+                {nurseryAssessmentsLoaded && !isLoadingNurseryAssessments && (
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                    Loaded
+                  </Badge>
+                )}
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base mt-1">
+                Monitor and review nursery assessments from schools in your region
+              </p>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
+                  <Filter className="h-4 w-4" />
+                  <span className="font-medium">Filters:</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                  <Input
+                    placeholder="Search by school name, head teacher..."
+                    className="sm:max-w-md"
+                    value={nurseryAssessmentSearch}
+                    onChange={(e) => setNurseryAssessmentSearch(e.target.value)}
+                  />
+                  <Select value={nurseryAssessmentTypeFilter} onValueChange={setNurseryAssessmentTypeFilter}>
+                    <SelectTrigger className="sm:w-56">
+                      <SelectValue placeholder="All Assessment Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Assessment Types</SelectItem>
+                      {nurseryAssessmentTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={nurseryAssessmentYearFilter} onValueChange={setNurseryAssessmentYearFilter}>
+                    <SelectTrigger className="sm:w-40">
+                      <SelectValue placeholder="All Years" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Years</SelectItem>
+                      {nurseryAssessmentYears.map(year => (
+                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    className="flex items-center gap-2 flex-shrink-0"
+                    onClick={() => loadNurseryAssessments(true)}
+                    disabled={isLoadingNurseryAssessments}
+                  >
+                    {isLoadingNurseryAssessments ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Refreshing...
+                      </>
+                    ) : (
+                      <>
+                        Refresh Data
+                      </>
+                    )}
+                  </Button>
+                  {isLoadingNurseryAssessments && (
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={resetNurseryAssessments}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Error Alert */}
+          {nurseryAssessmentsError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{nurseryAssessmentsError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Assessments List */}
+          {isLoadingNurseryAssessments && !nurseryAssessmentsLoaded ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 mx-auto text-gray-400 mb-4 animate-spin" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Nursery Assessments</h3>
+                  <p className="text-gray-600">Fetching nursery assessments for {user?.region_name}...</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : filteredNurseryAssessments.length === 0 ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Nursery Assessments</h3>
+                  <p className="text-gray-600">
+                    {nurseryAssessments.length === 0 
+                      ? `No nursery assessments have been submitted in ${user?.region_name} yet.`
+                      : "No assessments match your current filter criteria."
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="min-w-[200px] font-semibold">School</TableHead>
+                        <TableHead className="min-w-[150px] font-semibold">Head Teacher</TableHead>
+                        <TableHead className="min-w-[180px] font-semibold">Assessment Type</TableHead>
+                        <TableHead className="min-w-[100px] font-semibold">Enrollment</TableHead>
+                        <TableHead className="min-w-[140px] font-semibold">Date Submitted</TableHead>
+                        <TableHead className="min-w-[100px] font-semibold">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredNurseryAssessments.map((assessment) => (
+                        <TableRow key={assessment.id} className="hover:bg-gray-50">
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <School className="h-4 w-4 text-blue-500" />
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {assessment.schools?.name || 'Unknown School'}
+                                </p>
+                                <p className="text-sm text-gray-500">Nursery Level</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-gray-400" />
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {assessment.headteacher?.name || 'Unknown'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {assessment.headteacher?.email || ''}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs font-medium border ${getNurseryAssessmentTypeColor(assessment.assessment_type)}`}
+                            >
+                              {formatNurseryAssessmentType(assessment.assessment_type)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm font-medium">
+                              {assessment.enrollment} students
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3 text-gray-400" />
+                              <span className="text-sm">
+                                {new Date(assessment.created_at).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-3 text-xs font-medium text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Link 
+                                href={`/dashboard/nursery-assessment/view/${assessment.id}?back=${encodeURIComponent('/dashboard/regional-officer?tab=nursery-assessment')}`}
+                                className="flex items-center gap-1.5"
+                              >
+                                <Eye className="h-3 w-3" />
+                                View
+                              </Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
       </Tabs>

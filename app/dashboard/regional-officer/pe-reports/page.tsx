@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Search, Download, X } from "lucide-react"
+import { Loader2, Search, Download, X, Filter } from "lucide-react"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
 import { ClickableReportRow } from "@/components/clickable-report-row"
 import { useDebounceValue } from "@/hooks/use-debounced-search"
@@ -188,44 +188,17 @@ function RegionalPEReportsContent() {
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="pb-3 sm:pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg sm:text-xl text-primary-700">
-                Regional PE Reports
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Physical Education reports for {user?.region_name || 'your region'} ({totalCount} reports)
-              </p>
+      {/* Filters Card - Separate from table */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Filters:</span>
             </div>
-            <Button 
-              variant="outline" 
-              className="bg-primary-50 border-primary-200 text-primary-700 hover:bg-primary-100 w-full sm:w-auto" 
-              size="sm"
-              disabled={isExporting || reports.length === 0}
-            >
-              {isExporting ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-              ) : (
-                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              )}
-              <span className="hidden sm:inline">
-                {isExporting ? 'Generating...' : 'Export CSV'}
-              </span>
-              <span className="sm:hidden">
-                {isExporting ? 'Generating...' : 'Export'}
-              </span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          {/* Search and Filter Controls */}
-          <div className="mb-6 space-y-4">
-            {/* All filters in one row */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3">
-              {/* Search Input - Takes more space */}
-              <div className="relative lg:col-span-6">
+            <div className="flex flex-col sm:flex-row gap-3 flex-1">
+              {/* Search Input */}
+              <div className="relative flex-1 sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   type="text"
@@ -237,62 +210,75 @@ function RegionalPEReportsContent() {
               </div>
 
               {/* Month Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedMonth || undefined} onValueChange={(value) => setSelectedMonth(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Month..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Months</SelectItem>
-                    <SelectItem value="1">January</SelectItem>
-                    <SelectItem value="2">February</SelectItem>
-                    <SelectItem value="3">March</SelectItem>
-                    <SelectItem value="4">April</SelectItem>
-                    <SelectItem value="5">May</SelectItem>
-                    <SelectItem value="6">June</SelectItem>
-                    <SelectItem value="7">July</SelectItem>
-                    <SelectItem value="8">August</SelectItem>
-                    <SelectItem value="9">September</SelectItem>
-                    <SelectItem value="10">October</SelectItem>
-                    <SelectItem value="11">November</SelectItem>
-                    <SelectItem value="12">December</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedMonth || undefined} onValueChange={(value) => setSelectedMonth(value || "")}>
+                <SelectTrigger className="sm:w-40">
+                  <SelectValue placeholder="Month..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  <SelectItem value="1">January</SelectItem>
+                  <SelectItem value="2">February</SelectItem>
+                  <SelectItem value="3">March</SelectItem>
+                  <SelectItem value="4">April</SelectItem>
+                  <SelectItem value="5">May</SelectItem>
+                  <SelectItem value="6">June</SelectItem>
+                  <SelectItem value="7">July</SelectItem>
+                  <SelectItem value="8">August</SelectItem>
+                  <SelectItem value="9">September</SelectItem>
+                  <SelectItem value="10">October</SelectItem>
+                  <SelectItem value="11">November</SelectItem>
+                  <SelectItem value="12">December</SelectItem>
+                </SelectContent>
+              </Select>
 
               {/* Year Filter */}
-              <div className="lg:col-span-2">
-                <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value || "")}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Year..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    {Array.from({ length: 10 }, (_, i) => {
-                      const year = new Date().getFullYear() - i
-                      return (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedYear || undefined} onValueChange={(value) => setSelectedYear(value || "")}>
+                <SelectTrigger className="sm:w-40">
+                  <SelectValue placeholder="Year..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() - i
+                    return (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
 
               {/* Region Info (Read-only for regional officers) */}
-              <div className="lg:col-span-2">
-                <Input
-                  value={user?.region_name || 'Your Region'}
-                  disabled
-                  className="bg-gray-50 text-gray-600"
-                />
-              </div>
+              <Input
+                value={user?.region_name || 'Your Region'}
+                disabled
+                className="bg-gray-50 text-gray-600 sm:w-40"
+              />
             </div>
 
-            {/* Clear Filters Button */}
-            {hasActiveFilters && (
-              <div className="flex justify-end">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Export CSV Button */}
+              <Button 
+                className="flex items-center gap-2 flex-shrink-0"
+                size="sm"
+                disabled={isExporting || reports.length === 0}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Export CSV
+                  </>
+                )}
+              </Button>
+
+              {/* Clear Filters Button */}
+              {hasActiveFilters && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -300,36 +286,17 @@ function RegionalPEReportsContent() {
                   className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Clear All Filters
+                  Clear Filters
                 </Button>
-              </div>
-            )}
-
-            {/* Page Size Selection */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">Show:</span>
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-muted-foreground">per page</span>
-              </div>
-
-              {/* Results count */}
-              <div className="text-sm text-muted-foreground">
-                Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} results
-              </div>
+              )}
             </div>
           </div>
+        </CardContent>
+      </Card>
 
+      {/* Main Table Card */}
+      <Card className="gradient-card border-0 shadow-lg">
+        <CardContent className="p-4 sm:p-6">
           {/* Table */}
           {isLoading ? (
             <div className="text-center py-8">
@@ -415,6 +382,26 @@ function RegionalPEReportsContent() {
               </Table>
             </div>
           )}
+
+          {/* Page Size Selection - Moved to bottom */}
+          <div className="mt-6 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Show:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">per page</span>
+            </div>
+            <div></div> {/* Empty div for spacing */}
+          </div>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

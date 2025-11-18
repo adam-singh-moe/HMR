@@ -10,7 +10,8 @@ export default async function EducationOfficialLayout({
 }) {
   const { user, role, error } = await getUserDetails()
 
-  if (error || !user || role !== "Education Official") {
+  // Allow both Education Officials and Regional Officers to access this area
+  if (error || !user || (role !== "Education Official" && role !== "Regional Officer")) {
     redirect("/auth")
   }
 
@@ -18,12 +19,14 @@ export default async function EducationOfficialLayout({
     <div className="space-y-4 lg:space-y-6">
       <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary-700">Education Official Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary-700">
+            {role === "Regional Officer" ? "Regional Officer Dashboard" : "Education Official Dashboard"}
+          </h1>
           <p className="text-muted-foreground text-sm sm:text-base">Monitor reports and school performance across the system</p>
         </div>
       </div>
 
-      <EducationOfficialNav />
+      {role === "Education Official" && <EducationOfficialNav />}
 
       {children}
     </div>

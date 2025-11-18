@@ -215,7 +215,7 @@ export default async function NurseryAssessmentPage() {
                           className="h-8 px-3 text-xs font-medium text-blue-600 border-blue-200 hover:bg-blue-50"
                         >
                           <Link 
-                            href={`/dashboard/education-official/nursery-assessment/${assessment.id}`}
+                            href={`/dashboard/nursery-assessment/view/${assessment.id}?back=${encodeURIComponent('/dashboard/education-official/nursery-assessment')}`}
                             className="flex items-center gap-1.5"
                           >
                             <Eye className="h-3 w-3" />

@@ -134,7 +134,12 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
     } else {
       // Check the current path to determine the appropriate back location
       const currentPath = window.location.pathname
-      if (currentPath.includes('/education-official/')) {
+      const referrer = document.referrer
+      
+      // Check if we came from regional officer dashboard
+      if (referrer.includes('/dashboard/regional-officer') || referrer.includes('tab=nursery-assessment')) {
+        router.push('/dashboard/regional-officer?tab=nursery-assessment')
+      } else if (currentPath.includes('/education-official/')) {
         router.push('/dashboard/education-official/nursery-assessment')
       } else {
         // Default back to head teacher nursery assessment list
