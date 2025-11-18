@@ -619,17 +619,26 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       return { assessment: null, responses: [], error: assessmentError.message }
     }
 
-    // Get school data separately
+    // Get school data with region name
     const { data: school } = await supabase
       .from('sms_schools')
-      .select('name, region_id, school_level_id')
+      .select(`
+        name, 
+        region_id, 
+        school_level_id,
+        sms_regions!inner(name)
+      `)
       .eq('id', assessment.school_id)
       .single()
 
     // Attach school data to assessment
     const assessmentWithSchool = {
       ...assessment,
-      schools: school ? { name: school.name, region: school.region_id, level: school.school_level_id } : null
+      schools: school ? { 
+        name: school.name, 
+        region: (school.sms_regions as any)?.name || 'Unknown Region', 
+        level: school.school_level_id 
+      } : null
     }
 
     // Get all responses for this assessment - using simple query

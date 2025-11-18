@@ -3301,7 +3301,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           } else if (question.questions.toLowerCase().includes('hop')) {
                             return (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0)
                           } else if (question.questions.toLowerCase().includes('stand')) {
-                            return (responses.left || 0) + (responses.right || 0)
+                            return (responses.left || 0) + (responses.right || 0) + (responses.both || 0)
                           } else {
                             return (responses.oneTime || 0) + (responses.twoTimes || 0)
                           }
@@ -3485,12 +3485,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
-                disabled={true}
+                onClick={saveCurrentSection}
+                disabled={loading}
                 variant="outline"
-                className="w-full sm:w-auto border border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed opacity-50"
+                className="w-full sm:w-auto border border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200"
               >
                 <Save className="h-4 w-4" />
-                Save Section <span className="text-xs">(Coming Soon)</span>
+                Save Section
               </Button>
 
               {/* Auto-save indicator */}
