@@ -17,8 +17,8 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
       return { insight: null, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { insight: null, error: "Only Education Officials and Admins can access AI insights." }
+    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
+      return { insight: null, error: "Only Education Officials, Regional Officers, and Admins can access AI insights." }
     }
 
     // Fetch relevant report data based on reportType and filters
@@ -33,9 +33,19 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
 
     // Generate AI insight using Gemini
     const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, reportData)
-
-    return { insight, error: null }
+    try {
+      const insight = await geminiService.generateInsight(prompt, reportData)
+      return { insight, error: null }
+    } catch (geminiError) {
+      console.error("Gemini service error:", geminiError)
+      
+      // Return user-friendly error message
+      const errorMessage = geminiError instanceof Error 
+        ? geminiError.message 
+        : "AI service is temporarily unavailable. Please try again later."
+      
+      return { insight: null, error: errorMessage }
+    }
 
   } catch (error) {
     console.error("Error generating AI insight:", error)
@@ -125,9 +135,9 @@ async function fetchPhysicalEducationData(supabase: any, filters?: any) {
         month,
         year,
         status,
-        sms_schools (
+        sms_schools!inner (
           name,
-          sms_regions (
+          sms_regions!inner (
             name
           )
         )
@@ -146,6 +156,11 @@ async function fetchPhysicalEducationData(supabase: any, filters?: any) {
 
   if (filters?.schoolId) {
     query = query.eq("hmr_report.school_id", filters.schoolId)
+  }
+
+  // Add region filter for Physical Education data
+  if (filters?.region) {
+    query = query.eq("hmr_report.sms_schools.sms_regions.name", filters.region)
   }
 
   const { data, error } = await query
@@ -177,9 +192,9 @@ async function fetchReportBaseData(supabase: any, filters?: any) {
       status,
       created_at,
       updated_at,
-      sms_schools (
+      sms_schools!inner (
         name,
-        sms_regions (
+        sms_regions!inner (
           name
         )
       ),
@@ -203,6 +218,11 @@ async function fetchReportBaseData(supabase: any, filters?: any) {
     query = query.eq("school_id", filters.schoolId)
   }
 
+  // Add region filter - this was missing!
+  if (filters?.region) {
+    query = query.eq("sms_schools.sms_regions.name", filters.region)
+  }
+
   const { data, error } = await query
 
   if (error) {
@@ -216,7 +236,14 @@ async function fetchReportBaseData(supabase: any, filters?: any) {
 async function fetchSectionDataWithReports(supabase: any, tableName: string, filters?: any) {
   const reports = await fetchReportBaseData(supabase, filters)
   
+  console.log(`fetchSectionDataWithReports for ${tableName}:`, {
+    filtersReceived: filters,
+    reportsFound: reports.length,
+    sampleReport: reports[0]
+  })
+  
   if (!reports.length) {
+    console.log(`No reports found for ${tableName} with filters:`, filters)
     return []
   }
 
@@ -237,6 +264,11 @@ async function fetchSectionDataWithReports(supabase: any, tableName: string, fil
     console.error(`Error fetching data from ${tableName}:`, error)
     throw error
   }
+
+  console.log(`Section data from ${tableName}:`, {
+    sectionRecordsFound: data?.length || 0,
+    sampleSectionData: data?.[0]
+  })
 
   // Combine section data with report data
   return (data || []).map((sectionData: any) => {
@@ -376,8 +408,8 @@ export async function getAISuggestedPrompts(category: string) {
       return { prompts: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { prompts: [], error: "Only Education Officials and Admins can access AI features." }
+    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
+      return { prompts: [], error: "Only Education Officials, Regional Officers, and Admins can access AI features." }
     }
 
     const prompts = GeminiService.getSuggestedPrompts(category as any)
@@ -400,8 +432,8 @@ export async function getAvailableSchools() {
       return { schools: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { schools: [], error: "Only Education Officials and Admins can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
+      return { schools: [], error: "Only Education Officials, Regional Officers, and Admins can access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { RegionalPEReportsContent } from "./pe-reports/page"
+import { RegionalAIInsightsContent } from "./ai-insights/page"
 import {
   BarChart,
   Bar,
@@ -49,6 +50,7 @@ import {
   TrendingUp,
   History,
   Activity,
+  Brain,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -978,6 +980,13 @@ function RegionalOfficerDashboardContent() {
             >
               <span className="hidden sm:inline">Nursery Assessment</span>
               <span className="sm:hidden">Nursery</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="ai-insights" 
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
+            >
+              <span className="hidden sm:inline">AI Insights</span>
+              <span className="sm:hidden">AI</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -2265,6 +2274,10 @@ function RegionalOfficerDashboardContent() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="ai-insights" className="space-y-4 lg:space-y-6">          
+          <RegionalAIInsightsContent />
         </TabsContent>
 
       </Tabs>
