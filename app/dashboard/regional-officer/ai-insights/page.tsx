@@ -32,10 +32,9 @@ export { RegionalAIInsightsContent }
 
 function RegionalAIInsightsContent() {
   const { user } = useAuth()
-  const [selectedReportType, setSelectedReportType] = useState("physical-education")
-  const [selectedMonth, setSelectedMonth] = useState("all")
-  const [selectedYear, setSelectedYear] = useState("all") 
-  const [selectedSchool, setSelectedSchool] = useState("all")
+  const [selectedReportType, setSelectedReportType] = useState("")
+  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedYear, setSelectedYear] = useState("") 
   const [customPrompt, setCustomPrompt] = useState("")
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
   const [aiInsight, setAiInsight] = useState<string>("")
@@ -44,6 +43,10 @@ function RegionalAIInsightsContent() {
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false)
   const [showFullInsight, setShowFullInsight] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const [dailyUsage, setDailyUsage] = useState(0)
+  const [lastUsageDate, setLastUsageDate] = useState<string>('')
+
+  const DAILY_LIMIT = 5
 
   const reportTypes = [
     { value: "student-enrollment", label: "Student Enrollment", icon: FileText },
@@ -82,6 +85,7 @@ function RegionalAIInsightsContent() {
 
   useEffect(() => {
     loadSchools()
+    loadDailyUsage()
   }, [])
 
   useEffect(() => {
@@ -89,6 +93,51 @@ function RegionalAIInsightsContent() {
       loadSuggestedPrompts(selectedReportType)
     }
   }, [selectedReportType])
+
+  const loadDailyUsage = () => {
+    try {
+      const today = new Date().toDateString()
+      const storedUsage = localStorage.getItem(`ai-insights-usage-${user?.id}`)
+      const storedDate = localStorage.getItem(`ai-insights-date-${user?.id}`)
+      
+      if (storedDate === today && storedUsage) {
+        setDailyUsage(parseInt(storedUsage, 10))
+        setLastUsageDate(today)
+      } else {
+        // Reset usage for new day
+        setDailyUsage(0)
+        setLastUsageDate(today)
+        localStorage.setItem(`ai-insights-usage-${user?.id}`, '0')
+        localStorage.setItem(`ai-insights-date-${user?.id}`, today)
+      }
+    } catch (error) {
+      // Silent fail - usage tracking is not critical
+      setDailyUsage(0)
+    }
+  }
+
+  const incrementDailyUsage = () => {
+    try {
+      const today = new Date().toDateString()
+      const newUsage = dailyUsage + 1
+      
+      setDailyUsage(newUsage)
+      setLastUsageDate(today)
+      
+      localStorage.setItem(`ai-insights-usage-${user?.id}`, newUsage.toString())
+      localStorage.setItem(`ai-insights-date-${user?.id}`, today)
+    } catch (error) {
+      // Silent fail - usage tracking is not critical
+    }
+  }
+
+  const getRemainingGenerations = () => {
+    return Math.max(0, DAILY_LIMIT - dailyUsage)
+  }
+
+  const canGenerateInsight = () => {
+    return dailyUsage < DAILY_LIMIT
+  }
 
   const loadSchools = async () => {
     try {
@@ -128,7 +177,47 @@ function RegionalAIInsightsContent() {
     }
   }
 
+  const isFormValid = () => {
+    return selectedReportType && selectedMonth && selectedYear && customPrompt.trim() && canGenerateInsight()
+  }
+
   const handleGenerateInsight = async () => {
+    if (!canGenerateInsight()) {
+      toast({
+        title: "Daily Limit Reached",
+        description: `You've reached your daily limit of ${DAILY_LIMIT} AI insight generations. Please try again tomorrow.`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!selectedReportType) {
+      toast({
+        title: "Error",
+        description: "Please select a report type.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!selectedMonth) {
+      toast({
+        title: "Error",
+        description: "Please select a month.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!selectedYear) {
+      toast({
+        title: "Error",
+        description: "Please select a year.",
+        variant: "destructive",
+      })
+      return
+    }
+
     if (!customPrompt.trim()) {
       toast({
         title: "Error",
@@ -146,7 +235,7 @@ function RegionalAIInsightsContent() {
         month: selectedMonth !== "all" ? selectedMonth : undefined,
         year: selectedYear !== "all" ? selectedYear : undefined,
         region: user?.region_name, // Always filter by regional officer's region
-        schoolId: selectedSchool !== "all" ? selectedSchool : undefined
+        // School filter removed - analyze all schools in the region
       }
 
       const result = await generateAIInsight(customPrompt, selectedReportType, filters)
@@ -159,9 +248,10 @@ function RegionalAIInsightsContent() {
         })
       } else if (result.insight) {
         setAiInsight(result.insight)
+        incrementDailyUsage() // Track successful generation
         toast({
           title: "Success",
-          description: "AI insight generated successfully!",
+          description: `AI insight generated successfully! ${getRemainingGenerations()} generations remaining today.`,
         })
       } else {
         toast({
@@ -463,13 +553,31 @@ function RegionalAIInsightsContent() {
                 <Zap className="h-5 w-5 text-blue-600" />
                 Analysis Settings
               </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                All fields are required to generate AI insights. <span className="text-red-500">*</span> indicates required fields.
+              </p>
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-blue-800">
+                    Daily Usage: {dailyUsage} / {DAILY_LIMIT}
+                  </span>
+                  <span className="text-sm text-blue-600">
+                    {getRemainingGenerations()} remaining
+                  </span>
+                </div>
+                {!canGenerateInsight() && (
+                  <p className="text-sm text-red-600 mt-2">
+                    Daily limit reached. Resets at midnight.
+                  </p>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Report Type Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Report Type</label>
+                <label className="text-sm font-medium">Report Type <span className="text-red-500">*</span></label>
                 <Select value={selectedReportType} onValueChange={setSelectedReportType}>
-                  <SelectTrigger>
+                  <SelectTrigger className={!selectedReportType ? "border-red-200" : ""}>
                     <SelectValue placeholder="Select report type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -491,10 +599,10 @@ function RegionalAIInsightsContent() {
               {/* Time Period Filters */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Month</label>
+                  <label className="text-sm font-medium">Month <span className="text-red-500">*</span></label>
                   <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All months" />
+                    <SelectTrigger className={!selectedMonth ? "border-red-200" : ""}>
+                      <SelectValue placeholder="Select month" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Months</SelectItem>
@@ -515,10 +623,10 @@ function RegionalAIInsightsContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Year</label>
+                  <label className="text-sm font-medium">Year <span className="text-red-500">*</span></label>
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All years" />
+                    <SelectTrigger className={!selectedYear ? "border-red-200" : ""}>
+                      <SelectValue placeholder="Select year" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Years</SelectItem>
@@ -533,24 +641,6 @@ function RegionalAIInsightsContent() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* School Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">School (Optional)</label>
-                <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All schools in your region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Schools in {user?.region_name || 'Your Region'}</SelectItem>
-                    {schools.map((school) => (
-                      <SelectItem key={school.id} value={school.id}>
-                        {school.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
@@ -602,7 +692,7 @@ function RegionalAIInsightsContent() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  What would you like to analyze about your region's education data?
+                  What would you like to analyze about your region's education data? <span className="text-red-500">*</span>
                 </label>
                 <Textarea
                   placeholder="e.g., 'What are the attendance trends in my region?', 'Which schools need the most support?', 'Analyze student enrollment patterns'..."
@@ -614,7 +704,7 @@ function RegionalAIInsightsContent() {
               
               <Button
                 onClick={handleGenerateInsight}
-                disabled={isGenerating || !customPrompt.trim()}
+                disabled={isGenerating || !isFormValid()}
                 className="w-full"
               >
                 {isGenerating ? (
@@ -622,10 +712,14 @@ function RegionalAIInsightsContent() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analyzing Data...
                   </>
+                ) : !canGenerateInsight() ? (
+                  <>
+                    Daily Limit Reached ({DAILY_LIMIT}/{DAILY_LIMIT})
+                  </>
                 ) : (
                   <>
                     <Brain className="mr-2 h-4 w-4" />
-                    Generate AI Insight
+                    Generate AI Insight ({getRemainingGenerations()} left)
                   </>
                 )}
               </Button>

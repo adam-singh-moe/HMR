@@ -380,9 +380,27 @@ function RegionalOfficerDashboardContent() {
       } else {
         setAvailableFinancePeriods(financePeriodsResult.periods)
         
-        // Set default selection to most recent period if available
+        // Set default selection to most recent period if available, but not in the future
         if (financePeriodsResult.periods.length > 0) {
-          const mostRecent = financePeriodsResult.periods[0]
+          const currentDate = new Date()
+          const currentYear = currentDate.getFullYear()
+          const currentMonth = currentDate.getMonth() + 1
+          
+          // Find the most recent period that's not in the future
+          const validPeriods = financePeriodsResult.periods.filter(period => {
+            if (period.year < currentYear) return true
+            if (period.year === currentYear && period.month <= currentMonth) return true
+            return false
+          })
+          
+          let mostRecent
+          if (validPeriods.length > 0) {
+            mostRecent = validPeriods[0] // Already sorted by most recent first
+          } else {
+            // Fallback to current year/month if no valid periods found
+            mostRecent = { year: currentYear, month: currentMonth }
+          }
+          
           setSelectedFinanceYear(mostRecent.year)
           setSelectedFinanceMonth(mostRecent.month)
           
@@ -516,9 +534,27 @@ function RegionalOfficerDashboardContent() {
       } else {
         setAvailableFinancePeriods(result.periods)
         
-        // Set default selection to most recent period if available
+        // Set default selection to most recent period if available, but not in the future
         if (result.periods.length > 0) {
-          const mostRecent = result.periods[0]
+          const currentDate = new Date()
+          const currentYear = currentDate.getFullYear()
+          const currentMonth = currentDate.getMonth() + 1
+          
+          // Find the most recent period that's not in the future
+          const validPeriods = result.periods.filter(period => {
+            if (period.year < currentYear) return true
+            if (period.year === currentYear && period.month <= currentMonth) return true
+            return false
+          })
+          
+          let mostRecent
+          if (validPeriods.length > 0) {
+            mostRecent = validPeriods[0] // Already sorted by most recent first
+          } else {
+            // Fallback to current year/month if no valid periods found
+            mostRecent = { year: currentYear, month: currentMonth }
+          }
+          
           setSelectedFinanceYear(mostRecent.year)
           setSelectedFinanceMonth(mostRecent.month)
         }
@@ -1056,7 +1092,7 @@ function RegionalOfficerDashboardContent() {
                   <div className="min-w-0">
                     <p className="text-xs sm:text-sm text-muted-foreground">Not Submitted</p>
                     <p className="text-xl sm:text-2xl font-bold text-orange-700">
-                      {currentMonthSchools.filter((s) => s.status === "not-submitted").length}
+                      {currentMonthSchools.filter((s) => s.status !== "submitted").length}
                     </p>
                   </div>
                 </div>

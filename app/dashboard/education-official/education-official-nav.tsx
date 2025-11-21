@@ -14,22 +14,22 @@ export default function EducationOfficialNav() {
         <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
           <Link href="/dashboard/education-official">
             <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline sm:inline">Overview</span>
-            <span className="xs:hidden sm:hidden">Over</span>
-          </Link>
-        </Button>
-        <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official/reports' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
-          <Link href="/dashboard/education-official/reports">
-            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline sm:inline">Reports</span>
-            <span className="xs:hidden sm:hidden">Rep</span>
+            <span className="hidden xs:inline sm:inline">Dashboard Overview</span>
+            <span className="xs:hidden sm:hidden">Dash</span>
           </Link>
         </Button>
         <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official/schools' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
           <Link href="/dashboard/education-official/schools">
             <School className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline sm:inline">Schools</span>
+            <span className="hidden xs:inline sm:inline">Schools Overview</span>
             <span className="xs:hidden sm:hidden">Sch</span>
+          </Link>
+        </Button>
+        <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official/reports' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
+          <Link href="/dashboard/education-official/reports">
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">Monthly Reports</span>
+            <span className="xs:hidden sm:hidden">Rep</span>
           </Link>
         </Button>
         <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official/nursery-assessment' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
