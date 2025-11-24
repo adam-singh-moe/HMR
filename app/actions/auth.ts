@@ -422,6 +422,7 @@ export async function getUserSchoolInfo() {
         name, 
         school_level_id,
         region_id,
+        has_nursery_class,
         sms_school_levels (
           id,
           name
@@ -462,7 +463,8 @@ export async function getUserSchoolInfo() {
       id: school.id,
       name: school.name,
       level: schoolLevel,
-      region: regionName
+      region: regionName,
+      has_nursery_class: school.has_nursery_class || false
     }
 
     return { school: schoolWithDetails, error: null }

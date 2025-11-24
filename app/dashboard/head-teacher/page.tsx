@@ -142,7 +142,7 @@ function HeadTeacherDashboardContent() {
        // console.log('School data:', result.school)
        // console.log('School level:', result.school.level)
         setSchoolInfo(result.school)
-        const isNursery = result.school.level?.toLowerCase() === 'nursery'
+        const isNursery = result.school.level?.toLowerCase() === 'nursery' || result.school.has_nursery_class === true
        // console.log('Is nursery school?', isNursery)
         setIsNurserySchool(isNursery)
       }
