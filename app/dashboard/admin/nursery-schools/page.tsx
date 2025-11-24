@@ -20,7 +20,9 @@ import {
   MapPin, 
   X,
   Check,
-  Baby
+  GraduationCap,
+  CheckSquare,
+  Square
 } from "lucide-react"
 
 interface School {
@@ -34,6 +36,7 @@ export default function NurseryClassesPage() {
   const [nurserySchools, setNurserySchools] = useState<School[]>([])
   const [availableSchools, setAvailableSchools] = useState<School[]>([])
   const [filteredSchools, setFilteredSchools] = useState<School[]>([])
+  const [selectedSchools, setSelectedSchools] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -82,6 +85,72 @@ export default function NurseryClassesPage() {
         school.region_name.toLowerCase().includes(searchTerm.toLowerCase())
       )
       setFilteredSchools(filtered)
+    }
+    // Reset selection when filtering
+    setSelectedSchools([])
+  }
+
+  const toggleSchoolSelection = (schoolId: string) => {
+    setSelectedSchools(prev => 
+      prev.includes(schoolId) 
+        ? prev.filter(id => id !== schoolId)
+        : [...prev, schoolId]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedSchools.length === filteredSchools.length) {
+      setSelectedSchools([])
+    } else {
+      setSelectedSchools(filteredSchools.map(school => school.id))
+    }
+  }
+
+  const handleAddSelectedSchools = async () => {
+    if (selectedSchools.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one school to add",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setProcessing(true)
+      const promises = selectedSchools.map(schoolId => 
+        updateSchoolNurseryStatus(schoolId, true)
+      )
+      
+      const results = await Promise.all(promises)
+      const failed = results.filter(result => !result.success)
+      
+      if (failed.length === 0) {
+        toast({
+          title: "Success",
+          description: `${selectedSchools.length} school(s) marked as having nursery classes`,
+        })
+        await loadData()
+        setDialogOpen(false)
+        setSearchTerm("")
+        setSelectedSchools([])
+      } else {
+        toast({
+          title: "Partial Success",
+          description: `${results.length - failed.length} schools updated successfully, ${failed.length} failed`,
+          variant: "destructive"
+        })
+        await loadData()
+        setSelectedSchools([])
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      })
+    } finally {
+      setProcessing(false)
     }
   }
 
@@ -162,7 +231,7 @@ export default function NurseryClassesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Baby className="h-6 w-6 text-pink-600" />
+            <GraduationCap className="h-6 w-6 text-blue-600" />
             Nursery Classes Management
           </h1>
           <p className="text-gray-600 mt-1">
@@ -183,15 +252,54 @@ export default function NurseryClassesPage() {
             </DialogHeader>
             
             <div className="space-y-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search schools by name or region..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              {/* Search and Bulk Actions */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search schools by name or region..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                {/* Bulk Actions */}
+                {filteredSchools.length > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-2"
+                      >
+                        {selectedSchools.length === filteredSchools.length ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                        {selectedSchools.length === filteredSchools.length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                      {selectedSchools.length > 0 && (
+                        <span className="text-sm text-gray-600">
+                          {selectedSchools.length} selected
+                        </span>
+                      )}
+                    </div>
+                    
+                    {selectedSchools.length > 0 && (
+                      <Button
+                        onClick={handleAddSelectedSchools}
+                        disabled={processing}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Selected ({selectedSchools.length})
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Schools List */}
@@ -199,6 +307,7 @@ export default function NurseryClassesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">Select</TableHead>
                       <TableHead>School Name</TableHead>
                       <TableHead>Region</TableHead>
                       <TableHead className="w-24">Action</TableHead>
@@ -207,13 +316,27 @@ export default function NurseryClassesPage() {
                   <TableBody>
                     {filteredSchools.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                           {searchTerm ? "No schools found matching your search" : "No schools available to add"}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredSchools.map((school) => (
                         <TableRow key={school.id}>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleSchoolSelection(school.id)}
+                              className="p-1 h-8 w-8"
+                            >
+                              {selectedSchools.includes(school.id) ? (
+                                <CheckSquare className="h-4 w-4 text-blue-600" />
+                              ) : (
+                                <Square className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <School className="h-4 w-4 text-blue-600" />
@@ -256,7 +379,7 @@ export default function NurseryClassesPage() {
               <p className="text-sm text-gray-600">Total Nursery Schools</p>
               <p className="text-3xl font-bold text-pink-600">{nurserySchools.length}</p>
             </div>
-            <Baby className="h-8 w-8 text-pink-400" />
+            <GraduationCap className="h-8 w-8 text-blue-400" />
           </div>
         </CardContent>
       </Card>
@@ -272,7 +395,7 @@ export default function NurseryClassesPage() {
         <CardContent>
           {nurserySchools.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <Baby className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <GraduationCap className="h-12 w-12 mx-auto text-gray-300 mb-3" />
               <p className="text-lg font-medium mb-2">No nursery schools configured</p>
               <p className="text-sm">Click "Add Nursery School" to get started</p>
             </div>
@@ -303,7 +426,7 @@ export default function NurseryClassesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="bg-pink-100 text-pink-800">
-                        <Baby className="h-3 w-3 mr-1" />
+                        <GraduationCap className="h-3 w-3 mr-1" />
                         Has Nursery
                       </Badge>
                     </TableCell>
