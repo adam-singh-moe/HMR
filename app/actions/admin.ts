@@ -1816,6 +1816,126 @@ export async function submitAdminReport(reportData: any) {
   }
 }
 
+// Get schools that have nursery classes
+export async function getNurserySchools() {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { success: false, error: "Unauthorized access.", schools: [] }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { data: schools, error } = await supabase
+      .from("sms_schools")
+      .select(`
+        id,
+        name,
+        has_nursery_class,
+        sms_regions (
+          name
+        )
+      `)
+      .eq("has_nursery_class", true)
+      .order("name")
+
+    if (error) {
+      console.error("Error fetching nursery schools:", error)
+      return { success: false, error: "Failed to fetch nursery schools.", schools: [] }
+    }
+
+    console.log("Nursery schools found:", schools?.length || 0)
+
+    const nurserySchools = schools.map(school => ({
+      id: school.id,
+      name: school.name,
+      has_nursery_class: school.has_nursery_class,
+      region_name: school.sms_regions?.name || "Unknown"
+    }))
+
+    return { success: true, schools: nurserySchools }
+  } catch (error) {
+    console.error("Error in getNurserySchools:", error)
+    return { success: false, error: "An unexpected error occurred.", schools: [] }
+  }
+}
+
+// Get schools that can be assigned nursery status (schools without nursery class)
+export async function getSchoolsForNurseryAssignment() {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { success: false, error: "Unauthorized access.", schools: [] }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { data: schools, error } = await supabase
+      .from("sms_schools")
+      .select(`
+        id,
+        name,
+        has_nursery_class,
+        sms_regions (
+          name
+        )
+      `)
+      .is("has_nursery_class", null)
+      .order("name")
+
+    if (error) {
+      console.error("Error fetching available schools:", error)
+      return { success: false, error: "Failed to fetch available schools.", schools: [] }
+    }
+
+    console.log("Available schools found:", schools?.length || 0)
+
+    const availableSchools = schools.map(school => ({
+      id: school.id,
+      name: school.name,
+      has_nursery_class: school.has_nursery_class || false,
+      region_name: school.sms_regions?.name || "Unknown"
+    }))
+
+    return { success: true, schools: availableSchools }
+  } catch (error) {
+    return { success: false, error: "An unexpected error occurred.", schools: [] }
+  }
+}
+
+// Update a school's nursery class status
+export async function updateSchoolNurseryStatus(schoolId: string, hasNursery: boolean) {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { success: false, error: "Unauthorized access." }
+    }
+
+    if (!schoolId) {
+      return { success: false, error: "School ID is required." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { error } = await supabase
+      .from("sms_schools")
+      .update({ has_nursery_class: hasNursery })
+      .eq("id", schoolId)
+
+    if (error) {
+      return { success: false, error: "Failed to update school nursery status." }
+    }
+
+    revalidatePath("/dashboard/admin/nursery-schools")
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: "An unexpected error occurred." }
+  }
+}
+
 // Simple function to mark an admin report as submitted
 export async function submitAdminReportById(reportId: string) {
   try {

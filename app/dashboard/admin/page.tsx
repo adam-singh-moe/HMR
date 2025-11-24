@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUserCounts, getSchoolCount, getRegionCount, getPendingVerifications, getSchoolsWithRegions, getUserRegistrationData, getSchoolsByRegion } from "@/app/actions/admin"
 import { SchoolsList } from "@/components/admin/schools-list"
 import Link from "next/link"
-import { Users, School, Map, ArrowRight, UserCheck, TrendingUp, PieChart } from "lucide-react"
+import { Users, School, Map, ArrowRight, UserCheck, TrendingUp, PieChart, Baby } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Main Stats */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -148,7 +148,24 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="sm:col-span-2 lg:col-span-1">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium">Nursery Classes</CardTitle>
+            <Baby className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">-</div>
+            <div className="text-xs text-muted-foreground mt-1">Schools with nursery classes</div>
+            <Link
+              href="/dashboard/admin/nursery-schools"
+              className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
+            >
+              Manage Classes <ArrowRight className="h-3 w-3" />
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Regions</CardTitle>
             <Map className="h-4 w-4 text-muted-foreground" />

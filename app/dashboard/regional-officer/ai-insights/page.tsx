@@ -12,6 +12,8 @@ import { Loader2, Sparkles, Brain, TrendingUp, AlertCircle, Lightbulb, FileText,
 import { toast } from "@/components/ui/use-toast"
 import { generateAIInsight, getAISuggestedPrompts, getAvailableSchools } from "@/app/actions/ai-insights"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface School {
   id: string
@@ -45,8 +47,10 @@ function RegionalAIInsightsContent() {
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [dailyUsage, setDailyUsage] = useState(0)
   const [lastUsageDate, setLastUsageDate] = useState<string>('')
+  const [visualizationData, setVisualizationData] = useState<any>(null)
 
   const DAILY_LIMIT = 5
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
   const reportTypes = [
     { value: "student-enrollment", label: "Student Enrollment", icon: FileText },
@@ -248,6 +252,8 @@ function RegionalAIInsightsContent() {
         })
       } else if (result.insight) {
         setAiInsight(result.insight)
+        const vizData = extractVisualizationData(result.insight)
+        setVisualizationData(vizData)
         incrementDailyUsage() // Track successful generation
         toast({
           title: "Success",
@@ -311,6 +317,104 @@ function RegionalAIInsightsContent() {
       .replace(/(<\/ul>)<p class="mb-3">/g, '$1<p class="mb-3 mt-3">')
 
     return formattedText
+  }
+
+  const renderChart = (chart: any, index: number) => {
+    switch (chart.type) {
+      case 'bar':
+        return (
+          <div key={index} className="mb-6">
+            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chart.data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                <YAxis fontSize={12} />
+                <Tooltip 
+                  formatter={(value, name) => [value, name]}
+                  labelFormatter={(label) => `${label}`}
+                />
+                <Bar dataKey="value" fill="#0088FE" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )
+      
+      case 'line':
+        return (
+          <div key={index} className="mb-6">
+            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chart.data}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
+                <YAxis fontSize={12} />
+                <Tooltip 
+                  formatter={(value, name) => [value, name]}
+                  labelFormatter={(label) => `${label}`}
+                />
+                <Line type="monotone" dataKey="value" stroke="#00C49F" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )
+      
+      case 'pie':
+        return (
+          <div key={index} className="mb-6">
+            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={chart.data}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {chart.data.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )
+      
+      default:
+        return null
+    }
+  }
+
+  const renderTable = (table: any, index: number) => {
+    return (
+      <div key={index} className="mb-6">
+        <h4 className="text-md font-semibold mb-3 text-gray-800">Data Summary</h4>
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {table.headers.map((header: string, i: number) => (
+                  <TableHead key={i} className="font-medium">{header}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {table.rows.map((row: string[], i: number) => (
+                <TableRow key={i}>
+                  {row.map((cell: string, j: number) => (
+                    <TableCell key={j}>{cell}</TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    )
   }
 
   // Generate a summary of the AI insight
@@ -736,6 +840,17 @@ function RegionalAIInsightsContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Render visualizations if available */}
+                {visualizationData && (
+                  <div className="mb-6">
+                    {/* Render tables */}
+                    {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
+                    
+                    {/* Render charts */}
+                    {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
+                  </div>
+                )}
+                
                 <div className="prose prose-sm max-w-none">
                   <div 
                     className="text-gray-800 leading-relaxed"
@@ -763,6 +878,17 @@ function RegionalAIInsightsContent() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="max-h-[60vh] overflow-y-auto pr-4">
+                        {/* Render visualizations in detailed view */}
+                        {visualizationData && (
+                          <div className="mb-6">
+                            {/* Render tables */}
+                            {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
+                            
+                            {/* Render charts */}
+                            {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
+                          </div>
+                        )}
+                        
                         <div className="prose prose-sm max-w-none">
                           <div 
                             className="text-gray-800 leading-relaxed"
@@ -791,7 +917,10 @@ function RegionalAIInsightsContent() {
                   
                   <Button 
                     variant="outline" 
-                    onClick={() => setAiInsight("")}
+                    onClick={() => {
+                      setAiInsight("")
+                      setVisualizationData(null)
+                    }}
                     className="flex items-center gap-2"
                   >
                     <X className="h-4 w-4" />
