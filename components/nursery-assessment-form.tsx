@@ -3532,12 +3532,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
                 onClick={saveCurrentSection}
-                disabled={loading}
+                disabled={true} // Disabled for now
                 variant="outline"
-                className="w-full sm:w-auto border border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                className="w-full sm:w-auto border border-gray-300 text-gray-400 cursor-not-allowed"
               >
                 <Save className="h-4 w-4" />
-                Save Section
+                Save Section (Disabled)
               </Button>
 
               {/* Auto-save indicator */}
