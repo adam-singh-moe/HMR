@@ -1882,7 +1882,7 @@ export async function getSchoolsForNurseryAssignment() {
           name
         )
       `)
-      .is("has_nursery_class", null)
+      .or("has_nursery_class.is.null,has_nursery_class.eq.false")
       .order("name")
 
     if (error) {
