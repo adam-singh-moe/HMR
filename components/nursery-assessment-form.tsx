@@ -41,6 +41,8 @@ interface FormData {
       range7to12Correct: number
       range13to18Correct: number
       range19to26Correct: number
+      noResponseGiven: number
+      incorrectResponse: number
     }
   }
   // Section 4: Colour Identification responses
@@ -49,6 +51,8 @@ interface FormData {
       oneCorrect: number
       twoCorrect: number
       threeCorrect: number
+      noResponseGiven: number
+      incorrectResponse: number
     }
   }
   // Section 5: Quantity Differentiation and Counting Fluency responses
@@ -63,6 +67,9 @@ interface FormData {
       range1to10Correct?: number
       range11to20Correct?: number
       range20PlusCorrect?: number
+      // Common options for both types
+      noResponseGiven?: number
+      incorrectResponse?: number
     }
   }
   // Section 6: Shape Recognition and One on One Correspondence responses
@@ -75,6 +82,9 @@ interface FormData {
       // For other questions (One on One Correspondence, Number Identification)
       range1to5Correct?: number
       range6to10Correct?: number
+      // Common options for both types
+      noResponseGiven?: number
+      incorrectResponse?: number
     }
   }
   // Section 7: Motor Skills responses
@@ -93,6 +103,9 @@ interface FormData {
       scribbleR?: number
       approximation?: number
       name?: number
+      // Common options for Picture and Letter Formation
+      noResponseGiven?: number
+      incorrectResponse?: number
     }
   }
   // Section 8: Gross Motor Skills responses
@@ -112,6 +125,8 @@ interface FormData {
       left?: number
       right?: number
       both?: number
+      // Common option for all questions
+      unableToRespond?: number
     }
   }
 }
@@ -234,41 +249,61 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Section 3: Alphabet Recitation and Identification
       } else if (optionId === '689f84cf-2e07-44ff-8d36-e7f9457979f8') { // 1-6 Correct
         if (!responseMap.alphabetResponses[questionId]) {
-          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.alphabetResponses[questionId].range1to6Correct = answer
       } else if (optionId === 'b5f8ffa7-a703-43ed-9a3e-4e4716d7a028') { // 7-12 Correct
         if (!responseMap.alphabetResponses[questionId]) {
-          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.alphabetResponses[questionId].range7to12Correct = answer
       } else if (optionId === '1189716c-57c4-4136-8475-5866acb3de3a') { // 13-18 Correct
         if (!responseMap.alphabetResponses[questionId]) {
-          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.alphabetResponses[questionId].range13to18Correct = answer
       } else if (optionId === '644cb1ba-cd4d-43d9-b014-ecaf8e13edd9') { // 19-26 Correct
         if (!responseMap.alphabetResponses[questionId]) {
-          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0 }
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.alphabetResponses[questionId].range19to26Correct = answer
+      } else if (optionId === '94c52e91-044e-4e49-8498-b83656c741b2') { // No Response Given
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
+        }
+        responseMap.alphabetResponses[questionId].noResponseGiven = answer
+      } else if (optionId === '9c8997d9-a271-45bd-af05-31e0b4933b22') { // Incorrect Response
+        if (!responseMap.alphabetResponses[questionId]) {
+          responseMap.alphabetResponses[questionId] = { range1to6Correct: 0, range7to12Correct: 0, range13to18Correct: 0, range19to26Correct: 0, noResponseGiven: 0, incorrectResponse: 0 }
+        }
+        responseMap.alphabetResponses[questionId].incorrectResponse = answer
 
       // Section 4: Colour Identification
       } else if (optionId === '16ef329d-748d-43e3-90fe-587fe8f9541e') { // 1 Correct
         if (!responseMap.colourResponses[questionId]) {
-          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.colourResponses[questionId].oneCorrect = answer
       } else if (optionId === '4d479a15-4fbc-4da2-a8ce-51da25cb37c8') { // 2 Correct
         if (!responseMap.colourResponses[questionId]) {
-          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.colourResponses[questionId].twoCorrect = answer
       } else if (optionId === 'b47fe6cf-8e87-4927-94d2-1463c50b65a9') { // 3 Correct
         if (!responseMap.colourResponses[questionId]) {
-          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0 }
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0, noResponseGiven: 0, incorrectResponse: 0 }
         }
         responseMap.colourResponses[questionId].threeCorrect = answer
+      } else if (optionId === '74ab7a85-a053-425b-a3b6-4321bbc48fc9') { // No Response Given (Colour)
+        if (!responseMap.colourResponses[questionId]) {
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0, noResponseGiven: 0, incorrectResponse: 0 }
+        }
+        responseMap.colourResponses[questionId].noResponseGiven = answer
+      } else if (optionId === '7334046f-efad-475f-9711-0278c5e7cf60') { // Incorrect Response (Colour)
+        if (!responseMap.colourResponses[questionId]) {
+          responseMap.colourResponses[questionId] = { oneCorrect: 0, twoCorrect: 0, threeCorrect: 0, noResponseGiven: 0, incorrectResponse: 0 }
+        }
+        responseMap.colourResponses[questionId].incorrectResponse = answer
 
       // Section 5: Quantity Differentiation and Counting Fluency
       } else if (optionId === 'c6ac5034-cd24-4712-83e1-8f0f7d57c0e3') { // 1 Correct (Quantity)
@@ -306,6 +341,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.quantityCountingResponses[questionId] = {}
         }
         responseMap.quantityCountingResponses[questionId].range20PlusCorrect = answer
+      } else if (optionId === 'cf9e25aa-2094-4b22-8ed2-ee5d8c01977b') { // No Response Given (Quantity/Counting)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].noResponseGiven = answer
+      } else if (optionId === '80c5ec75-e2a3-44c9-a664-f93539ba6bbe') { // Incorrect Response (Quantity/Counting)
+        if (!responseMap.quantityCountingResponses[questionId]) {
+          responseMap.quantityCountingResponses[questionId] = {}
+        }
+        responseMap.quantityCountingResponses[questionId].incorrectResponse = answer
 
       // Section 6: Shape Recognition and One on One Correspondence
       } else if (optionId === 'd4abf4a1-4b44-44af-bc02-efc3d74be0e3') { // 1 Correct (Shape)
@@ -333,6 +378,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.shapeRecognitionResponses[questionId] = {}
         }
         responseMap.shapeRecognitionResponses[questionId].range6to10Correct = answer
+      } else if (optionId === '3574b44b-a17e-418d-b2c8-5bcb31caba65') { // No Response Given (Shape/One on One)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].noResponseGiven = answer
+      } else if (optionId === '0b35a798-c2dc-48a9-90a9-79510ee5db97') { // Incorrect Response (Shape/One on One)
+        if (!responseMap.shapeRecognitionResponses[questionId]) {
+          responseMap.shapeRecognitionResponses[questionId] = {}
+        }
+        responseMap.shapeRecognitionResponses[questionId].incorrectResponse = answer
 
       // Section 7: Motor Skills
       } else if (optionId === '16e7f2c4-776e-432e-9b96-af8aa4cacdfa') { // 1-4 Correct (Picture)
@@ -385,6 +440,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.motorSkillsResponses[questionId] = {}
         }
         responseMap.motorSkillsResponses[questionId].name = answer
+      } else if (optionId === 'd44b99c0-993a-4598-aae7-755e5b3337b5') { // No Response Given (Motor Skills)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].noResponseGiven = answer
+      } else if (optionId === '241fbe95-c3f7-4686-a74b-060a53eda5c4') { // Incorrect Response (Motor Skills - Picture of Yourself only)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].incorrectResponse = answer
 
       // Section 8: Gross Motor Skills
       } else if (optionId === '62b6e481-811e-43ee-88a3-0a1d8f53aa12') { // 1 Time (Throw/Catch)
@@ -437,6 +502,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.grossMotorSkillsResponses[questionId] = {}
         }
         responseMap.grossMotorSkillsResponses[questionId].right = answer
+      } else if (optionId === '6dff252d-bf88-4300-ab4f-ec32891b979a') { // Unable to respond (Gross Motor Skills)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].unableToRespond = answer
       }
     })
 
@@ -516,10 +586,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all autobiographical responses and save them
       for (const [questionId, responses] of Object.entries(formData.autobiographicalResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
-            // Use the actual option IDs from your database
-            let optionId = ''
-            
+          // Save all values including zeros
+          // Use the actual option IDs from your database
+          let optionId = ''
+          
             switch (category) {
               case 'fullSentenceResponse':
                 optionId = '1e3164fd-8dc4-4169-ad42-1d6ec4e4e267'
@@ -548,7 +618,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               console.error('Failed to save answer:', result.error)
               throw new Error(`Failed to save response for question ${questionId}`)
             }
-          }
         }
       }
 
@@ -590,38 +659,43 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all alphabet responses and save them
       for (const [questionId, responses] of Object.entries(formData.alphabetResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
-            // Use the actual option IDs from your database for Alphabet Recitation and Identification
-            let optionId = ''
-            
-            switch (category) {
-              case 'range1to6Correct':
-                optionId = '689f84cf-2e07-44ff-8d36-e7f9457979f8' // 1 - 6 Correct
-                break
-              case 'range7to12Correct':
-                optionId = 'b5f8ffa7-a703-43ed-9a3e-4e4716d7a028' // 7 - 12 Correct
-                break
-              case 'range13to18Correct':
-                optionId = '1189716c-57c4-4136-8475-5866acb3de3a' // 13 - 18 Correct
-                break
-              case 'range19to26Correct':
-                optionId = '644cb1ba-cd4d-43d9-b014-ecaf8e13edd9' // 19 - 26 Correct
-                break
-              default:
-                continue
-            }
+          // Save all values including zeros
+          // Use the actual option IDs from your database for Alphabet Recitation and Identification
+          let optionId = ''
+          
+          switch (category) {
+            case 'range1to6Correct':
+              optionId = '689f84cf-2e07-44ff-8d36-e7f9457979f8' // 1 - 6 Correct
+              break
+            case 'range7to12Correct':
+              optionId = 'b5f8ffa7-a703-43ed-9a3e-4e4716d7a028' // 7 - 12 Correct
+              break
+            case 'range13to18Correct':
+              optionId = '1189716c-57c4-4136-8475-5866acb3de3a' // 13 - 18 Correct
+              break
+            case 'range19to26Correct':
+              optionId = '644cb1ba-cd4d-43d9-b014-ecaf8e13edd9' // 19 - 26 Correct
+              break
+            case 'noResponseGiven':
+              optionId = '94c52e91-044e-4e49-8498-b83656c741b2' // No Response Given
+              break
+            case 'incorrectResponse':
+              optionId = '9c8997d9-a271-45bd-af05-31e0b4933b22' // Incorrect Response
+              break
+            default:
+              continue
+          }
 
-            const result = await saveAssessmentAnswer({
-              assessment_id: currentAssessmentId,
-              question_id: questionId,
-              option_id: optionId,
-              answer: value as number
-            })
+          const result = await saveAssessmentAnswer({
+            assessment_id: currentAssessmentId,
+            question_id: questionId,
+            option_id: optionId,
+            answer: value as number
+          })
 
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
+          if (!result.success) {
+            console.error('Failed to save answer:', result.error)
+            throw new Error(`Failed to save response for question ${questionId}`)
           }
         }
       }
@@ -664,11 +738,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all colour responses and save them
       for (const [questionId, responses] of Object.entries(formData.colourResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
-            // Use the actual option IDs from your database for Colour Identification
-            let optionId = ''
-            
-            switch (category) {
+          // Save all values including zeros
+          // Use the actual option IDs from your database for Colour Identification
+          let optionId = ''
+          
+          switch (category) {
               case 'oneCorrect':
                 optionId = '16ef329d-748d-43e3-90fe-587fe8f9541e' // 1 Correct
                 break
@@ -677,6 +751,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 break
               case 'threeCorrect':
                 optionId = 'b47fe6cf-8e87-4927-94d2-1463c50b65a9' // 3 Correct
+                break
+              case 'noResponseGiven':
+                optionId = '74ab7a85-a053-425b-a3b6-4321bbc48fc9' // No Response Given (Colour)
+                break
+              case 'incorrectResponse':
+                optionId = '7334046f-efad-475f-9711-0278c5e7cf60' // Incorrect Response (Colour)
                 break
               default:
                 continue
@@ -693,7 +773,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               console.error('Failed to save answer:', result.error)
               throw new Error(`Failed to save response for question ${questionId}`)
             }
-          }
         }
       }
 
@@ -735,7 +814,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all quantity counting responses and save them
       for (const [questionId, responses] of Object.entries(formData.quantityCountingResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
+          if (value >= 0) { // Save all values including zeros
             // Use the actual option IDs from your database for Quantity Differentiation and Counting Fluency
             let optionId = ''
             
@@ -760,6 +839,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 break
               case 'range20PlusCorrect':
                 optionId = 'ba0ca8fc-e152-4a9a-aa4a-d6bc9217e0a5' // 20 + Correct
+                break
+              case 'noResponseGiven':
+                optionId = 'cf9e25aa-2094-4b22-8ed2-ee5d8c01977b' // No Response Given (Quantity/Counting)
+                break
+              case 'incorrectResponse':
+                optionId = '80c5ec75-e2a3-44c9-a664-f93539ba6bbe' // Incorrect Response (Quantity/Counting)
                 break
               default:
                 continue
@@ -818,7 +903,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all shape recognition responses and save them
       for (const [questionId, responses] of Object.entries(formData.shapeRecognitionResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
+          if (value >= 0) { // Save all values including zeros
             // Use the actual option IDs from your database for Shape Recognition and One on One Correspondence
             let optionId = ''
             
@@ -837,6 +922,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 break
               case 'range6to10Correct':
                 optionId = '12ab8b04-82a9-4726-b941-317458e86559' // 6 - 10 Correct
+                break
+              case 'noResponseGiven':
+                optionId = '3574b44b-a17e-418d-b2c8-5bcb31caba65' // No Response Given (Shape/One on One)
+                break
+              case 'incorrectResponse':
+                optionId = '0b35a798-c2dc-48a9-90a9-79510ee5db97' // Incorrect Response (Shape/One on One)
                 break
               default:
                 continue
@@ -895,7 +986,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all motor skills responses and save them
       for (const [questionId, responses] of Object.entries(formData.motorSkillsResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
+          if (value >= 0) { // Save all values including zeros
             // Use the actual option IDs from your database for Motor Skills
             let optionId = ''
             
@@ -929,6 +1020,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 break
               case 'name':
                 optionId = '7533234a-1598-4176-a8ed-8a5e5cb77193' // Name
+                break
+              case 'noResponseGiven':
+                optionId = 'd44b99c0-993a-4598-aae7-755e5b3337b5' // No Response Given (Motor Skills)
+                break
+              case 'incorrectResponse':
+                optionId = '241fbe95-c3f7-4686-a74b-060a53eda5c4' // Incorrect Response (Motor Skills - Picture of Yourself only)
                 break
               default:
                 continue
@@ -987,7 +1084,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Iterate through all gross motor skills responses and save them
       for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
         for (const [category, value] of Object.entries(responses)) {
-          if (value > 0) { // Only save non-zero values
+          if (value >= 0) { // Save all values including zeros
             // Use the actual option IDs from your database for Gross Motor Skills
             let optionId = ''
             
@@ -1021,6 +1118,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 break
               case 'right':
                 optionId = '5f106448-51de-47a2-a7ce-edf46884aaef' // Right
+                break
+              case 'both':
+                optionId = '3d09727b-88af-46fa-a1b6-e474e09cfaea' // Both (need actual option ID)
+                break
+              case 'unableToRespond':
+                optionId = '6dff252d-bf88-4300-ab4f-ec32891b979a' // Unable to respond
                 break
               default:
                 continue
@@ -1065,6 +1168,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           range7to12Correct: 0,
           range13to18Correct: 0,
           range19to26Correct: 0,
+          noResponseGiven: 0,
+          incorrectResponse: 0,
           ...prev.alphabetResponses[questionId],
           [category]: value
         }
@@ -1082,6 +1187,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           oneCorrect: 0,
           twoCorrect: 0,
           threeCorrect: 0,
+          noResponseGiven: 0,
+          incorrectResponse: 0,
           ...prev.colourResponses[questionId],
           [category]: value
         }
@@ -1149,6 +1256,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           left: 0,
           right: 0,
           both: 0,
+          unableToRespond: 0,
           ...prev.grossMotorSkillsResponses[questionId],
           [category]: value
         }
@@ -1603,7 +1711,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     for (const [questionId, questionResponses] of Object.entries(responses)) {
       if (!questionResponses) return false
       const total = (questionResponses.range1to6Correct || 0) + (questionResponses.range7to12Correct || 0) + 
-                   (questionResponses.range13to18Correct || 0) + (questionResponses.range19to26Correct || 0)
+                   (questionResponses.range13to18Correct || 0) + (questionResponses.range19to26Correct || 0) +
+                   (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       if (total !== enrollment) return false
     }
     return true
@@ -1620,7 +1729,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     // Check each question has valid total
     for (const [questionId, questionResponses] of Object.entries(responses)) {
       if (!questionResponses) return false
-      const total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0)
+      const total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0) + (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       if (total !== enrollment) return false
     }
     return true
@@ -1639,9 +1748,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       if (!questionResponses) return false
       let total = 0
       if (questionResponses.oneCorrect !== undefined || questionResponses.twoCorrect !== undefined || questionResponses.threeCorrect !== undefined || questionResponses.allFourCorrect !== undefined) {
-        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0) + (questionResponses.allFourCorrect || 0)
+        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0) + (questionResponses.allFourCorrect || 0) + (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       } else {
-        total = (questionResponses.range1to10Correct || 0) + (questionResponses.range11to20Correct || 0) + (questionResponses.range20PlusCorrect || 0)
+        total = (questionResponses.range1to10Correct || 0) + (questionResponses.range11to20Correct || 0) + (questionResponses.range20PlusCorrect || 0) + (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       }
       if (total !== enrollment) return false
     }
@@ -1661,9 +1770,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       if (!questionResponses) return false
       let total = 0
       if (questionResponses.oneCorrect !== undefined || questionResponses.twoCorrect !== undefined || questionResponses.threeCorrect !== undefined) {
-        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0)
+        total = (questionResponses.oneCorrect || 0) + (questionResponses.twoCorrect || 0) + (questionResponses.threeCorrect || 0) + (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       } else {
-        total = (questionResponses.range1to5Correct || 0) + (questionResponses.range6to10Correct || 0)
+        total = (questionResponses.range1to5Correct || 0) + (questionResponses.range6to10Correct || 0) + (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       }
       if (total !== enrollment) return false
     }
@@ -1683,11 +1792,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       if (!questionResponses) return false
       let total = 0
       if (questionResponses.range1to4Correct !== undefined || questionResponses.range5to8Correct !== undefined) {
-        total = (questionResponses.range1to4Correct || 0) + (questionResponses.range5to8Correct || 0)
+        total = (questionResponses.range1to4Correct || 0) + (questionResponses.range5to8Correct || 0) + 
+                (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       } else if (questionResponses.cylindricalGrasp !== undefined) {
         total = (questionResponses.cylindricalGrasp || 0) + (questionResponses.digital || 0) + (questionResponses.modifiedTripodGrasp || 0) + (questionResponses.tripod || 0)
       } else if (questionResponses.scribbleUR !== undefined) {
-        total = (questionResponses.scribbleUR || 0) + (questionResponses.scribbleR || 0) + (questionResponses.approximation || 0) + (questionResponses.name || 0)
+        total = (questionResponses.scribbleUR || 0) + (questionResponses.scribbleR || 0) + 
+                (questionResponses.approximation || 0) + (questionResponses.name || 0) + 
+                (questionResponses.noResponseGiven || 0)
       }
       if (total !== enrollment) return false
     }
@@ -1707,13 +1819,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       if (!questionResponses) return false
       let total = 0
       if (questionResponses.oneTime !== undefined && questionResponses.fiveTimes !== undefined) {
-        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0) + (questionResponses.threeTimes || 0) + (questionResponses.fourTimes || 0) + (questionResponses.fiveTimes || 0)
+        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0) + (questionResponses.threeTimes || 0) + (questionResponses.fourTimes || 0) + (questionResponses.fiveTimes || 0) + (questionResponses.unableToRespond || 0)
       } else if (questionResponses.oneLegOneTime !== undefined) {
-        total = (questionResponses.oneLegOneTime || 0) + (questionResponses.oneLegTwoTimes || 0) + (questionResponses.oneLegThreeTimes || 0)
+        total = (questionResponses.oneLegOneTime || 0) + (questionResponses.oneLegTwoTimes || 0) + (questionResponses.oneLegThreeTimes || 0) + (questionResponses.unableToRespond || 0)
       } else if (questionResponses.left !== undefined || questionResponses.right !== undefined) {
-        total = (questionResponses.left || 0) + (questionResponses.right || 0)
+        total = (questionResponses.left || 0) + (questionResponses.right || 0) + (questionResponses.both || 0) + (questionResponses.unableToRespond || 0)
       } else {
-        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0)
+        total = (questionResponses.oneTime || 0) + (questionResponses.twoTimes || 0) + (questionResponses.unableToRespond || 0)
       }
       if (total !== enrollment) return false
     }
@@ -1793,7 +1905,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       }
 
       const total = (responses.range1to6Correct || 0) + (responses.range7to12Correct || 0) + 
-                   (responses.range13to18Correct || 0) + (responses.range19to26Correct || 0)
+                   (responses.range13to18Correct || 0) + (responses.range19to26Correct || 0) +
+                   (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       
       if (total !== enrollment) {
         toast({
@@ -1824,7 +1937,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         return false
       }
 
-      const total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0)
+      const total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0) + (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       
       if (total !== enrollment) {
         toast({
@@ -1857,9 +1970,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('quantity')) {
-        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0) + (responses.allFourCorrect || 0)
+        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0) + (responses.allFourCorrect || 0) + (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       } else {
-        total = (responses.range1to10Correct || 0) + (responses.range11to20Correct || 0) + (responses.range20PlusCorrect || 0)
+        total = (responses.range1to10Correct || 0) + (responses.range11to20Correct || 0) + (responses.range20PlusCorrect || 0) + (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       }
       
       if (total !== enrollment) {
@@ -1893,9 +2006,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('shape')) {
-        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0)
+        total = (responses.oneCorrect || 0) + (responses.twoCorrect || 0) + (responses.threeCorrect || 0) + (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       } else {
-        total = (responses.range1to5Correct || 0) + (responses.range6to10Correct || 0)
+        total = (responses.range1to5Correct || 0) + (responses.range6to10Correct || 0) + (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       }
       
       if (total !== enrollment) {
@@ -1929,11 +2042,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('picture')) {
-        total = (responses.range1to4Correct || 0) + (responses.range5to8Correct || 0)
+        total = (responses.range1to4Correct || 0) + (responses.range5to8Correct || 0) + 
+                (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       } else if (question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip')) {
         total = (responses.cylindricalGrasp || 0) + (responses.digital || 0) + (responses.modifiedTripodGrasp || 0) + (responses.tripod || 0)
       } else if (question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation')) {
-        total = (responses.scribbleUR || 0) + (responses.scribbleR || 0) + (responses.approximation || 0) + (responses.name || 0)
+        total = (responses.scribbleUR || 0) + (responses.scribbleR || 0) + 
+                (responses.approximation || 0) + (responses.name || 0) + 
+                (responses.noResponseGiven || 0)
       }
       
       if (total !== enrollment) {
@@ -1967,13 +2083,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
-        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0)
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
       } else if (question.questions.toLowerCase().includes('hop')) {
-        total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0)
+        total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
       } else if (question.questions.toLowerCase().includes('stand')) {
-        total = (responses.left || 0) + (responses.right || 0)
+        total = (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
       } else {
-        total = (responses.oneTime || 0) + (responses.twoTimes || 0)
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
       }
       
       if (total !== enrollment) {
@@ -2459,6 +2575,36 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         className="w-16"
                       />
                     </div>
+                    
+                    {/* No Response Given */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        No Response Given
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.noResponseGiven || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* Incorrect Response */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        Incorrect Response
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.alphabetResponses[question.id]?.incorrectResponse || ""}
+                        onChange={(e) => handleAlphabetResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
                   </div>
                   
                   {/* Total Count Display */}
@@ -2469,7 +2615,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         {(formData.alphabetResponses[question.id]?.range1to6Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range7to12Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range13to18Correct || 0) +
-                         (formData.alphabetResponses[question.id]?.range19to26Correct || 0)}/{parseInt(formData.enrollment) || 0}
+                         (formData.alphabetResponses[question.id]?.range19to26Correct || 0) +
+                         (formData.alphabetResponses[question.id]?.noResponseGiven || 0) +
+                         (formData.alphabetResponses[question.id]?.incorrectResponse || 0)}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2521,7 +2669,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
                   
                   {/* Response Categories Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     {/* 1 Correct */}
                     <div className="flex items-center gap-2">
                       <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -2566,6 +2714,36 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         className="w-16"
                       />
                     </div>
+                    
+                    {/* No Response Given */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        No Response Given
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.colourResponses[question.id]?.noResponseGiven || ""}
+                        onChange={(e) => handleColourResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
+                    
+                    {/* Incorrect Response */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        Incorrect Response
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.colourResponses[question.id]?.incorrectResponse || ""}
+                        onChange={(e) => handleColourResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                        className="w-16"
+                      />
+                    </div>
                   </div>
                   
                   {/* Total Count Display */}
@@ -2575,7 +2753,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       <span className="font-medium text-gray-900">
                         {(formData.colourResponses[question.id]?.oneCorrect || 0) +
                          (formData.colourResponses[question.id]?.twoCorrect || 0) +
-                         (formData.colourResponses[question.id]?.threeCorrect || 0)}/{parseInt(formData.enrollment) || 0}
+                         (formData.colourResponses[question.id]?.threeCorrect || 0) +
+                         (formData.colourResponses[question.id]?.noResponseGiven || 0) +
+                         (formData.colourResponses[question.id]?.incorrectResponse || 0)}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
                   </div>
@@ -2628,7 +2808,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('quantity') ? (
                     // Quantity Differentiation options
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 Correct
@@ -2681,10 +2861,36 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Incorrect Response
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.incorrectResponse || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (
                     // Counting Fluency options
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 - 10 Correct
@@ -2724,6 +2930,32 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Incorrect Response
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.quantityCountingResponses[question.id]?.incorrectResponse || ""}
+                          onChange={(e) => handleQuantityCountingResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   )}
                   
@@ -2736,11 +2968,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           (formData.quantityCountingResponses[question.id]?.oneCorrect || 0) +
                           (formData.quantityCountingResponses[question.id]?.twoCorrect || 0) +
                           (formData.quantityCountingResponses[question.id]?.threeCorrect || 0) +
-                          (formData.quantityCountingResponses[question.id]?.allFourCorrect || 0)
+                          (formData.quantityCountingResponses[question.id]?.allFourCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.noResponseGiven || 0) +
+                          (formData.quantityCountingResponses[question.id]?.incorrectResponse || 0)
                         ) : (
                           (formData.quantityCountingResponses[question.id]?.range1to10Correct || 0) +
                           (formData.quantityCountingResponses[question.id]?.range11to20Correct || 0) +
-                          (formData.quantityCountingResponses[question.id]?.range20PlusCorrect || 0)
+                          (formData.quantityCountingResponses[question.id]?.range20PlusCorrect || 0) +
+                          (formData.quantityCountingResponses[question.id]?.noResponseGiven || 0) +
+                          (formData.quantityCountingResponses[question.id]?.incorrectResponse || 0)
                         )}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
@@ -2794,7 +3030,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('shape') ? (
                     // Shape Recognition options (1, 2, 3 correct)
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 Correct
@@ -2834,10 +3070,36 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Incorrect Response
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.incorrectResponse || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (
                     // Other questions options (1-5 correct, 6-10 correct)
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 - 5 Correct
@@ -2864,6 +3126,32 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Incorrect Response
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.shapeRecognitionResponses[question.id]?.incorrectResponse || ""}
+                          onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   )}
                   
@@ -2875,10 +3163,14 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         {question.questions.toLowerCase().includes('shape') ? (
                           (formData.shapeRecognitionResponses[question.id]?.oneCorrect || 0) +
                           (formData.shapeRecognitionResponses[question.id]?.twoCorrect || 0) +
-                          (formData.shapeRecognitionResponses[question.id]?.threeCorrect || 0)
+                          (formData.shapeRecognitionResponses[question.id]?.threeCorrect || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.noResponseGiven || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.incorrectResponse || 0)
                         ) : (
                           (formData.shapeRecognitionResponses[question.id]?.range1to5Correct || 0) +
-                          (formData.shapeRecognitionResponses[question.id]?.range6to10Correct || 0)
+                          (formData.shapeRecognitionResponses[question.id]?.range6to10Correct || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.noResponseGiven || 0) +
+                          (formData.shapeRecognitionResponses[question.id]?.incorrectResponse || 0)
                         )}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
@@ -2931,8 +3223,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('picture') ? (
-                    // Picture of Yourself options (1-4 correct, 5-8 correct)
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    // Picture of Yourself options (1-4 correct, 5-8 correct, No Response, Incorrect)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 - 4 Correct
@@ -2956,6 +3248,32 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.range5to8Correct || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'range5to8Correct', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Incorrect Response
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.incorrectResponse || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
                           className="w-16"
                         />
                       </div>
@@ -3017,8 +3335,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       </div>
                     </div>
                   ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
-                    // Letter Formation options
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    // Letter Formation options (only No Response Given added)
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           Scribble (UR)
@@ -3071,6 +3389,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (
                     // Default fallback (should not be reached)
@@ -3086,7 +3417,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                       <span className="font-medium text-gray-900">
                         {question.questions.toLowerCase().includes('picture') ? (
                           (formData.motorSkillsResponses[question.id]?.range1to4Correct || 0) +
-                          (formData.motorSkillsResponses[question.id]?.range5to8Correct || 0)
+                          (formData.motorSkillsResponses[question.id]?.range5to8Correct || 0) +
+                          (formData.motorSkillsResponses[question.id]?.noResponseGiven || 0) +
+                          (formData.motorSkillsResponses[question.id]?.incorrectResponse || 0)
                         ) : question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip') ? (
                           (formData.motorSkillsResponses[question.id]?.cylindricalGrasp || 0) +
                           (formData.motorSkillsResponses[question.id]?.digital || 0) +
@@ -3096,7 +3429,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           (formData.motorSkillsResponses[question.id]?.scribbleUR || 0) +
                           (formData.motorSkillsResponses[question.id]?.scribbleR || 0) +
                           (formData.motorSkillsResponses[question.id]?.approximation || 0) +
-                          (formData.motorSkillsResponses[question.id]?.name || 0)
+                          (formData.motorSkillsResponses[question.id]?.name || 0) +
+                          (formData.motorSkillsResponses[question.id]?.noResponseGiven || 0)
                         ) : 0}/{parseInt(formData.enrollment) || 0}
                       </span>
                     </div>
@@ -3149,7 +3483,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                   
                   {/* Conditional Response Categories based on question type */}
                   {(question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) ? (
-                    // Throw and Catch: 1-5 Times
+                    // Throw and Catch: 1-5 Times + No Response Given
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -3216,10 +3550,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Unable to
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (question.questions.toLowerCase().includes('hop')) ? (
-                    // One/Two Leg Hop: 1-3 Times
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    // One/Two Leg Hop: 1-3 Times + No Response Given
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           1 Time
@@ -3259,10 +3606,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Unable to
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (question.questions.toLowerCase().includes('stand')) ? (
-                    // Stand on One Leg: Left/Right/Both
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    // Stand on One Leg: Left/Right/Both + No Response Given
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           Left Only
@@ -3302,10 +3662,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Unable to
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : (
-                    // Default: Number Correct/Incorrect (fallback)
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    // Default: Number Correct/Incorrect + No Response Given (fallback)
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
                           Number Correct
@@ -3332,6 +3705,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          Unable to
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
+                          onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   )}
                   
@@ -3343,13 +3729,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         {(() => {
                           const responses = formData.grossMotorSkillsResponses[question.id] || {}
                           if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
-                            return (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0)
+                            return (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
                           } else if (question.questions.toLowerCase().includes('hop')) {
-                            return (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0)
+                            return (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
                           } else if (question.questions.toLowerCase().includes('stand')) {
-                            return (responses.left || 0) + (responses.right || 0) + (responses.both || 0)
+                            return (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
                           } else {
-                            return (responses.oneTime || 0) + (responses.twoTimes || 0)
+                            return (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
                           }
                         })()}/{parseInt(formData.enrollment) || 0}
                       </span>
@@ -3532,12 +3918,12 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
                 onClick={saveCurrentSection}
-                disabled={true} // Disabled for now
+                disabled={loading}
                 variant="outline"
-                className="w-full sm:w-auto border border-gray-300 text-gray-400 cursor-not-allowed"
+                className="w-full sm:w-auto border border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200"
               >
                 <Save className="h-4 w-4" />
-                Save Section (Disabled)
+                Save Section
               </Button>
 
               {/* Auto-save indicator */}

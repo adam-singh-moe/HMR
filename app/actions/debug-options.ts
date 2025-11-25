@@ -11,14 +11,12 @@ export async function getAllAvailableOptions() {
       .eq('section', 'Autobiographical Knowledge')
     
     if (error) {
-      console.error('Error fetching all options:', error)
       return { options: [], error: error.message }
     }
     
-    console.log('All available options:', data)
+    //console.log('All available options:', data)
     return { options: data || [], error: null }
   } catch (err) {
-    console.error('Error in getAllAvailableOptions:', err)
     return { options: [], error: "An unexpected error occurred" }
   }
 }
