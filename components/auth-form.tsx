@@ -388,10 +388,10 @@ function AuthFormContent() {
       // Check if password change is required
       if (result?.requirePasswordChange && result.userEmail && result.userId) {
         // Debug logging
-        console.log("Password change required:", {
-          result,
-          requiresName: result.requiresName
-        })
+        // console.log("Password change required:", {
+        //   result,
+        //   requiresName: result.requiresName
+        // })
         
         // For head teachers with default password, show account setup flow
         if (result.userRole === "Head Teacher") {

@@ -55,7 +55,7 @@ export class GeminiService {
           attempt++
           if (attempt < maxRetries) {
             const backoffDelay = Math.pow(2, attempt) * 1000 + Math.random() * 1000 // Exponential backoff with jitter
-            console.log(`Rate limited or server error. Retrying in ${backoffDelay}ms... (Attempt ${attempt}/${maxRetries})`)
+           // console.log(`Rate limited or server error. Retrying in ${backoffDelay}ms... (Attempt ${attempt}/${maxRetries})`)
             await this.delay(backoffDelay)
             continue
           }
@@ -76,7 +76,7 @@ export class GeminiService {
         // If it's a network error and we have retries left, retry
         if ((error instanceof TypeError && error.message.includes('fetch')) && attempt < maxRetries) {
           const backoffDelay = Math.pow(2, attempt) * 1000 + Math.random() * 1000
-          console.log(`Network error. Retrying in ${backoffDelay}ms... (Attempt ${attempt}/${maxRetries})`)
+          //console.log(`Network error. Retrying in ${backoffDelay}ms... (Attempt ${attempt}/${maxRetries})`)
           await this.delay(backoffDelay)
           continue
         }
@@ -134,7 +134,7 @@ Analysis:
 
   private formatReportData(reports: any[]): string {
     if (!reports || !Array.isArray(reports) || reports.length === 0) {
-      console.log("Invalid reports data:", typeof reports, Array.isArray(reports))
+      //console.log("Invalid reports data:", typeof reports, Array.isArray(reports))
       return "No report data available."
     }
 

@@ -1319,9 +1319,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               // Load saved responses from answers table
               const responsesResult = await loadSavedResponses(existingAssessment.assessment.id)
               if (responsesResult.responses && responsesResult.responses.length > 0) {
-                console.log('Loading saved responses:', responsesResult.responses)
+                //console.log('Loading saved responses:', responsesResult.responses)
                 const mappedResponses = mapResponsestoFormData(responsesResult.responses)
-                console.log('Mapped responses:', mappedResponses)
+                //console.log('Mapped responses:', mappedResponses)
                 
                 setFormData(prev => ({
                   ...prev,
@@ -2363,7 +2363,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
     try {
       setLoading(true)
-      console.log('Submitting assessment:', currentAssessmentId)
+    //  console.log('Submitting assessment:', currentAssessmentId)
 
       // First, auto-save the current section if it's Section 8 (final section)
       if (currentSection === 7) {
@@ -2390,7 +2390,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         return
       }
 
-      console.log('Assessment submitted successfully:', result.assessment)
+     // console.log('Assessment submitted successfully:', result.assessment)
       
       // Clear local storage since assessment is now submitted
       clearLocalStorage()

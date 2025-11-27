@@ -2018,11 +2018,11 @@ export async function savePhysicalEducation(formData: FormData) {
     const activities = formData.get("activities") as string
     const challenges = formData.get("challenges") as string
 
-    console.log("Saving Physical Education data:", {
-      reportId,
-      activities,
-      challenges
-    })
+    // console.log("Saving Physical Education data:", {
+    //   reportId,
+    //   activities,
+    //   challenges
+    // })
 
     if (!reportId) {
       return { error: "Report ID is required." }

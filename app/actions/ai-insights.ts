@@ -236,11 +236,11 @@ async function fetchReportBaseData(supabase: any, filters?: any) {
 async function fetchSectionDataWithReports(supabase: any, tableName: string, filters?: any) {
   const reports = await fetchReportBaseData(supabase, filters)
   
-  console.log(`fetchSectionDataWithReports for ${tableName}:`, {
-    filtersReceived: filters,
-    reportsFound: reports.length,
-    sampleReport: reports[0]
-  })
+  // console.log(`fetchSectionDataWithReports for ${tableName}:`, {
+  //   filtersReceived: filters,
+  //   reportsFound: reports.length,
+  //   sampleReport: reports[0]
+  // })
   
   if (!reports.length) {
     console.log(`No reports found for ${tableName} with filters:`, filters)
@@ -265,10 +265,10 @@ async function fetchSectionDataWithReports(supabase: any, tableName: string, fil
     throw error
   }
 
-  console.log(`Section data from ${tableName}:`, {
-    sectionRecordsFound: data?.length || 0,
-    sampleSectionData: data?.[0]
-  })
+  // console.log(`Section data from ${tableName}:`, {
+  //   sectionRecordsFound: data?.length || 0,
+  //   sampleSectionData: data?.[0]
+  // })
 
   // Combine section data with report data
   return (data || []).map((sectionData: any) => {

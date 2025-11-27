@@ -237,7 +237,7 @@ export async function inspectTableStructure() {
           .select(column)
           .limit(1)
         
-        console.log(`Column '${column}': ${colError ? 'ERROR - ' + colError.message : 'OK'}`)
+       // console.log(`Column '${column}': ${colError ? 'ERROR - ' + colError.message : 'OK'}`)
       } catch (colErr) {
         console.log(`Column '${column}': ERROR - ${colErr instanceof Error ? colErr.message : 'Unknown error'}`)
       }
@@ -460,7 +460,7 @@ export async function saveAssessmentAnswer(answerData: {
         created_at: new Date().toISOString()
       }
       
-      console.log('Inserting new answer:', insertData)
+     // console.log('Inserting new answer:', insertData)
       
       const { data, error } = await supabase
         .from('hmr_nursery_assessment_answers')
