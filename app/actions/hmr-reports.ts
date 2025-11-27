@@ -670,27 +670,27 @@ export async function getStaffing(reportId: string) {
 
     // Group teacher status updates by category
     const teacherStatusByCategory = {
-      leftSchool: teacherStatusUpdates?.filter((record) => record.category === "Left School").map(record => ({
+      leftSchool: teacherStatusUpdates?.filter((record) => record.category === "left_school").map(record => ({
         ...record,
         daysAbsent: record.days_absent,
         actionTaken: record.action_taken
       })) || [],
-      specialLeave: teacherStatusUpdates?.filter((record) => record.category === "Special Leave").map(record => ({
+      specialLeave: teacherStatusUpdates?.filter((record) => record.category === "special_leave").map(record => ({
         ...record,
         daysAbsent: record.days_absent,
         actionTaken: record.action_taken
       })) || [],
-      assumedDuty: teacherStatusUpdates?.filter((record) => record.category === "Assumed Duty").map(record => ({
+      assumedDuty: teacherStatusUpdates?.filter((record) => record.category === "assumed_duty").map(record => ({
         ...record,
         daysAbsent: record.days_absent,
         actionTaken: record.action_taken
       })) || [],
-      notReported: teacherStatusUpdates?.filter((record) => record.category === "Not Reported").map(record => ({
+      notReported: teacherStatusUpdates?.filter((record) => record.category === "not_reported").map(record => ({
         ...record,
         daysAbsent: record.days_absent,
         actionTaken: record.action_taken
       })) || [],
-      didNotReceiveSalary: teacherStatusUpdates?.filter((record) => record.category === "Did Not Receive Salary").map(record => ({
+      didNotReceiveSalary: teacherStatusUpdates?.filter((record) => record.category === "without_salary").map(record => ({
         ...record,
         daysAbsent: record.days_absent,
         actionTaken: record.action_taken
