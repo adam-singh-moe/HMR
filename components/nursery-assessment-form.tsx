@@ -420,6 +420,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.motorSkillsResponses[questionId] = {}
         }
         responseMap.motorSkillsResponses[questionId].tripod = answer
+      } else if (optionId === 'd44b99c0-993a-4598-aae7-755e5b3337b5') { // No Response Given (Pencil Grip)
+        if (!responseMap.motorSkillsResponses[questionId]) {
+          responseMap.motorSkillsResponses[questionId] = {}
+        }
+        responseMap.motorSkillsResponses[questionId].noResponseGiven = answer
       } else if (optionId === '0a8be88c-5dd4-4694-9351-dbb80e031b68') { // Scribble UR (Letter Formation)
         if (!responseMap.motorSkillsResponses[questionId]) {
           responseMap.motorSkillsResponses[questionId] = {}
@@ -1795,7 +1800,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         total = (questionResponses.range1to4Correct || 0) + (questionResponses.range5to8Correct || 0) + 
                 (questionResponses.noResponseGiven || 0) + (questionResponses.incorrectResponse || 0)
       } else if (questionResponses.cylindricalGrasp !== undefined) {
-        total = (questionResponses.cylindricalGrasp || 0) + (questionResponses.digital || 0) + (questionResponses.modifiedTripodGrasp || 0) + (questionResponses.tripod || 0)
+        total = (questionResponses.cylindricalGrasp || 0) + (questionResponses.digital || 0) + (questionResponses.modifiedTripodGrasp || 0) + (questionResponses.tripod || 0) + (questionResponses.noResponseGiven || 0)
       } else if (questionResponses.scribbleUR !== undefined) {
         total = (questionResponses.scribbleUR || 0) + (questionResponses.scribbleR || 0) + 
                 (questionResponses.approximation || 0) + (questionResponses.name || 0) + 
@@ -2045,7 +2050,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         total = (responses.range1to4Correct || 0) + (responses.range5to8Correct || 0) + 
                 (responses.noResponseGiven || 0) + (responses.incorrectResponse || 0)
       } else if (question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip')) {
-        total = (responses.cylindricalGrasp || 0) + (responses.digital || 0) + (responses.modifiedTripodGrasp || 0) + (responses.tripod || 0)
+        total = (responses.cylindricalGrasp || 0) + (responses.digital || 0) + (responses.modifiedTripodGrasp || 0) + (responses.tripod || 0) + (responses.noResponseGiven || 0)
       } else if (question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation')) {
         total = (responses.scribbleUR || 0) + (responses.scribbleR || 0) + 
                 (responses.approximation || 0) + (responses.name || 0) + 
@@ -2098,6 +2103,210 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment})`,
           variant: "destructive",
         })
+        return false
+      }
+    }
+    return true
+  }
+
+  // Function to validate Section 2 totals match enrollment
+  const isSection2Valid = () => {
+    if (currentSection !== 1) return true // Only validate Section 2
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 2
+    for (const question of questions) {
+      const responses = formData.autobiographicalResponses[question.id] || {}
+      const total = (responses.fullSentenceResponse || 0) +
+                   (responses.singleWordOrPhraseResponse || 0) +
+                   (responses.incorrectResponse || 0) +
+                   (responses.noResponseGiven || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 3 totals match enrollment
+  const isSection3Valid = () => {
+    if (currentSection !== 2) return true // Only validate Section 3
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Filter questions based on assessment type (same logic as UI)
+    const filteredQuestions = formData.assessmentType === 'assessment-1-year-1' 
+      ? questions.filter((question, index) => index === 0 || index === 2) // Show questions 1 and 3
+      : questions // Show all questions for Year 2
+    
+    // Check each filtered question in Section 3
+    for (const question of filteredQuestions) {
+      const responses = formData.alphabetResponses[question.id] || {}
+      const total = (responses.range1to6Correct || 0) +
+                   (responses.range7to12Correct || 0) +
+                   (responses.range13to18Correct || 0) +
+                   (responses.range19to26Correct || 0) +
+                   (responses.noResponseGiven || 0) +
+                   (responses.incorrectResponse || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 4 totals match enrollment
+  const isSection4Valid = () => {
+    if (currentSection !== 3) return true // Only validate Section 4
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 4
+    for (const question of questions) {
+      const responses = formData.colourResponses[question.id] || {}
+      const total = (responses.oneCorrect || 0) +
+                   (responses.twoCorrect || 0) +
+                   (responses.threeCorrect || 0) +
+                   (responses.noResponseGiven || 0) +
+                   (responses.incorrectResponse || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 5 totals match enrollment
+  const isSection5Valid = () => {
+    if (currentSection !== 4) return true // Only validate Section 5
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 5
+    for (const question of questions) {
+      const responses = formData.quantityCountingResponses[question.id] || {}
+      const total = (responses.oneCorrect || 0) +
+                   (responses.twoCorrect || 0) +
+                   (responses.threeCorrect || 0) +
+                   (responses.allFourCorrect || 0) +
+                   (responses.range1to10Correct || 0) +
+                   (responses.range11to20Correct || 0) +
+                   (responses.range20PlusCorrect || 0) +
+                   (responses.noResponseGiven || 0) +
+                   (responses.incorrectResponse || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 6 totals match enrollment
+  const isSection6Valid = () => {
+    if (currentSection !== 5) return true // Only validate Section 6
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 6
+    for (const question of questions) {
+      const responses = formData.shapeRecognitionResponses[question.id] || {}
+      const total = (responses.oneCorrect || 0) +
+                   (responses.twoCorrect || 0) +
+                   (responses.threeCorrect || 0) +
+                   (responses.range1to5Correct || 0) +
+                   (responses.range6to10Correct || 0) +
+                   (responses.noResponseGiven || 0) +
+                   (responses.incorrectResponse || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 7 totals match enrollment
+  const isSection7Valid = () => {
+    if (currentSection !== 6) return true // Only validate Section 7
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 7
+    for (const question of questions) {
+      const responses = formData.motorSkillsResponses[question.id] || {}
+      const total = (responses.range1to4Correct || 0) +
+                   (responses.range5to8Correct || 0) +
+                   (responses.cylindricalGrasp || 0) +
+                   (responses.digital || 0) +
+                   (responses.modifiedTripodGrasp || 0) +
+                   (responses.tripod || 0) +
+                   (responses.scribbleUR || 0) +
+                   (responses.scribbleR || 0) +
+                   (responses.approximation || 0) +
+                   (responses.name || 0) +
+                   (responses.noResponseGiven || 0) +
+                   (responses.incorrectResponse || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to validate Section 8 totals match enrollment
+  const isSection8Valid = () => {
+    if (currentSection !== 7) return true // Only validate Section 8
+    
+    const enrollment = parseInt(formData.enrollment) || 0
+    if (enrollment === 0) return false
+    
+    // Check each question in Section 8
+    for (const question of questions) {
+      const responses = formData.grossMotorSkillsResponses[question.id] || {}
+      const total = (responses.oneTime || 0) +
+                   (responses.twoTimes || 0) +
+                   (responses.threeTimes || 0) +
+                   (responses.fourTimes || 0) +
+                   (responses.fiveTimes || 0) +
+                   (responses.oneLegOneTime || 0) +
+                   (responses.oneLegTwoTimes || 0) +
+                   (responses.oneLegThreeTimes || 0) +
+                   (responses.left || 0) +
+                   (responses.right || 0) +
+                   (responses.both || 0) +
+                   (responses.unableToRespond || 0)
+      
+      if (total !== enrollment) {
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  // Function to check if all sections are completed
+  const areAllSectionsComplete = () => {
+    // Check if all available sections have been saved
+    for (let i = 0; i < availableSections.length; i++) {
+      if (!savedSections.has(i)) {
         return false
       }
     }
@@ -2279,7 +2488,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         {/* Enrollment */}
         <div className="space-y-2">
           <Label htmlFor="enrollment" className="text-sm font-medium text-gray-700">
-            Enrollment
+            Enrollment <span className="text-red-500">*</span>
           </Label>
           <Input
             id="enrollment"
@@ -3333,6 +3542,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           className="w-16"
                         />
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                          No Response Given
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
+                          onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
+                          className="w-16"
+                        />
+                      </div>
                     </div>
                   ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
                     // Letter Formation options (only No Response Given added)
@@ -3424,7 +3646,8 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           (formData.motorSkillsResponses[question.id]?.cylindricalGrasp || 0) +
                           (formData.motorSkillsResponses[question.id]?.digital || 0) +
                           (formData.motorSkillsResponses[question.id]?.modifiedTripodGrasp || 0) +
-                          (formData.motorSkillsResponses[question.id]?.tripod || 0)
+                          (formData.motorSkillsResponses[question.id]?.tripod || 0) +
+                          (formData.motorSkillsResponses[question.id]?.noResponseGiven || 0)
                         ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
                           (formData.motorSkillsResponses[question.id]?.scribbleUR || 0) +
                           (formData.motorSkillsResponses[question.id]?.scribbleR || 0) +
@@ -3918,7 +4141,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
                 onClick={saveCurrentSection}
-                disabled={loading}
+                disabled={loading || 
+                  (currentSection === 0 && (!formData.assessmentType || !formData.enrollment)) ||
+                  (currentSection === 1 && !isSection2Valid()) ||
+                  (currentSection === 2 && !isSection3Valid()) ||
+                  (currentSection === 3 && !isSection4Valid()) ||
+                  (currentSection === 4 && !isSection5Valid()) ||
+                  (currentSection === 5 && !isSection6Valid()) ||
+                  (currentSection === 6 && !isSection7Valid()) ||
+                  (currentSection === 7 && !isSection8Valid())
+                }
                 variant="outline"
                 className="w-full sm:w-auto border border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200"
               >
@@ -3937,7 +4169,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               {currentSection === availableSections.length - 1 ? (
                 <Button
                   onClick={submitAssessment}
-                  disabled={loading || yearlyLimits.allThreeSubmitted}
+                  disabled={loading || yearlyLimits.allThreeSubmitted || !areAllSectionsComplete()}
                   className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
                 >
                   {loading ? (
