@@ -1040,8 +1040,28 @@ function HeadTeacherDashboardContent() {
               <div className="bg-white">
                 {currentTab === 'submit-assessment' && (
                   <div>
-                    
-                    <NurseryAssessmentForm onSuccess={handleNurseryAssessmentSuccess} />
+                    {/* Maintenance Notice */}
+                    <Card className="bg-amber-50 border border-amber-200 shadow-sm">
+                      <CardContent className="p-8 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                            <ClockIcon className="h-8 w-8 text-amber-600" />
+                          </div>
+                          <h3 className="text-xl font-semibold text-amber-900 mb-3">
+                            Nursery Assessment Form Under Maintenance
+                          </h3>
+                          <p className="text-amber-800 mb-6 max-w-md">
+                            The nursery assessment form is currently undergoing maintenance and improvements. 
+                            Please check back later or contact your administrator for assistance.
+                          </p>
+                          <div className="bg-amber-100 border border-amber-300 rounded-lg p-4 max-w-sm">
+                            <p className="text-sm text-amber-700">
+                              <strong>Expected Resolution:</strong> We're working to restore functionality as soon as possible.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
                 {currentTab === 'view-assessments' && (
