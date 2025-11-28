@@ -36,13 +36,19 @@ interface Report {
   status: 'submitted' | 'pending' | 'reviewed'
 }
 
+interface Region {
+  id: string
+  name: string
+}
+
 interface AdminReportsClientProps {
   reports?: Report[]
   totalPages?: number
   currentPage?: number
+  regions?: Region[]
 }
 
-export function AdminReportsClient({ reports = [], totalPages = 0, currentPage = 1 }: AdminReportsClientProps) {
+export function AdminReportsClient({ reports = [], totalPages = 0, currentPage = 1, regions = [] }: AdminReportsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -51,8 +57,8 @@ export function AdminReportsClient({ reports = [], totalPages = 0, currentPage =
   const [selectedRegion, setSelectedRegion] = useState(searchParams.get('region') || 'all')
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'all')
 
-  // Get unique regions from reports with null safety
-  const regions = reports.length > 0 ? [...new Set(reports.map(report => report.region))].sort() : []
+  // Remove the regions extraction as we're passing them as props
+  // const regions = reports.length > 0 ? [...new Set(reports.map(report => report.region))].sort() : []
 
   const handleSearch = () => {
     startTransition(() => {
@@ -128,8 +134,8 @@ export function AdminReportsClient({ reports = [], totalPages = 0, currentPage =
               <SelectContent>
                 <SelectItem value="all">All Regions</SelectItem>
                 {regions.map((region) => (
-                  <SelectItem key={region} value={region}>
-                    {region}
+                  <SelectItem key={region.id} value={region.id}>
+                    {region.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -5,15 +5,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Download, TrendingUp, Users, School, Calendar, Eye } from "lucide-react"
 import Link from "next/link"
 import { AdminReportsClient } from "./components/AdminReportsClient"
-import { getSubmittedReportsWithSearchAndPagination, getReportCounts } from "@/app/actions/education-official-reports"
+import { getSubmittedReportsWithSearchAndPagination, getReportCounts, getRegionsForFilter } from "@/app/actions/education-official-reports"
 
-export default async function AdminReportsPage() {
-  // Get initial reports data
+interface PageProps {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default async function AdminReportsPage({ searchParams }: PageProps) {
+  // Extract search parameters
+  const search = typeof searchParams.search === 'string' ? searchParams.search : ''
+  const region = typeof searchParams.region === 'string' ? searchParams.region : ''
+  const status = typeof searchParams.status === 'string' ? searchParams.status : ''
+  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
+
+  // Get regions for the filter
+  const { regions } = await getRegionsForFilter()
+
+  // Get initial reports data with search parameters
   const { reports: initialReports, totalCount, totalPages, error } = await getSubmittedReportsWithSearchAndPagination({
-    page: 1,
+    page: page,
     pageSize: 25,
-    searchTerm: "",
-    selectedRegionId: "",
+    searchTerm: search,
+    selectedRegionId: region === 'all' ? '' : region,
+    selectedStatus: status === 'all' ? '' : status,
     selectedSchoolLevel: "",
     sortBy: "updated_at",
     sortOrder: "desc"
@@ -109,7 +123,8 @@ export default async function AdminReportsPage() {
           <AdminReportsClient 
             reports={initialReports || []}
             totalPages={totalPages || 0}
-            currentPage={1}
+            currentPage={page}
+            regions={regions || []}
           />
         </CardContent>
       </Card>

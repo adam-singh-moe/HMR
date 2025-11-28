@@ -106,6 +106,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
   selectedSchoolLevel = "",
   selectedMonth = "",
   selectedYear = "",
+  selectedStatus = "submitted",
   page = 1,
   pageSize = 25,
   sortBy = "updated_at",
@@ -117,6 +118,7 @@ export async function getSubmittedReportsWithSearchAndPagination({
   selectedSchoolLevel?: string
   selectedMonth?: string
   selectedYear?: string
+  selectedStatus?: string
   page?: number
   pageSize?: number
   sortBy?: string
@@ -164,8 +166,15 @@ export async function getSubmittedReportsWithSearchAndPagination({
           email
         )
       `, { count: 'exact' })
-      .eq("status", "submitted")
       .is("deleted_on", null)
+
+    // Apply status filter - default to submitted, but allow filtering by other statuses
+    if (selectedStatus && selectedStatus !== "all") {
+      query = query.eq("status", selectedStatus)
+    } else {
+      // Default to submitted only if no specific status filter
+      query = query.eq("status", "submitted")
+    }
 
     // Apply school filter if provided
     if (selectedSchoolId) {
@@ -1566,8 +1575,8 @@ export async function getRegionsForFilter() {
       return { regions: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { regions: [], error: "Only Education Officials can access this data." }
+    if (user.role !== "Education Official" && user.role !== "Admin") {
+      return { regions: [], error: "Only Education Officials and Admins can access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
