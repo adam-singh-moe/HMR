@@ -89,8 +89,13 @@ function RegionalAIInsightsContent() {
 
   useEffect(() => {
     loadSchools()
-    loadDailyUsage()
   }, [])
+
+  useEffect(() => {
+    if (user?.id) {
+      loadDailyUsage()
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (selectedReportType) {
@@ -141,6 +146,68 @@ function RegionalAIInsightsContent() {
 
   const canGenerateInsight = () => {
     return dailyUsage < DAILY_LIMIT
+  }
+
+  // Extract visualization data from AI insight text
+  const extractVisualizationData = (insightText: string) => {
+    const data = {
+      charts: [] as any[],
+      tables: [] as any[]
+    }
+
+    try {
+      // Look for data patterns in the text that could be visualized
+      // This is a simplified implementation - you can expand based on your AI response format
+      
+      // Extract tables from markdown-style tables
+      const tableRegex = /\|(.*?)\|\s*\n\|([-\s:|]+)\|\s*\n((\|.*?\|\s*\n)*)/gm
+      let tableMatch
+      while ((tableMatch = tableRegex.exec(insightText)) !== null) {
+        const headers = tableMatch[1].split('|').map(h => h.trim()).filter(h => h)
+        const rows = tableMatch[3].split('\n').filter(row => row.trim() && row.includes('|'))
+          .map(row => row.split('|').map(cell => cell.trim()).filter(cell => cell))
+          .filter(row => row.length > 0)
+        
+        if (headers.length > 0 && rows.length > 0) {
+          data.tables.push({
+            headers,
+            rows
+          })
+        }
+      }
+
+      // Extract data that could be charted (numbers with labels)
+      const numberPatterns = [
+        // Pattern: "School A: 85%, School B: 92%" etc.
+        /([^:,\n]+):\s*(\d+(?:\.\d+)?%?)/g,
+        // Pattern: "January: 150, February: 200" etc.
+        /([A-Za-z]+):\s*(\d+(?:\.\d+)?)/g
+      ]
+
+      for (const pattern of numberPatterns) {
+        const matches = [...insightText.matchAll(pattern)]
+        if (matches.length >= 2) {
+          const chartData = matches.map(match => ({
+            name: match[1].trim(),
+            value: parseFloat(match[2].replace('%', ''))
+          }))
+          
+          // Determine chart type based on data
+          const chartType = matches.length <= 5 ? 'pie' : 'bar'
+          
+          data.charts.push({
+            type: chartType,
+            title: 'Data Visualization',
+            data: chartData
+          })
+          break // Only take the first good match to avoid duplicates
+        }
+      }
+    } catch (error) {
+      console.warn('Error extracting visualization data:', error)
+    }
+
+    return data.charts.length > 0 || data.tables.length > 0 ? data : null
   }
 
   const loadSchools = async () => {
@@ -417,69 +484,52 @@ function RegionalAIInsightsContent() {
     )
   }
 
-  // Generate a summary of the AI insight
+  // Generate a brief summary of the AI insight
   const generateSummary = (text: string) => {
     if (!text) return ""
 
-    // Split the text into sections
+    // Count basic elements in the report to generate a descriptive summary
     const lines = text.split('\n').filter(line => line.trim())
-    
-    // Find key sections
-    const summary = []
-    let foundSummary = false
-    let foundKeyFindings = false
-    let foundRecommendations = false
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
-      
-      // Look for summary/executive summary
-      if (line.toLowerCase().includes('summary') && !foundSummary) {
-        foundSummary = true
-        if (i + 1 < lines.length) {
-          summary.push(`**Summary:** ${lines[i + 1].trim()}`)
-        }
-        continue
-      }
-      
-      // Look for key findings
-      if ((line.toLowerCase().includes('key finding') || line.toLowerCase().includes('finding')) && !foundKeyFindings) {
-        foundKeyFindings = true
-        // Get the next few bullet points or important lines
-        for (let j = i + 1; j < Math.min(i + 4, lines.length); j++) {
-          const nextLine = lines[j].trim()
-          if (nextLine.startsWith('*') || nextLine.startsWith('-')) {
-            summary.push(nextLine)
-            break
-          }
-        }
-        continue
-      }
-      
-      // Look for recommendations
-      if (line.toLowerCase().includes('recommendation') && !foundRecommendations) {
-        foundRecommendations = true
-        if (i + 1 < lines.length) {
-          summary.push(`**Key Recommendation:** ${lines[i + 1].trim()}`)
-        }
-        continue
-      }
+    const sections = text.split('##').length - 1
+    const hasCharts = text.toLowerCase().includes('chart') || text.toLowerCase().includes('graph')
+    const hasTables = text.includes('|') && text.includes('---')
+    const hasRecommendations = text.toLowerCase().includes('recommendation')
+    const hasData = /\d+/.test(text)
+
+    // Determine report type based on content
+    let reportType = selectedReportType || "analysis"
+    const reportTypeLabels: Record<string, string> = {
+      "student-enrollment": "Student Enrollment Analysis",
+      "nursery-assessment": "Nursery Assessment Analysis", 
+      "regional-pe": "Physical Education Analysis",
+      "trends": "Trend Analysis",
+      "recommendations": "Recommendations & Action Items"
     }
     
-    // If no structured summary found, take first meaningful paragraph
-    if (summary.length === 0) {
-      const paragraphs = text.split('\n\n').filter(p => p.trim().length > 50)
-      if (paragraphs.length > 0) {
-        // Take first substantial paragraph and limit to ~200 characters
-        let firstParagraph = paragraphs[0].replace(/\*+/g, '').trim()
-        if (firstParagraph.length > 200) {
-          firstParagraph = firstParagraph.substring(0, 200) + "..."
-        }
-        summary.push(firstParagraph)
-      }
+    const reportLabel = reportTypeLabels[reportType] || "Educational Data Analysis"
+    
+    // Build summary components
+    const summaryParts = []
+    
+    // Basic description
+    summaryParts.push(`This ${reportLabel.toLowerCase()} has been generated for ${selectedMonth} ${selectedYear}.`)
+    
+    // Content description
+    const contentFeatures = []
+    if (sections > 0) contentFeatures.push(`${sections} main sections`)
+    if (hasData) contentFeatures.push("statistical data")
+    if (hasCharts) contentFeatures.push("visualizations")
+    if (hasTables) contentFeatures.push("data tables")
+    if (hasRecommendations) contentFeatures.push("actionable recommendations")
+    
+    if (contentFeatures.length > 0) {
+      summaryParts.push(`The report includes ${contentFeatures.join(', ')}.`)
     }
     
-    return summary.length > 0 ? summary.join('\n\n') : "Analysis completed. Click 'View Details' for full insights."
+    // Call to action
+    summaryParts.push("Click 'View Details' to see the complete analysis.")
+    
+    return summaryParts.join(' ')
   }
 
   // Export AI insights as PDF
