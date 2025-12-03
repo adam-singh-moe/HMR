@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useMemo } from "react"
 import { FileTextIcon, ChevronLeft, ChevronRight, BookOpenIcon, Loader2, Save } from "lucide-react"
 import { getUserSchoolInfo, getUser } from "@/app/actions/auth"
-import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, autoSaveNurseryAssessment, saveAssessmentAnswer, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses, checkYearlyAssessmentLimits } from "@/app/actions/nursery-assessment"
+import { useAuth } from "@/components/auth-wrapper"
+import { getNurseryAssessmentQuestions, saveNurseryAssessment, updateNurseryAssessment, loadNurseryAssessment, saveAssessmentAnswer, saveAssessmentAnswersBatch, getQuestionOptions, loadNurseryAssessmentResponses, loadSavedResponses, checkYearlyAssessmentLimits } from "@/app/actions/nursery-assessment"
 import { useToast } from "@/components/ui/use-toast"
-import { useAutoSave } from "@/hooks/use-auto-save"
+
 
 interface NurseryAssessmentFormProps {
   onSuccess?: () => void
@@ -166,11 +167,19 @@ const ASSESSMENT_TYPES = [
 
 export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps) {
   const { toast } = useToast()
+  // Use auth hook to get user information from session instead of API calls
+  const { user, isLoading: authLoading } = useAuth()
+  
   const [currentSection, setCurrentSection] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(false)
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
   const [savedSections, setSavedSections] = useState<Set<number>>(new Set())
+  // Questions caching to prevent repeated API calls
+  const [questionsCache, setQuestionsCache] = useState<{[section: string]: any[]}>({})
   const [questions, setQuestions] = useState<any[]>([])
+  const [allQuestionsLoaded, setAllQuestionsLoaded] = useState(false)
   const [questionOptions, setQuestionOptions] = useState<{ [questionId: string]: any[] }>({})
   const [questionsLoading, setQuestionsLoading] = useState(false)
   const [currentAssessmentId, setCurrentAssessmentId] = useState<string | null>(null)
@@ -204,6 +213,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   // Helper function to map loaded responses to form state
   const mapResponsestoFormData = (responses: any[]) => {
+    console.log("=== MAPPING RESPONSES ===")
+    console.log("Total responses to map:", responses.length)
+    
     const responseMap: any = {
       autobiographicalResponses: {},
       alphabetResponses: {},
@@ -213,6 +225,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       motorSkillsResponses: {},
       grossMotorSkillsResponses: {}
     }
+
+    // Filter Section 8 responses for debugging
+    const section8Responses = responses.filter(r => {
+      const isSection8 = ['62b6e481-811e-43ee-88a3-0a1d8f53aa12', 'e3e921e1-5296-4c15-bce8-72289447df1e', 
+                         '0f460701-938e-4c32-97aa-1ad7b35499cc', '46e086cf-f773-4578-aa07-ad694a6a91c7',
+                         'cfbbace8-c1b2-4d17-aefd-657736332adb', '339fb99d-50ad-4eac-b3af-b69ed44605fc',
+                         '5f106448-51de-47a2-a7ce-edf46884aaef', '3d09727b-88af-46fa-a1b6-e474e09cfaea',
+                         '6dff252d-bf88-4300-ab4f-ec32891b979a'].includes(r.option_id)
+      return isSection8
+    })
+    console.log("Section 8 responses found:", section8Responses.length, section8Responses)
 
    // console.log('Processing responses for mapping:', responses.length)
 
@@ -507,6 +530,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           responseMap.grossMotorSkillsResponses[questionId] = {}
         }
         responseMap.grossMotorSkillsResponses[questionId].right = answer
+      } else if (optionId === '3d09727b-88af-46fa-a1b6-e474e09cfaea') { // Both (Stand on one leg)
+        if (!responseMap.grossMotorSkillsResponses[questionId]) {
+          responseMap.grossMotorSkillsResponses[questionId] = {}
+        }
+        responseMap.grossMotorSkillsResponses[questionId].both = answer
       } else if (optionId === '6dff252d-bf88-4300-ab4f-ec32891b979a') { // Unable to respond (Gross Motor Skills)
         if (!responseMap.grossMotorSkillsResponses[questionId]) {
           responseMap.grossMotorSkillsResponses[questionId] = {}
@@ -515,34 +543,19 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       }
     })
 
+    console.log("=== MAPPING COMPLETE ===")
+    console.log("Mapped grossMotorSkillsResponses:", responseMap.grossMotorSkillsResponses)
+
     return responseMap
   }
 
-  // Auto-save hook
-  const { loadFromLocalStorage, clearLocalStorage, isSaving } = useAutoSave({
-    key: `nursery-assessment-${schoolInfo?.id || 'unknown'}`,
-    data: formData,
-    onSave: async (data) => {
-      if (currentAssessmentId && currentUser) {
-        await autoSaveNurseryAssessment(currentAssessmentId, data, currentUser.id)
-      }
-    },
-    enabled: !!currentAssessmentId && !!currentUser,
-    delay: 3000 // Auto-save after 3 seconds of inactivity
-  })
-
   // Helper function to handle response changes
   const handleResponseChange = (questionId: string, category: string, value: number) => {
-    // Only update local state - no immediate database save
     setFormData(prev => ({
       ...prev,
       autobiographicalResponses: {
         ...prev.autobiographicalResponses,
         [questionId]: {
-          fullSentenceResponse: 0,
-          singleWordOrPhraseResponse: 0,
-          incorrectResponse: 0,
-          noResponseGiven: 0,
           ...prev.autobiographicalResponses[questionId],
           [category]: value
         }
@@ -586,9 +599,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-     // console.log('Saving Section 2 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all autobiographical responses and save them
+      // Iterate through all autobiographical responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.autobiographicalResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           // Save all values including zeros
@@ -612,21 +626,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
         }
       }
 
-     // console.log('Section 2 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 2 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 2 responses:', error)
@@ -659,9 +675,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-     // console.log('Saving Section 3 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all alphabet responses and save them
+      // Iterate through all alphabet responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.alphabetResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           // Save all values including zeros
@@ -691,21 +708,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
               continue
           }
 
-          const result = await saveAssessmentAnswer({
+          batchAnswers.push({
             assessment_id: currentAssessmentId,
             question_id: questionId,
             option_id: optionId,
             answer: value as number
           })
-
-          if (!result.success) {
-            console.error('Failed to save answer:', result.error)
-            throw new Error(`Failed to save response for question ${questionId}`)
-          }
         }
       }
 
-     // console.log('Section 3 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 3 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 3 responses:', error)
@@ -738,9 +757,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-     // console.log('Saving Section 4 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all colour responses and save them
+      // Iterate through all colour responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.colourResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           // Save all values including zeros
@@ -767,21 +787,23 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
         }
       }
 
-    //  console.log('Section 4 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 4 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 4 responses:', error)
@@ -814,9 +836,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-     // console.log('Saving Section 5 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all quantity counting responses and save them
+      // Iterate through all quantity counting responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.quantityCountingResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           if (value >= 0) { // Save all values including zeros
@@ -855,22 +878,24 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
           }
         }
       }
 
-      //console.log('Section 5 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 5 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 5 responses:', error)
@@ -903,9 +928,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-     // console.log('Saving Section 6 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all shape recognition responses and save them
+      // Iterate through all shape recognition responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.shapeRecognitionResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           if (value >= 0) { // Save all values including zeros
@@ -938,22 +964,24 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
           }
         }
       }
 
-     // console.log('Section 6 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 6 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 6 responses:', error)
@@ -986,9 +1014,10 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }
 
     try {
-   //   console.log('Saving Section 7 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all motor skills responses and save them
+      // Iterate through all motor skills responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.motorSkillsResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           if (value >= 0) { // Save all values including zeros
@@ -1036,22 +1065,24 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
           }
         }
       }
 
-    //  console.log('Section 7 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 7 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 7 responses:', error)
@@ -1066,6 +1097,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   // Function to save Section 8 responses to database
   const saveSection8Responses = async () => {
+    console.log("=== SAVING SECTION 8 ===")
+    console.log("Current formData.grossMotorSkillsResponses:", formData.grossMotorSkillsResponses)
+    
     if (!currentAssessmentId) {
       toast({
         title: "Please Save Section 1",
@@ -1075,18 +1109,43 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       return false
     }
 
-    // Validate all questions in Section 8 before saving
-    for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
-      const questionTitle = `Gross Motor Skills Question ${Object.keys(formData.grossMotorSkillsResponses).indexOf(questionId) + 1}`
-      if (!validateQuestionTotals(responses, questionTitle)) {
+    // Validate all questions in Section 8 before saving using the correct validation logic
+    const enrollment = parseInt(formData.enrollment) || 0
+    const section8Questions = questionsCache["Gross Motor Skills"] || []
+    
+    for (const question of section8Questions) {
+      const responses = formData.grossMotorSkillsResponses[question.id] || {}
+      
+      let total = 0
+      if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
+        // Throw and Catch: 1-5 Times + Unable to Respond
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
+      } else if (question.questions.toLowerCase().includes('hop')) {
+        // Hop activities: 1-3 Times + Unable to Respond  
+        total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
+      } else if (question.questions.toLowerCase().includes('stand')) {
+        // Stand on One Leg: Left + Right + Both + Unable to Respond
+        total = (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
+      } else {
+        // Default: Simple counting for other types
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
+      }
+      
+      if (total !== enrollment) {
+        toast({
+          title: "Section 8 Validation Error",
+          description: `${question.questions}: Total responses (${total}) must equal enrollment (${enrollment}). Please check your entries.`,
+          variant: "destructive",
+        })
         return false
       }
     }
 
     try {
-    //  console.log('Saving Section 8 responses to database...')
+      // Prepare all answers for batch saving
+      const batchAnswers = []
       
-      // Iterate through all gross motor skills responses and save them
+      // Iterate through all gross motor skills responses and prepare them for batch save
       for (const [questionId, responses] of Object.entries(formData.grossMotorSkillsResponses)) {
         for (const [category, value] of Object.entries(responses)) {
           if (value >= 0) { // Save all values including zeros
@@ -1125,7 +1184,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 optionId = '5f106448-51de-47a2-a7ce-edf46884aaef' // Right
                 break
               case 'both':
-                optionId = '3d09727b-88af-46fa-a1b6-e474e09cfaea' // Both (need actual option ID)
+                optionId = '3d09727b-88af-46fa-a1b6-e474e09cfaea' // Both
                 break
               case 'unableToRespond':
                 optionId = '6dff252d-bf88-4300-ab4f-ec32891b979a' // Unable to respond
@@ -1134,22 +1193,24 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 continue
             }
 
-            const result = await saveAssessmentAnswer({
+            batchAnswers.push({
               assessment_id: currentAssessmentId,
               question_id: questionId,
               option_id: optionId,
               answer: value as number
             })
-
-            if (!result.success) {
-              console.error('Failed to save answer:', result.error)
-              throw new Error(`Failed to save response for question ${questionId}`)
-            }
           }
         }
       }
 
-     // console.log('Section 8 responses saved successfully!')
+      // Save all answers in a single batch operation
+      const result = await saveAssessmentAnswersBatch(batchAnswers)
+
+      if (!result.success) {
+        console.error('Failed to save batch answers:', result.error)
+        throw new Error(`Failed to save Section 8 responses: ${result.error}`)
+      }
+
       return true
     } catch (error) {
       console.error('Error saving Section 8 responses:', error)
@@ -1169,12 +1230,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       alphabetResponses: {
         ...prev.alphabetResponses,
         [questionId]: {
-          range1to6Correct: 0,
-          range7to12Correct: 0,
-          range13to18Correct: 0,
-          range19to26Correct: 0,
-          noResponseGiven: 0,
-          incorrectResponse: 0,
           ...prev.alphabetResponses[questionId],
           [category]: value
         }
@@ -1189,11 +1244,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       colourResponses: {
         ...prev.colourResponses,
         [questionId]: {
-          oneCorrect: 0,
-          twoCorrect: 0,
-          threeCorrect: 0,
-          noResponseGiven: 0,
-          incorrectResponse: 0,
           ...prev.colourResponses[questionId],
           [category]: value
         }
@@ -1274,31 +1324,59 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     return getAvailableSections(formData.assessmentType)
   }, [formData.assessmentType])
 
-  // Load school information and existing assessment
+  // Load user information from session and existing assessment
   useEffect(() => {
-    const loadSchoolInfo = async () => {
+    let isMounted = true
+    
+    const loadUserInfo = async () => {
+      // Wait for auth to load and prevent multiple simultaneous loads
+      if (authLoading || !user || isInitialLoading || hasLoadedInitialData) return
+      setIsInitialLoading(true)
+      
+      console.log("=== LOADING USER INFO FROM SESSION ===")
+      console.log("User from session:", user)
+      
       try {
-        // Get school info
-        const schoolResult = await getUserSchoolInfo()
-        if (!schoolResult.error && schoolResult.school) {
-          setSchoolInfo(schoolResult.school)
+        // Set user info from session (no API call needed)
+        if (isMounted) {
+          setCurrentUser(user)
           
-          // Get user info for head teacher name
-          const userResult = await getUser()
-          setCurrentUser(userResult)
+          // Check if we have full school info in session, otherwise get it
+          let schoolData = null
+          if (user.school_name && user.region_name) {
+            // Use session data if available
+            schoolData = {
+              name: user.school_name,
+              region: user.region_name,
+              level: user.school_level || "Primary" // fallback
+            }
+          } else {
+            // Need to get full school info if not in session
+            console.log("Getting full school info from API...")
+            const schoolResult = await getUserSchoolInfo()
+            if (schoolResult.school) {
+              schoolData = schoolResult.school
+              setSchoolInfo(schoolResult.school)
+            }
+          }
           
-          // Auto-fill form data
-          setFormData(prev => ({
-            ...prev,
-            schoolName: schoolResult.school.name,
-            region: schoolResult.school.region,
-            schoolGrade: schoolResult.school.level,
-            headTeacherName: userResult?.name || userResult?.email || "Loading..."
-          }))
+          if (schoolData) {
+            // Auto-fill form data from session/school data
+            setFormData(prev => ({
+              ...prev,
+              schoolName: schoolData.name,
+              region: schoolData.region,
+              schoolGrade: schoolData.level,
+              date: new Date().toISOString().split('T')[0],
+              headTeacherName: user.name || user.email || "Loading..."
+            }))
+          }
 
-          // Check yearly assessment limits
-          if (userResult?.id) {
-            const limitsResult = await checkYearlyAssessmentLimits(userResult.id, schoolResult.school.id)
+          // Check yearly assessment limits (minimal API call)
+          if (user.id && user.school_id) {
+            const limitsResult = await checkYearlyAssessmentLimits(user.id, user.school_id)
+            if (!isMounted) return
+            
             if (!limitsResult.error) {
               setYearlyLimits({
                 allThreeSubmitted: limitsResult.allThreeSubmitted,
@@ -1309,120 +1387,93 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           }
 
           // Try to load existing draft assessment
-          if (userResult?.id) {
-            const existingAssessment = await loadNurseryAssessment(userResult.id, schoolResult.school.id)
+          if (user.id && user.school_id) {
+            const existingAssessment = await loadNurseryAssessment(user.id, user.school_id)
+            if (!isMounted) return
             
             if (existingAssessment.assessment) {
-           //   console.log('Found existing assessment:', existingAssessment.assessment)
               setCurrentAssessmentId(existingAssessment.assessment.id)
               
               // Load saved responses from answers table
               const responsesResult = await loadSavedResponses(existingAssessment.assessment.id)
               if (responsesResult.responses && responsesResult.responses.length > 0) {
-                //console.log('Loading saved responses:', responsesResult.responses)
                 const mappedResponses = mapResponsestoFormData(responsesResult.responses)
-                //console.log('Mapped responses:', mappedResponses)
                 
-                setFormData(prev => ({
-                  ...prev,
+                const loadedData = {
                   ...mappedResponses,
-                  // Keep the auto-filled basic info
-                  schoolName: schoolResult.school.name,
-                  region: schoolResult.school.region,
-                  schoolGrade: schoolResult.school.level,
-                  headTeacherName: userResult?.name || userResult?.email || "Loading...",
-                  // Load basic assessment info
-                  assessmentType: existingAssessment.assessment.assessment_type || prev.assessmentType,
-                  enrollment: existingAssessment.assessment.enrollment?.toString() || prev.enrollment
-                }))
-              } else {
-                // No responses saved yet, just load basic info
-                setFormData(prev => ({
-                  ...prev,
-                  // Keep the auto-filled basic info
-                  schoolName: schoolResult.school.name,
-                  region: schoolResult.school.region,
-                  schoolGrade: schoolResult.school.level,
-                  headTeacherName: userResult?.name || userResult?.email || "Loading...",
+                  // Keep the session-based basic info
+                  schoolName: user.school_name || "",
+                  region: user.region_name || "",
+                  headTeacherName: user.name || user.email || "Loading...",
                   // Load basic assessment info
                   assessmentType: existingAssessment.assessment.assessment_type || '',
                   enrollment: existingAssessment.assessment.enrollment?.toString() || ''
-                }))
-              }
-              
-              // Load saved form data from JSON field if available (for any other data)
-              if (existingAssessment.assessment.form_data) {
-               // console.log('Also loading saved form_data JSON:', existingAssessment.assessment.form_data)
-                setFormData(prev => ({
-                  ...prev,
-                  ...existingAssessment.assessment.form_data,
-                  // Preserve what we just loaded from responses table
-                  autobiographicalResponses: prev.autobiographicalResponses,
-                  alphabetResponses: prev.alphabetResponses,
-                  colourResponses: prev.colourResponses,
-                  quantityCountingResponses: prev.quantityCountingResponses,
-                  shapeRecognitionResponses: prev.shapeRecognitionResponses,
-                  motorSkillsResponses: prev.motorSkillsResponses,
-                  grossMotorSkillsResponses: prev.grossMotorSkillsResponses,
-                  // Keep the auto-filled basic info
-                  schoolName: schoolResult.school.name,
-                  region: schoolResult.school.region,
-                  schoolGrade: schoolResult.school.level,
-                  headTeacherName: userResult?.name || userResult?.email || "Loading..."
-                }))
+                }
+                
+                setFormData(prev => ({ ...prev, ...loadedData }))
               }
               
               toast({
                 title: "Assessment Loaded",
                 description: "Continuing your previous nursery assessment with saved responses.",
               })
-            } else {
-             // console.log('No existing assessment found')
-              // Try to load from localStorage as fallback
-              const localData = loadFromLocalStorage()
-              if (localData) {
-               // console.log('Loading from localStorage:', localData)
-                setFormData(prev => ({
-                  ...prev,
-                  ...localData,
-                  // Keep the auto-filled basic info
-                  schoolName: schoolResult.school.name,
-                  region: schoolResult.school.region,
-                  schoolGrade: schoolResult.school.level,
-                  headTeacherName: userResult?.name || userResult?.email || "Loading..."
-                }))
-              }
             }
           }
-        } else {
-          console.error("Error loading school info:", schoolResult.error)
         }
       } catch (error) {
-        console.error("Error loading school info:", error)
+        console.error("Error loading user info:", error)
+      } finally {
+        if (isMounted) {
+          setIsInitialLoading(false)
+          setHasLoadedInitialData(true)
+        }
       }
     }
     
-    loadSchoolInfo()
-  }, [loadFromLocalStorage])
-
-  // Load questions when entering sections 2, 3, 4, 5, 6, 7, or 8
-  useEffect(() => {
-    if (currentSection === 1) {
-      loadQuestions("Autobiographical Knowledge")
-    } else if (currentSection === 2) {
-      loadQuestions("Alphabet Recitation and Identification")
-    } else if (currentSection === 3) {
-      loadQuestions("Colour Identification")
-    } else if (currentSection === 4) {
-      loadQuestions("Quantity Differentiation and Counting Fluency")
-    } else if (currentSection === 5) {
-      loadQuestions("Shape Recognition and One on One Correspondence")
-    } else if (currentSection === 6) {
-      loadQuestions("Motor Skills")
-    } else if (currentSection === 7) {
-      loadQuestions("Gross Motor Skills")
+    loadUserInfo()
+    
+    // Cleanup function
+    return () => {
+      isMounted = false
     }
-  }, [currentSection])
+  }, [user?.id || '', user?.school_id || '', authLoading])
+  useEffect(() => {
+    let isMounted = true
+    
+    const loadQuestions = async () => {
+      if (isMounted && !allQuestionsLoaded && !questionsLoading) {
+        console.log("=== TRIGGERING QUESTIONS LOAD ===")
+        await loadAllQuestions()
+      }
+    }
+    
+    loadQuestions()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [!!allQuestionsLoaded, !!questionsLoading])
+
+  // Load questions from cache when section changes (no API calls)
+  useEffect(() => {
+    if (!allQuestionsLoaded) return // Wait for questions to be cached
+    
+    const sectionMap: {[key: number]: string} = {
+      1: "Autobiographical Knowledge",
+      2: "Alphabet Recitation and Identification", 
+      3: "Colour Identification",
+      4: "Quantity Differentiation and Counting Fluency",
+      5: "Shape Recognition and One on One Correspondence",
+      6: "Motor Skills",
+      7: "Gross Motor Skills"
+    }
+    
+    const section = sectionMap[currentSection]
+    if (section && questionsCache[section]) {
+      console.log(`Loading section ${currentSection}: ${section} from cache`)
+      loadQuestionsFromCache(section)
+    }
+  }, [currentSection, allQuestionsLoaded])
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -1431,37 +1482,99 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     }))
   }
 
-  const loadQuestions = async (section: string) => {
+  // Load all questions once at startup to cache them
+  const loadAllQuestions = async () => {
+    if (allQuestionsLoaded || questionsLoading) return // Already loaded or loading
+    
+    console.log("=== LOADING ALL QUESTIONS (ONE TIME ONLY) ===")
     setQuestionsLoading(true)
+    const sections = [
+      "Autobiographical Knowledge",
+      "Alphabet Recitation and Identification", 
+      "Colour Identification",
+      "Quantity Differentiation and Counting Fluency",
+      "Shape Recognition and One on One Correspondence",
+      "Motor Skills",
+      "Gross Motor Skills"
+    ]
+    
     try {
-     // console.log('Loading questions for section:', section)
-      const result = await getNurseryAssessmentQuestions(section)
-     // console.log('Questions result:', result)
+      const cache: {[section: string]: any[]} = {}
       
-      if (!result.error && result.questions.length > 0) {
-        setQuestions(result.questions)
-      //  console.log('Questions loaded:', result.questions.length)
-        
-        // No need to load options since we're using fixed option IDs for Autobiographical Knowledge
-       // console.log('Using fixed option IDs for Autobiographical Knowledge questions')
-      } else {
-        console.error("Error loading questions:", result.error)
-        toast({
-          title: "Error",
-          description: "Failed to load questions: " + result.error,
-          variant: "destructive",
-        })
+      // Load all sections in parallel for better performance
+      const results = await Promise.all(
+        sections.map(section => getNurseryAssessmentQuestions(section))
+      )
+      
+      results.forEach((result, index) => {
+        const section = sections[index]
+        if (!result.error && result.questions.length > 0) {
+          cache[section] = result.questions
+        } else {
+          console.error(`Error loading questions for ${section}:`, result.error)
+          cache[section] = []
+        }
+      })
+      
+      setQuestionsCache(cache)
+      setAllQuestionsLoaded(true)
+      
+      // Set initial questions for first section
+      if (cache["Autobiographical Knowledge"]) {
+        setQuestions(cache["Autobiographical Knowledge"])
       }
+      
     } catch (error) {
-      console.error("Error loading questions:", error)
+      console.error("Error loading all questions:", error)
       toast({
-        title: "Error", 
-        description: "Failed to load questions",
+        title: "Error",
+        description: "Failed to load assessment questions. Please refresh the page.",
         variant: "destructive",
       })
     } finally {
       setQuestionsLoading(false)
     }
+  }
+  
+  // Get questions from cache instead of making API calls
+  const loadQuestionsFromCache = (section: string) => {
+    if (questionsCache[section]) {
+      console.log(`Loading questions for section "${section}":`, questionsCache[section].length, 'questions found')
+      setQuestions(questionsCache[section])
+    } else {
+      console.warn(`Questions for section "${section}" not found in cache`)
+      setQuestions([])
+    }
+  }
+
+  // Check if a section has sufficient data to be considered complete
+  const isSectionComplete = (sectionNumber: number): boolean => {
+    switch (sectionNumber) {
+      case 0:
+        return !!(formData.schoolName && formData.date && formData.enrollment && formData.assessmentType)
+      case 1:
+        return Object.keys(formData.autobiographicalResponses).length > 0
+      case 2:
+        return Object.keys(formData.alphabetResponses).length > 0
+      case 3:
+        return Object.keys(formData.colourResponses).length > 0
+      case 4:
+        return Object.keys(formData.quantityCountingResponses).length > 0
+      case 5:
+        return Object.keys(formData.shapeRecognitionResponses).length > 0
+      case 6:
+        return Object.keys(formData.motorSkillsResponses).length > 0
+      case 7:
+        return Object.keys(formData.grossMotorSkillsResponses).length > 0
+      default:
+        return false
+    }
+  }
+
+  // Simple navigation - allow free movement between sections
+  const canNavigateToSection = (targetSection: number): boolean => {
+    // Always allow navigation if basic information is complete
+    return isSectionComplete(0) || targetSection === 0
   }
 
   const saveAssessmentBasicInfo = async () => {
@@ -1547,7 +1660,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       console.error("Error saving assessment:", error)
       toast({
         title: "Error",
-        description: `Failed to save assessment: ${error.message}`,
+        description: `Failed to save assessment: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       })
       return false
@@ -1854,6 +1967,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection2 = () => {
+    const section2Questions = questionsCache["Autobiographical Knowledge"] || []
     if (!section2Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -1893,6 +2007,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection3 = () => {
+    const section3Questions = questionsCache["Alphabet Recitation and Identification"] || []
     if (!section3Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -1926,6 +2041,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection4 = () => {
+    const section4Questions = questionsCache["Colour Identification"] || []
     if (!section4Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -1957,6 +2073,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection5 = () => {
+    const section5Questions = questionsCache["Quantity Differentiation and Counting Fluency"] || []
     if (!section5Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -1993,6 +2110,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection6 = () => {
+    const section6Questions = questionsCache["Shape Recognition and One on One Correspondence"] || []
     if (!section6Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -2029,6 +2147,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection7 = () => {
+    const section7Questions = questionsCache["Motor Skills"] || []
     if (!section7Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -2070,6 +2189,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const validateSection8 = () => {
+    const section8Questions = questionsCache["Gross Motor Skills"] || []
     if (!section8Questions.length) return true
     
     const enrollment = parseInt(formData.enrollment) || 0
@@ -2088,12 +2208,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
       let total = 0
       if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
+        // Throw and Catch: 1-5 Times + Unable to Respond
         total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
       } else if (question.questions.toLowerCase().includes('hop')) {
+        // Hop activities: 1-3 Times + Unable to Respond  
         total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
       } else if (question.questions.toLowerCase().includes('stand')) {
+        // Stand on One Leg: Left + Right + Both + Unable to Respond
         total = (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
       } else {
+        // Default: Simple counting for other types
         total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
       }
       
@@ -2278,27 +2402,51 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     const enrollment = parseInt(formData.enrollment) || 0
     if (enrollment === 0) return false
     
+    // Wait for questions cache to be loaded before validation
+    if (!allQuestionsLoaded) {
+      console.log("Section 8 validation: Questions not yet loaded")
+      return false
+    }
+    
+    // Get Section 8 questions from cache
+    const grossMotorQuestions = questionsCache["Gross Motor Skills"] || []
+    if (grossMotorQuestions.length === 0) {
+      console.log("Section 8 validation: No Gross Motor Skills questions found in cache")
+      return false
+    }
+    
+    console.log(`Section 8 validation: Found ${grossMotorQuestions.length} questions, checking responses...`)
+    
     // Check each question in Section 8
-    for (const question of questions) {
+    for (const question of grossMotorQuestions) {
       const responses = formData.grossMotorSkillsResponses[question.id] || {}
-      const total = (responses.oneTime || 0) +
-                   (responses.twoTimes || 0) +
-                   (responses.threeTimes || 0) +
-                   (responses.fourTimes || 0) +
-                   (responses.fiveTimes || 0) +
-                   (responses.oneLegOneTime || 0) +
-                   (responses.oneLegTwoTimes || 0) +
-                   (responses.oneLegThreeTimes || 0) +
-                   (responses.left || 0) +
-                   (responses.right || 0) +
-                   (responses.both || 0) +
-                   (responses.unableToRespond || 0)
+      
+      let total = 0
+      if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
+        // Throw and Catch: 1-5 Times + Unable to Respond
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
+        console.log(`Question "${question.questions}" (Throw/Catch): total=${total}, responses=`, responses)
+      } else if (question.questions.toLowerCase().includes('hop')) {
+        // Hop activities: 1-3 Times + Unable to Respond  
+        total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
+        console.log(`Question "${question.questions}" (Hop): total=${total}, responses=`, responses)
+      } else if (question.questions.toLowerCase().includes('stand')) {
+        // Stand on One Leg: Left + Right + Both + Unable to Respond
+        total = (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
+        console.log(`Question "${question.questions}" (Stand): total=${total}, responses=`, responses)
+      } else {
+        // Default: Simple counting for other types
+        total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
+        console.log(`Question "${question.questions}" (Default): total=${total}, responses=`, responses)
+      }
       
       if (total !== enrollment) {
+        console.log(`Section 8 validation failed for question ${question.id} ("${question.questions}"): total=${total}, enrollment=${enrollment}`)
         return false
       }
     }
     
+    console.log("Section 8 validation passed for all questions")
     return true
   }
 
@@ -2319,22 +2467,31 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   }
 
   const nextSection = async () => {
-    // Check if current section is saved before proceeding
-    if (!savedSections.has(currentSection)) {
-      toast({
-        title: "Save Required",
-        description: "Please save the current section before proceeding to the next.",
-        variant: "destructive",
-      })
+    const nextSectionIndex = currentSection + 1
+    
+    // Check if navigation is allowed using smart navigation logic
+    if (!canNavigateToSection(nextSectionIndex)) {
+      if (!isSectionComplete(0)) {
+        toast({
+          title: "Complete Basic Information",
+          description: "Please complete Section 1 (Basic Information) before continuing.",
+          variant: "destructive",
+        })
+      } else if (!savedSections.has(currentSection)) {
+        // For new assessments, require saving
+        toast({
+          title: "Save Required",
+          description: "Please save the current section before proceeding to the next.",
+          variant: "destructive",
+        })
+      }
       return
     }
 
-    // Simply move to next section (no auto-saving)
+    // Navigate to next section
     if (currentSection < availableSections.length - 1) {
       // Skip Section 7 (Gross Motor Skills) if Assessment 1 - Year 1
-      let nextSectionIndex = currentSection + 1
       if (formData.assessmentType === 'assessment-1-year-1' && nextSectionIndex === 7) {
-        // Already handled by availableSections.length check above
         return
       }
       setCurrentSection(nextSectionIndex)
@@ -2391,9 +2548,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       }
 
      // console.log('Assessment submitted successfully:', result.assessment)
-      
-      // Clear local storage since assessment is now submitted
-      clearLocalStorage()
       
       // Show success message
       toast({
@@ -3667,7 +3821,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     </div>
   )
 
-  const renderGrossMotorSkills = () => (
+  const renderGrossMotorSkills = () => {
+    // Get Section 8 questions from cache
+    const grossMotorQuestions = questionsCache["Gross Motor Skills"] || []
+    
+    return (
     <div className="space-y-6">
       {/* Instructions */}
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
@@ -3687,7 +3845,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
           <p className="text-gray-600">Loading assessment questions...</p>
         </div>
-      ) : questions.length === 0 ? (
+      ) : grossMotorQuestions.length === 0 ? (
         <div className="text-center py-8">
           <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
@@ -3695,7 +3853,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         </div>
       ) : (
         <div className="space-y-4">
-          {questions.map((question, index) => (
+          {grossMotorQuestions.map((question, index) => (
             <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -3972,6 +4130,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       )}
     </div>
   )
+  }
 
   const renderCurrentSection = () => {
     switch (currentSection) {
@@ -4064,16 +4223,31 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                     {/* Circle and Content */}
                     <div className="flex flex-col items-center">
                       <button
-                        onClick={() => setCurrentSection(index)}
+                        type="button"
+                        onClick={() => {
+                          if (canNavigateToSection(index)) {
+                            setCurrentSection(index)
+                          } else {
+                            toast({
+                              title: "Complete Basic Information",
+                              description: "Please complete Section 1 first.",
+                              variant: "destructive",
+                            })
+                          }
+                        }}
+                        disabled={!canNavigateToSection(index)}
                         className={`
                           w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
-                          ${isCurrent 
-                            ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
-                            : isCompleted 
-                              ? 'bg-green-500 text-white' 
-                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          ${!canNavigateToSection(index) 
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : isCurrent 
+                              ? 'bg-blue-600 text-white ring-4 ring-blue-100 cursor-pointer' 
+                              : isCompleted 
+                                ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600' 
+                                : currentAssessmentId 
+                                  ? 'bg-blue-100 text-blue-600 cursor-pointer hover:bg-blue-200'
+                                  : 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300'
                           }
-                          cursor-pointer
                         `}
                       >
                         {isCompleted ? '✓' : index + 1}
@@ -4129,6 +4303,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           {/* Navigation */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
             <Button
+              type="button"
               variant="outline"
               onClick={previousSection}
               disabled={currentSection === 0}
@@ -4140,6 +4315,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
             <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
               <Button
+                type="button"
                 onClick={saveCurrentSection}
                 disabled={loading || 
                   (currentSection === 0 && (!formData.assessmentType || !formData.enrollment)) ||
@@ -4158,16 +4334,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 Save Section
               </Button>
 
-              {/* Auto-save indicator */}
-              {isSaving && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Auto-saving...
-                </div>
-              )}
-
               {currentSection === availableSections.length - 1 ? (
                 <Button
+                  type="button"
                   onClick={submitAssessment}
                   disabled={loading || yearlyLimits.allThreeSubmitted || !areAllSectionsComplete()}
                   className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
@@ -4183,15 +4352,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                 </Button>
               ) : (
                 <Button
+                  type="button"
                   onClick={nextSection}
-                  disabled={currentSection === availableSections.length - 1 || !isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted}
+                  disabled={currentSection === availableSections.length - 1 || !isCurrentSectionComplete()}
                   className={`w-full sm:w-auto transition-all duration-200 flex items-center gap-2 ${
-                    (!isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted)
+                    !isCurrentSectionComplete()
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                       : 'gradient-button text-white hover:shadow-lg'
                   }`}
                 >
-                  {(!isCurrentSectionComplete() || yearlyLimits.allThreeSubmitted) ? 'Save Section First' : 'Next'}
+                  {!isCurrentSectionComplete() ? 'Save Section First' : 'Next'}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}

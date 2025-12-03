@@ -7,15 +7,6 @@ export async function getNurseryAssessmentQuestions(section: string) {
    // console.log('Fetching questions for section:', section)
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
     
-    // First, let's try to get all questions to see if table exists
-    const { data: allQuestions, error: allError } = await supabase
-      .from('hmr_nursery_assessment_questions')
-      .select('*')
-      .limit(5)
-    
-   // console.log('All questions test:', allQuestions)
-   // console.log('All questions error:', allError)
-    
     const { data: questions, error } = await supabase
       .from('hmr_nursery_assessment_questions')
       .select('*')
@@ -34,6 +25,38 @@ export async function getNurseryAssessmentQuestions(section: string) {
   } catch (err) {
     console.error('Error in getNurseryAssessmentQuestions:', err)
     return { questions: [], error: "An unexpected error occurred" }
+  }
+}
+
+// Optimized function to get all questions at once for better caching
+export async function getAllNurseryAssessmentQuestions() {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    const { data: questions, error } = await supabase
+      .from('hmr_nursery_assessment_questions')
+      .select('*')
+      .order('section', { ascending: true })
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching all questions:', error)
+      return { questionsBySection: {}, error: "Failed to fetch questions: " + error.message }
+    }
+
+    // Group questions by section for easy access
+    const questionsBySection: { [section: string]: any[] } = {}
+    questions?.forEach(question => {
+      if (!questionsBySection[question.section]) {
+        questionsBySection[question.section] = []
+      }
+      questionsBySection[question.section].push(question)
+    })
+
+    return { questionsBySection, error: null }
+  } catch (err) {
+    console.error('Error in getAllNurseryAssessmentQuestions:', err)
+    return { questionsBySection: {}, error: "An unexpected error occurred" }
   }
 }
 
@@ -398,7 +421,122 @@ export async function testEnrollmentColumn() {
   }
 }
 
-// Save individual assessment answer
+// Save multiple assessment answers in a single batch operation
+export async function saveAssessmentAnswersBatch(answersData: Array<{
+  assessment_id: string
+  question_id: string
+  option_id: string
+  answer: number
+}>) {
+  try {
+    if (!answersData || answersData.length === 0) {
+      return { success: true, data: [], error: null }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // Validate all answers have required data
+    for (const answer of answersData) {
+      if (!answer.assessment_id || !answer.question_id || !answer.option_id) {
+        console.error('Missing required fields in batch:', answer)
+        return { success: false, error: 'Missing required fields in batch data' }
+      }
+    }
+
+    // Get all existing answers for this assessment in one query
+    const assessmentIds = [...new Set(answersData.map(a => a.assessment_id))]
+    const { data: existingAnswers, error: fetchError } = await supabase
+      .from('hmr_nursery_assessment_answers')
+      .select('id, assessment_id, question_id, option_id')
+      .in('assessment_id', assessmentIds)
+
+    if (fetchError) {
+      console.error('Error fetching existing answers:', fetchError)
+      return { success: false, error: fetchError.message }
+    }
+
+    // Create lookup map for existing answers
+    const existingMap = new Map()
+    existingAnswers?.forEach(answer => {
+      const key = `${answer.assessment_id}-${answer.question_id}-${answer.option_id}`
+      existingMap.set(key, answer.id)
+    })
+
+    // Separate updates and inserts
+    const updates: Array<{ id: string; answer: number }> = []
+    const inserts: Array<{
+      assessment_id: string
+      question_id: string
+      option_id: string
+      answer: number
+      created_at: string
+    }> = []
+
+    answersData.forEach(answerData => {
+      const key = `${answerData.assessment_id}-${answerData.question_id}-${answerData.option_id}`
+      const existingId = existingMap.get(key)
+      
+      if (existingId) {
+        updates.push({
+          id: existingId,
+          answer: answerData.answer
+        })
+      } else {
+        inserts.push({
+          assessment_id: answerData.assessment_id,
+          question_id: answerData.question_id,
+          option_id: answerData.option_id,
+          answer: answerData.answer,
+          created_at: new Date().toISOString()
+        })
+      }
+    })
+
+    const results = []
+
+    // Perform batch updates if any
+    if (updates.length > 0) {
+      for (const update of updates) {
+        const { data, error } = await supabase
+          .from('hmr_nursery_assessment_answers')
+          .update({ 
+            answer: update.answer,
+            created_at: new Date().toISOString()
+          })
+          .eq('id', update.id)
+          .select()
+          .single()
+
+        if (error) {
+          console.error('Error in batch update:', error)
+          return { success: false, error: `Batch update error: ${error.message}` }
+        }
+        results.push(data)
+      }
+    }
+
+    // Perform batch inserts if any  
+    if (inserts.length > 0) {
+      const { data, error } = await supabase
+        .from('hmr_nursery_assessment_answers')
+        .insert(inserts)
+        .select()
+
+      if (error) {
+        console.error('Error in batch insert:', error)
+        return { success: false, error: `Batch insert error: ${error.message}` }
+      }
+      results.push(...(data || []))
+    }
+
+    return { success: true, data: results, error: null }
+  } catch (err) {
+    console.error('Error in saveAssessmentAnswersBatch:', err)
+    return { success: false, error: "An unexpected error occurred while saving answers batch" }
+  }
+}
+
+// Save individual assessment answer (kept for compatibility)
 export async function saveAssessmentAnswer(answerData: {
   assessment_id: string
   question_id: string

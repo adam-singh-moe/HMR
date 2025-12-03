@@ -316,7 +316,7 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
     data: formData,
     onSave: performAutoSave,
     delay: 5000, // 5 seconds debounce
-    enabled: reportStatus !== 'submitted' && !isInitialLoading,
+    enabled: false, // DISABLED - use save button instead
     maxRetries: 3
   })
 
