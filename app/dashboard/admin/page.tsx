@@ -150,17 +150,17 @@ export default function AdminDashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Nursery Classes</CardTitle>
+            <CardTitle className="text-sm font-medium">Nursery Assessments</CardTitle>
             <Baby className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">-</div>
-            <div className="text-xs text-muted-foreground mt-1">Schools with nursery classes</div>
+            <div className="text-xs text-muted-foreground mt-1">Manage nursery assessments</div>
             <Link
-              href="/dashboard/admin/nursery-schools"
+              href="/dashboard/admin/nursery-assessments"
               className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
             >
-              Manage Classes <ArrowRight className="h-3 w-3" />
+              Manage Assessments <ArrowRight className="h-3 w-3" />
             </Link>
           </CardContent>
         </Card>

@@ -56,6 +56,11 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
         icon: Baby,
       },
       {
+        name: "Nursery Assessments",
+        href: "/dashboard/admin/nursery-assessments",
+        icon: Baby,
+      },
+      {
         name: "Regions",
         href: "/dashboard/admin/regions",
         icon: MapPin,
