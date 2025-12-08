@@ -142,7 +142,7 @@ export async function authenticateWithToken(token: string) {
     }
     
     // Set the user_session cookie that your middleware recognizes
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     cookieStore.set('user_session', JSON.stringify(userSessionData), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
