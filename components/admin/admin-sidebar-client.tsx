@@ -15,6 +15,7 @@ import {
   FilePlus,
   LogOut,
   Baby,
+  Key,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -44,6 +45,11 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
         name: "Users",
         href: "/dashboard/admin/users",
         icon: Users,
+      },
+      {
+        name: "Access Tokens",
+        href: "/dashboard/admin/access-tokens",
+        icon: Key,
       },
       {
         name: "Schools",

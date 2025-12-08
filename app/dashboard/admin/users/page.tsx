@@ -1,11 +1,12 @@
 import { getUsers } from "@/app/actions/admin"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { UserPlus, MoreHorizontal, Pencil } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog"
+import { GenerateAccessTokenDialog } from "@/components/admin/generate-access-token-dialog"
 import { PaginationControls } from "@/components/admin/pagination-controls"
 import { SearchInput } from "@/components/admin/search-input"
 
@@ -121,6 +122,12 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                               Edit
                             </Link>
                           </DropdownMenuItem>
+                          <GenerateAccessTokenDialog 
+                            userId={user.id} 
+                            userName={user.name} 
+                            userEmail={user.email} 
+                          />
+                          <DropdownMenuSeparator />
                           <DeleteUserDialog userId={user.id} userName={user.name} />
                         </DropdownMenuContent>
                       </DropdownMenu>
