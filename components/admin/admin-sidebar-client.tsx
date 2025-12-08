@@ -47,11 +47,6 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
         icon: Users,
       },
       {
-        name: "Access Tokens",
-        href: "/dashboard/admin/access-tokens",
-        icon: Key,
-      },
-      {
         name: "Schools",
         href: "/dashboard/admin/schools",
         icon: School,
