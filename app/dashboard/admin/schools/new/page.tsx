@@ -3,7 +3,7 @@ import { SchoolForm } from "@/components/admin/school-form"
 
 export default async function NewSchoolPage() {
   const [regionsResult, schoolLevels] = await Promise.all([
-    getRegions(),
+    getRegions(1, 50),
     getSchoolLevels()
   ])
 

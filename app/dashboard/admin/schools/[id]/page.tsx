@@ -9,9 +9,10 @@ interface EditSchoolPageProps {
 }
 
 export default async function EditSchoolPage({ params }: EditSchoolPageProps) {
+  const { id } = await params
   const [school, regionsResult, schoolLevels] = await Promise.all([
-    getSchoolById(params.id),
-    getRegions(),
+    getSchoolById(id),
+    getRegions(1, 50),
     getSchoolLevels()
   ])
 

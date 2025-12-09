@@ -40,7 +40,7 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
 
   const [schoolsResult, regionsResult, schoolLevels] = await Promise.all([
     getSchools(page, limit, search, selectedRegion, selectedSchoolLevel, sortBy, sortOrder),
-    getRegions(),
+    getRegions(1, 50),
     getSchoolLevels()
   ])
 

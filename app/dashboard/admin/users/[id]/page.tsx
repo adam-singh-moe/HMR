@@ -13,7 +13,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   const [user, roles, regionsResult, schoolsResult] = await Promise.all([
     getUserById(id),
     getRoles(),
-    getRegions(),
+    getRegions(1, 50),
     getSchools(1, 1000), // Get up to 1000 schools for the dropdown
   ])
 

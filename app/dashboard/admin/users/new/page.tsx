@@ -4,7 +4,7 @@ import { UserForm } from "@/components/admin/user-form"
 export default async function NewUserPage() {
   const [roles, regionsResult, schoolsResult] = await Promise.all([
     getRoles(), 
-    getRegions(), 
+    getRegions(1, 50), 
     getSchools(1, 2500) // Get up to 2500 schools for the dropdown to accommodate all schools
   ])
 
