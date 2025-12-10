@@ -764,14 +764,15 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       return { assessment: null, responses: [], error: assessmentError.message }
     }
 
-    // Get school data with region name
+    // Get school data with region name and school level name
     const { data: school } = await supabase
       .from('sms_schools')
       .select(`
         name, 
         region_id, 
         school_level_id,
-        sms_regions!inner(name)
+        sms_regions!inner(name),
+        sms_school_levels!inner(name)
       `)
       .eq('id', assessment.school_id)
       .single()
@@ -782,7 +783,7 @@ export async function getNurseryAssessmentDetails(assessmentId: string) {
       schools: school ? { 
         name: school.name, 
         region: (school.sms_regions as any)?.name || 'Unknown Region', 
-        level: school.school_level_id 
+        level: (school.sms_school_levels as any)?.name || 'Unknown Level'
       } : null
     }
 

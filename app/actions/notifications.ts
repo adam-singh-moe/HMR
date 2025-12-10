@@ -1,173 +1,378 @@
 "use server"
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
-import { getUser as getCurrentUser } from "./auth"
+import { getUser } from "./auth"
 import { revalidatePath } from "next/cache"
 
-export async function getNotifications(page = 1, limit = 10) {
-  const user = await getCurrentUser()
-  if (!user) {
-    return { notifications: [], total: 0, error: "User not authenticated." }
-  }
-
-  const supabase = createServiceRoleSupabaseClient()
-
-  let query = supabase.from("notifications").select("*", { count: "exact" })
-
-  // Filter notifications based on user role
-  if (user.role === "Head Teacher") {
-    // Head teachers see notifications for their user ID, school, or region
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
-  } else if (user.role === "Regional Officer") {
-    // Regional officers see notifications for their user ID or region
-    query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
-  } else if (user.role === "Admin") {
-    // Admins see all notifications
-    // No additional filter needed
-  } else {
-    // Other users see only their personal notifications
-    query = query.eq("user_id", user.id)
-  }
-
-  const {
-    data: notifications,
-    error,
-    count,
-  } = await query.order("created_at", { ascending: false }).range((page - 1) * limit, page * limit - 1)
-
-  if (error) {
-    console.error("Error fetching notifications:", error)
-    return { notifications: [], total: 0, error: "Failed to fetch notifications." }
-  }
-
-  return { notifications: notifications || [], total: count || 0, error: null }
+export interface CreateNotificationData {
+  title: string
+  message: string
+  type?: 'info' | 'warning' | 'success' | 'error'
+  priority?: 'low' | 'normal' | 'high' | 'urgent'
+  targetType: 'role' | 'school_level' | 'specific_user' | 'all'
+  targetRoleId?: string
+  targetSchoolLevelId?: string
+  targetUserId?: string
+  expiresAt?: string
 }
 
-export async function getUnreadNotificationCount() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return 0
+export async function createNotification(data: CreateNotificationData) {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { success: false, error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    // Create the notification
+    const { data: notification, error: notificationError } = await supabase
+      .from("hmr_notifications")
+      .insert({
+        title: data.title,
+        message: data.message,
+        type: data.type || 'info',
+        priority: data.priority || 'normal',
+        target_type: data.targetType,
+        target_role_id: data.targetRoleId || null,
+        target_school_level_id: data.targetSchoolLevelId || null,
+        target_user_id: data.targetUserId || null,
+        created_by: user.id,
+        expires_at: data.expiresAt || null
+      })
+      .select()
+      .single()
+
+    if (notificationError) {
+      console.error("Error creating notification:", notificationError)
+      return { success: false, error: "Failed to create notification." }
+    }
+
+    // Now create user notification records for all targeted users
+    let targetUsers: any[] = []
+
+    if (data.targetType === 'all') {
+      // Get all active users
+      const { data: users, error: usersError } = await supabase
+        .from("hmr_users")
+        .select("id")
+        .is("deleted_at", null)
+
+      if (usersError) {
+        console.error("Error fetching all users:", usersError)
+        return { success: false, error: "Failed to fetch target users." }
+      }
+      targetUsers = users || []
+    } else if (data.targetType === 'role' && data.targetRoleId) {
+      // Get users with specific role
+      const { data: users, error: usersError } = await supabase
+        .from("hmr_users")
+        .select("id")
+        .eq("role_id", data.targetRoleId)
+        .is("deleted_at", null)
+
+      if (usersError) {
+        console.error("Error fetching users by role:", usersError)
+        return { success: false, error: "Failed to fetch target users." }
+      }
+      targetUsers = users || []
+    } else if (data.targetType === 'school_level' && data.targetSchoolLevelId) {
+      // Get users from schools with specific school level
+      const { data: users, error: usersError } = await supabase
+        .from("hmr_users")
+        .select(`
+          id,
+          sms_schools!inner (
+            school_level_id
+          )
+        `)
+        .eq("sms_schools.school_level_id", data.targetSchoolLevelId)
+        .is("deleted_at", null)
+
+      if (usersError) {
+        console.error("Error fetching users by school level:", usersError)
+        return { success: false, error: "Failed to fetch target users." }
+      }
+      targetUsers = users || []
+    } else if (data.targetType === 'specific_user' && data.targetUserId) {
+      targetUsers = [{ id: data.targetUserId }]
+    }
+
+    // Create user notification records
+    if (targetUsers.length > 0) {
+      const userNotifications = targetUsers.map(user => ({
+        notification_id: notification.id,
+        user_id: user.id
+      }))
+
+      const { error: userNotificationError } = await supabase
+        .from("hmr_user_notifications")
+        .insert(userNotifications)
+
+      if (userNotificationError) {
+        console.error("Error creating user notifications:", userNotificationError)
+        return { success: false, error: "Failed to create user notifications." }
+      }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true, error: null, notification, targetCount: targetUsers.length }
+  } catch (error) {
+    console.error("Error in createNotification:", error)
+    return { success: false, error: "An unexpected error occurred." }
   }
+}
 
-  const supabase = createServiceRoleSupabaseClient()
+export async function getUserNotifications(page = 1, limit = 20, unreadOnly = false) {
+  try {
+    const user = await getUser()
 
-  let query = supabase.from("notifications").select("id", { count: "exact" }).eq("read", false)
+    if (!user) {
+      return { notifications: [], total: 0, unreadCount: 0, error: "Unauthorized access." }
+    }
 
-  // Filter notifications based on user role
-  if (user.role === "Head Teacher") {
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
-  } else if (user.role === "Regional Officer") {
-    query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
-  } else if (user.role === "Admin") {
-    // Admins see all notifications
-    // No additional filter needed
-  } else {
-    query = query.eq("user_id", user.id)
+    const supabase = createServiceRoleSupabaseClient()
+    const offset = (page - 1) * limit
+
+    // Base query for user's notifications
+    let query = supabase
+      .from("hmr_user_notifications")
+      .select(`
+        *,
+        hmr_notifications!inner (
+          id,
+          title,
+          message,
+          type,
+          priority,
+          created_at,
+          expires_at,
+          is_active
+        )
+      `, { count: "exact" })
+      .eq("user_id", user.id)
+      .eq("hmr_notifications.is_active", true)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    // Filter for active notifications that haven't expired
+    query = query.or("hmr_notifications.expires_at.is.null,hmr_notifications.expires_at.gt.now()", {
+      referencedTable: "hmr_notifications"
+    })
+
+    if (unreadOnly) {
+      query = query.eq("is_read", false)
+    }
+
+    const { data: notifications, error, count } = await query
+
+    if (error) {
+      console.error("Error fetching user notifications:", error)
+      return { notifications: [], total: 0, unreadCount: 0, error: "Failed to fetch notifications." }
+    }
+
+    // Get unread count separately
+    const { count: unreadCount, error: unreadError } = await supabase
+      .from("hmr_user_notifications")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("is_read", false)
+      .eq("hmr_notifications.is_active", true)
+      .or("hmr_notifications.expires_at.is.null,hmr_notifications.expires_at.gt.now()", {
+        referencedTable: "hmr_notifications"
+      })
+
+    if (unreadError) {
+      console.error("Error fetching unread count:", unreadError)
+    }
+
+    return { 
+      notifications: notifications || [], 
+      total: count || 0, 
+      unreadCount: unreadCount || 0,
+      error: null 
+    }
+  } catch (error) {
+    console.error("Error in getUserNotifications:", error)
+    return { notifications: [], total: 0, unreadCount: 0, error: "An unexpected error occurred." }
   }
-
-  const { count, error } = await query
-
-  if (error) {
-    console.error("Error fetching unread notification count:", error)
-    return 0
-  }
-
-  return count || 0
 }
 
 export async function markNotificationAsRead(notificationId: string) {
-  const user = await getCurrentUser()
-  if (!user) {
-    return { error: "User not authenticated." }
+  try {
+    const user = await getUser()
+
+    if (!user) {
+      return { success: false, error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { error } = await supabase
+      .from("hmr_user_notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString()
+      })
+      .eq("notification_id", notificationId)
+      .eq("user_id", user.id)
+
+    if (error) {
+      console.error("Error marking notification as read:", error)
+      return { success: false, error: "Failed to mark notification as read." }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true, error: null }
+  } catch (error) {
+    console.error("Error in markNotificationAsRead:", error)
+    return { success: false, error: "An unexpected error occurred." }
   }
-
-  const supabase = createServiceRoleSupabaseClient()
-
-  const { error } = await supabase
-    .from("notifications")
-    .update({ read: true, read_at: new Date().toISOString() })
-    .eq("id", notificationId)
-
-  if (error) {
-    console.error("Error marking notification as read:", error)
-    return { error: "Failed to mark notification as read." }
-  }
-
-  revalidatePath("/dashboard/admin/notifications")
-  return { success: true }
 }
 
 export async function markAllNotificationsAsRead() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return { error: "User not authenticated." }
+  try {
+    const user = await getUser()
+
+    if (!user) {
+      return { success: false, error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { error } = await supabase
+      .from("hmr_user_notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString()
+      })
+      .eq("user_id", user.id)
+      .eq("is_read", false)
+
+    if (error) {
+      console.error("Error marking all notifications as read:", error)
+      return { success: false, error: "Failed to mark all notifications as read." }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true, error: null }
+  } catch (error) {
+    console.error("Error in markAllNotificationsAsRead:", error)
+    return { success: false, error: "An unexpected error occurred." }
   }
-
-  const supabase = createServiceRoleSupabaseClient()
-
-  let query = supabase.from("notifications").update({ read: true, read_at: new Date().toISOString() }).eq("read", false)
-
-  // Filter notifications based on user role
-  if (user.role === "Head Teacher") {
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
-  } else if (user.role === "Regional Officer") {
-    query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
-  } else if (user.role === "Admin") {
-    // Admins can mark all notifications as read
-  } else {
-    query = query.eq("user_id", user.id)
-  }
-
-  const { error } = await query
-
-  if (error) {
-    console.error("Error marking all notifications as read:", error)
-    return { error: "Failed to mark all notifications as read." }
-  }
-
-  revalidatePath("/dashboard/admin/notifications")
-  return { success: true }
 }
 
-export async function createNotification(data: {
-  title: string
-  message: string
-  type: string
-  user_id?: string
-  school_id?: string
-  region_id?: string
-}) {
-  const user = await getCurrentUser()
-  if (!user || user.role !== "Admin") {
-    return { error: "Only admins can create notifications." }
+export async function getNotificationsForAdmin(page = 1, limit = 20) {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { notifications: [], total: 0, error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+    const offset = (page - 1) * limit
+
+    const { data: notifications, error, count } = await supabase
+      .from("hmr_notifications")
+      .select(`
+        *,
+        created_by_user:hmr_users!hmr_notifications_created_by_fkey (
+          first_name,
+          last_name
+        ),
+        target_role:hmr_user_roles (
+          name
+        ),
+        target_school_level:sms_school_levels (
+          name
+        ),
+        target_user:hmr_users!hmr_notifications_target_user_id_fkey (
+          first_name,
+          last_name
+        )
+      `, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      console.error("Error fetching admin notifications:", error)
+      return { notifications: [], total: 0, error: "Failed to fetch notifications." }
+    }
+
+    // Get notification statistics for each notification
+    const notificationsWithStats = await Promise.all(
+      (notifications || []).map(async (notification) => {
+        const { count: totalSent } = await supabase
+          .from("hmr_user_notifications")
+          .select("*", { count: "exact", head: true })
+          .eq("notification_id", notification.id)
+
+        const { count: totalRead } = await supabase
+          .from("hmr_user_notifications")
+          .select("*", { count: "exact", head: true })
+          .eq("notification_id", notification.id)
+          .eq("is_read", true)
+
+        return {
+          ...notification,
+          stats: {
+            totalSent: totalSent || 0,
+            totalRead: totalRead || 0,
+            readPercentage: totalSent ? Math.round(((totalRead || 0) / totalSent) * 100) : 0
+          }
+        }
+      })
+    )
+
+    return { 
+      notifications: notificationsWithStats, 
+      total: count || 0, 
+      error: null 
+    }
+  } catch (error) {
+    console.error("Error in getNotificationsForAdmin:", error)
+    return { notifications: [], total: 0, error: "An unexpected error occurred." }
   }
+}
 
-  const supabase = createServiceRoleSupabaseClient()
+export async function deleteNotification(notificationId: string) {
+  try {
+    const user = await getUser()
 
-  const { data: notification, error } = await supabase
-    .from("notifications")
-    .insert([
-      {
-        title: data.title,
-        message: data.message,
-        type: data.type,
-        user_id: data.user_id || null,
-        school_id: data.school_id || null,
-        region_id: data.region_id || null,
-        read: false,
-        created_at: new Date().toISOString(),
-      },
-    ])
-    .select()
-    .single()
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { success: false, error: "Unauthorized access." }
+    }
 
-  if (error) {
-    console.error("Error creating notification:", error)
-    return { error: "Failed to create notification." }
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { error } = await supabase
+      .from("hmr_notifications")
+      .update({ is_active: false })
+      .eq("id", notificationId)
+
+    if (error) {
+      console.error("Error deleting notification:", error)
+      return { success: false, error: "Failed to delete notification." }
+    }
+
+    revalidatePath("/dashboard/admin")
+    return { success: true, error: null }
+  } catch (error) {
+    console.error("Error in deleteNotification:", error)
+    return { success: false, error: "An unexpected error occurred." }
   }
+}
 
-  revalidatePath("/dashboard/admin/notifications")
-  return { success: true, notification }
+// Legacy functions for backward compatibility - these can be removed after migration
+export async function getNotifications(page = 1, limit = 10) {
+  return getUserNotifications(page, limit)
+}
+
+export async function getUnreadNotificationCount() {
+  const result = await getUserNotifications(1, 1, false)
+  return result.unreadCount
 }
 
 export async function sendReportReminders(schoolIds: string[]) {

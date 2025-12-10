@@ -1345,18 +1345,41 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           let schoolData = null
           if (user.school_name && user.region_name) {
             // Use session data if available
+            // Smart detection for nursery schools - always check school name first
+            let schoolLevel = user.school_level
+            const schoolName = user.school_name.toLowerCase()
+            
+            // Override with correct level based on school name
+            if (schoolName.includes('nursery') || schoolName.includes('pre-school') || schoolName.includes('kindergarten')) {
+              schoolLevel = "Nursery"
+            } else if (!schoolLevel) {
+              // Only use fallback if no level is set and it's not a nursery
+              schoolLevel = "Primary"
+            }
+            
             schoolData = {
               name: user.school_name,
               region: user.region_name,
-              level: user.school_level || "Primary" // fallback
+              level: schoolLevel
             }
           } else {
             // Need to get full school info if not in session
             console.log("Getting full school info from API...")
             const schoolResult = await getUserSchoolInfo()
             if (schoolResult.school) {
-              schoolData = schoolResult.school
-              setSchoolInfo(schoolResult.school)
+              // Apply smart detection here too
+              const schoolName = schoolResult.school.name.toLowerCase()
+              let correctedLevel = schoolResult.school.level
+              
+              if (schoolName.includes('nursery') || schoolName.includes('pre-school') || schoolName.includes('kindergarten')) {
+                correctedLevel = "Nursery"
+              }
+              
+              schoolData = {
+                ...schoolResult.school,
+                level: correctedLevel
+              }
+              setSchoolInfo(schoolData)
             }
           }
           
