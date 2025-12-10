@@ -1358,10 +1358,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             }
             
             schoolData = {
+              id: user.school_id, // Include the school ID
               name: user.school_name,
               region: user.region_name,
               level: schoolLevel
             }
+            // Also set schoolInfo for the session data path
+            setSchoolInfo(schoolData)
           } else {
             // Need to get full school info if not in session
             console.log("Getting full school info from API...")
