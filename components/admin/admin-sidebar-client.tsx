@@ -54,6 +54,7 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
       "School Management": true,
       "Nursery Management": false,
       "Monthly Reports": true,
+      "Feature Requests": true,
     })
 
     const navigationSections: NavigationSection[] = [
@@ -131,6 +132,16 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
             name: "Submit Report",
             href: "/dashboard/admin/submit-report",
             icon: FilePlus,
+          },
+        ],
+      },
+      {
+        title: "Feature Requests",
+        items: [
+          {
+            name: "All Requests",
+            href: "/dashboard/admin/feature-requests",
+            icon: Bell,
           },
         ],
       },

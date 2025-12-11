@@ -15,6 +15,7 @@ import Image from "next/image"
 import { User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { HelpDeskButton } from "@/components/help-desk-button"
 import { NotificationBell } from "@/components/notification-bell"
+import { FeatureRequestButton } from "@/components/feature-request-button"
 
 // Helper function to capitalize first and last names
 function capitalizeName(name: string): string {
@@ -83,6 +84,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <nav className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               {/* Notification Bell */}
               <NotificationBell />
+              
+              {/* Feature Request Button - For Regional Officers, Education Officials, and Head Teachers */}
+              {(role === "Regional Officer" || role === "Education Official" || role === "Head Teacher") && (
+                <FeatureRequestButton />
+              )}
               
               {/* User info - hidden on mobile, shown on larger screens */}
               <div className="text-right hidden md:block">
