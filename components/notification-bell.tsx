@@ -10,6 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { getUserNotifications } from "@/app/actions/notifications"
 import { formatDistanceToNow } from "date-fns"
 
@@ -38,6 +45,8 @@ export function NotificationBell() {
   const [lastReadTime, setLastReadTime] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const fetchNotifications = async () => {
     try {
@@ -79,6 +88,12 @@ export function NotificationBell() {
       // Mark as read when dropdown is opened
       markAsRead()
     }
+  }
+
+  const openNotificationModal = (notification: Notification) => {
+    setSelectedNotification(notification)
+    setIsModalOpen(true)
+    setIsOpen(false) // Close the dropdown
   }
 
   useEffect(() => {
@@ -152,7 +167,8 @@ export function NotificationBell() {
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpen}>
+    <>
+      <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -205,7 +221,8 @@ export function NotificationBell() {
                 return (
                   <div
                     key={notification.id}
-                    className={`p-3 hover:bg-gray-50 border-l-4 ${priorityColors.border} ${priorityColors.bg}`}
+                    onClick={() => openNotificationModal(notification)}
+                    className={`p-3 hover:bg-gray-50 border-l-4 cursor-pointer transition-colors ${priorityColors.border} ${priorityColors.bg}`}
                   >
                     <div className="space-y-2">
                       {/* Type and Priority on same line, better spaced */}
@@ -225,13 +242,16 @@ export function NotificationBell() {
                       </div>
                       
                       {/* Title */}
-                      <h4 className={`font-semibold text-sm ${priorityColors.text}`}>
+                      <h4 className={`font-semibold text-sm ${priorityColors.text} line-clamp-1`}>
                         {notification.title}
                       </h4>
                       
-                      {/* Message body */}
+                      {/* Message body - truncated with click to expand hint */}
                       <p className="text-xs text-gray-600 line-clamp-2">
                         {notification.message}
+                      </p>
+                      <p className="text-xs text-blue-600 italic">
+                        Click to read full message
                       </p>
                       
                       {/* Footer with time and creator */}
@@ -256,5 +276,54 @@ export function NotificationBell() {
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+
+      {/* Notification Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl p-6 pb-8">
+          <DialogHeader className="pr-8 space-y-3">
+            {selectedNotification && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-xs ${getPriorityColors(selectedNotification.priority).badge}`}
+                  >
+                    {getTypeDisplay(selectedNotification.notification_type)}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${getPriorityColors(selectedNotification.priority).text} border-current`}
+                  >
+                    {selectedNotification.priority.toUpperCase()}
+                  </Badge>
+                </div>
+                <DialogTitle className="text-lg font-semibold pr-4 leading-relaxed">
+                  {selectedNotification.title}
+                </DialogTitle>
+                <DialogDescription asChild>
+                  <div className="space-y-6 mt-4">
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {selectedNotification.message}
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t text-xs text-gray-500">
+                      <span>
+                        {formatDistanceToNow(new Date(selectedNotification.created_at), { addSuffix: true })}
+                      </span>
+                      <span>
+                        Sent by: {
+                          Array.isArray(selectedNotification.hmr_users) 
+                            ? (selectedNotification.hmr_users as any)[0]?.name || 'System Administrator'
+                            : (selectedNotification.hmr_users as any)?.name || 'System Administrator'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </DialogDescription>
+              </>
+            )}
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
