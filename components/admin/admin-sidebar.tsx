@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Key,
+  Bell,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,6 +39,11 @@ export function AdminSidebar({ pendingCount }: AdminSidebarProps) {
       name: "Users",
       href: "/dashboard/admin/users",
       icon: Users,
+    },
+    {
+      name: "Send Notifications",
+      href: "/dashboard/admin/notifications",
+      icon: Bell,
     },
     {
       name: "Access Tokens",

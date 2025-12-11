@@ -14,6 +14,7 @@ import {
 import Image from "next/image"
 import { User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { HelpDeskButton } from "@/components/help-desk-button"
+import { NotificationBell } from "@/components/notification-bell"
 
 // Helper function to capitalize first and last names
 function capitalizeName(name: string): string {
@@ -80,6 +81,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             </Link>
 
             <nav className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              {/* Notification Bell */}
+              <NotificationBell />
+              
               {/* User info - hidden on mobile, shown on larger screens */}
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium text-primary-700 truncate max-w-32 lg:max-w-none">

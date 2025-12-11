@@ -64,3 +64,22 @@ export type Region = {
   id: string
   name: string
 }
+
+export type Notification = {
+  id: string
+  title: string
+  message: string
+  created_by: string
+  created_at: string
+  target_all_users: boolean
+  target_user_roles: string[] | null
+  target_school_levels: string[] | null
+  target_regions: string[] | null
+  target_user_ids: string[] | null
+  priority: 'low' | 'normal' | 'high' | 'urgent'
+  notification_type: 'general' | 'announcement' | 'deadline' | 'update' | 'alert'
+  expires_at: string | null
+  is_active: boolean
+  // Joined data
+  hmr_users?: HmrUser
+}
