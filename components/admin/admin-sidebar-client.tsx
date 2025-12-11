@@ -17,6 +17,8 @@ import {
   Baby,
   Key,
   Bell,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,71 +32,126 @@ export interface AdminSidebarRef {
   toggleMobileMenu: () => void
 }
 
+type NavigationSection = {
+  title: string
+  items: NavigationItem[]
+}
+
+type NavigationItem = {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  exact?: boolean
+  badge?: number
+}
+
 export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClientProps>(
   ({ pendingCount }, ref) => {
     const pathname = usePathname()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+      "User Management": true,
+      "School Management": true,
+      "Nursery Management": false,
+      "Monthly Reports": true,
+    })
 
-    const navigationItems = [
+    const navigationSections: NavigationSection[] = [
       {
-        name: "Dashboard",
-        href: "/dashboard/admin",
-        icon: LayoutDashboard,
-        exact: true,
+        title: "Overview",
+        items: [
+          {
+            name: "Dashboard",
+            href: "/dashboard/admin",
+            icon: LayoutDashboard,
+            exact: true,
+          },
+        ],
       },
       {
-        name: "Users",
-        href: "/dashboard/admin/users",
-        icon: Users,
+        title: "User Management",
+        items: [
+          {
+            name: "Users",
+            href: "/dashboard/admin/users",
+            icon: Users,
+          },
+          {
+            name: "Verifications",
+            href: "/dashboard/admin/verifications",
+            icon: UserCheck,
+            badge: pendingCount > 0 ? pendingCount : undefined,
+          },
+          {
+            name: "Send Notifications",
+            href: "/dashboard/admin/notifications",
+            icon: Bell,
+          },
+        ],
       },
       {
-        name: "Send Notifications",
-        href: "/dashboard/admin/notifications",
-        icon: Bell,
+        title: "School Management",
+        items: [
+          {
+            name: "Schools",
+            href: "/dashboard/admin/schools",
+            icon: School,
+          },
+          {
+            name: "Regions",
+            href: "/dashboard/admin/regions",
+            icon: MapPin,
+          },
+        ],
       },
       {
-        name: "Schools",
-        href: "/dashboard/admin/schools",
-        icon: School,
+        title: "Nursery Management",
+        items: [
+          {
+            name: "Nursery Classes",
+            href: "/dashboard/admin/nursery-schools",
+            icon: Baby,
+          },
+          {
+            name: "Assessments",
+            href: "/dashboard/admin/nursery-assessments",
+            icon: Baby,
+          },
+        ],
       },
       {
-        name: "Nursery Classes",
-        href: "/dashboard/admin/nursery-schools",
-        icon: Baby,
-      },
-      {
-        name: "Nursery Assessments",
-        href: "/dashboard/admin/nursery-assessments",
-        icon: Baby,
-      },
-      {
-        name: "Regions",
-        href: "/dashboard/admin/regions",
-        icon: MapPin,
-      },
-      {
-        name: "Reports",
-        href: "/dashboard/admin/reports",
-        icon: FileText,
-      },
-      {
-        name: "Submit Report",
-        href: "/dashboard/admin/submit-report",
-        icon: FilePlus,
-      },
-      {
-        name: "Verifications",
-        href: "/dashboard/admin/verifications",
-        icon: UserCheck,
-        badge: pendingCount > 0 ? pendingCount : undefined,
+        title: "Monthly Reports",
+        items: [
+          {
+            name: "View Reports",
+            href: "/dashboard/admin/reports",
+            icon: FileText,
+          },
+          {
+            name: "Submit Report",
+            href: "/dashboard/admin/submit-report",
+            icon: FilePlus,
+          },
+        ],
       },
     ]
+
+    const toggleSection = (title: string) => {
+      setOpenSections(prev => ({
+        ...prev,
+        [title]: !prev[title]
+      }))
+    }
 
     const isActive = (href: string, exact?: boolean) => {
       if (exact) {
         return pathname === href
       }
       return pathname.startsWith(href)
+    }
+
+    const isSectionActive = (section: NavigationSection) => {
+      return section.items.some(item => isActive(item.href, item.exact))
     }
 
     const handleSignOut = async () => {
@@ -156,44 +213,114 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navigationItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href, item.exact)
-
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {navigationSections.map((section) => {
+              const isOpen = openSections[section.title] ?? true
+              const sectionActive = isSectionActive(section)
+              
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={handleMobileMenuClick}
-                  className={cn(
-                    "flex items-center justify-between w-full px-4 py-3 text-left rounded-lg transition-all duration-200 group relative",
-                    active
-                      ? "bg-primary-100 text-primary-700 shadow-sm border-l-4 border-primary-500"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent hover:border-gray-300"
-                  )}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 transition-colors",
-                        active 
-                          ? "text-primary-600" 
-                          : "text-gray-400 group-hover:text-gray-600"
+                <div key={section.title} className="space-y-1">
+                  {/* Section Header */}
+                  {section.title === "Overview" ? (
+                    // Single items in "Overview" don't need collapsible header
+                    section.items.map((item) => {
+                      const Icon = item.icon
+                      const active = isActive(item.href, item.exact)
+
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={handleMobileMenuClick}
+                          className={cn(
+                            "flex items-center justify-between w-full px-4 py-3 text-left rounded-lg transition-all duration-200 group relative",
+                            active
+                              ? "bg-primary-100 text-primary-700 shadow-sm border-l-4 border-primary-500"
+                              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent hover:border-gray-300"
+                          )}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Icon
+                              className={cn(
+                                "h-5 w-5 transition-colors",
+                                active 
+                                  ? "text-primary-600" 
+                                  : "text-gray-400 group-hover:text-gray-600"
+                              )}
+                            />
+                            <span className="font-medium">{item.name}</span>
+                          </div>
+                        </Link>
+                      )
+                    })
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => toggleSection(section.title)}
+                        className={cn(
+                          "flex items-center justify-between w-full px-3 py-2 text-left rounded-lg transition-all duration-200 group",
+                          sectionActive
+                            ? "text-primary-700 bg-primary-50"
+                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                        )}
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-wider">
+                          {section.title}
+                        </span>
+                        {isOpen ? (
+                          <ChevronDown className="h-4 w-4 transition-transform" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 transition-transform" />
+                        )}
+                      </button>
+
+                      {/* Section Items */}
+                      {isOpen && (
+                        <div className="ml-2 space-y-1 border-l-2 border-gray-200 pl-2">
+                          {section.items.map((item) => {
+                            const Icon = item.icon
+                            const active = isActive(item.href, item.exact)
+
+                            return (
+                              <Link
+                                key={item.name}
+                                href={item.href}
+                                onClick={handleMobileMenuClick}
+                                className={cn(
+                                  "flex items-center justify-between w-full px-3 py-2.5 text-left rounded-lg transition-all duration-200 group relative text-sm",
+                                  active
+                                    ? "bg-primary-100 text-primary-700 shadow-sm border-l-4 border-primary-500"
+                                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 border-l-4 border-transparent hover:border-gray-300"
+                                )}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <Icon
+                                    className={cn(
+                                      "h-4 w-4 transition-colors",
+                                      active 
+                                        ? "text-primary-600" 
+                                        : "text-gray-400 group-hover:text-gray-600"
+                                    )}
+                                  />
+                                  <span className="font-medium">{item.name}</span>
+                                </div>
+                                
+                                {item.badge && (
+                                  <Badge 
+                                    variant="destructive" 
+                                    className="h-5 w-5 p-0 flex items-center justify-center text-xs font-bold bg-red-500 hover:bg-red-600 border-2 border-white shadow-md"
+                                  >
+                                    {item.badge > 99 ? "99+" : item.badge}
+                                  </Badge>
+                                )}
+                              </Link>
+                            )
+                          })}
+                        </div>
                       )}
-                    />
-                    <span className="font-medium">{item.name}</span>
-                  </div>
-                  
-                  {item.badge && (
-                    <Badge 
-                      variant="destructive" 
-                      className="h-6 w-6 p-0 flex items-center justify-center text-xs font-bold bg-red-500 hover:bg-red-600 border-2 border-white shadow-md"
-                    >
-                      {item.badge > 99 ? "99+" : item.badge}
-                    </Badge>
+                    </>
                   )}
-                </Link>
+                </div>
               )
             })}
           </nav>
