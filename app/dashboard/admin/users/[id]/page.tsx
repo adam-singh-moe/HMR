@@ -14,7 +14,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
     getUserById(id),
     getRoles(),
     getRegions(1, 50),
-    getSchools(1, 1000), // Get up to 1000 schools for the dropdown
+    getSchools(1, 2000), // Get up to 2000 schools for the dropdown
   ])
 
   if (!user) {
