@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { RegionalPEReportsContent } from "./pe-reports/page"
 import { RegionalAIInsightsContent } from "./ai-insights/page"
+import { RegionalOfficerAssessmentCard } from "@/components/school-assessment-entry-card"
 import {
   BarChart,
   Bar,
@@ -1037,19 +1038,24 @@ function RegionalOfficerDashboardContent() {
               </h2>
               <p className="text-gray-500 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
             </div>
-            <div 
-              onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
-              className="cursor-pointer bg-red-500 hover:bg-red-600 transition-all duration-200 rounded-full px-3 sm:px-4 py-2 text-center text-white shadow-lg hover:shadow-xl"
-            >
-              <div className="flex items-center gap-2">
-                <School className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="text-xs sm:text-sm font-medium">School Readiness</span>
-              </div>
-              <div className="text-sm sm:text-lg font-bold">
-                {schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}
+            <div className="flex items-center gap-3">
+              <div 
+                onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
+                className="cursor-pointer bg-red-500 hover:bg-red-600 transition-all duration-200 rounded-full px-3 sm:px-4 py-2 text-center text-white shadow-lg hover:shadow-xl"
+              >
+                <div className="flex items-center gap-2">
+                  <School className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm font-medium">School Readiness</span>
+                </div>
+                <div className="text-sm sm:text-lg font-bold">
+                  {schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}
+                </div>
               </div>
             </div>
           </div>
+
+          {/* School Assessment Entry Card */}
+          <RegionalOfficerAssessmentCard regionId={user?.region_name || ''} />
           
           {/* Key Metrics */}
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">

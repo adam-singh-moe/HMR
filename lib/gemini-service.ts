@@ -2,10 +2,10 @@
 export class GeminiService {
   private apiKey: string
   private apiUrl = "https://generativelanguage.googleapis.com/v1beta/models"
-  private model = "gemini-2.0-flash"
+  private model = "gemini-flash-latest"
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
+    this.apiKey = process.env.GEMINI_API_KEY || ''
     if (!this.apiKey) {
       throw new Error('Gemini API key is required')
     }

@@ -15,6 +15,10 @@ import Image from "next/image"
 import { User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { HelpDeskButton } from "@/components/help-desk-button"
 
+// Dashboards are authenticated and depend on cookies/session.
+// Force dynamic rendering to avoid build-time prerender attempts.
+export const dynamic = 'force-dynamic'
+
 // Helper function to capitalize first and last names
 function capitalizeName(name: string): string {
   return name

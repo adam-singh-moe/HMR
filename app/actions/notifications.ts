@@ -17,7 +17,7 @@ export async function getNotifications(page = 1, limit = 10) {
   // Filter notifications based on user role
   if (user.role === "Head Teacher") {
     // Head teachers see notifications for their user ID, school, or region
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
+    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school_id},region_id.eq.${user.region}`)
   } else if (user.role === "Regional Officer") {
     // Regional officers see notifications for their user ID or region
     query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
@@ -55,7 +55,7 @@ export async function getUnreadNotificationCount() {
 
   // Filter notifications based on user role
   if (user.role === "Head Teacher") {
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
+    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school_id},region_id.eq.${user.region}`)
   } else if (user.role === "Regional Officer") {
     query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
   } else if (user.role === "Admin") {
@@ -109,7 +109,7 @@ export async function markAllNotificationsAsRead() {
 
   // Filter notifications based on user role
   if (user.role === "Head Teacher") {
-    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school},region_id.eq.${user.region}`)
+    query = query.or(`user_id.eq.${user.id},school_id.eq.${user.school_id},region_id.eq.${user.region}`)
   } else if (user.role === "Regional Officer") {
     query = query.or(`user_id.eq.${user.id},region_id.eq.${user.region}`)
   } else if (user.role === "Admin") {
