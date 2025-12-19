@@ -1,11 +1,64 @@
 "use server"
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { getUser } from "@/app/actions/auth"
 import type {
   CategoryName,
   RatingLevel,
 } from "../types"
 import { RATING_THRESHOLDS, SCORING_WEIGHTS, CATEGORY_NAMES } from "../types"
+
+async function assertCanAccessSchool(schoolId: string) {
+  const user = await getUser()
+  if (!user) {
+    return { ok: false as const, error: 'You must be logged in.' }
+  }
+
+  if (user.role === 'Admin' || user.role === 'Education Official') {
+    return { ok: true as const, user }
+  }
+
+  const supabase = createServiceRoleSupabaseClient()
+
+  if (user.role === 'Head Teacher') {
+    if (user.school_id && user.school_id === schoolId) {
+      return { ok: true as const, user }
+    }
+
+    if (!user.school_id && user.school_name) {
+      const { data: school, error: schoolError } = await supabase
+        .from('sms_schools')
+        .select('id')
+        .eq('name', user.school_name)
+        .single()
+      if (!schoolError && school?.id === schoolId) {
+        return { ok: true as const, user }
+      }
+    }
+
+    return { ok: false as const, error: 'You do not have permission to view this school.' }
+  }
+
+  if (user.role === 'Regional Officer') {
+    const { data: school, error: schoolError } = await supabase
+      .from('sms_schools')
+      .select('region_id')
+      .eq('id', schoolId)
+      .single()
+
+    if (schoolError || !school) {
+      return { ok: false as const, error: 'School not found.' }
+    }
+
+    if (school.region_id !== user.region) {
+      return { ok: false as const, error: 'You do not have permission to view this school.' }
+    }
+
+    return { ok: true as const, user }
+  }
+
+  return { ok: false as const, error: 'You do not have permission to view this school.' }
+}
 
 // ============================================================================
 // TYPES - Local analytics-specific types
@@ -597,6 +650,11 @@ export async function getSchoolTrends(
   limit: number = 9 // Last 3 academic years (3 terms each)
 ): Promise<{ trends: TrendData[]; error: string | null }> {
   try {
+    const access = await assertCanAccessSchool(schoolId)
+    if (!access.ok) {
+      return { trends: [], error: access.error }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: reports, error } = await supabase
@@ -988,6 +1046,19 @@ export async function getSchoolRankingPosition(
   error: string | null 
 }> {
   try {
+    const access = await assertCanAccessSchool(schoolId)
+    if (!access.ok) {
+      return {
+        regionalRank: null,
+        regionalTotal: 0,
+        nationalRank: null,
+        nationalTotal: 0,
+        nationalPercentile: null,
+        regionName: '',
+        error: access.error,
+      }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
     
     // Get school's region
@@ -1733,6 +1804,91 @@ export async function getCategoryLeaders(
   } catch (error) {
     console.error('Error in getCategoryLeaders:', error)
     return { leaders: [], error: 'An unexpected error occurred.' }
+  }
+}
+
+/**
+ * Gets school rankings for a single category (highest to lowest)
+ */
+export async function getRegionalCategoryRankings(
+  category: CategoryName,
+  regionId?: string,
+  periodId?: string
+): Promise<{
+  rankings: { rank: number; schoolId: string; schoolName: string; regionName?: string; score: number; maxScore: number; percentage: number }[]
+  error: string | null
+}> {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+
+    const categoryConfig: Record<CategoryName, { label: string; maxScore: number; scoreKey: string }> = {
+      academic: { label: 'Academic Performance', maxScore: 300, scoreKey: 'academic_scores' },
+      attendance: { label: 'Attendance', maxScore: 150, scoreKey: 'attendance_scores' },
+      infrastructure: { label: 'Infrastructure', maxScore: 150, scoreKey: 'infrastructure_scores' },
+      teaching_quality: { label: 'Teaching Quality', maxScore: 150, scoreKey: 'teaching_quality_scores' },
+      management: { label: 'Management', maxScore: 100, scoreKey: 'management_scores' },
+      student_welfare: { label: 'Student Welfare', maxScore: 100, scoreKey: 'student_welfare_scores' },
+      community: { label: 'Community Engagement', maxScore: 50, scoreKey: 'community_scores' },
+    }
+
+    const config = categoryConfig[category]
+
+    let query = supabase
+      .from('school_assessment_reports')
+      .select(`
+        school_id,
+        academic_scores,
+        attendance_scores,
+        infrastructure_scores,
+        teaching_quality_scores,
+        management_scores,
+        student_welfare_scores,
+        community_scores,
+        sms_schools!inner(id, name, region_id, sms_regions(name))
+      `)
+      .eq('status', 'submitted')
+
+    if (regionId) {
+      query = query.eq('sms_schools.region_id', regionId)
+    }
+
+    if (periodId) {
+      query = applyPeriodFilter(query, periodId)
+    }
+
+    const { data: reports, error } = await query
+
+    if (error || !reports) {
+      console.error('Error fetching category rankings:', error)
+      return { rankings: [], error: 'Failed to fetch data.' }
+    }
+
+    const scored = (reports || []).map((r: any) => {
+      const score = r[config.scoreKey]?.total || 0
+      return {
+        schoolId: r.school_id || '',
+        schoolName: r.sms_schools?.name || 'Unknown',
+        regionName: r.sms_schools?.sms_regions?.name || '',
+        score,
+        maxScore: config.maxScore,
+        percentage: config.maxScore > 0 ? Math.round((score / config.maxScore) * 100) : 0,
+      }
+    })
+
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return a.schoolName.localeCompare(b.schoolName)
+    })
+
+    const rankings = scored.map((r, idx) => ({
+      rank: idx + 1,
+      ...r,
+    }))
+
+    return { rankings, error: null }
+  } catch (err) {
+    console.error('Error in getRegionalCategoryRankings:', err)
+    return { rankings: [], error: 'An unexpected error occurred.' }
   }
 }
 

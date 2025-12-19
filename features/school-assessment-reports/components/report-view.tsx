@@ -193,6 +193,143 @@ function getPercentage(score: number, max: number): number {
   return Math.round((score / max) * 100)
 }
 
+function getPerformanceTone(percentage: number): {
+  label: string
+  barClass: string
+  borderClass: string
+  badgeClass: string
+  iconClass: string
+  textClass: string
+  bgClass: string
+} {
+  if (!Number.isFinite(percentage) || percentage <= 0) {
+    return {
+      label: 'Not started',
+      barClass: '[&>div]:bg-muted-foreground/30',
+      borderClass: 'border-border',
+      badgeClass: 'bg-muted text-muted-foreground border-border',
+      iconClass: 'text-muted-foreground',
+      textClass: 'text-muted-foreground',
+      bgClass: 'bg-muted/30',
+    }
+  }
+
+  if (percentage >= 85) {
+    return {
+      label: 'Excellent',
+      barClass: '[&>div]:bg-emerald-500',
+      borderClass: 'border-emerald-200',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      iconClass: 'text-emerald-600',
+      textClass: 'text-emerald-700',
+      bgClass: 'bg-emerald-50',
+    }
+  }
+
+  if (percentage >= 70) {
+    return {
+      label: 'Strong',
+      barClass: '[&>div]:bg-blue-500',
+      borderClass: 'border-blue-200',
+      badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      iconClass: 'text-blue-600',
+      textClass: 'text-blue-700',
+      bgClass: 'bg-blue-50',
+    }
+  }
+
+  if (percentage >= 60) {
+    return {
+      label: 'On track',
+      barClass: '[&>div]:bg-amber-500',
+      borderClass: 'border-amber-200',
+      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      iconClass: 'text-amber-600',
+      textClass: 'text-amber-700',
+      bgClass: 'bg-amber-50',
+    }
+  }
+
+  if (percentage >= 40) {
+    return {
+      label: 'Needs focus',
+      barClass: '[&>div]:bg-orange-500',
+      borderClass: 'border-orange-200',
+      badgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      iconClass: 'text-orange-600',
+      textClass: 'text-orange-700',
+      bgClass: 'bg-orange-50',
+    }
+  }
+
+  return {
+    label: 'Critical',
+    barClass: '[&>div]:bg-red-500',
+    borderClass: 'border-red-200',
+    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    iconClass: 'text-red-600',
+    textClass: 'text-red-700',
+    bgClass: 'bg-red-50',
+  }
+}
+
+function getTAPSGradeTone(grade: TAPSRatingGrade): {
+  barClass: string
+  badgeClass: string
+  iconClass: string
+  bgClass: string
+  ringClass: string
+  textClass: string
+} {
+  switch (grade) {
+    case 'A':
+      return {
+        barClass: '[&>div]:bg-green-500',
+        badgeClass: 'bg-green-50 text-green-800 border-green-200',
+        iconClass: 'text-green-600',
+        bgClass: 'bg-green-50',
+        ringClass: 'ring-1 ring-green-200',
+        textClass: 'text-green-800',
+      }
+    case 'B':
+      return {
+        barClass: '[&>div]:bg-blue-500',
+        badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+        iconClass: 'text-blue-600',
+        bgClass: 'bg-blue-50',
+        ringClass: 'ring-1 ring-blue-200',
+        textClass: 'text-blue-800',
+      }
+    case 'C':
+      return {
+        barClass: '[&>div]:bg-amber-500',
+        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+        iconClass: 'text-amber-600',
+        bgClass: 'bg-amber-50',
+        ringClass: 'ring-1 ring-amber-200',
+        textClass: 'text-amber-800',
+      }
+    case 'D':
+      return {
+        barClass: '[&>div]:bg-orange-500',
+        badgeClass: 'bg-orange-50 text-orange-800 border-orange-200',
+        iconClass: 'text-orange-600',
+        bgClass: 'bg-orange-50',
+        ringClass: 'ring-1 ring-orange-200',
+        textClass: 'text-orange-800',
+      }
+    default:
+      return {
+        barClass: '[&>div]:bg-red-500',
+        badgeClass: 'bg-red-50 text-red-800 border-red-200',
+        iconClass: 'text-red-600',
+        bgClass: 'bg-red-50',
+        ringClass: 'ring-1 ring-red-200',
+        textClass: 'text-red-800',
+      }
+  }
+}
+
 function getRatingIcon(rating: RatingLevel): React.ReactNode {
   switch (rating) {
     case 'outstanding':
@@ -258,6 +395,8 @@ export function ReportView({
 
   const maxScore = isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000
   const overallPercentage = getPercentage(report.totalScore, maxScore)
+  const overallTone = getPerformanceTone(overallPercentage)
+  const tapsTone = resolvedTAPSGrade ? getTAPSGradeTone(resolvedTAPSGrade) : null
   
   return (
     <div className="space-y-6">
@@ -304,7 +443,17 @@ export function ReportView({
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                {resolvedTAPSGrade ? getTAPSGradeIcon(resolvedTAPSGrade) : <Award className="h-6 w-6 text-blue-500" />}
+                {resolvedTAPSGrade ? (
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${tapsTone?.bgClass ?? 'bg-muted/30'} ${tapsTone?.ringClass ?? ''}`}>
+                    <span className={tapsTone?.iconClass ?? 'text-muted-foreground'}>
+                      {getTAPSGradeIcon(resolvedTAPSGrade)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/30 ring-1 ring-border">
+                    <Award className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                )}
                 <div>
                   <div className="text-4xl font-bold">{report.totalScore}</div>
                   <div className="text-sm text-muted-foreground">out of {TAPS_TOTAL_MAX_SCORE} points</div>
@@ -313,11 +462,19 @@ export function ReportView({
               <div className="text-center md:text-right">
                 {resolvedTAPSGrade ? (
                   <>
-                    <div className={`inline-flex items-center text-3xl font-bold px-6 py-2 rounded-lg ${TAPS_GRADE_BG_COLORS[resolvedTAPSGrade]}`}>
-                      Grade {resolvedTAPSGrade}
-                    </div>
-                    <div className="text-sm font-medium mt-1">
-                      {TAPS_RATING_LABELS[resolvedTAPSGrade]}
+                    <div className={`inline-flex items-center gap-3 rounded-xl border px-4 py-3 ${tapsTone?.badgeClass ?? TAPS_GRADE_BG_COLORS[resolvedTAPSGrade]}`}>
+                      <div className="text-left leading-tight">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs font-medium text-muted-foreground">Grade</span>
+                          <span className={`text-3xl font-bold ${tapsTone?.textClass ?? ''}`}>{resolvedTAPSGrade}</span>
+                        </div>
+                        <div className="text-sm font-semibold">
+                          {TAPS_RATING_LABELS[resolvedTAPSGrade]}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="ml-1">
+                        {overallPercentage}%
+                      </Badge>
                     </div>
                   </>
                 ) : (
@@ -333,9 +490,12 @@ export function ReportView({
             <div className="mt-6">
               <div className="flex justify-between text-sm mb-2">
                 <span>Overall Performance</span>
-                <span className="font-medium">{overallPercentage}%</span>
+                <span className="font-medium">
+                  <span className="mr-2 text-muted-foreground">{overallTone.label}</span>
+                  {overallPercentage}%
+                </span>
               </div>
-              <Progress value={overallPercentage} className="h-3" />
+              <Progress value={overallPercentage} className={`h-3 ${tapsTone?.barClass ?? overallTone.barClass}`} />
             </div>
           </CardContent>
         </Card>
@@ -362,9 +522,12 @@ export function ReportView({
             <div className="mt-6">
               <div className="flex justify-between text-sm mb-2">
               <span>Overall Performance</span>
-              <span className="font-medium">{overallPercentage}%</span>
+              <span className="font-medium">
+                <span className="mr-2 text-muted-foreground">{overallTone.label}</span>
+                {overallPercentage}%
+              </span>
             </div>
-            <Progress value={overallPercentage} className="h-3" />
+            <Progress value={overallPercentage} className={`h-3 ${overallTone.barClass}`} />
           </div>
         </CardContent>
       </Card>
@@ -382,14 +545,15 @@ export function ReportView({
               {(Object.entries(TAPS_CATEGORY_CONFIG) as [TAPSCategoryName, { label: string; maxScore: number }][]).map(([category, config]) => {
                 const score = report.tapsCategoryScores![category] || 0
                 const percentage = getPercentage(score, config.maxScore)
-                const isWeak = percentage < 60
+                const tone = getPerformanceTone(percentage)
                 
                 return (
-                  <Card key={category} className={`${isWeak ? 'border-amber-300' : ''}`}>
+                  <Card key={category} className={tone.borderClass}>
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 mb-3">
-                        {TAPS_CATEGORY_ICONS[category]}
+                        <span className={tone.iconClass}>{TAPS_CATEGORY_ICONS[category]}</span>
                         <span className="font-medium text-sm">{config.label}</span>
+                        <Badge variant="outline" className={`ml-auto text-xs ${tone.badgeClass}`}>{tone.label}</Badge>
                       </div>
                       <div className="flex items-end justify-between mb-2">
                         <span className="text-2xl font-bold">{score}</span>
@@ -397,7 +561,7 @@ export function ReportView({
                       </div>
                       <Progress 
                         value={percentage} 
-                        className={`h-2 ${isWeak ? '[&>div]:bg-amber-500' : ''}`} 
+                        className={`h-2 ${tone.barClass}`} 
                       />
                       <div className="text-xs text-muted-foreground mt-1 text-right">
                         {percentage}%
@@ -420,14 +584,15 @@ export function ReportView({
               {(Object.entries(CATEGORY_CONFIG) as [CategoryName, { label: string; maxScore: number }][]).map(([category, config]) => {
                 const score = report.categoryScores[category] || 0
                 const percentage = getPercentage(score, config.maxScore)
-                const isWeak = percentage < 60
+                const tone = getPerformanceTone(percentage)
                 
                 return (
-                  <Card key={category} className={`${isWeak ? 'border-amber-300' : ''}`}>
+                  <Card key={category} className={tone.borderClass}>
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 mb-3">
-                        {CATEGORY_ICONS[category]}
+                        <span className={tone.iconClass}>{CATEGORY_ICONS[category]}</span>
                         <span className="font-medium text-sm">{config.label}</span>
+                        <Badge variant="outline" className={`ml-auto text-xs ${tone.badgeClass}`}>{tone.label}</Badge>
                       </div>
                       <div className="flex items-end justify-between mb-2">
                         <span className="text-2xl font-bold">{score}</span>
@@ -435,7 +600,7 @@ export function ReportView({
                       </div>
                       <Progress 
                         value={percentage} 
-                        className={`h-2 ${isWeak ? '[&>div]:bg-amber-500' : ''}`} 
+                        className={`h-2 ${tone.barClass}`} 
                       />
                       <div className="text-xs text-muted-foreground mt-1 text-right">
                         {percentage}%

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,7 +58,7 @@ import {
   getNationalReports,
   getReport,
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getNationalStatistics, 
   getNationalSchoolRankings,
@@ -124,6 +124,7 @@ function EducationOfficialAssessmentContent() {
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
+  const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [isExporting, setIsExporting] = useState(false)
   const [underperformingSchools, setUnderperformingSchools] = useState<any[]>([])
   const [scoreThreshold, setScoreThreshold] = useState<number>(400)
@@ -269,13 +270,7 @@ function EducationOfficialAssessmentContent() {
         router.push(`/dashboard/education-official/school-assessment?tab=details`)
 
         if (reportResult.report.status === 'submitted') {
-          setIsGeneratingRecommendations(true)
-          void getOrGenerateRecommendations(reportId)
-            .then((recsResult) => {
-              setRecommendations(recsResult.recommendations || [])
-            })
-            .catch((err) => console.error('Error loading recommendations:', err))
-            .finally(() => setIsGeneratingRecommendations(false))
+          void loadRecommendations(reportId, true)
         }
       } else {
         toast({
@@ -286,6 +281,33 @@ function EducationOfficialAssessmentContent() {
       }
     } catch (error) {
       console.error('Error loading report:', error)
+    }
+  }
+
+  const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    try {
+      setRecommendations([])
+      setIsGeneratingRecommendations(false)
+
+      const existing = await getRecommendations(reportId)
+      if (existing.recommendations && existing.recommendations.length > 0) {
+        setRecommendations(existing.recommendations)
+        return
+      }
+
+      if (!allowAutoBackfill) return
+
+      if (recGenerationInFlight.current.has(reportId)) return
+      recGenerationInFlight.current.add(reportId)
+      setIsGeneratingRecommendations(true)
+
+      const generated = await getOrGenerateRecommendations(reportId)
+      setRecommendations(generated.recommendations || [])
+    } catch (err) {
+      console.error('Error loading recommendations:', err)
+    } finally {
+      setIsGeneratingRecommendations(false)
+      recGenerationInFlight.current.delete(reportId)
     }
   }
 

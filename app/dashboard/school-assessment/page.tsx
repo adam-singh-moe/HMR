@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,7 +53,7 @@ import {
   getSchoolReports,
   getReport
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getSchoolTrends,
   getSchoolRankingPosition,
@@ -126,6 +126,7 @@ function HeadTeacherAssessmentContent() {
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
+  const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [trends, setTrends] = useState<any[]>([])
   
   // New metrics state
@@ -233,15 +234,8 @@ function HeadTeacherAssessmentContent() {
                 if (detailedResult.report) {
                   setSelectedReport(detailedResult.report)
 
-                  // Load recommendations (non-blocking)
-                  setRecommendations([])
-                  setIsGeneratingRecommendations(true)
-                  void getOrGenerateRecommendations(current.id)
-                    .then((recResult) => {
-                      setRecommendations(recResult.recommendations || [])
-                    })
-                    .catch((err) => console.error('Error loading recommendations:', err))
-                    .finally(() => setIsGeneratingRecommendations(false))
+                  // Load recommendations (saved first; auto-generate once if missing)
+                  void loadRecommendations(current.id, true)
                   
                   // Fetch category strength analysis
                   const strengthResult = await getCategoryStrengthAnalysis(current.id)
@@ -303,15 +297,9 @@ function HeadTeacherAssessmentContent() {
         setRecommendations([])
         setIsGeneratingRecommendations(false)
         
-        // Load recommendations if submitted
+        // Load recommendations if submitted (saved first; auto-generate once if missing)
         if (reportResult.report.status === 'submitted') {
-          setIsGeneratingRecommendations(true)
-          void getOrGenerateRecommendations(reportId)
-            .then((recResult) => {
-              setRecommendations(recResult.recommendations || [])
-            })
-            .catch((err) => console.error('Error loading recommendations:', err))
-            .finally(() => setIsGeneratingRecommendations(false))
+          void loadRecommendations(reportId, true)
         }
       }
     } catch (error) {
@@ -337,6 +325,33 @@ function HeadTeacherAssessmentContent() {
       title: 'Success',
       description: 'Your assessment report has been submitted!',
     })
+  }
+
+  const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    try {
+      setRecommendations([])
+      setIsGeneratingRecommendations(false)
+
+      const existing = await getRecommendations(reportId)
+      if (existing.recommendations && existing.recommendations.length > 0) {
+        setRecommendations(existing.recommendations)
+        return
+      }
+
+      if (!allowAutoBackfill) return
+
+      if (recGenerationInFlight.current.has(reportId)) return
+      recGenerationInFlight.current.add(reportId)
+      setIsGeneratingRecommendations(true)
+
+      const generated = await getOrGenerateRecommendations(reportId)
+      setRecommendations(generated.recommendations || [])
+    } catch (err) {
+      console.error('Error loading recommendations:', err)
+    } finally {
+      setIsGeneratingRecommendations(false)
+      recGenerationInFlight.current.delete(reportId)
+    }
   }
 
   // ============================================================================
@@ -383,8 +398,13 @@ function HeadTeacherAssessmentContent() {
     return false
   }
 
-  const accountSchoolType = getSchoolTypeFromSchoolLevel(schoolInfo.level) || getSchoolTypeFromEmail(user?.email)?.type || 'primary'
-  const isTAPS = selectedReport ? reportLooksLikeTAPS(selectedReport) : accountSchoolType === 'secondary'
+  const accountSchoolType =
+    getSchoolTypeFromSchoolLevel(schoolInfo.level) ||
+    getSchoolTypeFromSchoolLevel(schoolInfo.name) ||
+    getSchoolTypeFromEmail(user?.email)?.type ||
+    'primary'
+
+  const isTAPS = accountSchoolType === 'secondary' || (selectedReport ? reportLooksLikeTAPS(selectedReport) : false)
   const totalMaxScore = isTAPS ? TAPS_TOTAL_MAX_SCORE : TOTAL_MAX_SCORE
 
   const latestScoreNumber = typeof latestReport?.totalScore === 'number' ? latestReport.totalScore : null
@@ -455,9 +475,16 @@ function HeadTeacherAssessmentContent() {
 
   const tapsCategoryScores = isTAPS
     ? {
+        // Support both legacy key `school_inputs` and canonical `school_inputs_operations`
         school_inputs: Number(
           (selectedReport?.tapsCategoryScores as any)?.school_inputs ??
             (selectedReport?.tapsCategoryScores as any)?.school_inputs_operations ??
+            selectedReport?.tapsSchoolInputsScores?.total ??
+            0
+        ),
+        school_inputs_operations: Number(
+          (selectedReport?.tapsCategoryScores as any)?.school_inputs_operations ??
+            (selectedReport?.tapsCategoryScores as any)?.school_inputs ??
             selectedReport?.tapsSchoolInputsScores?.total ??
             0
         ),

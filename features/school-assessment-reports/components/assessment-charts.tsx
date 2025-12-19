@@ -1,9 +1,19 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   BarChart,
   Bar,
@@ -28,9 +38,10 @@ import {
   ComposedChart,
   ReferenceLine,
 } from "recharts"
-import { TrendingUp, TrendingDown, Minus, Award, Target, Calendar } from "lucide-react"
+import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar } from "lucide-react"
 import type { CategoryName, RatingLevel, TAPSCategoryName, TAPSRatingGrade } from "../types"
 import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE } from "../types"
+import { getRegionalCategoryRankings } from "../actions/analytics"
 
 // ============================================================================
 // TYPES
@@ -2197,12 +2208,46 @@ export function RegionVsNationalCard({
 interface CategoryLeadersProps {
   leaders: { category: string; label: string; schoolName: string; schoolId: string; score: number; maxScore: number; percentage: number }[]
   title?: string
+  regionId?: string
+  periodId?: string
+  onViewSchool?: (schoolId: string) => void
 }
 
 export function CategoryLeadersTable({
   leaders,
-  title = "Category Leaders"
+  title = "Category Leaders",
+  regionId,
+  periodId,
+  onViewSchool,
 }: CategoryLeadersProps) {
+  const [activeCategory, setActiveCategory] = useState<string>(() => leaders?.[0]?.category || 'academic')
+  const [rankings, setRankings] = useState<{ rank: number; schoolId: string; schoolName: string; regionName?: string; score: number; maxScore: number; percentage: number }[]>([])
+  const [loadingRankings, setLoadingRankings] = useState(false)
+  const [rankingsError, setRankingsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!regionId) return
+    if (!activeCategory) return
+
+    setLoadingRankings(true)
+    setRankingsError(null)
+
+    void getRegionalCategoryRankings(activeCategory as CategoryName, regionId, periodId)
+      .then((res) => {
+        if (res.error) {
+          setRankingsError(res.error)
+          setRankings([])
+        } else {
+          setRankings(res.rankings || [])
+        }
+      })
+      .catch(() => {
+        setRankingsError('Failed to load rankings')
+        setRankings([])
+      })
+      .finally(() => setLoadingRankings(false))
+  }, [activeCategory, regionId, periodId])
+
   if (!leaders || leaders.length === 0) {
     return (
       <Card>
@@ -2218,6 +2263,54 @@ export function CategoryLeadersTable({
     )
   }
 
+  const leaderByCategory = new Map(leaders.map((l) => [l.category, l]))
+  const top3 = rankings.slice(0, 3)
+
+  // Fallback: when regionId isn't provided, keep the simple summary list
+  // (used in contexts like Education Official where drilldown isn't wired).
+  if (!regionId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-amber-500" />
+            {title}
+          </CardTitle>
+          <CardDescription>Top performing school in each category</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {leaders.map((leader, index) => (
+              <div
+                key={leader.category}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg"
+                    style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
+                  >
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium">{leader.label}</p>
+                    <p className="text-sm text-muted-foreground">{leader.schoolName}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold">{leader.percentage}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    {leader.score}/{leader.maxScore}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -2225,36 +2318,154 @@ export function CategoryLeadersTable({
           <Award className="h-5 w-5 text-amber-500" />
           {title}
         </CardTitle>
-        <CardDescription>Top performing school in each category</CardDescription>
+        <CardDescription>Click a category to view the full rankings</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {leaders.map((leader, index) => (
-            <div 
-              key={leader.category}
-              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg"
-                  style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
-                >
-                  {index + 1}
+        <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto">
+            {leaders.map((leader, index) => (
+              <TabsTrigger
+                key={leader.category}
+                value={leader.category}
+                className="py-3 data-[state=active]:shadow-none"
+              >
+                <div className="w-full text-left">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
+                    />
+                    <span className="text-xs font-medium leading-tight line-clamp-1">
+                      {leader.label}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground line-clamp-1">
+                      {leader.schoolName}
+                    </span>
+                    <Badge variant="secondary" className="shrink-0">
+                      {leader.percentage}%
+                    </Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{leader.label}</p>
-                  <p className="text-sm text-muted-foreground">{leader.schoolName}</p>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <TabsContent value={activeCategory} className="mt-4">
+            {loadingRankings ? (
+              <div className="flex items-center justify-center py-10 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                Loading category rankings…
+              </div>
+            ) : rankingsError ? (
+              <div className="flex items-center justify-center py-10 text-muted-foreground">
+                {rankingsError}
+              </div>
+            ) : rankings.length === 0 ? (
+              <div className="flex items-center justify-center py-10 text-muted-foreground">
+                No rankings available for this category
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Top 3 spotlight */}
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">Top 3 schools</p>
+                      <p className="text-xs text-muted-foreground">
+                        Highest performers in {leaderByCategory.get(activeCategory)?.label || 'this category'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Trophy className="h-4 w-4 text-amber-500" />
+                      <span className="text-xs">Spotlight</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    {top3.map((s, idx) => (
+                      <div
+                        key={s.schoolId}
+                        className={`rounded-lg border p-3 bg-background ${idx === 0 ? 'md:col-span-1' : ''}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Medal className={`h-4 w-4 ${idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-orange-400'}`} />
+                            <span className="text-sm font-medium">#{s.rank}</span>
+                          </div>
+                          <Badge variant={idx === 0 ? 'default' : 'secondary'}>
+                            {s.percentage}%
+                          </Badge>
+                        </div>
+                        <button
+                          type="button"
+                          className={onViewSchool ? 'mt-2 text-left w-full hover:underline' : 'mt-2 text-left w-full'}
+                          onClick={() => onViewSchool?.(s.schoolId)}
+                        >
+                          <p className="font-medium leading-tight line-clamp-1">{s.schoolName}</p>
+                        </button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {s.score}/{s.maxScore}
+                        </p>
+                        <div className="mt-2">
+                          <Progress value={s.percentage} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Full ranked list */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[70px]">Rank</TableHead>
+                        <TableHead>School</TableHead>
+                        <TableHead className="w-[120px]">Percent</TableHead>
+                        <TableHead className="text-right w-[140px]">Score</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rankings.map((s) => (
+                        <TableRow
+                          key={s.schoolId}
+                          className={onViewSchool ? 'cursor-pointer hover:bg-muted/50' : ''}
+                          onClick={() => onViewSchool?.(s.schoolId)}
+                        >
+                          <TableCell>
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                              s.rank <= 3 ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {s.rank}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{s.schoolName}</span>
+                              {s.regionName ? (
+                                <span className="text-xs text-muted-foreground">{s.regionName}</span>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">{s.percentage}%</Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-semibold">
+                            {s.score}/{s.maxScore}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold">{leader.percentage}%</p>
-                <p className="text-xs text-muted-foreground">
-                  {leader.score}/{leader.maxScore}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   )

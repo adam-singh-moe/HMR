@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
 import { 
@@ -19,12 +20,14 @@ import {
   Download,
   Settings,
   Globe,
+  AlertTriangle,
 } from "lucide-react"
 import { 
   ReportView, 
   ReportsList,
   SchoolRankingsTable,
   TrendChart,
+  EnhancedTrendChart,
   CategoryBarChart,
   RatingDistributionChart,
   RegionComparisonChart,
@@ -51,9 +54,11 @@ import {
 import {
   getNationalReports,
   getReport,
+  deleteAssessmentReport,
+  getSchoolReports,
   recalculateReportCategoryTotals,
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getNationalStatistics, 
   getNationalSchoolRankings,
@@ -65,6 +70,8 @@ import {
   getMostImprovedSchools,
   getUnderperformingRegions,
   getSubmissionProgressBreakdown,
+  getSchoolTrends,
+  getSchoolRankingPosition,
 } from "@/features/school-assessment-reports/actions/analytics"
 import { generateBulkExportCSV } from "@/features/school-assessment-reports/actions/exports"
 import type { AssessmentPeriod } from "@/features/school-assessment-reports/types"
@@ -102,14 +109,115 @@ function AdminAssessmentContent() {
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
+  const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [isExporting, setIsExporting] = useState(false)
+  const [isDeletingReport, setIsDeletingReport] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string
+    schoolName?: string
+    regionName?: string
+  } | null>(null)
   const [scoreDistribution, setScoreDistribution] = useState<any[] | null>(null)
   const [categoryGaps, setCategoryGaps] = useState<any>(null)
   const [mostImproved, setMostImproved] = useState<any>(null)
   const [underperformingRegions, setUnderperformingRegions] = useState<any[] | null>(null)
   const [submissionProgress, setSubmissionProgress] = useState<any>(null)
+  const [schoolOverviewLoading, setSchoolOverviewLoading] = useState(false)
+  const [schoolOverviewReports, setSchoolOverviewReports] = useState<any[]>([])
+  const [schoolOverviewTrends, setSchoolOverviewTrends] = useState<any[]>([])
+  const [schoolOverviewRanking, setSchoolOverviewRanking] = useState<any>(null)
+  const [schoolOverviewError, setSchoolOverviewError] = useState<string | null>(null)
 
   const isAdmin = user?.role === 'Admin'
+
+  const loadSchoolOverview = async (schoolId: string, periodId?: string) => {
+    setSchoolOverviewLoading(true)
+    setSchoolOverviewError(null)
+    try {
+      const [reportsRes, trendsRes, rankingRes] = await Promise.all([
+        getSchoolReports(schoolId),
+        getSchoolTrends(schoolId),
+        getSchoolRankingPosition(schoolId, periodId),
+      ])
+
+      if (reportsRes.error) {
+        setSchoolOverviewError(reportsRes.error)
+        setSchoolOverviewReports([])
+      } else {
+        setSchoolOverviewReports(reportsRes.reports || [])
+      }
+
+      setSchoolOverviewTrends(trendsRes.error ? [] : (trendsRes.trends || []))
+      setSchoolOverviewRanking(rankingRes.error ? null : rankingRes)
+    } catch (error) {
+      console.error('Error loading school overview:', error)
+      setSchoolOverviewError('Failed to load school overview.')
+      setSchoolOverviewReports([])
+      setSchoolOverviewTrends([])
+      setSchoolOverviewRanking(null)
+    } finally {
+      setSchoolOverviewLoading(false)
+    }
+  }
+
+  const handleDeleteReport = async (reportId: string, report?: any) => {
+    if (!isAdmin) {
+      toast({
+        title: "Not allowed",
+        description: "Only Admin users can delete assessment reports.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (isDeletingReport) return
+
+    setPendingDelete({
+      id: reportId,
+      schoolName: report?.schoolName,
+      regionName: report?.regionName,
+    })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteReport = async () => {
+    if (!pendingDelete) return
+    if (!isAdmin) return
+    if (isDeletingReport) return
+
+    setIsDeletingReport(true)
+    try {
+      const result = await deleteAssessmentReport(pendingDelete.id)
+      if (!result.success) {
+        toast({
+          title: "Delete failed",
+          description: result.error || "Could not delete the report.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setReports((prev) => prev.filter((r: any) => r.id !== pendingDelete.id))
+      setSelectedReport((prev: any) => (prev?.id === pendingDelete.id ? null : prev))
+      setDeleteDialogOpen(false)
+      setPendingDelete(null)
+
+      toast({
+        title: "Report deleted",
+        description: "The assessment report has been removed.",
+      })
+    } catch (error) {
+      console.error('Error deleting report:', error)
+      toast({
+        title: "Delete failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingReport(false)
+    }
+  }
 
   // ============================================================================
   // DATA LOADING
@@ -279,13 +387,17 @@ function AdminAssessmentContent() {
           setCurrentTab('view')
 
           if (reportResult.report.status === 'submitted') {
-            setIsGeneratingRecommendations(true)
-            void getOrGenerateRecommendations(reportId)
-              .then((recResult) => {
-                setRecommendations(recResult.recommendations || [])
-              })
-              .catch((err) => console.error('Error loading recommendations:', err))
-              .finally(() => setIsGeneratingRecommendations(false))
+            void loadRecommendations(reportId, true)
+          }
+
+          // Load headteacher-like overview for the selected school's full history
+          if (reportResult.report.schoolId) {
+            void loadSchoolOverview(reportResult.report.schoolId, selectedPeriodId || undefined)
+          } else {
+            setSchoolOverviewReports([])
+            setSchoolOverviewTrends([])
+            setSchoolOverviewRanking(null)
+            setSchoolOverviewError(null)
           }
         }
       }
@@ -296,6 +408,33 @@ function AdminAssessmentContent() {
         description: 'Failed to load report details.',
         variant: 'destructive',
       })
+    }
+  }
+
+  const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    try {
+      setRecommendations([])
+      setIsGeneratingRecommendations(false)
+
+      const existing = await getRecommendations(reportId)
+      if (existing.recommendations && existing.recommendations.length > 0) {
+        setRecommendations(existing.recommendations)
+        return
+      }
+
+      if (!allowAutoBackfill) return
+
+      if (recGenerationInFlight.current.has(reportId)) return
+      recGenerationInFlight.current.add(reportId)
+      setIsGeneratingRecommendations(true)
+
+      const generated = await getOrGenerateRecommendations(reportId)
+      setRecommendations(generated.recommendations || [])
+    } catch (err) {
+      console.error('Error loading recommendations:', err)
+    } finally {
+      setIsGeneratingRecommendations(false)
+      recGenerationInFlight.current.delete(reportId)
     }
   }
 
@@ -604,6 +743,7 @@ function AdminAssessmentContent() {
           <ReportsList
             reports={reports}
             onViewReport={handleViewReport}
+            onDeleteReport={isAdmin ? handleDeleteReport : undefined}
             showSchoolColumn={true}
             showRegionColumn={true}
             emptyMessage="No assessment reports found for the selected period."
@@ -630,41 +770,128 @@ function AdminAssessmentContent() {
         {/* View Details Tab */}
         <TabsContent value="view">
           {selectedReport ? (
-            <ReportView
-              report={{
-                id: selectedReport.id,
-                schoolName: selectedReport.school?.name || 'Unknown School',
-                regionName: selectedReport.school?.regionName || '',
-                academicYear: selectedReport.academicYear || activePeriod?.academicYear || '',
-                termName: selectedReport.termName || activePeriod?.termName || '',
-                totalScore: selectedReport.totalScore || 0,
-                ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
-                submittedAt: selectedReport.submittedAt || '',
-                // TAPS fields for secondary schools
-                isTAPS: selectedReport.isTAPS || Boolean(selectedReport.tapsRatingGrade),
-                tapsRatingGrade: selectedReport.tapsRatingGrade || undefined,
-                tapsCategoryScores: selectedReport.tapsCategoryScores || (selectedReport.isTAPS ? {
-                  school_inputs: selectedReport.tapsSchoolInputsScores?.total || 0,
-                  leadership: selectedReport.tapsLeadershipScores?.total || 0,
-                  academics: selectedReport.tapsAcademicsScores?.total || 0,
-                  teacher_development: selectedReport.tapsTeacherDevelopmentScores?.total || 0,
-                  health_safety: selectedReport.tapsHealthSafetyScores?.total || 0,
-                  school_culture: selectedReport.tapsSchoolCultureScores?.total || 0,
-                } : undefined),
-                // Demo category scores
-                categoryScores: calculateAllCategoryScores({
-                  academic: selectedReport.academicScores || {},
-                  attendance: selectedReport.attendanceScores || {},
-                  infrastructure: selectedReport.infrastructureScores || {},
-                  teachingQuality: selectedReport.teachingQualityScores || {},
-                  management: selectedReport.managementScores || {},
-                  studentWelfare: selectedReport.studentWelfareScores || {},
-                  community: selectedReport.communityScores || {},
-                }),
-              }}
-              recommendations={recommendations}
-              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
-            />
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>School Overview</CardTitle>
+                  <CardDescription>
+                    History and performance summary for {selectedReport.school?.name || 'this school'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {schoolOverviewError ? (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Unable to load school history</AlertTitle>
+                      <AlertDescription>{schoolOverviewError}</AlertDescription>
+                    </Alert>
+                  ) : null}
+
+                  {schoolOverviewLoading ? (
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Loading school overview…
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid gap-4 md:grid-cols-4">
+                        <StatCard
+                          title="Submitted Reports"
+                          value={schoolOverviewReports.filter((r: any) => r.status === 'submitted').length}
+                          description="All-time submissions"
+                        />
+                        <StatCard
+                          title="Best Score"
+                          value={
+                            Math.max(
+                              0,
+                              ...schoolOverviewReports
+                                .filter((r: any) => r.status === 'submitted')
+                                .map((r: any) => r.totalScore || 0)
+                            )
+                          }
+                          description="Highest submitted score"
+                        />
+                        <StatCard
+                          title="Average Score"
+                          value={(() => {
+                            const submitted = schoolOverviewReports.filter((r: any) => r.status === 'submitted')
+                            if (submitted.length === 0) return 0
+                            const sum = submitted.reduce((acc: number, r: any) => acc + (r.totalScore || 0), 0)
+                            return Math.round(sum / submitted.length)
+                          })()}
+                          description="Across submitted reports"
+                        />
+                        <StatCard
+                          title="Regional Rank"
+                          value={
+                            schoolOverviewRanking?.regionalRank
+                              ? `${schoolOverviewRanking.regionalRank}/${schoolOverviewRanking.regionalTotal}`
+                              : '—'
+                          }
+                          description={schoolOverviewRanking?.regionName ? schoolOverviewRanking.regionName : 'Current period'}
+                        />
+                      </div>
+
+                      <EnhancedTrendChart
+                        data={schoolOverviewTrends}
+                        title="Performance Journey"
+                        description="Submitted score trend over time"
+                        showTarget={true}
+                        variant={Boolean(selectedReport.isTAPS || selectedReport.tapsRatingGrade) ? 'taps' : 'demo'}
+                      />
+
+                      <ReportsList
+                        reports={schoolOverviewReports.map((r: any) => ({
+                          ...r,
+                          ratingLevel: r.ratingLevel as any,
+                        }))}
+                        onViewReport={handleViewReport}
+                        showSchoolColumn={false}
+                        showRegionColumn={false}
+                        emptyMessage="No assessment reports found for this school."
+                      />
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <ReportView
+                report={{
+                  id: selectedReport.id,
+                  schoolName: selectedReport.school?.name || 'Unknown School',
+                  regionName: selectedReport.school?.regionName || '',
+                  academicYear: selectedReport.academicYear || activePeriod?.academicYear || '',
+                  termName: selectedReport.termName || activePeriod?.termName || '',
+                  totalScore: selectedReport.totalScore || 0,
+                  ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
+                  submittedAt: selectedReport.submittedAt || '',
+                  // TAPS fields for secondary schools
+                  isTAPS: selectedReport.isTAPS || Boolean(selectedReport.tapsRatingGrade),
+                  tapsRatingGrade: selectedReport.tapsRatingGrade || undefined,
+                  tapsCategoryScores: selectedReport.tapsCategoryScores || (selectedReport.isTAPS ? {
+                    school_inputs: selectedReport.tapsSchoolInputsScores?.total || 0,
+                    leadership: selectedReport.tapsLeadershipScores?.total || 0,
+                    academics: selectedReport.tapsAcademicsScores?.total || 0,
+                    teacher_development: selectedReport.tapsTeacherDevelopmentScores?.total || 0,
+                    health_safety: selectedReport.tapsHealthSafetyScores?.total || 0,
+                    school_culture: selectedReport.tapsSchoolCultureScores?.total || 0,
+                  } : undefined),
+                  // Demo category scores
+                  categoryScores: calculateAllCategoryScores({
+                    academic: selectedReport.academicScores || {},
+                    attendance: selectedReport.attendanceScores || {},
+                    infrastructure: selectedReport.infrastructureScores || {},
+                    teachingQuality: selectedReport.teachingQualityScores || {},
+                    management: selectedReport.managementScores || {},
+                    studentWelfare: selectedReport.studentWelfareScores || {},
+                    community: selectedReport.communityScores || {},
+                  }),
+                }}
+                recommendations={recommendations}
+                isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
+              />
+            </div>
           ) : (
             <Card>
               <CardContent className="flex items-center justify-center py-12">
@@ -674,6 +901,66 @@ function AdminAssessmentContent() {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (isDeletingReport) return
+          setDeleteDialogOpen(open)
+          if (!open) setPendingDelete(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete assessment report?
+            </DialogTitle>
+            <DialogDescription>
+              This permanently deletes the report and any linked recommendations/audit entries.
+              {pendingDelete?.schoolName ? (
+                <span className="block mt-2">
+                  <span className="font-medium text-foreground">{pendingDelete.schoolName}</span>
+                  {pendingDelete.regionName ? (
+                    <span className="text-muted-foreground"> · {pendingDelete.regionName}</span>
+                  ) : null}
+                </span>
+              ) : null}
+              <span className="block mt-2 text-destructive">This action cannot be undone.</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (isDeletingReport) return
+                setDeleteDialogOpen(false)
+                setPendingDelete(null)
+              }}
+              disabled={isDeletingReport}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmDeleteReport}
+              disabled={isDeletingReport || !pendingDelete}
+            >
+              {isDeletingReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                'Delete Report'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

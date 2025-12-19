@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,7 +49,7 @@ import {
   getRegionalReports,
   getReport,
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getRegionalStatistics, 
   getRegionalSchoolRankings,
@@ -111,6 +111,7 @@ function RegionalOfficerAssessmentContent() {
   const [selectedReport, setSelectedReport] = useState<any>(null)
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
+  const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [isExporting, setIsExporting] = useState(false)
 
   // ============================================================================
@@ -177,7 +178,7 @@ function RegionalOfficerAssessmentContent() {
       }
       
       // Get rankings
-      const rankingsResult = await getRegionalSchoolRankings(regionId, periodId)
+      const rankingsResult = await getRegionalSchoolRankings(regionId, periodId, 500)
       if (rankingsResult.rankings) {
         setRankings(rankingsResult.rankings)
       }
@@ -245,13 +246,7 @@ function RegionalOfficerAssessmentContent() {
         setCurrentTab('view')
 
         if (reportResult.report.status === 'submitted') {
-          setIsGeneratingRecommendations(true)
-          void getOrGenerateRecommendations(reportId)
-            .then((recResult) => {
-              setRecommendations(recResult.recommendations || [])
-            })
-            .catch((err) => console.error('Error loading recommendations:', err))
-            .finally(() => setIsGeneratingRecommendations(false))
+          void loadRecommendations(reportId, true)
         }
       }
     } catch (error) {
@@ -261,6 +256,33 @@ function RegionalOfficerAssessmentContent() {
         description: 'Failed to load report details.',
         variant: 'destructive',
       })
+    }
+  }
+
+  const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    try {
+      setRecommendations([])
+      setIsGeneratingRecommendations(false)
+
+      const existing = await getRecommendations(reportId)
+      if (existing.recommendations && existing.recommendations.length > 0) {
+        setRecommendations(existing.recommendations)
+        return
+      }
+
+      if (!allowAutoBackfill) return
+
+      if (recGenerationInFlight.current.has(reportId)) return
+      recGenerationInFlight.current.add(reportId)
+      setIsGeneratingRecommendations(true)
+
+      const generated = await getOrGenerateRecommendations(reportId)
+      setRecommendations(generated.recommendations || [])
+    } catch (err) {
+      console.error('Error loading recommendations:', err)
+    } finally {
+      setIsGeneratingRecommendations(false)
+      recGenerationInFlight.current.delete(reportId)
     }
   }
 
@@ -583,6 +605,13 @@ function RegionalOfficerAssessmentContent() {
             <CategoryLeadersTable
               leaders={categoryLeaders}
               title="Category Leaders"
+              regionId={regionId}
+              onViewSchool={(schoolId) => {
+                const report = reports.find(r => r.schoolId === schoolId)
+                if (report) {
+                  handleViewReport(report.id)
+                }
+              }}
             />
           )}
         </TabsContent>

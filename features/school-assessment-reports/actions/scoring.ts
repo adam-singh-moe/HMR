@@ -365,13 +365,17 @@ export function calculateStudentWelfareScore(data: Partial<StudentWelfareScores>
   }
   
   // Special Needs Support (max 20 points)
-  if (data.specialNeedsStudentsEnrolled !== undefined && data.specialNeedsStudentsEnrolled > 0) {
-    if (data.specialNeedsSupportProvided) {
-      score += 12
+  if (data.specialNeedsStudentsEnrolled !== undefined) {
+    if (data.specialNeedsStudentsEnrolled > 0) {
+      if (data.specialNeedsSupportProvided) {
+        score += 12
+      }
+    } else {
+      // If explicitly stated there are no special needs students,
+      // award partial points for having systems in place.
+      // Do NOT award this when the field is unanswered.
+      score += 6
     }
-  } else {
-    // If no special needs students, award partial points for having systems in place
-    score += 6
   }
   if (data.inclusiveEducationPractices !== undefined) {
     score += ((data.inclusiveEducationPractices - 1) / 4) * 8

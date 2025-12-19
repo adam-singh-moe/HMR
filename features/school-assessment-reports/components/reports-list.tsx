@@ -25,12 +25,15 @@ import {
   MoreHorizontal, 
   Eye, 
   Download, 
+  Trash2,
   ChevronLeft, 
   ChevronRight,
   FileText,
   Clock,
   CheckCircle2,
   XCircle,
+  ArrowUpDown,
+  Trophy,
 } from "lucide-react"
 import type { RatingLevel, TAPSRatingGrade } from "../types"
 
@@ -58,6 +61,7 @@ interface ReportsListProps {
   reports: AssessmentReport[]
   onViewReport: (reportId: string) => void
   onExportReport?: (reportId: string, format: 'pdf' | 'excel') => void
+  onDeleteReport?: (reportId: string, report?: AssessmentReport) => void
   showSchoolColumn?: boolean
   showRegionColumn?: boolean
   showActions?: boolean
@@ -142,6 +146,7 @@ export function ReportsList({
   reports,
   onViewReport,
   onExportReport,
+  onDeleteReport,
   showSchoolColumn = true,
   showRegionColumn = false,
   showActions = true,
@@ -373,6 +378,18 @@ export function ReportsList({
                                 </DropdownMenuItem>
                               </>
                             )}
+                            {onDeleteReport && (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onDeleteReport(report.id, report)
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Report
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -444,6 +461,17 @@ export function SchoolRankingsTable({
   description,
   onViewSchool,
 }: SchoolRankingsTableProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [ratingFilter, setRatingFilter] = useState<"all" | RatingLevel>("all")
+  const [sortBy, setSortBy] = useState<"rank" | "school" | "score" | "rating">("rank")
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
+  const [pageSize, setPageSize] = useState<number>(10)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, ratingFilter, sortBy, sortDirection, pageSize])
+
   if (!rankings || rankings.length === 0) {
     return (
       <Card>
@@ -460,58 +488,195 @@ export function SchoolRankingsTable({
     )
   }
 
+  const filtered = rankings.filter((r) => {
+    const matchesSearch = !searchQuery
+      ? true
+      : r.schoolName.toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesRating = ratingFilter === "all" ? true : r.ratingLevel === ratingFilter
+    return matchesSearch && matchesRating
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    const dir = sortDirection === "asc" ? 1 : -1
+
+    if (sortBy === "rank") {
+      return (a.rank - b.rank) * dir
+    }
+    if (sortBy === "school") {
+      return a.schoolName.localeCompare(b.schoolName) * dir
+    }
+    if (sortBy === "score") {
+      return ((a.totalScore ?? 0) - (b.totalScore ?? 0)) * dir
+    }
+    // rating
+    return RATING_DISPLAY_LABELS[a.ratingLevel].localeCompare(RATING_DISPLAY_LABELS[b.ratingLevel]) * dir
+  })
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIndex = (safePage - 1) * pageSize
+  const paginated = sorted.slice(startIndex, startIndex + pageSize)
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-amber-500" />
+              {title}
+            </CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
+          </div>
+
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="relative w-full sm:w-[260px]">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search schools…"
+                className="pl-8"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <Select value={ratingFilter} onValueChange={(v) => setRatingFilter(v as any)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All ratings</SelectItem>
+                  <SelectItem value="outstanding">Outstanding</SelectItem>
+                  <SelectItem value="very_good">Very Good</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="satisfactory">Satisfactory</SelectItem>
+                  <SelectItem value="needs_improvement">Needs Improvement</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={`${sortBy}:${sortDirection}`} onValueChange={(v) => {
+                const [nextBy, nextDir] = v.split(":") as any
+                setSortBy(nextBy)
+                setSortDirection(nextDir)
+              }}>
+                <SelectTrigger className="w-[190px]">
+                  <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rank:asc">Rank (best first)</SelectItem>
+                  <SelectItem value="rank:desc">Rank (worst first)</SelectItem>
+                  <SelectItem value="score:desc">Score (high to low)</SelectItem>
+                  <SelectItem value="score:asc">Score (low to high)</SelectItem>
+                  <SelectItem value="school:asc">School (A to Z)</SelectItem>
+                  <SelectItem value="school:desc">School (Z to A)</SelectItem>
+                  <SelectItem value="rating:asc">Rating (A to Z)</SelectItem>
+                  <SelectItem value="rating:desc">Rating (Z to A)</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Rows" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">Rank</TableHead>
-                <TableHead>School</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead className="text-right">Score</TableHead>
-                <TableHead>Rating</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rankings.map((school) => (
-                <TableRow 
-                  key={school.schoolId}
-                  className={onViewSchool ? "cursor-pointer hover:bg-muted/50" : ""}
-                  onClick={() => onViewSchool?.(school.schoolId)}
-                >
-                  <TableCell>
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                      school.rank <= 3 
-                        ? 'bg-amber-100 text-amber-800 font-bold' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {school.rank}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{school.schoolName}</TableCell>
-                  <TableCell>{school.regionName}</TableCell>
-                  <TableCell className="text-right font-mono font-bold">
-                    {school.totalScore}
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="outline" 
-                      className={RATING_BADGE_COLORS[school.ratingLevel]}
-                    >
-                      {RATING_DISPLAY_LABELS[school.ratingLevel]}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        {sorted.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            No schools match your filters
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px]">Rank</TableHead>
+                    <TableHead>School</TableHead>
+                    <TableHead>Region</TableHead>
+                    <TableHead className="text-right">Score</TableHead>
+                    <TableHead>Rating</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginated.map((school, index) => {
+                    const displayRank = startIndex + index + 1
+                    return (
+                      <TableRow
+                        key={school.schoolId}
+                        className={onViewSchool ? "cursor-pointer hover:bg-muted/50" : ""}
+                        onClick={() => onViewSchool?.(school.schoolId)}
+                      >
+                        <TableCell>
+                          <div
+                            className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                              displayRank <= 3
+                                ? 'bg-amber-100 text-amber-800 font-bold'
+                                : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {displayRank}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{school.schoolName}</TableCell>
+                        <TableCell>{school.regionName}</TableCell>
+                        <TableCell className="text-right font-mono font-bold">
+                          {school.totalScore}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={RATING_BADGE_COLORS[school.ratingLevel]}>
+                            {RATING_DISPLAY_LABELS[school.ratingLevel]}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1} to {Math.min(startIndex + pageSize, sorted.length)} of {sorted.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm">
+                    Page {safePage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

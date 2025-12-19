@@ -22,7 +22,7 @@ import {
 } from "./scoring"
 import { generateRecommendations } from "./recommendations"
 import { createAuditEntry } from "./audit"
-import { getSchoolTypeFromEmail } from "@/lib/school-type"
+import { getSchoolTypeFromEmail, getSchoolTypeFromSchoolLevel } from "@/lib/school-type"
 import type { 
   SchoolAssessmentReport,
   SchoolAssessmentReportWithDetails,
@@ -54,6 +54,44 @@ import {
   calculateTAPSHealthSafetyScore,
   calculateTAPSSchoolCultureScore,
 } from "./scoring"
+
+// ============================================================================
+// ADMIN ACTIONS
+// ============================================================================
+
+export async function deleteAssessmentReport(reportId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getUser()
+    if (!user || user.role !== 'Admin') {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    if (!reportId) {
+      return { success: false, error: 'Report ID is required' }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { error } = await supabase
+      .from('school_assessment_reports')
+      .delete()
+      .eq('id', reportId)
+
+    if (error) {
+      console.error('Error deleting assessment report:', error)
+      return { success: false, error: 'Failed to delete report' }
+    }
+
+    revalidatePath('/dashboard/school-assessment/admin')
+    revalidatePath('/dashboard/school-assessment')
+    revalidatePath('/dashboard/school-assessment/regional')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error in deleteAssessmentReport:', error)
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -362,10 +400,17 @@ export async function createAssessmentReport(periodId?: string) {
       return { error: 'No school is assigned to your account. Please contact an administrator to assign your school.' }
     }
     
-    // Verify the school exists
+    // Verify the school exists (and fetch school level name for robust type detection)
     const { data: userSchool, error: verifyError } = await supabase
       .from('sms_schools')
-      .select('id, name')
+      .select(`
+        id,
+        name,
+        sms_school_levels(
+          id,
+          name
+        )
+      `)
       .eq('id', schoolId)
       .single()
     
@@ -398,9 +443,15 @@ export async function createAssessmentReport(periodId?: string) {
       return { success: true, reportId: existingReport.id, isExistingDraft: true }
     }
     
-    // Detect school type from email
-    const schoolTypeInfo = getSchoolTypeFromEmail(user.email)
-    const schoolType = schoolTypeInfo?.type || null
+    const schoolLevelName = Array.isArray((userSchool as any)?.sms_school_levels)
+      ? (userSchool as any).sms_school_levels?.[0]?.name
+      : (userSchool as any)?.sms_school_levels?.name
+
+    // Detect school type primarily from school level/name; fall back to email for legacy HM accounts.
+    const schoolTypeFromLevel = getSchoolTypeFromSchoolLevel(schoolLevelName)
+    const schoolTypeFromName = getSchoolTypeFromSchoolLevel(userSchool.name)
+    const schoolTypeFromEmail = getSchoolTypeFromEmail(user.email)?.type
+    const schoolType = (schoolTypeFromLevel || schoolTypeFromName || schoolTypeFromEmail || null) as any
     
     // Create new draft report with academic_year and term_name instead of period_id
     const { data: newReport, error: insertError } = await supabase
@@ -669,8 +720,23 @@ export async function submitReport(reportId: string) {
       return { error: 'Submission window has closed. Reports can no longer be submitted for this period.' }
     }
     
-    // Check if this is a TAPS report (secondary school)
-    const isTAPSReport = report.school_type === 'secondary'
+    const hasTapsObject = (value: unknown): boolean => {
+      if (!value || typeof value !== 'object') return false
+      return Object.keys(value as Record<string, unknown>).length > 0
+    }
+
+    const hasTAPSData = Boolean(
+      report.taps_rating_grade ||
+      hasTapsObject(report.taps_school_inputs_scores) ||
+      hasTapsObject(report.taps_leadership_scores) ||
+      hasTapsObject(report.taps_academics_scores) ||
+      hasTapsObject(report.taps_teacher_development_scores) ||
+      hasTapsObject(report.taps_health_safety_scores) ||
+      hasTapsObject(report.taps_school_culture_scores)
+    )
+
+    // Check if this is a TAPS report (prefer persisted school_type; fall back to data presence)
+    const isTAPSReport = report.school_type === 'secondary' || (!report.school_type && hasTAPSData)
     
     if (isTAPSReport) {
       // Calculate TAPS final scores (419 max)
@@ -716,6 +782,7 @@ export async function submitReport(reportId: string) {
           locked_at: new Date().toISOString(),
           total_score: totalScore,
           taps_rating_grade: tapsRatingGrade,
+          school_type: 'secondary',
           taps_school_inputs_scores: tapsSchoolInputsWithTotal,
           taps_leadership_scores: tapsLeadershipWithTotal,
           taps_academics_scores: tapsAcademicsWithTotal,
@@ -729,11 +796,17 @@ export async function submitReport(reportId: string) {
         console.error('Error submitting TAPS report:', updateError)
         return { error: 'Failed to submit report.' }
       }
-      
-      // Generate AI recommendations (async, don't block submission)
-      generateRecommendations(reportId).catch((err: Error) => {
+
+      // Generate + persist recommendations now so they render immediately on first view.
+      // This avoids “Recommendations in progress” on initial access by any role.
+      try {
+        const recResult = await generateRecommendations(reportId)
+        if (recResult?.error) {
+          console.error('Recommendation generation returned error:', recResult.error)
+        }
+      } catch (err) {
         console.error('Error generating recommendations:', err)
-      })
+      }
       
       revalidatePath('/dashboard/head-teacher/school-assessment')
       return { 
@@ -789,11 +862,16 @@ export async function submitReport(reportId: string) {
         console.error('Error submitting report:', updateError)
         return { error: 'Failed to submit report.' }
       }
-      
-      // Generate AI recommendations (async, don't block submission)
-      generateRecommendations(reportId).catch((err: Error) => {
+
+      // Generate + persist recommendations now so they render immediately on first view.
+      try {
+        const recResult = await generateRecommendations(reportId)
+        if (recResult?.error) {
+          console.error('Recommendation generation returned error:', recResult.error)
+        }
+      } catch (err) {
         console.error('Error generating recommendations:', err)
-      })
+      }
       
       revalidatePath('/dashboard/head-teacher/school-assessment')
       return { 
@@ -869,8 +947,50 @@ export async function getSchoolReports(schoolId: string) {
     if (!user) {
       return { reports: [], error: 'You must be logged in.' }
     }
+
+    if (!schoolId) {
+      return { reports: [], error: 'School ID is required.' }
+    }
     
     const supabase = createServiceRoleSupabaseClient()
+
+    // Permission checks
+    if (user.role === 'Head Teacher') {
+      // Prefer school_id from session
+      if (user.school_id && user.school_id !== schoolId) {
+        return { reports: [], error: 'You do not have permission to view these reports.' }
+      }
+
+      // Fallback: resolve by school name
+      if (!user.school_id && user.school_name) {
+        const { data: school, error: schoolError } = await supabase
+          .from('sms_schools')
+          .select('id')
+          .eq('name', user.school_name)
+          .single()
+
+        if (schoolError || !school || school.id !== schoolId) {
+          return { reports: [], error: 'You do not have permission to view these reports.' }
+        }
+      }
+    } else if (user.role === 'Regional Officer') {
+      // Ensure the school belongs to the officer's region
+      const { data: school, error: schoolError } = await supabase
+        .from('sms_schools')
+        .select('region_id')
+        .eq('id', schoolId)
+        .single()
+
+      if (schoolError || !school) {
+        return { reports: [], error: 'School not found.' }
+      }
+
+      if (school.region_id !== user.region) {
+        return { reports: [], error: 'You do not have permission to view these reports.' }
+      }
+    } else if (user.role !== 'Education Official' && user.role !== 'Admin') {
+      return { reports: [], error: 'You do not have permission to view these reports.' }
+    }
     
     const { data, error } = await supabase
       .from('school_assessment_reports')

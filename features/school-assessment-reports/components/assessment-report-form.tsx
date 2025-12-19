@@ -287,6 +287,7 @@ export function AssessmentReportForm({
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
   const [reportId, setReportId] = useState<string | null>(existingReportId || null)
   const [activeTermWindow, setActiveTermWindow] = useState<CurrentTermWindow | null>(null)
   const [submissionOpen, setSubmissionOpen] = useState(false)
@@ -294,8 +295,15 @@ export function AssessmentReportForm({
   
   // Detect school type from school level first (DB), then fall back to email.
   const schoolTypeFromLevel = getSchoolTypeFromSchoolLevel(schoolLevel)
+  const schoolTypeFromName = getSchoolTypeFromSchoolLevel(schoolName)
   const schoolTypeFromEmail = getSchoolTypeFromEmail(userEmail)?.type
-  const schoolType: SchoolType = schoolTypeFromLevel || schoolTypeFromEmail || "primary"
+  const schoolType: SchoolType = schoolTypeFromLevel || schoolTypeFromName || schoolTypeFromEmail || "primary"
+
+  // Info used for the header badge
+  const schoolTypeInfo = {
+    type: schoolType,
+    label: SCHOOL_TYPE_LABELS[schoolType],
+  }
   
   // Form data for all sections (Primary/Nursery - Demo metrics)
   const [academicData, setAcademicData] = useState<FormAcademicData>({})
@@ -416,6 +424,14 @@ export function AssessmentReportForm({
   
   // Get current form sections based on school type
   const currentFormSections = isTAPS ? TAPS_FORM_SECTIONS : FORM_SECTIONS
+
+  // Only show "incomplete" error markers after a user action (Review/Submit).
+  useEffect(() => {
+    const meta = currentFormSections[currentSection]
+    if (meta?.id === 'review') {
+      setShowValidationErrors(true)
+    }
+  }, [currentFormSections, currentSection])
   
   const handleSaveSection = async () => {
     setIsSaving(true)
@@ -666,6 +682,9 @@ export function AssessmentReportForm({
       toast({ title: 'Error', description: 'Submission window is closed.', variant: 'destructive' })
       return
     }
+
+    // From this point on, we should surface missing-field indicators in the UI.
+    setShowValidationErrors(true)
 
     const firstMissing = findFirstIncompleteField()
     if (firstMissing) {
@@ -1490,7 +1509,7 @@ export function AssessmentReportForm({
               {TAPS_FORM_SECTIONS.slice(0, -1).map((section) => {
                 const sectionScore = scores[section.id as TAPSCategoryName] || 0
                 const percentage = section.maxPoints > 0 ? Math.round((sectionScore / section.maxPoints) * 100) : 0
-                const isIncomplete = incompleteSectionIds.has(section.id)
+                const isIncomplete = showValidationErrors && incompleteSectionIds.has(section.id)
                 return (
                   <div key={section.id} className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -1609,7 +1628,7 @@ export function AssessmentReportForm({
               {FORM_SECTIONS.slice(0, -1).map((section) => {
                 const sectionScore = scores[section.id as CategoryName] || 0
                 const percentage = Math.round((sectionScore / section.maxPoints) * 100)
-                const isIncomplete = incompleteSectionIds.has(section.id)
+                const isIncomplete = showValidationErrors && incompleteSectionIds.has(section.id)
                 return (
                   <div key={section.id} className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -1706,7 +1725,7 @@ export function AssessmentReportForm({
 
   const currentSectionMeta = currentFormSections[currentSection]
   const isCurrentSectionIncomplete =
-    currentSectionMeta?.id !== 'review' && incompleteSectionIds.has(currentSectionMeta.id)
+    showValidationErrors && currentSectionMeta?.id !== 'review' && incompleteSectionIds.has(currentSectionMeta.id)
   
   return (
     <div className="space-y-6">
@@ -1761,10 +1780,11 @@ export function AssessmentReportForm({
             {currentFormSections.map((section, index) => {
               const isIncomplete = incompleteSectionIds.has(section.id)
               const isCurrent = index === currentSection
+              const showCaution = showValidationErrors && isIncomplete
               const cautionClassName = isCurrent
                 ? 'h-4 w-4 text-primary-foreground'
                 : 'h-4 w-4 text-destructive'
-              const titleClassName = isIncomplete && !isCurrent ? 'text-destructive' : ''
+              const titleClassName = showCaution && !isCurrent ? 'text-destructive' : ''
 
               return (
                 <button
@@ -1780,7 +1800,7 @@ export function AssessmentReportForm({
                 >
                   {section.icon}
                   <span className={`hidden sm:inline ${titleClassName}`.trim()}>{section.title}</span>
-                  {isIncomplete && <AlertTriangle className={cautionClassName} />}
+                  {showCaution && <AlertTriangle className={cautionClassName} />}
                   <span className="sm:hidden">{index + 1}</span>
                 </button>
               )
