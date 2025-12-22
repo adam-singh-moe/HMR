@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString()
     
     const { data: expiredPeriods, error: periodsError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('id, academic_year, term_name, submission_end, is_active')
       .lt('submission_end', now)
       .eq('is_active', true)
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
       // Find all draft reports for this period
       const { data: drafts, error: draftsError } = await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .select('id')
         .eq('period_id', period.id)
         .eq('status', 'draft')
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       if (drafts && drafts.length > 0) {
         // Update all drafts to expired_draft status
         const { error: updateError, count } = await supabase
-          .from('school_assessment_reports')
+          .from('hmr_school_assessment_reports')
           .update({ 
             status: 'expired_draft',
             updated_at: now 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
       // Deactivate the period
       const { error: deactivateError } = await supabase
-        .from('school_assessment_periods')
+        .from('hmr_school_assessment_periods')
         .update({ is_active: false })
         .eq('id', period.id)
 

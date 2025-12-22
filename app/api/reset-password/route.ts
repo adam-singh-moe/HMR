@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 12)

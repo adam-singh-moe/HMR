@@ -33,7 +33,7 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
         </div>
 
         {unreadCount > 0 && (
-          <form action={markAllNotificationsAsRead}>
+          <form action={async () => { await markAllNotificationsAsRead() }}>
             <Button type="submit" variant="outline" size="sm" className="w-full sm:w-auto">
               <CheckCheck className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Mark All Read</span>
@@ -86,7 +86,7 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
 
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {!notification.read && (
-                      <form action={markNotificationAsRead.bind(null, notification.id)}>
+                      <form action={async () => { await markNotificationAsRead(notification.id) }}>
                         <Button type="submit" variant="ghost" size="sm">
                           <Check className="h-3 w-3 lg:h-4 lg:w-4" />
                           <span className="sr-only">Mark as read</span>

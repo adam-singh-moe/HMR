@@ -1,1 +1,1 @@
-export { SchoolCharts } from './school-charts'
+export { SchoolCharts } from '../school-charts'

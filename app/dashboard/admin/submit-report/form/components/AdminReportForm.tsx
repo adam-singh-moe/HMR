@@ -287,7 +287,7 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
   const addArrayItem = <T extends Record<string, any>>(field: keyof FormData, newItem: T) => {
     setFormData(prev => ({
       ...prev,
-      [field]: [...(prev[field] as T[]), newItem]
+      [field]: [...(prev[field] as unknown as T[]), newItem]
     }))
   }
 
@@ -306,7 +306,7 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
   ) => {
     setFormData(prev => ({
       ...prev,
-      [field]: (prev[field] as T[]).map((item, i) => 
+      [field]: (prev[field] as unknown as T[]).map((item, i) => 
         i === index ? { ...item, [itemField]: value } : item
       )
     }))

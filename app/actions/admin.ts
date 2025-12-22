@@ -1851,7 +1851,7 @@ export async function getNurserySchools() {
       id: school.id,
       name: school.name,
       has_nursery_class: school.has_nursery_class,
-      region_name: school.sms_regions?.name || "Unknown"
+      region_name: (school.sms_regions as any)?.name || "Unknown"
     }))
 
     return { success: true, schools: nurserySchools }
@@ -1896,7 +1896,7 @@ export async function getSchoolsForNurseryAssignment() {
       id: school.id,
       name: school.name,
       has_nursery_class: school.has_nursery_class || false,
-      region_name: school.sms_regions?.name || "Unknown"
+      region_name: (school.sms_regions as any)?.name || "Unknown"
     }))
 
     return { success: true, schools: availableSchools }

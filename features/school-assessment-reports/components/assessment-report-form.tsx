@@ -61,9 +61,12 @@ import {
   TAPS_HEALTH_SAFETY_FIELDS,
   TAPS_SCHOOL_CULTURE_FIELDS,
   TAPS_CATEGORY_CONFIGS,
+  ALL_CATEGORY_CONFIGS,
 } from "../config/form-fields"
 import type { CategoryName, CurrentTermWindow, TAPSCategoryName } from "../types"
-import { TAPS_TOTAL_MAX_SCORE, TAPS_AUTO_CALC_REQUIRED_TERMS } from "../types"
+import { TAPS_TOTAL_MAX_SCORE, TAPS_AUTO_CALC_REQUIRED_TERMS, RATING_THRESHOLDS, TAPS_RATING_THRESHOLDS } from "../types"
+import { Separator } from "@/components/ui/separator"
+import { TrendingUp } from "lucide-react"
 
 // ============================================================================
 // SIMPLIFIED FORM DATA TYPES
@@ -329,6 +332,96 @@ export function AssessmentReportForm({
   // Check if using TAPS metrics
   const isTAPS = usesTAPSMetrics(schoolType)
 
+  // ============================================================================
+  // LIVE SCORE CALCULATIONS
+  // ============================================================================
+
+  const currentScores = useMemo(() => {
+    if (isTAPS) {
+      // Transform flat academics data to nested structure for scoring
+      const academicsNested = {
+        grade7: {
+          overall: tapsAcademicsData.grade7OverallPassRate || 0,
+          english: tapsAcademicsData.grade7EnglishPassRate || 0,
+          math: tapsAcademicsData.grade7MathPassRate || 0,
+          stem: tapsAcademicsData.grade7StemPassRate || 0,
+          above70Percent: tapsAcademicsData.grade7Above70Percent || 0,
+        },
+        grade8: {
+          overall: tapsAcademicsData.grade8OverallPassRate || 0,
+          english: tapsAcademicsData.grade8EnglishPassRate || 0,
+          math: tapsAcademicsData.grade8MathPassRate || 0,
+          stem: tapsAcademicsData.grade8StemPassRate || 0,
+          above70Percent: tapsAcademicsData.grade8Above70Percent || 0,
+        },
+        grade9: {
+          overall: tapsAcademicsData.grade9OverallPassRate || 0,
+          english: tapsAcademicsData.grade9EnglishPassRate || 0,
+          math: tapsAcademicsData.grade9MathPassRate || 0,
+          stem: tapsAcademicsData.grade9StemPassRate || 0,
+          above70Percent: tapsAcademicsData.grade9Above70Percent || 0,
+        },
+        grade10: {
+          overall: tapsAcademicsData.grade10OverallPassRate || 0,
+          english: tapsAcademicsData.grade10EnglishPassRate || 0,
+          math: tapsAcademicsData.grade10MathPassRate || 0,
+          stem: tapsAcademicsData.grade10StemPassRate || 0,
+          above70Percent: tapsAcademicsData.grade10Above70Percent || 0,
+        },
+        grade11: {
+          overall: tapsAcademicsData.grade11OverallPassRate || 0,
+          english: tapsAcademicsData.grade11EnglishPassRate || 0,
+          math: tapsAcademicsData.grade11MathPassRate || 0,
+          stem: tapsAcademicsData.grade11StemPassRate || 0,
+          above70Percent: tapsAcademicsData.grade11Above70Percent || 0,
+        },
+      }
+
+      return calculateAllTAPSCategoryScores({
+        schoolInputs: schoolInputsData as any,
+        leadership: leadershipData as any,
+        academics: academicsNested as any,
+        teacherDevelopment: teacherDevelopmentData as any,
+        healthSafety: healthSafetyData as any,
+        schoolCulture: schoolCultureData as any,
+      })
+    } else {
+      return calculateAllCategoryScores({
+        academic: academicData,
+        attendance: attendanceData,
+        infrastructure: infrastructureData,
+        teachingQuality: teachingQualityData,
+        management: managementData,
+        studentWelfare: studentWelfareData,
+        community: communityData,
+      })
+    }
+  }, [
+    isTAPS,
+    academicData, attendanceData, infrastructureData, teachingQualityData, managementData, studentWelfareData, communityData,
+    schoolInputsData, leadershipData, tapsAcademicsData, teacherDevelopmentData, healthSafetyData, schoolCultureData
+  ])
+
+  const totalScore = useMemo(() => {
+    if (isTAPS) {
+      return calculateTAPSTotalScore(currentScores as any)
+    } else {
+      return Object.values(currentScores).reduce((a, b) => (a as number) + (b as number), 0) as number
+    }
+  }, [isTAPS, currentScores])
+
+  const currentRating = useMemo(() => {
+    if (isTAPS) {
+      return assignTAPSRatingGrade(totalScore)
+    } else {
+      if (totalScore >= 850) return 'Outstanding'
+      if (totalScore >= 700) return 'Very Good'
+      if (totalScore >= 550) return 'Good'
+      if (totalScore >= 400) return 'Satisfactory'
+      return 'Needs Improvement'
+    }
+  }, [isTAPS, totalScore])
+
   type MissingField = {
     sectionId: CategoryName | TAPSCategoryName
     sectionTitle: string
@@ -349,12 +442,13 @@ export function AssessmentReportForm({
     try {
       // Check if submission is open using new term window system
       const windowResult = await getActiveTermWindow()
+      let submissionResult: any = null
       if (windowResult.window) {
         setActiveTermWindow(windowResult.window)
         setSubmissionOpen(windowResult.window.isOpen)
       } else {
         // Fallback check
-        const submissionResult = await isSubmissionWindowOpen()
+        submissionResult = await isSubmissionWindowOpen()
         setSubmissionOpen(submissionResult.isOpen)
         if (submissionResult.window) {
           setActiveTermWindow(submissionResult.window)
@@ -370,8 +464,13 @@ export function AssessmentReportForm({
       }
       
       // For TAPS schools, calculate improvement metrics from historical data
-      if (isTAPS) {
-        const metrics = await calculateImprovementMetrics(schoolId)
+      const currentWindow = windowResult.window || submissionResult?.window
+      if (isTAPS && currentWindow) {
+        const metrics = await calculateImprovementMetrics(
+          schoolId,
+          currentWindow.academicYear,
+          currentWindow.termName
+        )
         if (metrics) {
           setImprovementMetrics(metrics)
           setHasEnoughHistoricalData(true)
@@ -813,7 +912,7 @@ export function AssessmentReportForm({
     sections.forEach(section => {
       section.fields.forEach(field => {
         // Skip auto-calculated fields if we don't have historical data
-        if (field.autoCalculated && !hasEnoughHistoricalData) {
+        if (field.autoCalculable && !hasEnoughHistoricalData) {
           return
         }
         totalFields++
@@ -841,10 +940,48 @@ export function AssessmentReportForm({
   }
   
   const calculateTAPSSectionScore = (sectionId: TAPSCategoryName) => {
+    const academicsNested = {
+      grade7: {
+        overall: tapsAcademicsData.grade7OverallPassRate || 0,
+        english: tapsAcademicsData.grade7EnglishPassRate || 0,
+        math: tapsAcademicsData.grade7MathPassRate || 0,
+        stem: tapsAcademicsData.grade7StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade7Above70Percent || 0,
+      },
+      grade8: {
+        overall: tapsAcademicsData.grade8OverallPassRate || 0,
+        english: tapsAcademicsData.grade8EnglishPassRate || 0,
+        math: tapsAcademicsData.grade8MathPassRate || 0,
+        stem: tapsAcademicsData.grade8StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade8Above70Percent || 0,
+      },
+      grade9: {
+        overall: tapsAcademicsData.grade9OverallPassRate || 0,
+        english: tapsAcademicsData.grade9EnglishPassRate || 0,
+        math: tapsAcademicsData.grade9MathPassRate || 0,
+        stem: tapsAcademicsData.grade9StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade9Above70Percent || 0,
+      },
+      grade10: {
+        overall: tapsAcademicsData.grade10OverallPassRate || 0,
+        english: tapsAcademicsData.grade10EnglishPassRate || 0,
+        math: tapsAcademicsData.grade10MathPassRate || 0,
+        stem: tapsAcademicsData.grade10StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade10Above70Percent || 0,
+      },
+      grade11: {
+        overall: tapsAcademicsData.grade11OverallPassRate || 0,
+        english: tapsAcademicsData.grade11EnglishPassRate || 0,
+        math: tapsAcademicsData.grade11MathPassRate || 0,
+        stem: tapsAcademicsData.grade11StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade11Above70Percent || 0,
+      },
+    }
+
     const scores = calculateAllTAPSCategoryScores({
       schoolInputs: schoolInputsData as any,
       leadership: leadershipData as any,
-      academics: tapsAcademicsData as any,
+      academics: academicsNested as any,
       teacherDevelopment: teacherDevelopmentData as any,
       healthSafety: healthSafetyData as any,
       schoolCulture: schoolCultureData as any,
@@ -975,7 +1112,7 @@ export function AssessmentReportForm({
   
   // Select field renderer for TAPS
   const renderSelectField = (
-    field: TAPSFormFieldConfig,
+    field: FormFieldConfig,
     value: string | undefined,
     onChange: (value: string) => void,
     disabled?: boolean
@@ -1011,12 +1148,12 @@ export function AssessmentReportForm({
   
   // Number field renderer for TAPS (with importance indicator)
   const renderTAPSNumberField = (
-    field: TAPSFormFieldConfig,
+    field: FormFieldConfig,
     value: number | undefined,
     onChange: (value: number | undefined) => void,
     disabled?: boolean
   ) => {
-    const isAutoCalc = field.autoCalculated && hasEnoughHistoricalData
+    const isAutoCalc = field.autoCalculable && hasEnoughHistoricalData
     
     return (
       <div className="space-y-2 p-4 border rounded-lg">
@@ -1066,11 +1203,11 @@ export function AssessmentReportForm({
   
   // Dynamic TAPS field renderer
   const renderTAPSField = (
-    field: TAPSFormFieldConfig,
+    field: FormFieldConfig,
     value: any,
     onChange: (value: any) => void
   ) => {
-    const disabled = field.autoCalculated && hasEnoughHistoricalData
+    const disabled = field.autoCalculable && hasEnoughHistoricalData
     
     switch (field.type) {
       case 'number':
@@ -1325,7 +1462,7 @@ export function AssessmentReportForm({
     const gradeConfig = getGradeMatrixConfig()
     
     // Create a map of field IDs to their configs for quick lookup
-    const fieldConfigMap: Record<string, TAPSFormFieldConfig> = {}
+    const fieldConfigMap: Record<string, FormFieldConfig> = {}
     TAPS_ACADEMICS_FIELDS.forEach(field => {
       fieldConfigMap[field.id] = field
     })
@@ -1457,10 +1594,48 @@ export function AssessmentReportForm({
   // ============================================================================
   
   const renderTAPSReviewSection = () => {
+    const academicsNested = {
+      grade7: {
+        overall: tapsAcademicsData.grade7OverallPassRate || 0,
+        english: tapsAcademicsData.grade7EnglishPassRate || 0,
+        math: tapsAcademicsData.grade7MathPassRate || 0,
+        stem: tapsAcademicsData.grade7StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade7Above70Percent || 0,
+      },
+      grade8: {
+        overall: tapsAcademicsData.grade8OverallPassRate || 0,
+        english: tapsAcademicsData.grade8EnglishPassRate || 0,
+        math: tapsAcademicsData.grade8MathPassRate || 0,
+        stem: tapsAcademicsData.grade8StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade8Above70Percent || 0,
+      },
+      grade9: {
+        overall: tapsAcademicsData.grade9OverallPassRate || 0,
+        english: tapsAcademicsData.grade9EnglishPassRate || 0,
+        math: tapsAcademicsData.grade9MathPassRate || 0,
+        stem: tapsAcademicsData.grade9StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade9Above70Percent || 0,
+      },
+      grade10: {
+        overall: tapsAcademicsData.grade10OverallPassRate || 0,
+        english: tapsAcademicsData.grade10EnglishPassRate || 0,
+        math: tapsAcademicsData.grade10MathPassRate || 0,
+        stem: tapsAcademicsData.grade10StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade10Above70Percent || 0,
+      },
+      grade11: {
+        overall: tapsAcademicsData.grade11OverallPassRate || 0,
+        english: tapsAcademicsData.grade11EnglishPassRate || 0,
+        math: tapsAcademicsData.grade11MathPassRate || 0,
+        stem: tapsAcademicsData.grade11StemPassRate || 0,
+        above70Percent: tapsAcademicsData.grade11Above70Percent || 0,
+      },
+    }
+
     const scores = calculateAllTAPSCategoryScores({
       schoolInputs: schoolInputsData as any,
       leadership: leadershipData as any,
-      academics: tapsAcademicsData as any,
+      academics: academicsNested as any,
       teacherDevelopment: teacherDevelopmentData as any,
       healthSafety: healthSafetyData as any,
       schoolCulture: schoolCultureData as any,
@@ -1728,151 +1903,224 @@ export function AssessmentReportForm({
     showValidationErrors && currentSectionMeta?.id !== 'review' && incompleteSectionIds.has(currentSectionMeta.id)
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle className="text-xl">
-                {isTAPS ? 'TAPS Assessment Report' : 'School Assessment Report'}
-              </CardTitle>
-              <CardDescription>
-                {schoolName} • {regionName}
-              </CardDescription>
-              {activeTermWindow && (
-                <CardDescription className="mt-1">
-                  {activeTermWindow.academicYear} - {activeTermWindow.termNumber === 1 ? 'First' : activeTermWindow.termNumber === 2 ? 'Second' : 'Third'} Term
+    <div className="grid gap-6 lg:grid-cols-4">
+      <div className="lg:col-span-3 space-y-6">
+        {/* Header */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="text-xl">
+                  {isTAPS ? 'TAPS Assessment Report' : 'School Assessment Report'}
+                </CardTitle>
+                <CardDescription>
+                  {schoolName} • {regionName}
                 </CardDescription>
-              )}
-              <div className="flex items-center gap-2 mt-2">
-                {schoolTypeInfo && (
-                  <Badge variant="outline">
-                    {schoolTypeInfo.label}
-                  </Badge>
+                {activeTermWindow && (
+                  <CardDescription className="mt-1">
+                    {activeTermWindow.academicYear} - {activeTermWindow.termNumber === 1 ? 'First' : activeTermWindow.termNumber === 2 ? 'Second' : 'Third'} Term
+                  </CardDescription>
                 )}
-                {isTAPS && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                    TAPS Metrics
-                  </Badge>
+                <div className="flex items-center gap-2 mt-2">
+                  {schoolTypeInfo && (
+                    <Badge variant="outline">
+                      {schoolTypeInfo.label}
+                    </Badge>
+                  )}
+                  {isTAPS && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                      TAPS Metrics
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {lastSaved && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Saved {lastSaved.toLocaleTimeString()}
+                  </span>
                 )}
+                <Badge variant={submissionOpen ? "default" : "secondary"}>
+                  {submissionOpen ? "Submission Open" : "Submission Closed"}
+                </Badge>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {lastSaved && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Saved {lastSaved.toLocaleTimeString()}
-                </span>
-              )}
-              <Badge variant={submissionOpen ? "default" : "secondary"}>
-                {submissionOpen ? "Submission Open" : "Submission Closed"}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-      
-      {/* Progress Steps */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex overflow-x-auto gap-2 pb-2">
-            {currentFormSections.map((section, index) => {
-              const isIncomplete = incompleteSectionIds.has(section.id)
-              const isCurrent = index === currentSection
-              const showCaution = showValidationErrors && isIncomplete
-              const cautionClassName = isCurrent
-                ? 'h-4 w-4 text-primary-foreground'
-                : 'h-4 w-4 text-destructive'
-              const titleClassName = showCaution && !isCurrent ? 'text-destructive' : ''
-
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setCurrentSection(index)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
-                    index === currentSection
-                      ? 'bg-primary text-primary-foreground'
-                      : index < currentSection
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {section.icon}
-                  <span className={`hidden sm:inline ${titleClassName}`.trim()}>{section.title}</span>
-                  {showCaution && <AlertTriangle className={cautionClassName} />}
-                  <span className="sm:hidden">{index + 1}</span>
-                </button>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Current Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {currentFormSections[currentSection].icon}
-            <span className={isCurrentSectionIncomplete ? 'text-destructive' : undefined}>
-              {currentFormSections[currentSection].title}
-            </span>
-            {isCurrentSectionIncomplete && <AlertTriangle className="h-4 w-4 text-destructive" />}
-          </CardTitle>
-          {currentFormSections[currentSection].id !== 'review' && (
-            <CardDescription>
-              Maximum Points: {currentFormSections[currentSection].maxPoints}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          {renderCurrentSection()}
-        </CardContent>
-      </Card>
-      
-      {/* Navigation */}
-      <div className="flex justify-between items-center">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentSection === 0}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
-        </Button>
+          </CardHeader>
+        </Card>
         
-        <div className="flex gap-2">
+        {/* Progress Steps */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex overflow-x-auto gap-2 pb-2">
+              {currentFormSections.map((section, index) => {
+                const isIncomplete = incompleteSectionIds.has(section.id)
+                const isCurrent = index === currentSection
+                const showCaution = showValidationErrors && isIncomplete
+                const cautionClassName = isCurrent
+                  ? 'h-4 w-4 text-primary-foreground'
+                  : 'h-4 w-4 text-destructive'
+                const titleClassName = showCaution && !isCurrent ? 'text-destructive' : ''
+
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setCurrentSection(index)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                      index === currentSection
+                        ? 'bg-primary text-primary-foreground'
+                        : index < currentSection
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {section.icon}
+                    <span className={`hidden sm:inline ${titleClassName}`.trim()}>{section.title}</span>
+                    {showCaution && <AlertTriangle className={cautionClassName} />}
+                    <span className="sm:hidden">{index + 1}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Current Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {currentFormSections[currentSection].icon}
+              <span className={isCurrentSectionIncomplete ? 'text-destructive' : undefined}>
+                {currentFormSections[currentSection].title}
+              </span>
+              {isCurrentSectionIncomplete && <AlertTriangle className="h-4 w-4 text-destructive" />}
+            </CardTitle>
+            {currentFormSections[currentSection].id !== 'review' && (
+              <CardDescription>
+                Maximum Points: {currentFormSections[currentSection].maxPoints}
+              </CardDescription>
+            )}
+          </CardHeader>
+          <CardContent>
+            {renderCurrentSection()}
+          </CardContent>
+        </Card>
+        
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
           <Button
             variant="outline"
-            onClick={handleSaveSection}
-            disabled={isSaving || currentFormSections[currentSection].id === 'review'}
+            onClick={handlePrevious}
+            disabled={currentSection === 0}
           >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Draft
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Previous
           </Button>
           
-          {currentSection === currentFormSections.length - 1 ? (
+          <div className="flex gap-2">
             <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !submissionOpen || calculateProgress() < 100}
+              variant="outline"
+              onClick={handleSaveSection}
+              disabled={isSaving || currentFormSections[currentSection].id === 'review'}
             >
-              {isSubmitting ? (
+              {isSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 mr-2" />
               )}
-              Submit Report
+              Save Draft
             </Button>
-          ) : (
-            <Button onClick={handleNext}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+            
+            {currentSection === currentFormSections.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !submissionOpen || calculateProgress() < 100}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Submit Report
+              </Button>
+            ) : (
+              <Button onClick={handleNext}>
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar - Live Score Impact */}
+      <div className="hidden lg:block">
+        <div className="sticky top-6 space-y-6">
+          <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
+            <div className="bg-primary/5 px-4 py-3 border-b border-primary/10">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Live Score Impact
+              </h3>
+            </div>
+            <CardContent className="pt-6 space-y-6">
+              <div className="text-center">
+                <div className="text-5xl font-black tracking-tighter text-primary">{totalScore}</div>
+                <div className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">
+                  OUT OF {isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000} POINTS
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-bold uppercase">
+                  <span className="text-muted-foreground">Estimated Rating</span>
+                  <span className="text-primary">{currentRating}</span>
+                </div>
+                <Progress value={(totalScore / (isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000)) * 100} className="h-2" />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Category Breakdown</h4>
+                <div className="space-y-3">
+                  {Object.entries(currentScores).map(([cat, score]) => {
+                    const config = isTAPS 
+                      ? TAPS_CATEGORY_CONFIGS.find(c => c.categoryId === cat)
+                      : ALL_CATEGORY_CONFIGS.find(c => c.categoryId === cat)
+                    
+                    if (!config) return null
+                    const maxPoints = config.maxPoints || 100 // Fallback for demo
+                    const percentage = Math.round(((score as number) / maxPoints) * 100)
+                    
+                    return (
+                      <div key={cat} className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-medium">
+                          <span className="truncate max-w-[120px] text-muted-foreground">{config.categoryLabel}</span>
+                          <span className="font-bold">{score}/{maxPoints}</span>
+                        </div>
+                        <Progress value={percentage} className="h-1" />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-primary/5 border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-primary shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold">Real-time Insights</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Your score and rating are calculated instantly as you provide data. This helps you see the impact of each metric on the overall assessment.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

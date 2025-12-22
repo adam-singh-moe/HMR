@@ -142,9 +142,9 @@ export async function getRegionalSchoolReadinessData(regionName: string): Promis
         data: {
           summary: {
             total_schools: 0,
-            ready_schools: 0,
-            not_ready_schools: 0,
-            no_status_schools: 0,
+            ready: 0,
+            not_ready: 0,
+            no_status: 0,
             ready_percentage: 0,
             not_ready_percentage: 0,
             no_status_percentage: 0
@@ -243,9 +243,9 @@ export async function getRegionalSchoolReadinessData(regionName: string): Promis
       data: {
         summary: {
           total_schools: totalSchools,
-          ready_schools: readySchools,
-          not_ready_schools: notReadySchools,
-          no_status_schools: noStatusSchools,
+          ready: readySchools,
+          not_ready: notReadySchools,
+          no_status: noStatusSchools,
           ready_percentage: readyPercentage,
           not_ready_percentage: notReadyPercentage,
           no_status_percentage: noStatusPercentage

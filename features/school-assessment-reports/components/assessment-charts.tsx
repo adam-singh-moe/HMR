@@ -38,10 +38,14 @@ import {
   ComposedChart,
   ReferenceLine,
 } from "recharts"
-import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar } from "lucide-react"
+
+// Fix for Recharts 3.x type issues with React 18/19
+const PolarAngleAxisAny = PolarAngleAxis as any;
+import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar, LineChart as LineChartIcon, BarChart as BarChartIcon } from "lucide-react"
 import type { CategoryName, RatingLevel, TAPSCategoryName, TAPSRatingGrade } from "../types"
 import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE } from "../types"
-import { getRegionalCategoryRankings } from "../actions/analytics"
+import { getRegionalCategoryRankings, getSchoolTrends } from "../actions/analytics"
+import { getReport, getReportBySchoolAndPeriod } from "../actions/reports"
 
 // ============================================================================
 // TYPES
@@ -140,7 +144,7 @@ const CATEGORY_CONFIG: Record<CategoryName, { label: string; maxScore: number }>
 
 // TAPS Category configuration for charts
 const TAPS_CATEGORY_CONFIG: Record<TAPSCategoryName, { label: string; maxScore: number }> = {
-  school_inputs: { label: 'School Inputs & Operations', maxScore: 80 },
+  school_inputs_operations: { label: 'School Inputs & Operations', maxScore: 80 },
   leadership: { label: 'Leadership', maxScore: 30 },
   academics: { label: 'Academics', maxScore: 200 },
   teacher_development: { label: 'Teacher Development', maxScore: 20 },
@@ -198,7 +202,7 @@ export function TrendChart({ data, title = "Score Trends", description }: TrendC
             />
             <YAxis domain={[0, 1000]} />
             <Tooltip 
-              formatter={(value: number) => [value, 'Average Score']}
+              formatter={((value: any) => [value, 'Average Score']) as any}
               labelStyle={{ fontWeight: 'bold' }}
             />
             <Legend />
@@ -246,10 +250,10 @@ export function CategoryBarChart({ scores, title = "Category Scores", descriptio
             <XAxis type="number" domain={[0, 'dataMax']} />
             <YAxis type="category" dataKey="category" tick={{ fontSize: 12 }} width={90} />
             <Tooltip 
-              formatter={(value: number, name: string, props: any) => [
+              formatter={((value: any, n: any, name: any, props: any) => [
                 `${value} / ${props.payload.maxScore}`,
                 'Score'
-              ]}
+              ]) as any}
             />
             <Bar dataKey="score" fill="#8884d8" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
@@ -293,10 +297,10 @@ export function TAPSCategoryBarChart({ scores, title = "TAPS Category Scores", d
             <XAxis type="number" domain={[0, 'dataMax']} />
             <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={120} />
             <Tooltip 
-              formatter={(value: number, name: string, props: any) => [
+              formatter={((value: number, name: string, props: any) => [
                 `${value} / ${props.payload.maxScore}`,
                 'Score'
-              ]}
+              ]) as any}
             />
             <Bar dataKey="score" fill="#8884d8" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
@@ -368,7 +372,7 @@ export function TAPSGradeDistributionChart({
               paddingAngle={2}
               dataKey="value"
               label={({ name, value, percent }) => 
-                `${name}: ${value} (${(percent * 100).toFixed(0)}%)`
+                `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`
               }
             >
               {data.map((entry, index) => (
@@ -456,7 +460,7 @@ export function RatingDistributionChart({
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => [value, 'Schools']}
+                formatter={((value: any) => [value, 'Schools']) as any}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -482,6 +486,8 @@ export function RatingDistributionChart({
 
 interface RadarChartProps {
   scores: Record<CategoryName, number>
+  comparisonScores?: Record<CategoryName, number>
+  comparisonLabel?: string
   title?: string
   description?: string
   showPercentage?: boolean
@@ -489,6 +495,8 @@ interface RadarChartProps {
 
 export function CategoryRadarChart({ 
   scores, 
+  comparisonScores,
+  comparisonLabel = "Comparison",
   title = "Performance Profile", 
   description,
   showPercentage = true 
@@ -498,44 +506,72 @@ export function CategoryRadarChart({
       category: config.label.split(' ')[0], // Shortened for radar
       fullName: config.label,
       score: scores[category] || 0,
+      comparisonScore: comparisonScores ? (comparisonScores[category] || 0) : undefined,
       percentage: Math.round(((scores[category] || 0) / config.maxScore) * 100),
+      comparisonPercentage: comparisonScores 
+        ? Math.round(((comparisonScores[category] || 0) / config.maxScore) * 100) 
+        : undefined,
       maxScore: config.maxScore,
     }))
-  }, [scores])
+  }, [scores, comparisonScores])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <RadarChart data={data}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="category" tick={{ fontSize: 11 }} />
-            <PolarRadiusAxis 
-              angle={90} 
-              domain={showPercentage ? [0, 100] : [0, 'auto']} 
-              tick={{ fontSize: 10 }}
-            />
-            <Radar
-              name="Score"
-              dataKey={showPercentage ? "percentage" : "score"}
-              stroke="#8884d8"
-              fill="#8884d8"
-              fillOpacity={0.5}
-            />
-            <Tooltip 
-              formatter={(value: number, name: string, props: any) => [
-                showPercentage 
-                  ? `${value}% (${props.payload.score}/${props.payload.maxScore})`
-                  : `${value}/${props.payload.maxScore}`,
-                props.payload.fullName
-              ]}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+              <PolarGrid stroke="#e2e8f0" />
+              <PolarAngleAxisAny 
+                dataKey="category" 
+                tick={{ fontSize: 10, fontWeight: 500, fill: '#64748b' }} 
+              />
+              <PolarRadiusAxis 
+                angle={90} 
+                domain={showPercentage ? [0, 100] : [0, 'auto']} 
+                tick={false}
+                axisLine={false}
+              />
+              <Radar
+                name="Current School"
+                dataKey={showPercentage ? "percentage" : "score"}
+                stroke="#3b82f6"
+                fill="#3b82f6"
+                fillOpacity={0.5}
+                strokeWidth={2}
+              />
+              {comparisonScores && (
+                <Radar
+                  name={comparisonLabel}
+                  dataKey={showPercentage ? "comparisonPercentage" : "comparisonScore"}
+                  stroke="#ef4444"
+                  fill="#ef4444"
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                />
+              )}
+              <Tooltip 
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                formatter={((value: any, n: any, name: string, props: any) => {
+                  const isComparison = name === comparisonLabel;
+                  const score = isComparison ? props.payload.comparisonScore : props.payload.score;
+                  return [
+                    showPercentage 
+                      ? `${value}% (${score}/${props.payload.maxScore})`
+                      : `${value}/${props.payload.maxScore}`,
+                    name
+                  ];
+                }) as any}
+              />
+              {comparisonScores && <Legend verticalAlign="bottom" height={36}/>}
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
@@ -543,6 +579,8 @@ export function CategoryRadarChart({
 
 interface TAPSRadarChartProps {
   scores: Record<TAPSCategoryName, number>
+  comparisonScores?: Record<TAPSCategoryName, number>
+  comparisonLabel?: string
   title?: string
   description?: string
   showPercentage?: boolean
@@ -550,6 +588,8 @@ interface TAPSRadarChartProps {
 
 export function TAPSCategoryRadarChart({
   scores,
+  comparisonScores,
+  comparisonLabel = "Comparison",
   title = "Performance Profile",
   description,
   showPercentage = true,
@@ -559,46 +599,100 @@ export function TAPSCategoryRadarChart({
       category: config.label.split(' ')[0],
       fullName: config.label,
       score: scores[category] || 0,
+      comparisonScore: comparisonScores ? (comparisonScores[category] || 0) : undefined,
       percentage: Math.round(((scores[category] || 0) / config.maxScore) * 100),
+      comparisonPercentage: comparisonScores 
+        ? Math.round(((comparisonScores[category] || 0) / config.maxScore) * 100) 
+        : undefined,
       maxScore: config.maxScore,
     }))
-  }, [scores])
+  }, [scores, comparisonScores])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <RadarChart data={data}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="category" tick={{ fontSize: 11 }} />
-            <PolarRadiusAxis
-              angle={90}
-              domain={showPercentage ? [0, 100] : [0, 'auto']}
-              tick={{ fontSize: 10 }}
-            />
-            <Radar
-              name="Score"
-              dataKey={showPercentage ? "percentage" : "score"}
-              stroke="#8884d8"
-              fill="#8884d8"
-              fillOpacity={0.5}
-            />
-            <Tooltip
-              formatter={(value: number, name: string, props: any) => [
-                showPercentage
-                  ? `${value}% (${props.payload.score}/${props.payload.maxScore})`
-                  : `${value}/${props.payload.maxScore}`,
-                props.payload.fullName,
-              ]}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+              <PolarGrid stroke="#e2e8f0" />
+              <PolarAngleAxisAny 
+                dataKey="category" 
+                tick={{ fontSize: 10, fontWeight: 500, fill: '#64748b' }} 
+              />
+              <PolarRadiusAxis
+                angle={90}
+                domain={showPercentage ? [0, 100] : [0, 'auto']}
+                tick={false}
+                axisLine={false}
+              />
+              <Radar
+                name="Current School"
+                dataKey={showPercentage ? "percentage" : "score"}
+                stroke="#3b82f6"
+                fill="#3b82f6"
+                fillOpacity={0.5}
+                strokeWidth={2}
+              />
+              {comparisonScores && (
+                <Radar
+                  name={comparisonLabel}
+                  dataKey={showPercentage ? "comparisonPercentage" : "comparisonScore"}
+                  stroke="#ef4444"
+                  fill="#ef4444"
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                />
+              )}
+              <Tooltip
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                formatter={((value: number, name: string, props: any) => {
+                  const isComparison = name === comparisonLabel;
+                  const score = isComparison ? props.payload.comparisonScore : props.payload.score;
+                  return [
+                    showPercentage
+                      ? `${value}% (${score}/${props.payload.maxScore})`
+                      : `${value}/${props.payload.maxScore}`,
+                    name,
+                  ]
+                }) as any}
+              />
+              {comparisonScores && <Legend verticalAlign="bottom" height={36}/>}
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
+  )
+}
+
+interface SparklineProps {
+  data: number[]
+  color?: string
+  height?: number
+  width?: number
+}
+
+export function Sparkline({ data, color = "#8884d8", height = 30, width = 80 }: SparklineProps) {
+  const chartData = data.map((val, i) => ({ value: val, index: i }))
+  
+  return (
+    <ResponsiveContainer width={width} height={height}>
+      <LineChart data={chartData}>
+        <Line 
+          type="monotone" 
+          dataKey="value" 
+          stroke={color} 
+          strokeWidth={2} 
+          dot={false} 
+          isAnimationActive={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -650,10 +744,10 @@ export function RegionComparisonChart({
             <XAxis type="number" domain={[0, 1000]} />
             <YAxis type="category" dataKey="regionName" tick={{ fontSize: 12 }} width={90} />
             <Tooltip 
-              formatter={(value: number, name: string, props: any) => [
+              formatter={((value: any, name: string, props: any) => [
                 `${value} points (${props.payload.submittedCount} schools)`,
                 'Average Score'
-              ]}
+              ]) as any}
             />
             <Bar 
               dataKey="averageScore" 
@@ -1555,7 +1649,7 @@ export function ScoreDistributionHistogram({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BarChart className="h-5 w-5 text-blue-600" />
+          <BarChartIcon className="h-5 w-5 text-blue-600" />
           {title}
         </CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
@@ -1575,10 +1669,10 @@ export function ScoreDistributionHistogram({
             />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip 
-              formatter={(value: number, name: string, props: any) => [
+              formatter={((value: any, name: string, props: any) => [
                 `${value} schools (${props.payload.percentage}%)`,
                 'Count'
-              ]}
+              ]) as any}
               contentStyle={{ borderRadius: '8px' }}
             />
             <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -2625,24 +2719,8 @@ export function CompletionRateGauge({
 }
 
 // Export a BarChart icon component for use
-const BarChart = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <line x1="12" y1="20" x2="12" y2="10"></line>
-    <line x1="18" y1="20" x2="18" y2="4"></line>
-    <line x1="6" y1="20" x2="6" y2="16"></line>
-  </svg>
-)
+// (Using lucide-react BarChartIcon instead)
+
 
 const AlertTriangle = ({ className }: { className?: string }) => (
   <svg 
@@ -2662,3 +2740,125 @@ const AlertTriangle = ({ className }: { className?: string }) => (
     <line x1="12" y1="17" x2="12.01" y2="17"></line>
   </svg>
 )
+
+// ============================================================================
+// MAIN ASSESSMENT CHARTS WRAPPER
+// ============================================================================
+
+interface AssessmentChartsProps {
+  reportId: string
+  schoolId: string
+  comparisonSchoolId?: string | null
+}
+
+export function AssessmentCharts({ reportId, schoolId, comparisonSchoolId }: AssessmentChartsProps) {
+  const [data, setData] = useState<{
+    schoolTrends: any[]
+    comparisonTrends: any[]
+    currentReport: any
+    comparisonReport: any
+  }>({
+    schoolTrends: [],
+    comparisonTrends: [],
+    currentReport: null,
+    comparisonReport: null
+  })
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true)
+      try {
+        const [trendsRes, reportRes] = await Promise.all([
+          getSchoolTrends(schoolId),
+          getReport(reportId)
+        ])
+
+        let compTrends: any[] = []
+        let compReport: any = null
+
+        if (comparisonSchoolId && reportRes?.report) {
+          const [cTrendsRes, cReportRes] = await Promise.all([
+            getSchoolTrends(comparisonSchoolId),
+            getReportBySchoolAndPeriod(comparisonSchoolId, reportRes.report.periodId)
+          ])
+          compTrends = cTrendsRes.trends || []
+          compReport = cReportRes
+        }
+
+        setData({
+          schoolTrends: trendsRes.trends || [],
+          comparisonTrends: compTrends,
+          currentReport: reportRes?.report,
+          comparisonReport: compReport
+        })
+      } catch (error) {
+        console.error("Error loading assessment charts data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+  }, [schoolId, reportId, comparisonSchoolId])
+
+  if (isLoading) {
+    return (
+      <div className="h-[400px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading analytics...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const isTAPS = data.currentReport?.isTAPS || data.currentReport?.tapsRatingGrade
+
+  // Helper to extract category scores for radar chart
+  const getRadarScores = (report: any) => {
+    if (!report) return null
+    if (isTAPS) {
+      return report.tapsCategoryScores
+    }
+    return report.categoryScores
+  }
+
+  const currentRadarScores = getRadarScores(data.currentReport)
+  const comparisonRadarScores = getRadarScores(data.comparisonReport)
+
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-6 md:grid-cols-2">
+        <EnhancedTrendChart 
+          data={data.schoolTrends.map(t => ({
+            period: t.period,
+            averageScore: t.averageScore
+          }))}
+          title="Score History"
+          description="Performance over the last few terms"
+          variant={isTAPS ? 'taps' : 'demo'}
+        />
+        
+        {isTAPS ? (
+          <TAPSCategoryRadarChart 
+            scores={currentRadarScores || {}}
+            comparisonScores={comparisonRadarScores}
+            comparisonLabel={comparisonSchoolId ? "Comparison" : undefined}
+            title="Category Profile"
+            description="Relative strength across TAPS categories"
+          />
+        ) : (
+          <CategoryRadarChart 
+            scores={currentRadarScores || {}}
+            comparisonScores={comparisonRadarScores}
+            comparisonLabel={comparisonSchoolId ? "Comparison" : undefined}
+            title="Category Profile"
+            description="Relative strength across assessment categories"
+          />
+        )}
+      </div>
+
+      {/* Sparklines for quick category trends could be added here */}
+    </div>
+  )
+}

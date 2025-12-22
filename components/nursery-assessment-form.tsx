@@ -1342,7 +1342,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           setCurrentUser(user)
           
           // Check if we have full school info in session, otherwise get it
-          let schoolData = null
+          let schoolData: any = null
           if (user.school_name && user.region_name) {
             // Use session data if available
             schoolData = {
@@ -1354,9 +1354,9 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             // Need to get full school info if not in session
             console.log("Getting full school info from API...")
             const schoolResult = await getUserSchoolInfo()
-            if (schoolResult.school) {
-              schoolData = schoolResult.school
-              setSchoolInfo(schoolResult.school)
+            if ((schoolResult as any).school) {
+              schoolData = (schoolResult as any).school
+              setSchoolInfo((schoolResult as any).school)
             }
           }
           

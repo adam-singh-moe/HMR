@@ -252,7 +252,7 @@ export async function getCurrentMonthSchools() {
         headTeacherEmail: headTeacherEmail,
         headTeacherId: headTeacherId,
         region: `Region ${school.region_id}`,
-        level: school.sms_school_levels?.name || "",
+        level: (school.sms_school_levels as any)?.name || "",
         dueDate,
         status,
         submittedDate,

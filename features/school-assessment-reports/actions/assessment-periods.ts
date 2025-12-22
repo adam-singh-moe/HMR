@@ -94,7 +94,7 @@ export async function getTermConfigs() {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('term_submission_config')
+      .from('hmr_term_submission_config')
       .select('*')
       .order('term_number', { ascending: true })
     
@@ -143,7 +143,7 @@ export async function updateTermConfig(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('term_submission_config')
+      .from('hmr_term_submission_config')
       .update({
         start_month: startMonth,
         start_day: startDay,
@@ -182,7 +182,7 @@ export async function toggleTermEnabled(termNumber: 1 | 2 | 3, isEnabled: boolea
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('term_submission_config')
+      .from('hmr_term_submission_config')
       .update({
         is_enabled: isEnabled,
         updated_by: user.id,
@@ -324,7 +324,7 @@ export async function createAcademicYear(academicYear: string) {
     
     // Check if academic year already exists
     const { data: existing } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('id')
       .eq('academic_year', academicYear)
       .limit(1)
@@ -346,7 +346,7 @@ export async function createAcademicYear(academicYear: string) {
     }))
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .insert(periods)
       .select()
     
@@ -393,7 +393,7 @@ export async function setSubmissionWindow(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({
         start_date: start.toISOString(),
         end_date: end.toISOString(),
@@ -431,7 +431,7 @@ export async function activatePeriod(periodId: string) {
     
     // Get the period to verify it exists and has valid dates
     const { data: period, error: fetchError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('id', periodId)
       .single()
@@ -448,7 +448,7 @@ export async function activatePeriod(periodId: string) {
     }
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({ is_active: true })
       .eq('id', periodId)
       .select()
@@ -481,7 +481,7 @@ export async function deactivatePeriod(periodId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({ is_active: false })
       .eq('id', periodId)
       .select()
@@ -508,7 +508,7 @@ export async function getActivePeriod() {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('is_active', true)
       .single()
@@ -538,7 +538,7 @@ export async function isSubmissionOpen(periodId?: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
     
     if (periodId) {
@@ -579,7 +579,7 @@ export async function getAcademicYearPeriods(academicYear: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('academic_year', academicYear)
       .order('sequence_order', { ascending: true })
@@ -607,7 +607,7 @@ export async function getAllAcademicYears() {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .order('academic_year', { ascending: false })
       .order('sequence_order', { ascending: true })
@@ -635,7 +635,7 @@ export async function getPeriodById(periodId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('id', periodId)
       .single()
@@ -660,7 +660,7 @@ export async function getAllPeriods() {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .order('academic_year', { ascending: false })
       .order('sequence_order', { ascending: true })
@@ -691,7 +691,7 @@ export async function advanceToNextPeriod() {
     
     // Get current active period
     const { data: currentPeriod, error: fetchError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('is_active', true)
       .single()
@@ -710,7 +710,7 @@ export async function advanceToNextPeriod() {
       const nextSequence = currentSequence + 1
       
       const { data: nextPeriod, error: nextError } = await supabase
-        .from('school_assessment_periods')
+        .from('hmr_school_assessment_periods')
         .select('id')
         .eq('academic_year', currentYear)
         .eq('sequence_order', nextSequence)
@@ -727,7 +727,7 @@ export async function advanceToNextPeriod() {
       
       // Check if next year exists
       const { data: nextYearPeriods } = await supabase
-        .from('school_assessment_periods')
+        .from('hmr_school_assessment_periods')
         .select('id')
         .eq('academic_year', nextYear)
         .eq('sequence_order', 1)
@@ -747,13 +747,13 @@ export async function advanceToNextPeriod() {
     
     // Deactivate current period
     await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({ is_active: false })
       .eq('id', currentPeriod.id)
     
     // Activate next period
     const { data: activatedPeriod, error: activateError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({ is_active: true })
       .eq('id', nextPeriodId)
       .select()
@@ -786,7 +786,7 @@ export async function closeExpiredPeriod(periodId: string) {
     
     // Get the period
     const { data: period, error: fetchError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('id', periodId)
       .single()
@@ -797,7 +797,7 @@ export async function closeExpiredPeriod(periodId: string) {
     
     // Mark all draft reports for this period as expired_draft
     const { data: expiredReports, error: updateError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .update({ 
         status: 'expired_draft',
         locked_at: new Date().toISOString()
@@ -813,7 +813,7 @@ export async function closeExpiredPeriod(periodId: string) {
     
     // Deactivate the period
     await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .update({ is_active: false })
       .eq('id', periodId)
     
@@ -838,7 +838,7 @@ export async function getPeriodWithStatus(periodId: string): Promise<{
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: period, error: periodError } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('*')
       .eq('id', periodId)
       .single()
@@ -849,7 +849,7 @@ export async function getPeriodWithStatus(periodId: string): Promise<{
     
     // Get submission counts
     const { count: submittedCount } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('id', { count: 'exact', head: true })
       .eq('period_id', periodId)
       .eq('status', 'submitted')

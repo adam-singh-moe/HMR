@@ -56,7 +56,7 @@ export async function getTopExpenditureSchools(year: number, month: number) {
     // Process the data to get top 10 schools with highest expenditure
     const processedSchools = financeData
       .map(record => {
-        const report = record.hmr_report
+        const report = record.hmr_report as any
         const school = report?.sms_schools
         
         if (!school || !record.total_expenditure) {

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     // Get active assessment period
     const { data: activePeriod } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('id, end_date')
       .eq('is_active', true)
       .single()
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     if (activePeriod) {
       // Get all submitted reports for current period
       const { data: reports, error } = await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .select(`
           id,
           school_id,
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
       if (allSchools) {
         const submittedSchoolIds = new Set(
           (await supabase
-            .from('school_assessment_reports')
+            .from('hmr_school_assessment_reports')
             .select('school_id')
             .eq('status', 'submitted'))
             .data?.map(r => r.school_id) || []

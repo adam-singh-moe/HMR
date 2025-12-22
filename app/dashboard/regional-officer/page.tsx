@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AuthWrapper } from "@/components/auth-wrapper"
-import { RegionalPEReportsContent } from "./pe-reports/page"
-import { RegionalAIInsightsContent } from "./ai-insights/page"
+import { RegionalPEReportsContent } from "./pe-reports/pe-reports-content"
+import { RegionalAIInsightsContent } from "./ai-insights/ai-insights-content"
 import { RegionalOfficerAssessmentCard } from "@/components/school-assessment-entry-card"
 import {
   BarChart,
@@ -1321,7 +1321,7 @@ function RegionalOfficerDashboardContent() {
                           label={{ value: 'Total Expenditure', angle: -90, position: 'insideLeft' }}
                         />
                         <Tooltip 
-                          formatter={(value) => [`$${value.toLocaleString()}`, 'Total Expenditure']}
+                          formatter={(value: any) => [`$${(value || 0).toLocaleString()}`, 'Total Expenditure']}
                           labelStyle={{ fontSize: '12px' }}
                         />
                         <Bar 
@@ -1836,7 +1836,7 @@ function RegionalOfficerDashboardContent() {
                             
                             <div className="flex items-center space-x-1">
                               {Array.from({ length: Math.min(5, totalCurrentMonthPages) }, (_, i) => {
-                                let pageNum
+                                let pageNum: number
                                 if (totalCurrentMonthPages <= 5) {
                                   pageNum = i + 1
                                 } else if (currentMonthPage <= 3) {
@@ -2018,7 +2018,7 @@ function RegionalOfficerDashboardContent() {
                           
                           <div className="flex items-center space-x-1">
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                              let pageNum
+                              let pageNum: number
                               if (totalPages <= 5) {
                                 pageNum = i + 1
                               } else if (currentPage <= 3) {

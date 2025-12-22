@@ -3,9 +3,9 @@ import { UserForm } from "@/components/admin/user-form"
 import { notFound } from "next/navigation"
 
 interface EditUserPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {

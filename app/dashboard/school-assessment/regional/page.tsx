@@ -633,10 +633,13 @@ function RegionalOfficerAssessmentContent() {
             <ReportView
               report={{
                 id: selectedReport.id,
+                schoolId: selectedReport.schoolId || selectedReport.school?.id || '',
                 schoolName: selectedReport.school?.name || 'Unknown School',
+                regionId: selectedReport.regionId || '',
                 regionName: regionName,
                 academicYear: selectedReport.period?.academicYear || selectedReport.academicYear || activeWindow?.academicYear || '',
                 termName: selectedReport.period?.termName || selectedReport.termName || (activeWindow ? `${activeWindow.termNumber === 1 ? 'First' : activeWindow.termNumber === 2 ? 'Second' : 'Third'} Term` : ''),
+                periodId: selectedReport.periodId || selectedReport.period?.id || '',
                 totalScore: selectedReport.totalScore || 0,
                 ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
                 submittedAt: selectedReport.submittedAt || '',

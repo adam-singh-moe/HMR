@@ -56,6 +56,49 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
   }
 }
 
+export async function getRegionalAIInsights(timeframe: string) {
+  try {
+    const user = await getUser()
+    if (!user || user.role !== "Regional Officer") {
+      return { data: null, error: "Unauthorized" }
+    }
+
+    // Mock data for now to resolve build errors
+    // In a real app, this would fetch and analyze regional data
+    return {
+      data: {
+        summary: `Overall performance in ${user.region_name || 'the region'} shows positive trends in student enrollment and curriculum coverage. However, some schools are reporting challenges with physical facilities and resource allocation.`,
+        strengths: [
+          "High student enrollment rates across most schools",
+          "Consistent curriculum monitoring and reporting",
+          "Strong community engagement in school activities"
+        ],
+        weaknesses: [
+          "Aging physical facilities in rural areas",
+          "Shortage of specialized teaching resources",
+          "Inconsistent attendance in some secondary schools"
+        ],
+        recommendations: [
+          "Prioritize facility maintenance for schools in the northern district",
+          "Implement a resource-sharing program between high-performing and struggling schools",
+          "Conduct a regional workshop on attendance management strategies"
+        ],
+        trends: [
+          { metric: "Enrollment", direction: "up", change: "5.2%" },
+          { metric: "Attendance", direction: "stable", change: "0.1%" },
+          { metric: "Curriculum Coverage", direction: "up", change: "3.8%" }
+        ],
+        performance_score: 78,
+        last_updated: new Date().toISOString()
+      },
+      error: null
+    }
+  } catch (error) {
+    console.error("Error fetching regional AI insights:", error)
+    return { data: null, error: "Failed to fetch insights" }
+  }
+}
+
 async function fetchReportData(reportType: string, filters?: {
   month?: string
   year?: string

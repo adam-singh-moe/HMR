@@ -73,6 +73,7 @@ interface SchoolInfo {
   name: string
   level: string
   region?: string
+  regionId?: string
   regionName?: string
 }
 
@@ -168,6 +169,7 @@ function HeadTeacherAssessmentContent() {
         name: school.name,
         level: school.level,
         region: school.region,
+        regionId: school.region_id || school.region || '',
         regionName: school.region || '',
       })
       
@@ -475,26 +477,18 @@ function HeadTeacherAssessmentContent() {
 
   const tapsCategoryScores = isTAPS
     ? {
-        // Support both legacy key `school_inputs` and canonical `school_inputs_operations`
-        school_inputs: Number(
-          (selectedReport?.tapsCategoryScores as any)?.school_inputs ??
-            (selectedReport?.tapsCategoryScores as any)?.school_inputs_operations ??
-            selectedReport?.tapsSchoolInputsScores?.total ??
-            0
-        ),
         school_inputs_operations: Number(
-          (selectedReport?.tapsCategoryScores as any)?.school_inputs_operations ??
-            (selectedReport?.tapsCategoryScores as any)?.school_inputs ??
+          selectedReport?.tapsCategoryScores?.school_inputs_operations ??
             selectedReport?.tapsSchoolInputsScores?.total ??
             0
         ),
-        leadership: Number((selectedReport?.tapsCategoryScores as any)?.leadership ?? selectedReport?.tapsLeadershipScores?.total ?? 0),
-        academics: Number((selectedReport?.tapsCategoryScores as any)?.academics ?? selectedReport?.tapsAcademicsScores?.total ?? 0),
+        leadership: Number(selectedReport?.tapsCategoryScores?.leadership ?? selectedReport?.tapsLeadershipScores?.total ?? 0),
+        academics: Number(selectedReport?.tapsCategoryScores?.academics ?? selectedReport?.tapsAcademicsScores?.total ?? 0),
         teacher_development: Number(
-          (selectedReport?.tapsCategoryScores as any)?.teacher_development ?? selectedReport?.tapsTeacherDevelopmentScores?.total ?? 0
+          selectedReport?.tapsCategoryScores?.teacher_development ?? selectedReport?.tapsTeacherDevelopmentScores?.total ?? 0
         ),
-        health_safety: Number((selectedReport?.tapsCategoryScores as any)?.health_safety ?? selectedReport?.tapsHealthSafetyScores?.total ?? 0),
-        school_culture: Number((selectedReport?.tapsCategoryScores as any)?.school_culture ?? selectedReport?.tapsSchoolCultureScores?.total ?? 0),
+        health_safety: Number(selectedReport?.tapsCategoryScores?.health_safety ?? selectedReport?.tapsHealthSafetyScores?.total ?? 0),
+        school_culture: Number(selectedReport?.tapsCategoryScores?.school_culture ?? selectedReport?.tapsSchoolCultureScores?.total ?? 0),
       }
     : null
 
@@ -959,10 +953,13 @@ function HeadTeacherAssessmentContent() {
             <ReportView
               report={{
                 id: selectedReport.id,
+                schoolId: schoolInfo.id,
                 schoolName: schoolInfo.name,
+                regionId: schoolInfo.regionId || '',
                 regionName: schoolInfo.regionName || '',
                 academicYear: selectedReport.academicYear || activeWindow?.academicYear || '',
                 termName: selectedReport.termName || (activeWindow ? `${activeWindow.termNumber === 1 ? 'First' : activeWindow.termNumber === 2 ? 'Second' : 'Third'} Term` : ''),
+                periodId: selectedReport.periodId || '',
                 totalScore: selectedReport.totalScore || 0,
                 ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
                 submittedAt: selectedReport.submittedAt || '',

@@ -59,7 +59,7 @@ export async function createAuditEntry(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_audit_log')
+      .from('hmr_school_assessment_audit_log')
       .insert({
         report_id: reportId,
         admin_id: adminId,
@@ -92,7 +92,7 @@ export async function getReportAuditHistory(reportId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_audit_log')
+      .from('hmr_school_assessment_audit_log')
       .select(`
         *,
         hmr_users(id, name, email)
@@ -123,11 +123,11 @@ export async function getAdminAuditHistory(adminId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_audit_log')
+      .from('hmr_school_assessment_audit_log')
       .select(`
         *,
         hmr_users(id, name, email),
-        school_assessment_reports(
+        hmr_school_assessment_reports(
           id,
           sms_schools(name)
         )
@@ -142,7 +142,7 @@ export async function getAdminAuditHistory(adminId: string) {
     
     const entriesWithSchool = data.map(row => ({
       ...mapDbRowToAuditEntryWithAdmin(row),
-      schoolName: (row as any).school_assessment_reports?.sms_schools?.name || '',
+      schoolName: (row as any).hmr_school_assessment_reports?.sms_schools?.name || '',
     }))
     
     return { entries: entriesWithSchool, error: null }
@@ -160,11 +160,11 @@ export async function getRecentAuditEntries(limit: number = 20) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_audit_log')
+      .from('hmr_school_assessment_audit_log')
       .select(`
         *,
         hmr_users(id, name, email),
-        school_assessment_reports(
+        hmr_school_assessment_reports(
           id,
           sms_schools(name)
         )
@@ -179,7 +179,7 @@ export async function getRecentAuditEntries(limit: number = 20) {
     
     const entriesWithSchool = data.map(row => ({
       ...mapDbRowToAuditEntryWithAdmin(row),
-      schoolName: (row as any).school_assessment_reports?.sms_schools?.name || '',
+      schoolName: (row as any).hmr_school_assessment_reports?.sms_schools?.name || '',
     }))
     
     return { entries: entriesWithSchool, error: null }
@@ -197,7 +197,7 @@ export async function getAuditStats(startDate?: string, endDate?: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_audit_log')
+      .from('hmr_school_assessment_audit_log')
       .select('action, admin_id, created_at')
     
     if (startDate) {

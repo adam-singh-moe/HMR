@@ -362,9 +362,9 @@ export async function sendReportReminders(schoolIds: string[]) {
 
     // Log failed emails for debugging
     if (failedEmails.length > 0) {
-      console.error("Failed to send some emails:", failedEmails.map(f => ({
+      console.error("Failed to send some emails:", failedEmails.map((f: any) => ({
         status: f.status,
-        reason: f.reason.message || String(f.reason)
+        reason: f.reason?.message || String(f.reason)
       })))
     }
 

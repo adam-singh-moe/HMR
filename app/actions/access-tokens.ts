@@ -187,8 +187,8 @@ export async function loginWithAccessToken(formData: FormData) {
 
   const result = await authenticateWithToken(token)
 
-  if (!result.success) {
-    redirect(`/auth?error=${encodeURIComponent(result.error)}`)
+  if (!result.success || !result.user) {
+    redirect(`/auth?error=${encodeURIComponent(result.error || 'Authentication failed')}`)
   }
 
   // TODO: Set session for the impersonated user
@@ -198,7 +198,7 @@ export async function loginWithAccessToken(formData: FormData) {
   // Determine the appropriate dashboard based on user role
   const dashboardUrl = getDashboardUrlForRole(result.user.role)
   
-  redirect(`${dashboardUrl}?impersonated=true&original_user=${result.user.name}`)
+  redirect(`${dashboardUrl}?impersonated=true&original_user=${encodeURIComponent(result.user.name)}`)
 }
 
 // Helper function to generate secure token

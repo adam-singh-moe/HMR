@@ -8,15 +8,16 @@ import { AdminReportsClient } from "./components/AdminReportsClient"
 import { getSubmittedReportsWithSearchAndPagination, getReportCounts, getRegionsForFilter } from "@/app/actions/education-official-reports"
 
 interface PageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function AdminReportsPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams
   // Extract search parameters
-  const search = typeof searchParams.search === 'string' ? searchParams.search : ''
-  const region = typeof searchParams.region === 'string' ? searchParams.region : ''
-  const status = typeof searchParams.status === 'string' ? searchParams.status : ''
-  const page = typeof searchParams.page === 'string' ? parseInt(searchParams.page) : 1
+  const search = typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : ''
+  const region = typeof resolvedSearchParams.region === 'string' ? resolvedSearchParams.region : ''
+  const status = typeof resolvedSearchParams.status === 'string' ? resolvedSearchParams.status : ''
+  const page = typeof resolvedSearchParams.page === 'string' ? parseInt(resolvedSearchParams.page) : 1
 
   // Get regions for the filter
   const { regions } = await getRegionsForFilter()

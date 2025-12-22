@@ -278,10 +278,12 @@ export function HeadTeacherAssessmentCard({
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                         <PolarGrid stroke="rgba(255,255,255,0.3)" />
+                        {/* @ts-ignore */}
                         <PolarAngleAxis 
                           dataKey="category" 
                           tick={{ fill: 'white', fontSize: 9, fontWeight: 500 }}
                         />
+                        {/* @ts-ignore */}
                         <PolarRadiusAxis 
                           angle={90} 
                           domain={[0, 100]} 
@@ -600,7 +602,7 @@ export function RegionalOfficerAssessmentCard({
                           fontSize: '12px'
                         }}
                         labelFormatter={(label) => `Day: ${label}`}
-                        formatter={(value: number) => [`${value} submissions`, 'Count']}
+                        formatter={((value: number) => [`${value} submissions`, 'Count']) as any}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -918,10 +920,10 @@ export function EducationOfficialAssessmentCard({
                           borderRadius: '8px',
                           fontSize: '12px'
                         }}
-                        formatter={(value: number, name: string) => [
+                        formatter={((value: number, name: string) => [
                           name === 'score' ? `${value} pts` : `${value}%`,
                           name === 'score' ? 'Avg Score' : 'Compliance'
-                        ]}
+                        ]) as any}
                       />
                       <Bar 
                         dataKey="score" 

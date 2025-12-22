@@ -37,7 +37,7 @@ export async function updateUserProfile(formData: FormData) {
       return { error: "Name is required" }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Update the user's name in the database
     const { error } = await supabase
@@ -97,7 +97,7 @@ export async function updateUserPassword(formData: FormData) {
       return { error: "New passwords do not match" }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Get the current user data to verify the current password
     const { data: userData, error: fetchError } = await supabase

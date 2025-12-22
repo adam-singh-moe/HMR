@@ -36,6 +36,10 @@ export interface FormFieldConfig {
   options?: { value: string; label: string }[]
   /** Whether this field can be auto-calculated from historical data */
   autoCalculable?: boolean
+  /** Whether this field is currently being auto-calculated */
+  autoCalculated?: boolean
+  /** Step value for number inputs */
+  step?: number
   /** Number of previous terms required for auto-calculation */
   autoCalcRequiredTerms?: number
 }

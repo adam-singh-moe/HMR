@@ -114,7 +114,7 @@ export async function generateSchoolAssessmentInsight(
 
     // Fetch current and historical reports
     let reportQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -132,7 +132,7 @@ export async function generateSchoolAssessmentInsight(
 
     // Fetch regional averages for comparison (match assessment system to avoid mixing 1000-scale and 419-scale reports)
     let regionQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(
         system === 'taps'
           ? 'total_score, school_type, taps_rating_grade, taps_school_inputs_scores, taps_leadership_scores, taps_academics_scores, taps_teacher_development_scores, taps_health_safety_scores, taps_school_culture_scores, sms_schools!inner(region_id)'
@@ -208,7 +208,7 @@ export async function generateRegionalAssessmentInsight(
 
     // Fetch regional school reports
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(id, name, region_id)
@@ -240,7 +240,7 @@ export async function generateRegionalAssessmentInsight(
 
     // Fetch national averages for comparison
     let nationalQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('total_score')
       .eq('status', 'submitted')
       .limit(500)
@@ -320,7 +320,7 @@ export async function generateNationalAssessmentInsight(
 
     // Fetch reports with region info
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(id, name, region_id, sms_regions(id, name))
@@ -413,7 +413,7 @@ export async function generatePredictiveAnalytics(
 
     // Fetch historical reports (at least 2 needed for prediction)
     const { data: reports } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -556,7 +556,7 @@ export async function getEarlyWarnings(
 
     // Fetch schools with recent reports
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(id, name, region_id, sms_regions(name))
@@ -720,7 +720,7 @@ export async function getCohortAnalysis(
 
     // Get target school's latest report
     const { data: targetReport } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -734,7 +734,7 @@ export async function getCohortAnalysis(
 
     // Find similar schools based on criteria
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(id, name, region_id, sms_regions(name))
@@ -855,7 +855,7 @@ export async function generateImprovementPlan(
 
     // Get school's reports
     const { data: reports } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -871,7 +871,7 @@ export async function generateImprovementPlan(
 
     // Get top performing schools in region for benchmarking (match same assessment system)
     let topSchoolsQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(name, region_id)
@@ -969,7 +969,7 @@ export async function generateCategoryAnalysis(
 
     // Get historical reports for this school
     const { data: reports } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -1000,7 +1000,7 @@ export async function generateCategoryAnalysis(
 
     // Get regional average for this category
     const { data: regionReports } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`${String(categoryScoresKey)}, sms_schools!inner(region_id)`)
       .eq('sms_schools.region_id', school.region_id)
       .eq('status', 'submitted')

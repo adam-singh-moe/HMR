@@ -22,6 +22,7 @@ import {
   Globe,
   AlertTriangle,
 } from "lucide-react"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { 
   ReportView, 
   ReportsList,
@@ -252,14 +253,14 @@ function AdminAssessmentContent() {
             id: `term-window-${window.academicYear}-${window.termNumber}`,
             academicYear: window.academicYear,
             termName: window.termNumber === 1 ? 'First Term' : window.termNumber === 2 ? 'Second Term' : 'Third Term',
-            startDate: window.startDate,
-            endDate: window.endDate,
-            submissionStartDate: window.startDate,
-            submissionEndDate: window.endDate,
+            startDate: window.submissionStart,
+            endDate: window.submissionEnd,
+            submissionStartDate: window.submissionStart,
+            submissionEndDate: window.submissionEnd,
             isActive: window.isOpen,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-          }
+          } as any
           setActivePeriod(syntheticPeriod)
           // Still set a fake period ID to trigger data loading - we'll handle this in getNationalReports
           setSelectedPeriodId(syntheticPeriod.id)
@@ -859,10 +860,13 @@ function AdminAssessmentContent() {
               <ReportView
                 report={{
                   id: selectedReport.id,
+                  schoolId: selectedReport.schoolId || selectedReport.school?.id || '',
                   schoolName: selectedReport.school?.name || 'Unknown School',
+                  regionId: selectedReport.regionId || selectedReport.school?.regionId || '',
                   regionName: selectedReport.school?.regionName || '',
                   academicYear: selectedReport.academicYear || activePeriod?.academicYear || '',
                   termName: selectedReport.termName || activePeriod?.termName || '',
+                  periodId: selectedReport.periodId || activePeriod?.id || '',
                   totalScore: selectedReport.totalScore || 0,
                   ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
                   submittedAt: selectedReport.submittedAt || '',

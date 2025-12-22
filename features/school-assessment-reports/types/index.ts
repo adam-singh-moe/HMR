@@ -740,6 +740,16 @@ export interface SchoolAssessmentReport {
   tapsHealthSafetyScores?: Partial<TAPSHealthSafetyScores>
   tapsSchoolCultureScores?: Partial<TAPSSchoolCultureScores>
   
+  // TAPS Category totals for display
+  tapsCategoryScores?: {
+    school_inputs_operations: number
+    leadership: number
+    academics: number
+    teacher_development: number
+    health_safety: number
+    school_culture: number
+  } | null
+
   // Calculated fields
   totalScore: number | null
   ratingLevel: RatingLevel | null
@@ -1015,4 +1025,28 @@ export interface SchoolFilters {
   regionId?: string
   periodId?: string
   submissionStatus?: 'submitted' | 'not_submitted' | 'all'
+}
+
+// ============================================================================
+// USER PREFERENCES & ANALYTICS
+// ============================================================================
+
+export interface UserPreferences {
+  user_id: string
+  default_comparison_school_id: string | null
+  export_settings: {
+    include_ai_insights: boolean
+    include_comparison: boolean
+    include_trends: boolean
+  }
+  created_at: string
+  updated_at: string
+}
+
+export interface RegionalTopPerformerCache {
+  region: string
+  period_id: string
+  school_id: string
+  highest_average_score: number
+  calculated_at: string
 }

@@ -69,7 +69,7 @@ export default async function VerificationsPage() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <form action={verifyUserAction} className="w-full sm:w-auto">
+                  <form action={async (formData) => { await verifyUserAction(formData) }} className="w-full sm:w-auto">
                     <input type="hidden" name="userId" value={user.id} />
                     <Button type="submit" size="sm" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
                       <UserCheck className="h-4 w-4 mr-2" />
@@ -77,7 +77,7 @@ export default async function VerificationsPage() {
                       <span className="sm:hidden">Verify</span>
                     </Button>
                   </form>
-                  <form action={rejectUserAction} className="w-full sm:w-auto">
+                  <form action={async (formData) => { await rejectUserAction(formData) }} className="w-full sm:w-auto">
                     <input type="hidden" name="userId" value={user.id} />
                     <Button type="submit" variant="destructive" size="sm" className="w-full sm:w-auto">
                       <UserX className="h-4 w-4 mr-2" />

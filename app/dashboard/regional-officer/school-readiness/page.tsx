@@ -19,13 +19,13 @@ interface SchoolReadinessData {
     readiness_reason: string | null
     readiness_checklist_items: any | null
     readiness_updated_at: string | null
-    latest_report_date: string | null
+    latest_report_date: string | null | undefined
   }>
   summary: {
     total_schools: number
-    ready_schools: number
-    not_ready_schools: number
-    no_status_schools: number
+    ready: number
+    not_ready: number
+    no_status: number
     ready_percentage: number
     not_ready_percentage: number
     no_status_percentage: number
@@ -65,7 +65,7 @@ export default function SchoolReadinessPage() {
           //console.log('First school with readiness:', schoolWithReadiness)
           //console.log('Checklist items:', schoolWithReadiness.readiness_checklist_items)
         }
-        setData(result.data)
+        setData(result.data as any)
       } else {
         setError(result.error || "Failed to load school readiness data")
       }
@@ -193,7 +193,7 @@ export default function SchoolReadinessPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Ready</p>
-                  <p className="text-2xl font-bold text-green-600">{data?.summary?.ready_schools || 0}</p>
+                  <p className="text-2xl font-bold text-green-600">{data?.summary?.ready || 0}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
@@ -205,7 +205,7 @@ export default function SchoolReadinessPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Not Ready</p>
-                  <p className="text-2xl font-bold text-red-600">{data?.summary?.not_ready_schools || 0}</p>
+                  <p className="text-2xl font-bold text-red-600">{data?.summary?.not_ready || 0}</p>
                 </div>
                 <XCircle className="h-8 w-8 text-red-600" />
               </div>
@@ -217,7 +217,7 @@ export default function SchoolReadinessPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">No Status</p>
-                  <p className="text-2xl font-bold text-gray-600">{data?.summary?.no_status_schools || 0}</p>
+                  <p className="text-2xl font-bold text-gray-600">{data?.summary?.no_status || 0}</p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-gray-600" />
               </div>

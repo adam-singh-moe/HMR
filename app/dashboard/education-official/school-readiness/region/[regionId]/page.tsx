@@ -87,7 +87,7 @@ export default function RegionalSchoolsPage() {
         if (regionResult.error) {
           console.error("Failed to load region:", regionResult.error)
         } else {
-          setRegion(regionResult.region)
+          setRegion(regionResult.region || null)
         }
       } catch (err) {
         setError("Failed to load regional data")

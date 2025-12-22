@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     // Get school's assessment reports
     const { data: reports, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
         taps_teacher_development_scores,
         taps_health_safety_scores,
         taps_school_culture_scores,
-        school_assessment_periods(
+        hmr_school_assessment_periods(
           id,
           term_name,
           academic_year,
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 
     // Check if submitted this term (get current active period)
     const { data: activePeriod } = await supabase
-      .from('school_assessment_periods')
+      .from('hmr_school_assessment_periods')
       .select('id, term_name, end_date')
       .eq('is_active', true)
       .single()
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
 
     if (activePeriod) {
       const { data: currentTermReport } = await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .select('id')
         .eq('school_id', schoolId)
         .eq('period_id', activePeriod.id)
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
       if (totalSchoolsInRegion > 0) {
         // Get scores for all schools in region for current period
         const { data: regionReports } = await supabase
-          .from('school_assessment_reports')
+          .from('hmr_school_assessment_reports')
           .select('school_id, total_score')
           .eq('period_id', activePeriod.id)
           .eq('status', 'submitted')

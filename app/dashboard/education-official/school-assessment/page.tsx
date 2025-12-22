@@ -1086,10 +1086,13 @@ function EducationOfficialAssessmentContent() {
             <ReportView
               report={{
                 id: selectedReport.id,
+                schoolId: selectedReport.schoolId || selectedReport.school?.id || '',
                 schoolName: selectedReport.school?.name || selectedReport.schoolName || 'Unknown School',
+                regionId: selectedReport.regionId || selectedReport.school?.regionId || '',
                 regionName: selectedReport.school?.regionName || selectedReport.regionName || '',
                 academicYear: selectedReport.academicYear || selectedReport.period?.academicYear || '',
                 termName: selectedReport.termName || selectedReport.period?.termName || '',
+                periodId: selectedReport.periodId || selectedReport.period?.id || '',
                 totalScore: selectedReport.totalScore || 0,
                 ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
                 submittedAt: selectedReport.submittedAt || '',
@@ -1097,7 +1100,7 @@ function EducationOfficialAssessmentContent() {
                 isTAPS: Boolean(selectedReport.tapsRatingGrade || selectedReport.tapsSchoolInputsScores),
                 tapsRatingGrade: selectedReport.tapsRatingGrade || undefined,
                 tapsCategoryScores: selectedReport.tapsSchoolInputsScores ? {
-                  school_inputs: selectedReport.tapsSchoolInputsScores?.total || 0,
+                  school_inputs_operations: selectedReport.tapsSchoolInputsScores?.total || 0,
                   leadership: selectedReport.tapsLeadershipScores?.total || 0,
                   academics: selectedReport.tapsAcademicsScores?.total || 0,
                   teacher_development: selectedReport.tapsTeacherDevelopmentScores?.total || 0,

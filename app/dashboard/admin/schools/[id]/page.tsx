@@ -3,14 +3,15 @@ import { SchoolForm } from "@/components/admin/school-form"
 import { notFound } from "next/navigation"
 
 interface EditSchoolPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function EditSchoolPage({ params }: EditSchoolPageProps) {
+  const { id } = await params
   const [school, regionsResult, schoolLevels] = await Promise.all([
-    getSchoolById(params.id),
+    getSchoolById(id),
     getRegions(),
     getSchoolLevels()
   ])

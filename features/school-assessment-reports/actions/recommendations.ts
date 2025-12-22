@@ -283,7 +283,8 @@ function validateCategory(category: string): CategoryName | TAPSCategoryName | '
 
 function isTAPSReportRow(report: any): boolean {
   return Boolean(
-    report?.taps_rating_grade ||
+    report?.school_type === 'secondary' ||
+      report?.taps_rating_grade ||
       report?.taps_school_inputs_scores ||
       report?.taps_leadership_scores ||
       report?.taps_academics_scores ||
@@ -333,11 +334,11 @@ export async function generateRecommendations(reportId: string) {
     
     // Get the report with school and period details
     const { data: report, error: reportError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(name, sms_regions(name)),
-        school_assessment_periods(academic_year, term_name)
+        hmr_school_assessment_periods(academic_year, term_name)
       `)
       .eq('id', reportId)
       .single()
@@ -352,8 +353,8 @@ export async function generateRecommendations(reportId: string) {
     // Extract school and period info
     const schoolName = report.sms_schools?.name || 'Unknown School'
     const regionName = report.sms_schools?.sms_regions?.name || 'Unknown Region'
-    const academicYear = report.school_assessment_periods?.academic_year || ''
-    const termName = report.school_assessment_periods?.term_name || ''
+    const academicYear = report.hmr_school_assessment_periods?.academic_year || ''
+    const termName = report.hmr_school_assessment_periods?.term_name || ''
 
     // Build prompt (Demo vs TAPS)
     let prompt: string
@@ -465,7 +466,7 @@ export async function generateRecommendations(reportId: string) {
     }
     
     // Save recommendations to database
-    const savedRecommendations = await saveRecommendations(reportId, aiRecommendations)
+    const savedRecommendations = await saveRecommendations(reportId, aiRecommendations as any)
     
     return { recommendations: savedRecommendations, error: null }
   } catch (error) {
@@ -571,7 +572,7 @@ export async function saveRecommendations(
     
     // Delete existing recommendations for this report
     await supabase
-      .from('school_assessment_recommendations')
+      .from('hmr_school_assessment_recommendations')
       .delete()
       .eq('report_id', reportId)
     
@@ -586,7 +587,7 @@ export async function saveRecommendations(
     }))
     
     const { data, error } = await supabase
-      .from('school_assessment_recommendations')
+      .from('hmr_school_assessment_recommendations')
       .insert(recommendationsToInsert)
       .select()
     
@@ -610,7 +611,7 @@ export async function getRecommendations(reportId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_recommendations')
+      .from('hmr_school_assessment_recommendations')
       .select('*')
       .eq('report_id', reportId)
       .order('priority', { ascending: true }) // high, low, medium alphabetically but we'll sort properly

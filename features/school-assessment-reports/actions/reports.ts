@@ -73,7 +73,7 @@ export async function deleteAssessmentReport(reportId: string): Promise<{ succes
     const supabase = createServiceRoleSupabaseClient()
 
     const { error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .delete()
       .eq('id', reportId)
 
@@ -124,6 +124,15 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
     tapsTeacherDevelopmentScores: row.taps_teacher_development_scores || undefined,
     tapsHealthSafetyScores: row.taps_health_safety_scores || undefined,
     tapsSchoolCultureScores: row.taps_school_culture_scores || undefined,
+    // TAPS Category scores
+    tapsCategoryScores: (row.taps_school_inputs_scores || row.taps_leadership_scores || row.taps_academics_scores) ? {
+      school_inputs_operations: calculateTAPSSchoolInputsScore(row.taps_school_inputs_scores || {}),
+      leadership: calculateTAPSLeadershipScore(row.taps_leadership_scores || {}),
+      academics: calculateTAPSAcademicsScore(row.taps_academics_scores || {}),
+      teacher_development: calculateTAPSTeacherDevelopmentScore(row.taps_teacher_development_scores || {}),
+      health_safety: calculateTAPSHealthSafetyScore(row.taps_health_safety_scores || {}),
+      school_culture: calculateTAPSSchoolCultureScore(row.taps_school_culture_scores || {}),
+    } : null,
     // Calculated fields
     totalScore: row.total_score,
     ratingLevel: row.rating_level,
@@ -149,7 +158,7 @@ export async function getPreviousTermReports(
     // Get submitted reports for this school, ordered by academic year and term
     // Exclude the current term
     const { data: reports, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -270,16 +279,16 @@ function mapDbRowToReportWithDetails(row: any): SchoolAssessmentReportWithDetail
       email: row.hmr_users?.email || '',
     },
     period: {
-      id: row.school_assessment_periods?.id || row.period_id,
-      academicYear: row.school_assessment_periods?.academic_year || '',
-      termName: row.school_assessment_periods?.term_name || '',
-      startDate: row.school_assessment_periods?.start_date || '',
-      endDate: row.school_assessment_periods?.end_date || '',
-      sequenceOrder: row.school_assessment_periods?.sequence_order || 1,
-      isActive: row.school_assessment_periods?.is_active || false,
-      createdAt: row.school_assessment_periods?.created_at || '',
-      updatedAt: row.school_assessment_periods?.updated_at || '',
-      createdBy: row.school_assessment_periods?.created_by || null,
+      id: row.hmr_school_assessment_periods?.id || row.period_id,
+      academicYear: row.hmr_school_assessment_periods?.academic_year || '',
+      termName: row.hmr_school_assessment_periods?.term_name || '',
+      startDate: row.hmr_school_assessment_periods?.start_date || '',
+      endDate: row.hmr_school_assessment_periods?.end_date || '',
+      sequenceOrder: row.hmr_school_assessment_periods?.sequence_order || 1,
+      isActive: row.hmr_school_assessment_periods?.is_active || false,
+      createdAt: row.hmr_school_assessment_periods?.created_at || '',
+      updatedAt: row.hmr_school_assessment_periods?.updated_at || '',
+      createdBy: row.hmr_school_assessment_periods?.created_by || null,
     },
   }
 }
@@ -317,8 +326,8 @@ function mapDbRowToReportSummary(row: any): ReportSummary {
     regionName: row.sms_schools?.sms_regions?.name || '',
     periodId: row.period_id,
     // Use direct row fields first (new term window system), fallback to period relation
-    academicYear: row.academic_year || row.school_assessment_periods?.academic_year || '',
-    termName: row.term_name || row.school_assessment_periods?.term_name || '',
+    academicYear: row.academic_year || row.hmr_school_assessment_periods?.academic_year || '',
+    termName: row.term_name || row.hmr_school_assessment_periods?.term_name || '',
     status: row.status as ReportStatus,
     totalScore: row.total_score,
     ratingLevel: row.rating_level,
@@ -327,8 +336,7 @@ function mapDbRowToReportSummary(row: any): ReportSummary {
     isTAPS: hasTAPSData,
     tapsRatingGrade: row.taps_rating_grade || null,
     tapsCategoryScores: hasTAPSData ? {
-      // Derive totals from the stored JSON to avoid stale/mismatched `total` values.
-      school_inputs: calculateTAPSSchoolInputsScore(row.taps_school_inputs_scores || {}),
+      school_inputs_operations: calculateTAPSSchoolInputsScore(row.taps_school_inputs_scores || {}),
       leadership: calculateTAPSLeadershipScore(row.taps_leadership_scores || {}),
       academics: calculateTAPSAcademicsScore(row.taps_academics_scores || {}),
       teacher_development: calculateTAPSTeacherDevelopmentScore(row.taps_teacher_development_scores || {}),
@@ -425,7 +433,7 @@ export async function createAssessmentReport(periodId?: string) {
     
     // Check if a report already exists for this school, academic year, and term
     const { data: existingReport } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('id, status')
       .eq('school_id', userSchool.id)
       .eq('academic_year', activeWindow.academicYear)
@@ -455,7 +463,7 @@ export async function createAssessmentReport(periodId?: string) {
     
     // Create new draft report with academic_year and term_name instead of period_id
     const { data: newReport, error: insertError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .insert({
         school_id: userSchool.id,
         headteacher_id: user.id,
@@ -507,8 +515,8 @@ export async function saveSectionData(
     
     // Get the report
     const { data: report, error: reportError } = await supabase
-      .from('school_assessment_reports')
-      .select('*, school_assessment_periods(is_active, start_date, end_date)')
+      .from('hmr_school_assessment_reports')
+      .select('*, hmr_school_assessment_periods(is_active, start_date, end_date)')
       .eq('id', reportId)
       .single()
     
@@ -602,7 +610,7 @@ export async function saveSectionData(
     
     // Update the section data with calculated total
     const { error: updateError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .update({ [column]: dataWithTotal })
       .eq('id', reportId)
     
@@ -613,7 +621,7 @@ export async function saveSectionData(
     
     // Recalculate running total
     const { data: updatedReport } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('id', reportId)
       .single()
@@ -642,7 +650,7 @@ export async function saveSectionData(
         else tapsRatingGrade = 'E'
         
         await supabase
-          .from('school_assessment_reports')
+          .from('hmr_school_assessment_reports')
           .update({ 
             total_score: totalScore,
             taps_rating_grade: tapsRatingGrade,
@@ -663,7 +671,7 @@ export async function saveSectionData(
         const totalScore = calculateTotalScore(scores)
         
         await supabase
-          .from('school_assessment_reports')
+          .from('hmr_school_assessment_reports')
           .update({ total_score: totalScore })
           .eq('id', reportId)
       }
@@ -694,8 +702,8 @@ export async function submitReport(reportId: string) {
     
     // Get the report with period info
     const { data: report, error: reportError } = await supabase
-      .from('school_assessment_reports')
-      .select('*, school_assessment_periods(*)')
+      .from('hmr_school_assessment_reports')
+      .select('*, hmr_school_assessment_periods(*)')
       .eq('id', reportId)
       .single()
     
@@ -775,7 +783,7 @@ export async function submitReport(reportId: string) {
       
       // Update TAPS report status
       const { error: updateError } = await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .update({
           status: 'submitted',
           submitted_at: new Date().toISOString(),
@@ -841,7 +849,7 @@ export async function submitReport(reportId: string) {
       
       // Update report status and save calculated totals back to the category columns
       const { error: updateError } = await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .update({
           status: 'submitted',
           submitted_at: new Date().toISOString(),
@@ -901,12 +909,12 @@ export async function getReport(reportId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(id, name, region_id, sms_regions(name)),
         hmr_users(id, name, email),
-        school_assessment_periods(*)
+        hmr_school_assessment_periods(*)
       `)
       .eq('id', reportId)
       .single()
@@ -993,11 +1001,11 @@ export async function getSchoolReports(schoolId: string) {
     }
     
     const { data, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(id, name, region_id, sms_regions(name)),
-        school_assessment_periods(*)
+        hmr_school_assessment_periods(*)
       `)
       .eq('school_id', schoolId)
       .order('created_at', { ascending: false })
@@ -1011,6 +1019,39 @@ export async function getSchoolReports(schoolId: string) {
   } catch (error) {
     console.error('Error in getSchoolReports:', error)
     return { reports: [], error: 'An unexpected error occurred.' }
+  }
+}
+
+/**
+ * Gets a submitted report for a specific school and period
+ */
+export async function getReportBySchoolAndPeriod(schoolId: string, periodId: string) {
+  try {
+    const user = await getUser()
+    if (!user) return null
+
+    const supabase = createServiceRoleSupabaseClient()
+    const { data, error } = await supabase
+      .from('hmr_school_assessment_reports')
+      .select(`
+        *,
+        sms_schools(id, name, region_id, school_type, sms_regions(name)),
+        hmr_users(id, name, email),
+        hmr_school_assessment_periods(*)
+      `)
+      .eq('school_id', schoolId)
+      .eq('period_id', periodId)
+      .eq('status', 'submitted')
+      .maybeSingle()
+
+    if (error || !data) {
+      return null
+    }
+
+    return mapDbRowToReportSummary(data)
+  } catch (error) {
+    console.error('Error in getReportBySchoolAndPeriod:', error)
+    return null
   }
 }
 
@@ -1049,12 +1090,12 @@ export async function getMySchoolReport(periodId: string) {
     }
     
     const { data, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(id, name, region_id, sms_regions(name)),
         hmr_users(id, name, email),
-        school_assessment_periods(*)
+        hmr_school_assessment_periods(*)
       `)
       .eq('school_id', schoolId)
       .eq('period_id', periodId)
@@ -1096,11 +1137,11 @@ export async function getRegionalReports(regionId?: string, periodId?: string) {
     }
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools!inner(id, name, region_id, sms_regions(name)),
-        school_assessment_periods(*)
+        hmr_school_assessment_periods(*)
       `)
       .order('submitted_at', { ascending: false, nullsFirst: false })
     
@@ -1140,11 +1181,11 @@ export async function getNationalReports(filters?: ReportFilters) {
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(id, name, region_id, sms_regions(name)),
-        school_assessment_periods(*)
+        hmr_school_assessment_periods(*)
       `)
       .order('submitted_at', { ascending: false, nullsFirst: false })
     
@@ -1170,7 +1211,7 @@ export async function getNationalReports(filters?: ReportFilters) {
         // 2. Reports with academic_year and term_name set (new term window system)
         // First, get the period details to know what academic_year and term_name to filter by
         const { data: period } = await supabase
-          .from('school_assessment_periods')
+          .from('hmr_school_assessment_periods')
           .select('academic_year, term_name')
           .eq('id', filters.periodId)
           .single()
@@ -1261,7 +1302,7 @@ export async function adminUpdateReport(
     
     // Get current report
     const { data: currentReport, error: fetchError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('id', reportId)
       .single()
@@ -1303,7 +1344,7 @@ export async function adminUpdateReport(
     
     // Update the report
     const { error: updateError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .update(updateObj)
       .eq('id', reportId)
     
@@ -1314,7 +1355,7 @@ export async function adminUpdateReport(
     
     // Recalculate scores
     const { data: updatedReport } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('id', reportId)
       .single()
@@ -1338,7 +1379,7 @@ export async function adminUpdateReport(
       const ratingChanged = ratingLevel !== currentReport.rating_level
       
       await supabase
-        .from('school_assessment_reports')
+        .from('hmr_school_assessment_reports')
         .update({ 
           total_score: totalScore,
           rating_level: ratingLevel 
@@ -1417,7 +1458,7 @@ export async function getNotSubmittedSchools(periodId: string, regionId?: string
     
     // Get schools that have submitted for this period
     const { data: submittedReports } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('school_id')
       .eq('period_id', periodId)
       .eq('status', 'submitted')
@@ -1458,7 +1499,7 @@ export async function recalculateReportCategoryTotals(reportId: string) {
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: report, error: reportError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('*')
       .eq('id', reportId)
       .single()
@@ -1490,7 +1531,7 @@ export async function recalculateReportCategoryTotals(reportId: string) {
     }
     
     const { error: updateError } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .update(updatedScores)
       .eq('id', reportId)
     

@@ -1,6 +1,6 @@
 "use server"
 
-import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { createServiceRoleSupabaseClient, createServerSupabaseClient } from "@/lib/supabase"
 import type {
   SchoolAssessmentReport,
   CategoryName,
@@ -10,10 +10,20 @@ import type {
 import { CATEGORY_NAMES, SCORING_WEIGHTS, TERM_NAMES } from "../types"
 import { getScoreBreakdown } from "./scoring"
 import { getRecommendations } from "./recommendations"
+import { jsPDF } from "jspdf"
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+export interface ExportJob {
+  id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  export_type: 'pdf' | 'excel'
+  download_url?: string
+  error_message?: string
+  created_at: string
+}
 
 interface ExportReportData {
   report: SchoolAssessmentReport
@@ -50,11 +60,11 @@ async function getReportForExport(reportId: string): Promise<ExportReportData | 
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: report, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(name, sms_regions(name)),
-        school_assessment_periods(academic_year, term_name)
+        hmr_school_assessment_periods(academic_year, term_name)
       `)
       .eq('id', reportId)
       .single()
@@ -89,8 +99,8 @@ async function getReportForExport(reportId: string): Promise<ExportReportData | 
       },
       schoolName: report.sms_schools?.name || 'Unknown School',
       regionName: report.sms_schools?.sms_regions?.name || 'Unknown Region',
-      academicYear: report.school_assessment_periods?.academic_year || '',
-      termName: report.school_assessment_periods?.term_name || '',
+      academicYear: report.hmr_school_assessment_periods?.academic_year || '',
+      termName: report.hmr_school_assessment_periods?.term_name || '',
       recommendations,
     }
   } catch (error) {
@@ -368,11 +378,11 @@ export async function generateBulkExportData(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(name, sms_regions(name)),
-        school_assessment_periods(academic_year, term_name)
+        hmr_school_assessment_periods(academic_year, term_name)
       `)
       .eq('period_id', periodId)
       .eq('status', 'submitted')
@@ -394,7 +404,7 @@ export async function generateBulkExportData(
     }
     
     // Get period info
-    const period = reports[0].school_assessment_periods
+    const period = reports[0].hmr_school_assessment_periods
     const academicYear = period?.academic_year || ''
     const termName = period?.term_name || ''
     
@@ -498,11 +508,11 @@ export async function generateBulkExportCSV(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         *,
         sms_schools(name, sms_regions(name)),
-        school_assessment_periods(academic_year, term_name)
+        hmr_school_assessment_periods(academic_year, term_name)
       `)
       .eq('period_id', periodId)
       .eq('status', 'submitted')
@@ -558,5 +568,158 @@ export async function generateBulkExportCSV(
   } catch (error) {
     console.error('Error generating CSV:', error)
     return { csv: null, error: 'Failed to generate CSV.' }
+  }
+}
+// ============================================================================
+// BACKGROUND EXPORT JOBS
+// ============================================================================
+
+/**
+ * Starts a background export job
+ */
+export async function startExportJob(
+  reportId: string,
+  exportType: 'pdf' | 'excel' = 'pdf'
+) {
+  try {
+    const supabase = await await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) throw new Error('Unauthorized')
+    
+    // Create job record
+    const { data: job, error } = await supabase
+      .from('hmr_export_jobs')
+      .insert({
+        user_id: user.id,
+        report_id: reportId,
+        export_type: exportType,
+        status: 'pending'
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    
+    // In a real background worker setup, we would trigger a queue here.
+    // For this implementation, we'll trigger the processing asynchronously
+    // but return the job ID immediately to the client for polling.
+    processExportJob(job.id).catch(err => {
+      console.error(`Background job ${job.id} failed:`, err)
+    })
+    
+    return { jobId: job.id, error: null }
+  } catch (error: any) {
+    console.error('Error starting export job:', error)
+    return { jobId: null, error: error.message }
+  }
+}
+
+/**
+ * Gets the status of an export job
+ */
+export async function getExportJobStatus(jobId: string) {
+  try {
+    const supabase = await await createServerSupabaseClient()
+    const { data: job, error } = await supabase
+      .from('hmr_export_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single()
+    
+    if (error) throw error
+    
+    return { job: job as ExportJob, error: null }
+  } catch (error: any) {
+    console.error('Error getting export job status:', error)
+    return { job: null, error: error.message }
+  }
+}
+
+/**
+ * Processes an export job (Internal)
+ */
+async function processExportJob(jobId: string) {
+  const supabase = createServiceRoleSupabaseClient()
+  
+  try {
+    // Update status to processing
+    await supabase
+      .from('hmr_export_jobs')
+      .update({ status: 'processing', updated_at: new Date().toISOString() })
+      .eq('id', jobId)
+    
+    // Get job details
+    const { data: job } = await supabase
+      .from('hmr_export_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single()
+    
+    if (!job) return
+    
+    // 1. Fetch data
+    const data = await getReportForExport(job.report_id)
+    if (!data) throw new Error('Failed to fetch report data')
+    
+    // 2. Generate PDF (Simplified for background processing)
+    // In a real worker, we might use a headless browser or a more robust PDF lib.
+    // Here we use jsPDF to generate a basic report.
+    const doc = new jsPDF()
+    
+    // Add content
+    doc.setFontSize(20)
+    doc.text('School Assessment Report', 20, 20)
+    doc.setFontSize(14)
+    doc.text(`School: ${data.schoolName}`, 20, 35)
+    doc.text(`Region: ${data.regionName}`, 20, 45)
+    doc.text(`Period: ${data.academicYear} - ${data.termName}`, 20, 55)
+    
+    doc.text('Summary Scores:', 20, 75)
+    doc.setFontSize(12)
+    doc.text(`Total Score: ${data.report.totalScore}`, 30, 85)
+    doc.text(`Rating: ${data.report.ratingLevel}`, 30, 95)
+    
+    // Add more sections...
+    // (In a full implementation, we'd iterate through categories)
+    
+    // 3. Upload to Storage
+    const pdfBlob = doc.output('blob')
+    const fileName = `reports/${job.report_id}_${Date.now()}.pdf`
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('exports')
+      .upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: true
+      })
+    
+    if (uploadError) throw uploadError
+    
+    // 4. Get Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('exports')
+      .getPublicUrl(fileName)
+    
+    // 5. Update job status
+    await supabase
+      .from('hmr_export_jobs')
+      .update({
+        status: 'completed',
+        download_url: publicUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', jobId)
+      
+  } catch (error: any) {
+    console.error(`Error processing job ${jobId}:`, error)
+    await supabase
+      .from('hmr_export_jobs')
+      .update({
+        status: 'failed',
+        error_message: error.message,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', jobId)
   }
 }

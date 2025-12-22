@@ -222,7 +222,7 @@ export async function getRegionalStatistics(
     
     // Build query for submitted reports
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
@@ -366,7 +366,7 @@ export async function getRegionalSchoolRankings(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
@@ -421,7 +421,7 @@ export async function getNationalStatistics(
     
     // Build query
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
@@ -599,7 +599,7 @@ export async function getNationalSchoolRankings(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
@@ -658,10 +658,10 @@ export async function getSchoolTrends(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: reports, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
-        school_assessment_periods(academic_year, term_name, term_sequence)
+        hmr_school_assessment_periods(academic_year, term_name, term_sequence)
       `)
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -674,11 +674,11 @@ export async function getSchoolTrends(
     }
     
     const trends: TrendData[] = (reports || [])
-      .filter((r: any) => r.school_assessment_periods)
+      .filter((r: any) => r.hmr_school_assessment_periods)
       .map((r: any) => ({
-        period: `${r.school_assessment_periods?.academic_year} - ${r.school_assessment_periods?.term_name}`,
-        academicYear: r.school_assessment_periods?.academic_year || '',
-        termName: r.school_assessment_periods?.term_name || '',
+        period: `${r.hmr_school_assessment_periods?.academic_year} - ${r.hmr_school_assessment_periods?.term_name}`,
+        academicYear: r.hmr_school_assessment_periods?.academic_year || '',
+        termName: r.hmr_school_assessment_periods?.term_name || '',
         averageScore: r.total_score || 0,
         submissionCount: 1,
       }))
@@ -703,11 +703,11 @@ export async function getRegionalTrends(
     
     // Get periods with reports for this region
     const { data: reports, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         period_id,
-        school_assessment_periods(academic_year, term_name, term_sequence),
+        hmr_school_assessment_periods(academic_year, term_name, term_sequence),
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
@@ -728,12 +728,12 @@ export async function getRegionalTrends(
     
     ;(reports || []).forEach((r: any) => {
       const periodId = r.period_id
-      if (periodId && r.school_assessment_periods) {
+      if (periodId && r.hmr_school_assessment_periods) {
         if (!periodGroups[periodId]) {
           periodGroups[periodId] = {
-            academicYear: r.school_assessment_periods?.academic_year || '',
-            termName: r.school_assessment_periods?.term_name || '',
-            termSequence: r.school_assessment_periods?.term_sequence || 0,
+            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
+            termName: r.hmr_school_assessment_periods?.term_name || '',
+            termSequence: r.hmr_school_assessment_periods?.term_sequence || 0,
             scores: [],
           }
         }
@@ -777,11 +777,11 @@ export async function getNationalTrends(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: reports, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         period_id,
-        school_assessment_periods(academic_year, term_name, term_sequence)
+        hmr_school_assessment_periods(academic_year, term_name, term_sequence)
       `)
       .eq('status', 'submitted')
     
@@ -800,12 +800,12 @@ export async function getNationalTrends(
     
     ;(reports || []).forEach((r: any) => {
       const periodId = r.period_id
-      if (periodId && r.school_assessment_periods) {
+      if (periodId && r.hmr_school_assessment_periods) {
         if (!periodGroups[periodId]) {
           periodGroups[periodId] = {
-            academicYear: r.school_assessment_periods?.academic_year || '',
-            termName: r.school_assessment_periods?.term_name || '',
-            termSequence: r.school_assessment_periods?.term_sequence || 0,
+            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
+            termName: r.hmr_school_assessment_periods?.term_name || '',
+            termSequence: r.hmr_school_assessment_periods?.term_sequence || 0,
             scores: [],
           }
         }
@@ -853,7 +853,7 @@ export async function getCategoryPerformance(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         academic_scores,
         attendance_scores,
@@ -978,7 +978,7 @@ export async function getSubmissionStatusByRegion(
     
     // Get submitted reports (optionally filtered by period)
     let reportsQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select('school_id, sms_schools(region_id)')
       .eq('status', 'submitted')
     
@@ -1082,7 +1082,7 @@ export async function getSchoolRankingPosition(
     
     // Get all submitted reports with scores
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         school_id,
@@ -1169,7 +1169,7 @@ export async function getCategoryStrengthAnalysis(
     const supabase = createServiceRoleSupabaseClient()
     
     const { data: report, error } = await supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         academic_scores,
         attendance_scores,
@@ -1251,7 +1251,7 @@ export async function getSubmissionProgressBreakdown(
     
     // Get reports
     let reportsQuery = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         status,
@@ -1318,7 +1318,7 @@ export async function getMostImprovedSchools(
     
     // Get all submitted reports with their periods
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         school_id,
@@ -1436,7 +1436,7 @@ export async function getCategoryGapAnalysis(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         academic_scores,
         attendance_scores,
@@ -1523,7 +1523,7 @@ export async function getScoreDistribution(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         sms_schools!inner(region_id)
@@ -1596,7 +1596,7 @@ export async function getRegionVsNationalComparison(
     
     // Get all submitted reports
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         sms_schools!inner(region_id, sms_regions(id, name))
@@ -1682,7 +1682,7 @@ export async function getSchoolsNeedingAttention(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         id,
         school_id,
@@ -1738,7 +1738,7 @@ export async function getCategoryLeaders(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         school_id,
         academic_scores,
@@ -1834,7 +1834,7 @@ export async function getRegionalCategoryRankings(
     const config = categoryConfig[category]
 
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         school_id,
         academic_scores,
@@ -1906,7 +1906,7 @@ export async function getUnderperformingRegions(
     const supabase = createServiceRoleSupabaseClient()
     
     let query = supabase
-      .from('school_assessment_reports')
+      .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         sms_schools!inner(region_id, sms_regions(id, name))
@@ -1962,4 +1962,129 @@ export async function getUnderperformingRegions(
     console.error('Error in getUnderperformingRegions:', error)
     return { regions: [], count: 0, error: 'An unexpected error occurred.' }
   }
+}
+
+/**
+ * Refreshes the regional top performers cache for the current active period.
+ * This is intended to be called upon user login.
+ */
+export async function refreshRegionalTopPerformersCache() {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    
+    // 1. Get the active period
+    const { data: activePeriod, error: periodError } = await supabase
+      .from('hmr_school_assessment_periods')
+      .select('id')
+      .eq('is_active', true)
+      .single()
+    
+    if (periodError || !activePeriod) {
+      return { ok: false, error: 'No active assessment period found.' }
+    }
+    
+    // 2. Get all regions
+    const { data: regions, error: regionsError } = await supabase
+      .from('sms_regions')
+      .select('id, name')
+    
+    if (regionsError || !regions) {
+      return { ok: false, error: 'Failed to fetch regions.' }
+    }
+    
+    // 3. For each region, find the school with the highest average score
+    for (const region of regions) {
+      const { data: topReport, error: reportError } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select(`
+          school_id,
+          total_score
+        `)
+        .eq('status', 'submitted')
+        .eq('period_id', activePeriod.id)
+        .eq('sms_schools.region_id', region.id)
+        .order('total_score', { ascending: false })
+        .limit(1)
+        .single()
+      
+      if (!reportError && topReport) {
+        // Update cache
+        await supabase
+          .from('hmr_regional_top_performers_cache')
+          .upsert({
+            region: region.id,
+            period_id: activePeriod.id,
+            school_id: topReport.school_id,
+            highest_average_score: topReport.total_score,
+            calculated_at: new Date().toISOString()
+          }, { onConflict: 'region, period_id' })
+      }
+    }
+    
+    return { ok: true }
+  } catch (error) {
+    console.error('Error refreshing regional top performers cache:', error)
+    return { ok: false, error: 'Failed to refresh cache.' }
+  }
+}
+
+/**
+ * Retrieves the regional top performer for a specific region and period.
+ */
+export async function getRegionalTopPerformer(regionId: string, periodId: string) {
+  const supabase = createServiceRoleSupabaseClient()
+  const { data, error } = await supabase
+    .from('hmr_regional_top_performers_cache')
+    .select('school_id')
+    .eq('region', regionId)
+    .eq('period_id', periodId)
+    .single()
+  
+  if (error || !data) return null
+  return data.school_id
+}
+
+/**
+ * Saves user preferences for the dashboard.
+ */
+export async function saveUserPreferences(preferences: {
+  default_comparison_school_id?: string | null
+  export_settings?: any
+}) {
+  const user = await getUser()
+  if (!user) return { ok: false, error: 'Not authenticated' }
+  
+  const supabase = createServiceRoleSupabaseClient()
+  const { error } = await supabase
+    .from('hmr_user_preferences')
+    .upsert({
+      user_id: user.id,
+      ...preferences,
+      updated_at: new Date().toISOString()
+    })
+  
+  if (error) {
+    console.error('Error saving user preferences:', error)
+    return { ok: false, error: 'Failed to save preferences' }
+  }
+  
+  return { ok: true }
+}
+
+/**
+ * Retrieves user preferences.
+ */
+export async function getUserPreferences() {
+  const user = await getUser()
+  if (!user) return null
+  
+  const supabase = createServiceRoleSupabaseClient()
+  const { data, error } = await supabase
+    .from('hmr_user_preferences')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+  
+  if (error) return null
+  return data
 }
