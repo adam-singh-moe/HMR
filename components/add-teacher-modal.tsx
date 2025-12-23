@@ -478,7 +478,7 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
                 type="tel"
                 value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)}
-                placeholder="e.g., 592-XXX-XXXX"
+                placeholder="e.g., 592XXXXXXX"
               />
             </div>
           </div>
