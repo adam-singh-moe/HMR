@@ -23,6 +23,10 @@ export default function NurseryAssessmentPage() {
   const [selectedRegion, setSelectedRegion] = useState("all")
   const [selectedAssessmentType, setSelectedAssessmentType] = useState("all")
   const [selectedYear, setSelectedYear] = useState("all")
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   // Fetch assessments on mount
   useEffect(() => {
@@ -77,6 +81,7 @@ export default function NurseryAssessmentPage() {
     }
 
     setFilteredAssessments(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
   }, [searchQuery, selectedRegion, selectedAssessmentType, selectedYear, assessments])
 
   // Function to get assessment type color
@@ -106,6 +111,17 @@ export default function NurseryAssessmentPage() {
   // Get unique regions and assessment types for filters
   const regions = [...new Set(assessments.map(a => a.schools?.region).filter(Boolean))]
   const assessmentTypes = [...new Set(assessments.map(a => formatAssessmentType(a.assessment_type)).filter(Boolean))]
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAssessments.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedAssessments = filteredAssessments.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   if (loading) {
     return (
@@ -234,7 +250,7 @@ export default function NurseryAssessmentPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAssessments.map((assessment) => (
+                  {paginatedAssessments.map((assessment) => (
                     <TableRow key={assessment.id} className="hover:bg-gray-50">
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -312,6 +328,61 @@ export default function NurseryAssessmentPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Pagination */}
+      {filteredAssessments.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredAssessments.length)} of {filteredAssessments.length} assessments
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    // Show first page, last page, current page, and pages around current
+                    return (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    )
+                  })
+                  .map((page, index, array) => (
+                    <div key={page} className="inline-flex items-center">
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        className="min-w-[2.5rem]"
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
