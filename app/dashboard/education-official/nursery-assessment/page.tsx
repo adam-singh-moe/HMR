@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { getAllNurseryAssessments } from "@/app/actions/nursery-assessment"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -5,12 +8,76 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BookOpen, Eye, Calendar, School, User, MapPin, Filter } from "lucide-react"
+import { BookOpen, Eye, Calendar, School, User, MapPin, Filter, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 
-export default async function NurseryAssessmentPage() {
-  const { assessments, error } = await getAllNurseryAssessments()
+export default function NurseryAssessmentPage() {
+  const [assessments, setAssessments] = useState<any[]>([])
+  const [filteredAssessments, setFilteredAssessments] = useState<any[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedRegion, setSelectedRegion] = useState("all")
+  const [selectedAssessmentType, setSelectedAssessmentType] = useState("all")
+  const [selectedYear, setSelectedYear] = useState("all")
+
+  // Fetch assessments on mount
+  useEffect(() => {
+    async function fetchAssessments() {
+      setLoading(true)
+      const { assessments: data, error: err } = await getAllNurseryAssessments()
+      if (err) {
+        setError(err)
+      } else {
+        setAssessments(data)
+        setFilteredAssessments(data)
+      }
+      setLoading(false)
+    }
+    fetchAssessments()
+  }, [])
+
+  // Apply filters automatically whenever filter values change
+  useEffect(() => {
+    let filtered = [...assessments]
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(assessment => 
+        assessment.schools?.name?.toLowerCase().includes(query) ||
+        assessment.schools?.region?.toLowerCase().includes(query) ||
+        assessment.headteacher?.name?.toLowerCase().includes(query)
+      )
+    }
+
+    // Region filter
+    if (selectedRegion !== "all") {
+      filtered = filtered.filter(assessment => 
+        assessment.schools?.region === selectedRegion
+      )
+    }
+
+    // Assessment type filter
+    if (selectedAssessmentType !== "all") {
+      filtered = filtered.filter(assessment => 
+        formatAssessmentType(assessment.assessment_type) === selectedAssessmentType
+      )
+    }
+
+    // Year filter
+    if (selectedYear !== "all") {
+      filtered = filtered.filter(assessment => {
+        const year = new Date(assessment.created_at).getFullYear().toString()
+        return year === selectedYear
+      })
+    }
+
+    setFilteredAssessments(filtered)
+  }, [searchQuery, selectedRegion, selectedAssessmentType, selectedYear, assessments])
 
   // Function to get assessment type color
   const getAssessmentTypeColor = (assessmentType: string) => {
@@ -39,6 +106,15 @@ export default async function NurseryAssessmentPage() {
   // Get unique regions and assessment types for filters
   const regions = [...new Set(assessments.map(a => a.schools?.region).filter(Boolean))]
   const assessmentTypes = [...new Set(assessments.map(a => formatAssessmentType(a.assessment_type)).filter(Boolean))]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <span className="ml-2 text-gray-500">Loading assessments...</span>
+      </div>
+    )
+  }
 
   if (error) {
     return (
@@ -83,8 +159,10 @@ export default async function NurseryAssessmentPage() {
               <Input
                 placeholder="Search by school name, region, or head teacher..."
                 className="sm:max-w-md"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Select>
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                 <SelectTrigger className="sm:w-48">
                   <SelectValue placeholder="All Regions" />
                 </SelectTrigger>
@@ -95,7 +173,7 @@ export default async function NurseryAssessmentPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={selectedAssessmentType} onValueChange={setSelectedAssessmentType}>
                 <SelectTrigger className="sm:w-56">
                   <SelectValue placeholder="All Assessment Types" />
                 </SelectTrigger>
@@ -106,7 +184,7 @@ export default async function NurseryAssessmentPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="sm:w-40">
                   <SelectValue placeholder="All Years" />
                 </SelectTrigger>
@@ -117,21 +195,25 @@ export default async function NurseryAssessmentPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="flex items-center gap-2 flex-shrink-0">
-              Generate Report
-            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Assessments List */}
-      {assessments.length === 0 ? (
+      {filteredAssessments.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
               <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Nursery Assessments</h3>
-              <p className="text-gray-600">No nursery assessments have been submitted yet.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {assessments.length === 0 ? 'No Nursery Assessments' : 'No Results Found'}
+              </h3>
+              <p className="text-gray-600">
+                {assessments.length === 0 
+                  ? 'No nursery assessments have been submitted yet.'
+                  : 'No assessments match your filter criteria. Try adjusting your filters.'
+                }
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -152,7 +234,7 @@ export default async function NurseryAssessmentPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assessments.map((assessment) => (
+                  {filteredAssessments.map((assessment) => (
                     <TableRow key={assessment.id} className="hover:bg-gray-50">
                       <TableCell>
                         <div className="flex items-center gap-2">
