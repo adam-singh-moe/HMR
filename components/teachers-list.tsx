@@ -542,6 +542,10 @@ export function TeachersList() {
                                 </h4>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                   <div>
+                                    <span className="text-gray-500 block text-xs">Gender</span>
+                                    <span className="font-medium">{teacher.gender || '-'}</span>
+                                  </div>
+                                  <div>
                                     <span className="text-gray-500 block text-xs">Date of Birth</span>
                                     <span className="font-medium">{formatDate(teacher.date_of_birth)}</span>
                                   </div>
@@ -568,6 +572,20 @@ export function TeachersList() {
                                   Education
                                 </h4>
                                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-500 block text-xs">Currently at CPCE</span>
+                                    {teacher.currently_at_cpce ? (
+                                      <span className="font-medium text-green-600">Yes</span>
+                                    ) : (
+                                      <span className="text-gray-400">No</span>
+                                    )}
+                                  </div>
+                                  {teacher.currently_at_cpce && teacher.cpce_expected_graduation_date && (
+                                    <div>
+                                      <span className="text-gray-500 block text-xs">Expected Graduation</span>
+                                      <span className="font-medium">{formatDate(teacher.cpce_expected_graduation_date)}</span>
+                                    </div>
+                                  )}
                                   <div>
                                     <span className="text-gray-500 block text-xs">CPCE Major</span>
                                     <span className="font-medium">{teacher.cpce_major || '-'}</span>

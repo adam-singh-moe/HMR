@@ -40,8 +40,11 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
   const [firstName, setFirstName] = useState(teacher?.first_name || "")
   const [middleName, setMiddleName] = useState(teacher?.middle_name || "")
   const [lastName, setLastName] = useState(teacher?.last_name || "")
+  const [gender, setGender] = useState(teacher?.gender || "")
   const [statusId, setStatusId] = useState(teacher?.status_id || "")
   const [dateOfBirth, setDateOfBirth] = useState(teacher?.date_of_birth || "")
+  const [currentlyAtCpce, setCurrentlyAtCpce] = useState(teacher?.currently_at_cpce || false)
+  const [cpceExpectedGraduationDate, setCpceExpectedGraduationDate] = useState(teacher?.cpce_expected_graduation_date || "")
   const [cpceMajor, setCpceMajor] = useState(teacher?.cpce_major || "")
   const [cpceMinor, setCpceMinor] = useState(teacher?.cpce_minor || "")
   const [ugMajor, setUgMajor] = useState(teacher?.ug_major || "")
@@ -76,8 +79,11 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
     setFirstName("")
     setMiddleName("")
     setLastName("")
+    setGender("")
     setStatusId("")
     setDateOfBirth("")
+    setCurrentlyAtCpce(false)
+    setCpceExpectedGraduationDate("")
     setCpceMajor("")
     setCpceMinor("")
     setUgMajor("")
@@ -103,8 +109,11 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
     formData.append("first_name", firstName)
     formData.append("middle_name", middleName)
     formData.append("last_name", lastName)
+    formData.append("gender", gender)
     formData.append("status_id", statusId)
     formData.append("date_of_birth", dateOfBirth)
+    formData.append("currently_at_cpce", currentlyAtCpce.toString())
+    formData.append("cpce_expected_graduation_date", cpceExpectedGraduationDate)
     formData.append("cpce_major", cpceMajor)
     formData.append("cpce_minor", cpceMinor)
     formData.append("ug_major", ugMajor)
@@ -176,8 +185,11 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
       setFirstName(teacher.first_name || "")
       setMiddleName(teacher.middle_name || "")
       setLastName(teacher.last_name || "")
+      setGender(teacher.gender || "")
       setStatusId(teacher.status_id || "")
       setDateOfBirth(teacher.date_of_birth || "")
+      setCurrentlyAtCpce(teacher.currently_at_cpce || false)
+      setCpceExpectedGraduationDate(teacher.cpce_expected_graduation_date || "")
       setCpceMajor(teacher.cpce_major || "")
       setCpceMinor(teacher.cpce_minor || "")
       setUgMajor(teacher.ug_major || "")
@@ -252,7 +264,19 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select value={gender} onValueChange={setGender}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="date_of_birth">Date of Birth</Label>
                 <Input
@@ -283,6 +307,45 @@ export function AddTeacherModal({ open, onOpenChange, teacher, onSuccess }: AddT
           {/* CPCE Education */}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900 border-b pb-2">CPCE Education</h3>
+            
+            {/* Currently at CPCE */}
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label>Is the teacher currently attending CPCE?</Label>
+                <RadioGroup
+                  value={currentlyAtCpce ? "yes" : "no"}
+                  onValueChange={(value) => {
+                    setCurrentlyAtCpce(value === "yes")
+                    if (value === "no") {
+                      setCpceExpectedGraduationDate("") // Clear graduation date when not attending
+                    }
+                  }}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="currently_at_cpce_yes" />
+                    <Label htmlFor="currently_at_cpce_yes" className="font-normal cursor-pointer">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="currently_at_cpce_no" />
+                    <Label htmlFor="currently_at_cpce_no" className="font-normal cursor-pointer">No</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </div>
+            
+            {currentlyAtCpce && (
+              <div className="space-y-2">
+                <Label htmlFor="cpce_expected_graduation_date">Expected Graduation Date</Label>
+                <Input
+                  id="cpce_expected_graduation_date"
+                  type="date"
+                  value={cpceExpectedGraduationDate}
+                  onChange={(e) => setCpceExpectedGraduationDate(e.target.value)}
+                />
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cpce_major">Major at CPCE</Label>
