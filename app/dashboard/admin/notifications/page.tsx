@@ -339,7 +339,6 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
           </TabsTrigger>
         </TabsList>
 
-<<<<<<< HEAD
         <TabsContent value="broadcast" className="space-y-4">
           <Card>
             <CardHeader>
