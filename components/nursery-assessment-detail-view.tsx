@@ -273,7 +273,7 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
       }
       
       // Add footer
-      const totalPages = pdf.internal.getNumberOfPages()
+      const totalPages = (pdf as any).internal.getNumberOfPages()
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i)
         pdf.setFontSize(8)

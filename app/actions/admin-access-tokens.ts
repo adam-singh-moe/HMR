@@ -95,7 +95,7 @@ export async function verifyAccessToken(token: string) {
     }
     
     // Extract role name from the join
-    const roleName = user.hmr_user_roles?.name || 'Unknown Role'
+    const roleName = (user.hmr_user_roles as any)?.name || 'Unknown Role'
 
     return { 
       valid: true, 
@@ -177,7 +177,7 @@ export async function authenticateWithToken(token: string) {
 // Get current admin session info
 export async function getAdminSessionInfo() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const sessionToken = cookieStore.get('admin_session_token')?.value
     
     if (!sessionToken) {
@@ -210,7 +210,7 @@ export async function getAdminSessionInfo() {
 // End admin session
 export async function endAdminSession() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     cookieStore.delete('admin_session_token')
     
     return { success: true, error: null }

@@ -45,6 +45,7 @@ export default async function SchoolsPage() {
         </CardContent>
       </Card>
     }>
+      {/* @ts-ignore - Async component */}
       <SchoolsSummary />
     </Suspense>
   )

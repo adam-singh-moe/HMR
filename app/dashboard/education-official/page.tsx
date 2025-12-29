@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SchoolReadinessIndicator } from "@/components/school-readiness-indicator"
+import { EducationOfficialAssessmentCard } from "@/components/school-assessment-entry-card"
 import Link from "next/link"
 
 export default async function EducationOfficialPage() {
@@ -86,10 +87,13 @@ export default async function EducationOfficialPage() {
           </h2>
           <p className="text-muted-foreground">Monitor key metrics and performance indicators</p>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <SchoolReadinessIndicator />
         </div>
       </div>
+
+      {/* School Assessment Entry Card */}
+      <EducationOfficialAssessmentCard />
 
       {/* Error Alerts */}
       {(reportCountsError || schoolCountError || expenditureError || attendanceError || recentReportsError || regionStatsError) && (

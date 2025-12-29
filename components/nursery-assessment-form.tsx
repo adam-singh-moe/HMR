@@ -1342,7 +1342,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
           setCurrentUser(user)
           
           // Check if we have full school info in session, otherwise get it
-          let schoolData = null
+          let schoolData: any = null
           if (user.school_name && user.region_name) {
             // Use session data if available
             // Smart detection for nursery schools - always check school name first

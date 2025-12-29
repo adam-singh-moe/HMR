@@ -19,6 +19,7 @@ import {
   Bell,
   ChevronDown,
   ChevronRight,
+  ClipboardCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -102,6 +103,11 @@ export const AdminSidebarClient = forwardRef<AdminSidebarRef, AdminSidebarClient
             name: "Regions",
             href: "/dashboard/admin/regions",
             icon: MapPin,
+          },
+          {
+            name: "School Assessment",
+            href: "/dashboard/school-assessment/admin",
+            icon: ClipboardCheck,
           },
         ],
       },

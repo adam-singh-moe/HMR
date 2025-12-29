@@ -6,6 +6,7 @@ import { PreviousReportForm } from "@/components/previous-report-form"
 import { NurseryAssessmentForm } from "@/components/nursery-assessment-form"
 import { NurseryAssessmentsList } from "@/components/nursery-assessments-list"
 import { SchoolReadinessStatus } from "@/components/school-readiness-status"
+import { HeadTeacherAssessmentCard } from "@/components/school-assessment-entry-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,7 @@ import { getSubmittedNurseryAssessments } from "@/app/actions/nursery-assessment
 import { getUser, getUserSchoolInfo } from "@/app/actions/auth"
 import { getHeadTeacherDashboardTrends } from "@/app/actions/head-teacher-trends"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
@@ -572,6 +574,9 @@ function HeadTeacherDashboardContent() {
                 </div>
               </div>
 
+              {/* School Assessment Entry Card - Top Priority */}
+              <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} />
+
               {/* Stats Overview Cards */}
               <div className={`grid gap-6 ${
                 isNurserySchool 
@@ -889,8 +894,8 @@ function HeadTeacherDashboardContent() {
                 <CardContent>
                   <div className={`grid gap-4 ${
                     isNurserySchool 
-                      ? 'grid-cols-1 sm:grid-cols-2' 
-                      : 'grid-cols-1'
+                      ? 'grid-cols-1 sm:grid-cols-3' 
+                      : 'grid-cols-1 sm:grid-cols-2'
                   }`}>
                     <button 
                       onClick={() => {updateMainTab('monthly-reports'); updateURL('current-report')}}
@@ -1141,7 +1146,7 @@ function HeadTeacherDashboardContent() {
                 {/* Quick Actions */}
                 <div className="mt-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <button 
                       onClick={() => {updateMainTab('monthly-reports'); updateURL('current-report')}}
                       className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left"
@@ -1168,6 +1173,11 @@ function HeadTeacherDashboardContent() {
                       </div>
                     </button>
                   </div>
+                </div>
+
+                {/* School Assessment Entry Card */}
+                <div className="mt-6">
+                  <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} />
                 </div>
               </div>
 

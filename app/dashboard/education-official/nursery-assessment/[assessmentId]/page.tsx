@@ -3,15 +3,16 @@ import { NurseryAssessmentDetailView } from "@/components/nursery-assessment-det
 import { redirect } from "next/navigation"
 
 interface NurseryAssessmentDetailPageProps {
-  params: {
+  params: Promise<{
     assessmentId: string
-  }
+  }>
 }
 
 export default async function NurseryAssessmentDetailPage({ 
   params 
 }: NurseryAssessmentDetailPageProps) {
-  const { assessment, responses, error } = await getNurseryAssessmentDetails(params.assessmentId)
+  const { assessmentId } = await params
+  const { assessment, responses, error } = await getNurseryAssessmentDetails(assessmentId)
 
   if (error || !assessment) {
     redirect('/dashboard/education-official/nursery-assessment')
@@ -19,7 +20,7 @@ export default async function NurseryAssessmentDetailPage({
 
   return (
     <div className="space-y-6">
-      <NurseryAssessmentDetailView assessmentId={params.assessmentId} />
+      <NurseryAssessmentDetailView assessmentId={assessmentId} />
     </div>
   )
 }

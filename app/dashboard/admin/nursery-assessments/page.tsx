@@ -60,7 +60,7 @@ const formatTime = (dateString: string) => {
 
 interface Assessment {
   id: string
-  status: 'draft' | 'completed'
+  status: 'draft' | 'completed' | 'submitted'
   created_at: string
   updated_at: string
   sms_schools: {
@@ -69,8 +69,7 @@ interface Assessment {
     region_name: string
   }
   users: {
-    first_name: string
-    last_name: string
+    name: string
     email: string
   }
 }
@@ -126,7 +125,7 @@ export default function AdminNurseryAssessmentsPage() {
       if (statsResult.error) {
         console.error('Error loading stats:', statsResult.error)
       } else {
-        setStats(statsResult.stats)
+        setStats(statsResult.stats as any)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -413,10 +412,9 @@ export default function AdminNurseryAssessmentsPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           onClick={() => {
-                            const nextStatus = assessment.status === 'draft' 
-                              ? 'submitted' 
-                              : 'draft'
-                            handleStatusChange(assessment.id, nextStatus)
+                            setSelectedAssessment(assessment)
+                            setNewStatus(assessment.status === 'draft' ? 'submitted' : 'draft')
+                            setShowStatusDialog(true)
                           }}
                         >
                           <Settings className="h-4 w-4 mr-2" />
