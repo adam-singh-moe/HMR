@@ -5,7 +5,7 @@ export class GeminiService {
   private model = "gemini-flash-latest"
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || ''
+    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
     if (!this.apiKey) {
       throw new Error('Gemini API key is required')
     }
