@@ -10,6 +10,8 @@ interface User {
   role: string
   region_name?: string
   school_name?: string
+  school_id?: string
+  school_level?: string
 }
 
 interface AuthWrapperProps {
@@ -18,7 +20,7 @@ interface AuthWrapperProps {
   fallback?: React.ReactNode
 }
 
-export function AuthWrapper({ children, requiredRole, fallback }: AuthWrapperProps) {
+export function AuthWrapper({ children, requiredRole, fallback }: AuthWrapperProps): any {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)

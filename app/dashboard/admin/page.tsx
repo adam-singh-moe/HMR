@@ -236,7 +236,7 @@ export default function AdminDashboardPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ region, count }) => `${region}: ${count}`}
+                      label={({ region, count }: any) => `${region}: ${count}`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"

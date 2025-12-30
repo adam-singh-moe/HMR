@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { createServerSupabaseClient } from "@/lib/supabase"
 import { cookies } from "next/headers"
 import bcrypt from "bcryptjs"
+import { refreshRegionalTopPerformersCache } from "@/features/school-assessment-reports/actions/analytics"
 
 const MOE_EMAIL_DOMAIN = "@moe.gov.gy"
 const HEAD_TEACHER_EMAIL_DOMAIN = "@moe.edu.gy"
@@ -40,7 +41,7 @@ export async function signUp(formData: FormData) {
     return { error: "All required fields must be filled" }
   }
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   // Check if user already exists in hmr_users table
   const { data: existingUser, error: checkError } = await supabase
@@ -156,7 +157,7 @@ export async function signUp(formData: FormData) {
 }
 
 export async function signIn(formData: FormData) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -257,6 +258,12 @@ export async function signIn(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7, // 7 days
   })
 
+  // Refresh regional top performers cache in the background
+  // We don't await it to avoid delaying the login redirect
+  refreshRegionalTopPerformersCache().catch(err => {
+    console.error("Failed to refresh regional top performers cache:", err)
+  })
+
   // Redirect directly to the appropriate dashboard based on role
   if (user.hmr_user_roles?.name === "Head Teacher") {
     redirect("/dashboard/head-teacher")
@@ -299,7 +306,7 @@ export async function changeDefaultPassword(formData: FormData) {
     return { error: "You cannot use the default password. Please choose a different password." }
   }
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   // Hash the new password
   const hashedPassword = await bcrypt.hash(newPassword, 12)
@@ -414,7 +421,7 @@ export async function getUserSchoolInfo() {
       return { school: null, error: "User not found or no school assigned" }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: school, error } = await supabase
       .from('sms_schools')
       .select(`
@@ -464,6 +471,7 @@ export async function getUserSchoolInfo() {
       name: school.name,
       level: schoolLevel,
       region: regionName,
+      region_id: school.region_id,
       has_nursery_class: school.has_nursery_class || false
     }
 

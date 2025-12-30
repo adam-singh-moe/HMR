@@ -207,7 +207,7 @@ function processAttendanceTrends(rawData: any[]) {
     .filter(trend => trend !== null)
 
   // Sort by month
-  return monthlyTrends.sort((a, b) => a.monthIndex - b.monthIndex)
+  return (monthlyTrends as any[]).sort((a, b) => (a?.monthIndex || 0) - (b?.monthIndex || 0))
 }
 
 function processPunctualityTrends(rawData: any[]) {
@@ -261,7 +261,7 @@ function processPunctualityTrends(rawData: any[]) {
     })
     .filter(trend => trend !== null)
 
-  return monthlyTrends.sort((a, b) => a.monthIndex - b.monthIndex)
+  return (monthlyTrends as any[]).sort((a, b) => (a?.monthIndex || 0) - (b?.monthIndex || 0))
 }
 
 function processEnrollmentTrends(rawData: any[]) {

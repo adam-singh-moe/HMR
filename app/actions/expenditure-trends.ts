@@ -66,7 +66,7 @@ export async function getExpenditureTrends() {
 
     // Check for 2025 data specifically
     const data2025 = expenditureData.filter(record => 
-      record.hmr_report && (parseInt(record.hmr_report.year) === 2025 || record.hmr_report.year === '2025')
+      record.hmr_report && (parseInt((record.hmr_report as any).year) === 2025 || (record.hmr_report as any).year === '2025')
     )
    // console.log("Debug: 2025 expenditure records found:", data2025.length)
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button"
-import { BarChart3, FileText, School, Activity, Brain, BookOpen, Users } from "lucide-react"
+import { BarChart3, FileText, School, Activity, Brain, BookOpen, ClipboardCheck, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -37,6 +37,13 @@ export default function EducationOfficialNav() {
             <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="hidden xs:inline sm:inline">Monthly Reports</span>
             <span className="xs:hidden sm:hidden">Rep</span>
+          </Link>
+        </Button>
+        <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname?.startsWith('/dashboard/education-official/school-assessment') ? 'bg-purple-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">
+          <Link href="/dashboard/education-official/school-assessment">
+            <ClipboardCheck className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">School Assessment</span>
+            <span className="xs:hidden sm:hidden">Assess</span>
           </Link>
         </Button>
         <Button asChild variant="ghost" className={`px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${pathname === '/dashboard/education-official/nursery-assessment' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`} size="sm">

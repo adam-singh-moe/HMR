@@ -32,8 +32,8 @@ export async function getAllNurseryAssessments() {
     console.log('User IDs to fetch:', userIds.slice(0, 5)) // Debug log
 
     // Fetch schools and users separately if we have IDs
-    let schools = []
-    let users = []
+    let schools: any[] = []
+    let users: any[] = []
 
     if (schoolIds.length > 0) {
       const schoolsResult = await supabase.from('sms_schools').select('id, name, region_id').in('id', schoolIds)
@@ -42,14 +42,14 @@ export async function getAllNurseryAssessments() {
     }
 
     if (userIds.length > 0) {
-      const usersResult = await supabase.from('users').select('id, first_name, last_name, email').in('id', userIds)
+      const usersResult = await supabase.from('hmr_users').select('id, name, email').in('id', userIds)
       console.log('Users query result:', usersResult.error ? usersResult.error : `Found ${usersResult.data?.length || 0} users`)
       users = usersResult.data || []
     }
 
     // Get unique region IDs and fetch region names
     const regionIds = [...new Set(schools.map(s => s.region_id).filter(Boolean))]
-    let regions = []
+    let regions: any[] = []
 
     if (regionIds.length > 0) {
       const regionsResult = await supabase.from('sms_regions').select('id, name').in('id', regionIds)
@@ -135,7 +135,7 @@ export async function getNurseryAssessmentStats() {
     }
 
     // Process monthly data
-    const monthlyStats: { [key: string]: { completed: number, draft: number, total: number } } = {}
+    const monthlyStats: { [key: string]: { completed: number, submitted: number, draft: number, total: number } } = {}
     
     monthlyData?.forEach(assessment => {
       const month = new Date(assessment.created_at).toLocaleDateString('en-US', { 

@@ -18,7 +18,7 @@ export async function getAvailableSchools(): Promise<{
   error?: string
 }> {
   try {
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // First, get all school IDs that have active head teachers
     const { data: assignedSchools, error: assignedError } = await supabase
@@ -91,7 +91,7 @@ export async function searchAvailableSchools(searchQuery: string, limit?: number
   error?: string
 }> {
   try {
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     if (!searchQuery.trim()) {
       // If no search query, return all available schools

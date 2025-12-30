@@ -17,6 +17,10 @@ import { HelpDeskButton } from "@/components/help-desk-button"
 import { NotificationBell } from "@/components/notification-bell"
 import { FeatureRequestButton } from "@/components/feature-request-button"
 
+// Dashboards are authenticated and depend on cookies/session.
+// Force dynamic rendering to avoid build-time prerender attempts.
+export const dynamic = 'force-dynamic'
+
 // Helper function to capitalize first and last names
 function capitalizeName(name: string): string {
   return name

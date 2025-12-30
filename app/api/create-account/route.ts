@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Check if user already exists in hmr_users table
     const { data: existingUser, error: checkError } = await supabase

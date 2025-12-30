@@ -308,27 +308,27 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
       // Update form data with all loaded data
       setFormData((prev) => {
-        const updatedData = { ...prev }
+        const updatedData = { ...prev } as any
 
         // Student Enrollment data
-        if (studentEnrollmentResult.success && studentEnrollmentResult.data) {
-          const data = studentEnrollmentResult.data
+        if ((studentEnrollmentResult as any).success && (studentEnrollmentResult as any).data) {
+          const data = (studentEnrollmentResult as any).data
           updatedData.totalStudentsEnrolled = data.total_students?.toString() || ""
           updatedData.studentsTransferredIn = data.total_transferred_in?.toString() || ""
           updatedData.studentsTransferredOut = data.total_transferred_out?.toString() || ""
         }
 
         // Attendance data
-        if (attendanceResult.success && attendanceResult.data) {
-          const data = attendanceResult.data
+        if ((attendanceResult as any).success && (attendanceResult as any).data) {
+          const data = (attendanceResult as any).data
           updatedData.totalDaysInMonth = data.total_days_in_month?.toString() || ""
           updatedData.totalDaysSchoolOpened = data.total_days_school_opened?.toString() || ""
           updatedData.averageDailyAttendance = data.average_daily_attendance?.toString() || ""
         }
 
         // Staffing data
-        if (staffingResult.success && staffingResult.data) {
-          const data = staffingResult.data
+        if ((staffingResult as any).success && (staffingResult as any).data) {
+          const data = (staffingResult as any).data
           updatedData.totalTeachers = data.total_teachers?.toString() || ""
           updatedData.totalNonTeachingStaff = data.total_non_teaching_staff?.toString() || ""
           updatedData.teachersPresent = data.teachers_present?.toString() || ""
@@ -339,40 +339,40 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         }
 
         // Staff Development data
-        if (staffDevelopmentResult.success && staffDevelopmentResult.data) {
-          const data = staffDevelopmentResult.data
+        if ((staffDevelopmentResult as any).success && (staffDevelopmentResult as any).data) {
+          const data = (staffDevelopmentResult as any).data
           updatedData.professionalDevelopmentActivities = data.professional_development_activities || ""
           updatedData.teacherTrainingPrograms = data.teacher_training_programs || ""
           updatedData.skillDevelopmentInitiatives = data.skill_development_initiatives || ""
         }
 
         // Supervision data
-        if (supervisionResult.success && supervisionResult.data) {
-          const data = supervisionResult.data
+        if ((supervisionResult as any).success && (supervisionResult as any).data) {
+          const data = (supervisionResult as any).data
           updatedData.principalSupervisionActivities = data.principal_supervision_activities || ""
           updatedData.classroomObservations = data.classroom_observations || ""
           updatedData.teacherFeedbackSessions = data.teacher_feedback_sessions || ""
         }
 
         // Curriculum data
-        if (curriculumResult.success && curriculumResult.data) {
-          const data = curriculumResult.data
+        if ((curriculumResult as any).success && (curriculumResult as any).data) {
+          const data = (curriculumResult as any).data
           updatedData.curriculumImplementationProgress = data.curriculum_implementation_progress || ""
           updatedData.subjectSpecificUpdates = data.subject_specific_updates || ""
           updatedData.assessmentAndEvaluationActivities = data.assessment_and_evaluation_activities || ""
         }
 
         // Finance data
-        if (financeResult.success && financeResult.data) {
-          const data = financeResult.data
+        if ((financeResult as any).success && (financeResult as any).data) {
+          const data = (financeResult as any).data
           updatedData.schoolBudgetStatus = data.school_budget_status || ""
           updatedData.expenditureDetails = data.expenditure_details || ""
           updatedData.fundingChallenges = data.funding_challenges || ""
         }
 
         // Income data
-        if (incomeResult.success && incomeResult.data) {
-          const data = incomeResult.data
+        if ((incomeResult as any).success && (incomeResult as any).data) {
+          const data = (incomeResult as any).data
           updatedData.governmentFunding = data.government_funding?.toString() || ""
           updatedData.donationsAndGrants = data.donations_and_grants?.toString() || ""
           updatedData.fundraisingActivities = data.fundraising_activities?.toString() || ""
@@ -380,8 +380,8 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         }
 
         // Accident & Safety data
-        if (accidentSafetyResult.success && accidentSafetyResult.data) {
-          const data = accidentSafetyResult.data
+        if ((accidentSafetyResult as any).success && (accidentSafetyResult as any).data) {
+          const data = (accidentSafetyResult as any).data
           updatedData.accidentsReported = data.accidents_reported?.toString() || ""
           updatedData.safetyMeasuresImplemented = data.safety_measures_implemented || ""
           updatedData.emergencyProcedures = data.emergency_procedures || ""
@@ -391,38 +391,38 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         }
 
         // Staff Meetings data
-        if (staffMeetingsResult.success && staffMeetingsResult.data) {
-          const data = staffMeetingsResult.data
+        if ((staffMeetingsResult as any).success && (staffMeetingsResult as any).data) {
+          const data = (staffMeetingsResult as any).data
           updatedData.generalStaffMeetingHeld = data.generalMeetingHeld
           updatedData.keyIssuesDiscussed = data.keyIssuesDiscussed || ""
           updatedData.decisionsImplemented = data.decisionsImplemented || ""
         }
 
         // Physical Facilities data
-        if (facilitiesResult.success && facilitiesResult.data) {
-          const data = facilitiesResult.data
+        if ((facilitiesResult as any).success && (facilitiesResult as any).data) {
+          const data = (facilitiesResult as any).data
           updatedData.buildingCondition = data.building_condition || ""
           updatedData.maintenanceIssues = data.maintenance_issues || ""
           updatedData.facilitiesUpgrades = data.facilities_upgrades || ""
         }
 
         // Resources Needed data
-        if (resourcesResult.success && resourcesResult.data) {
-          const data = resourcesResult.data
+        if ((resourcesResult as any).success && (resourcesResult as any).data) {
+          const data = (resourcesResult as any).data
           updatedData.curriculumResources = data.curriculumResources || ""
           updatedData.janitorialSupplies = data.janitorialSupplies || ""
           updatedData.otherIssues = data.otherIssues || ""
         }
 
         // Physical Education data
-        if (physicalEducationResult.success && physicalEducationResult.data) {
-          const data = physicalEducationResult.data
+        if ((physicalEducationResult as any).success && (physicalEducationResult as any).data) {
+          const data = (physicalEducationResult as any).data
           // Convert comma-separated strings back to arrays
           const activitiesArray = data.physicalEducationActivities 
-            ? data.physicalEducationActivities.split(',').map(activity => ({ activity: activity.trim() })).filter(item => item.activity)
+            ? data.physicalEducationActivities.split(',').map((activity: string) => ({ activity: activity.trim() })).filter((item: any) => item.activity)
             : []
           const challengesArray = data.physicalEducationChallenges
-            ? data.physicalEducationChallenges.split(',').map(challenge => ({ challenge: challenge.trim() })).filter(item => item.challenge)
+            ? data.physicalEducationChallenges.split(',').map((challenge: string) => ({ challenge: challenge.trim() })).filter((item: any) => item.challenge)
             : []
           
           updatedData.physicalEducationActivities = activitiesArray
@@ -878,13 +878,13 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
          // console.log("Loading resources needed data for reportId:", reportId)
           const result = await getResourcesNeeded(reportId)
          // console.log("getResourcesNeeded result:", result)
-          if (result.success && result.data) {
+          if ((result as any).success && (result as any).data) {
             //console.log("Setting resources data to form:", result.data)
             setFormData((prev) => ({
               ...prev,
-              curriculumResources: result.data.curriculumResources,
-              janitorialSupplies: result.data.janitorialSupplies,
-              otherIssues: result.data.otherIssues,
+              curriculumResources: (result as any).data.curriculumResources,
+              janitorialSupplies: (result as any).data.janitorialSupplies,
+              otherIssues: (result as any).data.otherIssues,
             }))
           }
         } catch (error) {
@@ -905,15 +905,15 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             // Convert comma-separated strings back to arrays, filtering out empty strings
             const activitiesArray = result.data.physicalEducationActivities 
               ? result.data.physicalEducationActivities.split(',')
-                  .map(activity => activity.trim())
-                  .filter(activity => activity.length > 0)
-                  .map(activity => ({ activity }))
+                  .map((activity: string) => activity.trim())
+                  .filter((activity: string) => activity.length > 0)
+                  .map((activity: string) => ({ activity }))
               : []
             const challengesArray = result.data.physicalEducationChallenges
               ? result.data.physicalEducationChallenges.split(',')
-                  .map(challenge => challenge.trim())
-                  .filter(challenge => challenge.length > 0)
-                  .map(challenge => ({ challenge }))
+                  .map((challenge: string) => challenge.trim())
+                  .filter((challenge: string) => challenge.length > 0)
+                  .map((challenge: string) => ({ challenge }))
               : []
             
             setFormData((prev) => ({
@@ -1048,7 +1048,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Teachers who left the school
           const teachersWhoLeft = safeGetArray("teachersWhoLeft")
-          teachersWhoLeft.forEach((teacher) => {
+          teachersWhoLeft.forEach((teacher: any) => {
             if (teacher && teacher.name && teacher.name.trim()) {
               teacherStatusUpdates.push({
                 report_id: reportId,
@@ -1065,7 +1065,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Teachers on special leave
           const specialLeave = safeGetArray("specialLeave")
-          specialLeave.forEach((teacher) => {
+          specialLeave.forEach((teacher: any) => {
             if (teacher && teacher.name && teacher.name.trim()) {
               teacherStatusUpdates.push({
                 report_id: reportId,
@@ -1082,7 +1082,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Teachers who assumed duty
           const teachersAssumedDuty = safeGetArray("teachersAssumedDuty")
-          teachersAssumedDuty.forEach((teacher) => {
+          teachersAssumedDuty.forEach((teacher: any) => {
             if (teacher && teacher.name && teacher.name.trim()) {
               teacherStatusUpdates.push({
                 report_id: reportId,
@@ -1099,7 +1099,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Teachers not reported for duty
           const teachersNotReported = safeGetArray("teachersNotReported")
-          teachersNotReported.forEach((teacher) => {
+          teachersNotReported.forEach((teacher: any) => {
             if (teacher && teacher.name && teacher.name.trim()) {
               teacherStatusUpdates.push({
                 report_id: reportId,
@@ -1116,7 +1116,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
           // Teachers without salary
           const teachersWithoutSalary = safeGetArray("teachersWithoutSalary")
-          teachersWithoutSalary.forEach((teacher) => {
+          teachersWithoutSalary.forEach((teacher: any) => {
             if (teacher && teacher.name && teacher.name.trim()) {
               teacherStatusUpdates.push({
                 report_id: reportId,
@@ -1134,11 +1134,11 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           // Check if we have any meaningful teacher status data
           const hasTeacherStatusData = teacherStatusUpdates.length > 0
           const allArraysEmpty = !hasTeacherStatusData && 
-            (!safeGetArray("teachersWhoLeft").some(t => t?.name?.trim()) &&
-             !safeGetArray("specialLeave").some(t => t?.name?.trim()) &&
-             !safeGetArray("teachersAssumedDuty").some(t => t?.name?.trim()) &&
-             !safeGetArray("teachersNotReported").some(t => t?.name?.trim()) &&
-             !safeGetArray("teachersWithoutSalary").some(t => t?.name?.trim()))
+            (!safeGetArray("teachersWhoLeft").some((t: any) => t?.name?.trim()) &&
+             !safeGetArray("specialLeave").some((t: any) => t?.name?.trim()) &&
+             !safeGetArray("teachersAssumedDuty").some((t: any) => t?.name?.trim()) &&
+             !safeGetArray("teachersNotReported").some((t: any) => t?.name?.trim()) &&
+             !safeGetArray("teachersWithoutSalary").some((t: any) => t?.name?.trim()))
 
           // Only save if we have actual data or if this is not just from auto-loading
           if (allArraysEmpty && changedFields.size === 0) {
@@ -1197,7 +1197,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           financeFormData.append("totalExpenditure", safeGet("totalExpenditure", "0"))
           financeFormData.append("closingBalance", safeGet("closingBalance", "0"))
           const expenditureDetails = safeGetArray("expenditureDetails")
-          expenditureDetails.forEach((expense, index) => {
+          expenditureDetails.forEach((expense: any, index: number) => {
             if (expense && expense.description && expense.description.trim()) {
               financeFormData.append(`expense_${index}_description`, expense.description)
               financeFormData.append(`expense_${index}_amount`, expense.amount || "0")
@@ -1213,7 +1213,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           
           // Prepare income sources as JSON for the database
           const incomeSourcesData: any[] = []
-          incomeSources.forEach((income) => {
+          incomeSources.forEach((income: any) => {
             if (income && income.source && income.source.trim()) {
               incomeSourcesData.push({
                 source: income.source.trim(),
@@ -1284,12 +1284,12 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
             : []
           
           const activitiesString = activitiesArray
-            .map(item => item.activity)
-            .filter(activity => activity && activity.trim())
+            .map((item: any) => item.activity)
+            .filter((activity: any) => activity && activity.trim())
             .join(', ')
           const challengesString = challengesArray
-            .map(item => item.challenge)
-            .filter(challenge => challenge && challenge.trim())
+            .map((item: any) => item.challenge)
+            .filter((challenge: any) => challenge && challenge.trim())
             .join(', ')
           physicalEducationFormData.append("activities", activitiesString)
           physicalEducationFormData.append("challenges", challengesString)
@@ -1404,7 +1404,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
 
     setIsLoadingSection(true)
     try {
-      let result
+      let result: any
       switch (sectionIndex) {
         case 1:
           result = await getStudentEnrollment(reportId)
@@ -1449,20 +1449,20 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           return
       }
 
-      if (result?.success && result.data) {
+      if ((result as any)?.success && (result as any).data) {
        // console.log(`Loading data for section ${sectionIndex}:`, result.data)
         
         // Store original data for this section
         setOriginalSectionData(prev => ({
           ...prev,
-          [sectionIndex]: result.data
+          [sectionIndex]: (result as any).data
         }))
 
         // Update form data with loaded data (without triggering change detection)
         if (sectionIndex === 3) {
           // Special handling for Teacher Status section (case 3)
          // console.log("Loading Teacher Status data:", result.data)
-          const { staffing, teacherStatusUpdates } = result.data
+          const { staffing, teacherStatusUpdates } = (result as any).data
           
           // Only update if we have valid teacherStatusUpdates
           if (teacherStatusUpdates) {
@@ -1474,16 +1474,16 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
               overStaffedBy: staffing?.over_staffed_by?.toString() || "",
               secondmentCertificatesPrepared: staffing?.secondment_attendance_cert || false,
               teachersWhoLeft: teacherStatusUpdates.leftSchool?.length > 0 
-                ? teacherStatusUpdates.leftSchool.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
+                ? teacherStatusUpdates.leftSchool.map((t: any) => ({ name: t.name, status: t.status, reason: t.reason }))
                 : (prev.teachersWhoLeft?.length > 0 ? prev.teachersWhoLeft : [{ name: "", status: "", reason: "" }]),
               specialLeave: teacherStatusUpdates.specialLeave?.length > 0 
-                ? teacherStatusUpdates.specialLeave.map(t => ({ name: t.name, status: t.status, offence: t.offence }))
+                ? teacherStatusUpdates.specialLeave.map((t: any) => ({ name: t.name, status: t.status, offence: t.offence }))
                 : (prev.specialLeave?.length > 0 ? prev.specialLeave : [{ name: "", status: "", offence: "" }]),
               teachersAssumedDuty: teacherStatusUpdates.assumedDuty?.length > 0 
-                ? teacherStatusUpdates.assumedDuty.map(t => ({ name: t.name, status: t.status }))
+                ? teacherStatusUpdates.assumedDuty.map((t: any) => ({ name: t.name, status: t.status }))
                 : (prev.teachersAssumedDuty?.length > 0 ? prev.teachersAssumedDuty : [{ name: "", status: "" }]),
               teachersNotReported: teacherStatusUpdates.notReported?.length > 0 
-                ? teacherStatusUpdates.notReported.map(t => ({ 
+                ? teacherStatusUpdates.notReported.map((t: any) => ({ 
                     name: t.name, 
                     status: t.status, 
                     reason: t.reason, 
@@ -1492,7 +1492,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
                   }))
                 : (prev.teachersNotReported?.length > 0 ? prev.teachersNotReported : [{ name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" }]),
               teachersWithoutSalary: teacherStatusUpdates.didNotReceiveSalary?.length > 0 
-                ? teacherStatusUpdates.didNotReceiveSalary.map(t => ({ name: t.name, status: t.status, reason: t.reason }))
+                ? teacherStatusUpdates.didNotReceiveSalary.map((t: any) => ({ name: t.name, status: t.status, reason: t.reason }))
                 : (prev.teachersWithoutSalary?.length > 0 ? prev.teachersWithoutSalary : [{ name: "", status: "", reason: "" }]),
             }))
           } else {
@@ -1519,9 +1519,9 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           setFormData(prev => {
             const newData = {
               ...prev,
-              generalStaffMeetingHeld: result.data.generalMeetingHeld,
-              keyIssuesDiscussed: result.data.keyIssuesDiscussed || "",
-              decisionsImplemented: result.data.decisionsImplemented || "0",
+              generalStaffMeetingHeld: (result as any).data.generalMeetingHeld,
+              keyIssuesDiscussed: (result as any).data.keyIssuesDiscussed || "",
+              decisionsImplemented: (result as any).data.decisionsImplemented || "0",
             }
           //  console.log("Updated form data:", newData)
             return newData
@@ -1577,7 +1577,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
         // Mark this section as saved since we just loaded existing data
         // For Teacher Status section, only mark as saved if we actually have data
         if (sectionIndex === 3) {
-          const { teacherStatusUpdates } = result.data
+          const { teacherStatusUpdates } = (result as any).data
           if (teacherStatusUpdates && (
             teacherStatusUpdates.leftSchool?.length > 0 ||
             teacherStatusUpdates.specialLeave?.length > 0 ||
@@ -1589,9 +1589,9 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
           }
         } else if (sectionIndex === 10) {
           // Staff Meetings section - only mark as saved if we have data
-          if (result.data.generalMeetingHeld !== null || 
-              result.data.keyIssuesDiscussed || 
-              result.data.decisionsImplemented !== "0") {
+          if ((result as any).data.generalMeetingHeld !== null || 
+              (result as any).data.keyIssuesDiscussed || 
+              (result as any).data.decisionsImplemented !== "0") {
             setSavedSections(prev => new Set(prev).add(sectionIndex))
           }
         } else {
@@ -1888,7 +1888,7 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
       formDataToSubmit.append("totalCurrentTeachers", formData.currentTeachersOnStaff)
       formDataToSubmit.append("underStaffedBy", formData.underStaffedBy)
       formDataToSubmit.append("overStaffedBy", formData.overStaffedBy)
-      formDataToSubmit.append("secondmentAttendanceCert", formData.secondmentCertificatesPrepared.toString())
+      formDataToSubmit.append("secondmentAttendanceCert", (formData.secondmentCertificatesPrepared ?? false).toString())
       formDataToSubmit.append("teacherStatusData", JSON.stringify(teacherStatusRecords))
 
       const result = await saveStaffing(formDataToSubmit)

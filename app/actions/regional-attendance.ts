@@ -260,7 +260,7 @@ function processAttendanceTrendsDataDirect(rawData: any[]) {
     .filter(trend => trend !== null) // Remove any null entries from validation failures
 
   // Sort by year and month (ORDER BY equivalent)
-  const sortedTrends = monthlyTrends.sort((a, b) => {
+  const sortedTrends = (monthlyTrends as any[]).sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year
     return a.monthIndex - b.monthIndex
   })

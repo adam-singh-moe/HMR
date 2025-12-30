@@ -178,10 +178,10 @@ export function SchoolCharts({ schoolData }: SchoolChartsProps) {
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
-                formatter={(value: any, name: string) => [
+                formatter={((value: any, name: string) => [
                   `${value}%`, 
                   name === 'studentAttendance' ? 'Student Attendance' : 'Teacher Attendance'
-                ]}
+                ]) as any}
               />
               <Legend />
               <Line
