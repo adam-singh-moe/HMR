@@ -5,8 +5,11 @@ export class AIService {
   private model = "deepseek-chat"
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || ''
+    // Check both standard and public environment variables
+    this.apiKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || ''
+    
     if (!this.apiKey) {
+      console.error('AIService: DeepSeek API key is missing. Please ensure DEEPSEEK_API_KEY or NEXT_PUBLIC_DEEPSEEK_API_KEY is set in your environment.')
       throw new Error('DeepSeek API key is required')
     }
   }
