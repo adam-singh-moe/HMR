@@ -5,12 +5,23 @@ export class AIService {
   private model = "deepseek-chat"
 
   constructor() {
-    // Check both standard and public environment variables
-    this.apiKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || ''
+    // Check multiple possible environment variable names for maximum compatibility
+    const key = process.env.DEEPSEEK_API_KEY || 
+                process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || 
+                process.env.NEXT_APP_DEEPSEEK_API_KEY ||
+                '';
+    
+    this.apiKey = key.trim();
     
     if (!this.apiKey) {
-      console.error('AIService: DeepSeek API key is missing. Please ensure DEEPSEEK_API_KEY or NEXT_PUBLIC_DEEPSEEK_API_KEY is set in your environment.')
-      throw new Error('DeepSeek API key is required')
+      const envKeys = Object.keys(process.env).filter(k => k.includes('DEEPSEEK'));
+      console.error('AIService: DeepSeek API key is missing.', {
+        checkedKeys: ['DEEPSEEK_API_KEY', 'NEXT_PUBLIC_DEEPSEEK_API_KEY', 'NEXT_APP_DEEPSEEK_API_KEY'],
+        foundEnvKeys: envKeys,
+        nodeEnv: process.env.NODE_ENV
+      });
+      
+      throw new Error(`DeepSeek API key is required. Please set DEEPSEEK_API_KEY in your deployment environment variables. (Checked: ${envKeys.length > 0 ? envKeys.join(', ') : 'none found'})`);
     }
   }
 
