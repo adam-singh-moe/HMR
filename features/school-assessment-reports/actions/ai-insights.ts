@@ -185,7 +185,9 @@ export async function generateSchoolAssessmentInsight(
 export async function generateRegionalAssessmentInsight(
   regionId: string,
   periodId?: string,
-  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' | 'category_comparison' = 'overview'
+  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' | 'category_comparison' = 'overview',
+  academicYear?: string,
+  termName?: string
 ): Promise<AIInsightResult> {
   try {
     const user = await getUser()
@@ -220,6 +222,8 @@ export async function generateRegionalAssessmentInsight(
 
     if (periodId) {
       query = query.eq('period_id', periodId)
+    } else if (academicYear && termName) {
+      query = query.eq('academic_year', academicYear).eq('term_name', termName)
     }
 
     const { data: reports } = await query
@@ -247,6 +251,8 @@ export async function generateRegionalAssessmentInsight(
 
     if (periodId) {
       nationalQuery = nationalQuery.eq('period_id', periodId)
+    } else if (academicYear && termName) {
+      nationalQuery = nationalQuery.eq('academic_year', academicYear).eq('term_name', termName)
     }
 
     // Prefer DB filter by school_type; fall back to TAPS marker if needed.
@@ -854,19 +860,44 @@ export async function generateImprovementPlan(
     }
 
     // Get school's reports
-    const { data: reports } = await supabase
+    let reportsQuery = supabase
       .from('hmr_school_assessment_reports')
       .select('*')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
       .order('submitted_at', { ascending: false })
-      .limit(3)
+      .limit(5)
+
+    if (reportId) {
+      // If a specific report is requested, we want to make sure it's the primary one analyzed
+      // but we still want historical context
+    }
+
+    const { data: reports } = await reportsQuery
 
     if (!reports || reports.length === 0) {
       return { insight: null, error: "No assessment reports found." }
     }
 
-    const currentReport = reports[0]
+    // If reportId is provided, find it in the list or fetch it specifically
+    let currentReport = reports[0]
+    if (reportId) {
+      const found = reports.find(r => r.id === reportId)
+      if (found) {
+        currentReport = found
+      } else {
+        // Fetch it specifically if not in the recent list
+        const { data: specificReport } = await supabase
+          .from('hmr_school_assessment_reports')
+          .select('*')
+          .eq('id', reportId)
+          .single()
+        if (specificReport) {
+          currentReport = specificReport
+        }
+      }
+    }
+
     const system = detectAssessmentSystem(currentReport)
 
     // Get top performing schools in region for benchmarking (match same assessment system)

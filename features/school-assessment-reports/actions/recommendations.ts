@@ -354,8 +354,8 @@ export async function generateRecommendations(reportId: string) {
     // Extract school and period info
     const schoolName = report.sms_schools?.name || 'Unknown School'
     const regionName = report.sms_schools?.sms_regions?.name || 'Unknown Region'
-    const academicYear = report.hmr_school_assessment_periods?.academic_year || ''
-    const termName = report.hmr_school_assessment_periods?.term_name || ''
+    const academicYear = report.academic_year || report.hmr_school_assessment_periods?.academic_year || ''
+    const termName = report.term_name || report.hmr_school_assessment_periods?.term_name || ''
 
     // Build prompt (Demo vs TAPS)
     let prompt: string
@@ -615,17 +615,24 @@ export async function saveRecommendations(
  */
 export async function getRecommendations(reportId: string) {
   try {
+    if (!reportId) {
+      return { recommendations: [], error: 'Report ID is required.' }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
     
     const { data, error } = await supabase
       .from('hmr_school_assessment_recommendations')
       .select('*')
       .eq('report_id', reportId)
-      .order('priority', { ascending: true }) // high, low, medium alphabetically but we'll sort properly
+      .order('priority', { ascending: true })
     
     if (error) {
-      console.error('Error fetching recommendations:', error)
       return { recommendations: [], error: 'Failed to fetch recommendations.' }
+    }
+    
+    if (!data || data.length === 0) {
+      return { recommendations: [], error: null }
     }
     
     // Sort by priority: high, medium, low
@@ -635,16 +642,17 @@ export async function getRecommendations(reportId: string) {
       low: 3,
     }
     
-    const sorted = data.sort((a, b) => 
+    const sorted = [...data].sort((a, b) => 
       priorityOrder[a.priority as RecommendationPriority] - priorityOrder[b.priority as RecommendationPriority]
     )
     
+    const mapped = sorted.map(mapDbRowToRecommendation)
+    
     return { 
-      recommendations: sorted.map(mapDbRowToRecommendation), 
+      recommendations: mapped, 
       error: null 
     }
-  } catch (error) {
-    console.error('Error in getRecommendations:', error)
+  } catch (error: any) {
     return { recommendations: [], error: 'An unexpected error occurred.' }
   }
 }

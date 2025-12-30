@@ -133,6 +133,16 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
       health_safety: calculateTAPSHealthSafetyScore(row.taps_health_safety_scores || {}),
       school_culture: calculateTAPSSchoolCultureScore(row.taps_school_culture_scores || {}),
     } : null,
+    // Primary/Nursery Category scores
+    categoryScores: (row.academic_scores || row.attendance_scores) ? calculateAllCategoryScores({
+      academic: row.academic_scores || {},
+      attendance: row.attendance_scores || {},
+      infrastructure: row.infrastructure_scores || {},
+      teachingQuality: row.teaching_quality_scores || {},
+      management: row.management_scores || {},
+      studentWelfare: row.student_welfare_scores || {},
+      community: row.community_scores || {},
+    }) : null,
     // Calculated fields
     totalScore: row.total_score,
     ratingLevel: row.rating_level,

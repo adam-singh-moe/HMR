@@ -759,9 +759,12 @@ export function ReportView({
             <Lightbulb className="h-6 w-6 text-amber-500" />
             Actionable Roadmap
           </h3>
-          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
-            {recommendations.length} Suggestions
-          </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground font-mono">ID: {report.id.substring(0, 8)}</span>
+            <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
+              {recommendations.length} Suggestions
+            </Badge>
+          </div>
         </div>
 
         {isGeneratingRecommendations && recommendations.length === 0 ? (

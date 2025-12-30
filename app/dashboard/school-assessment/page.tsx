@@ -53,7 +53,7 @@ import {
   getSchoolReports,
   getReport
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getSchoolTrends,
   getSchoolRankingPosition,
@@ -334,7 +334,10 @@ function HeadTeacherAssessmentContent() {
       setRecommendations([])
       setIsGeneratingRecommendations(false)
 
-      const existing = await getRecommendations(reportId)
+      // Use API route instead of server action for better reliability
+      const response = await fetch(`/api/recommendations?reportId=${reportId}`)
+      const existing = await response.json()
+      
       if (existing.recommendations && existing.recommendations.length > 0) {
         setRecommendations(existing.recommendations)
         return
@@ -787,6 +790,7 @@ function HeadTeacherAssessmentContent() {
               
               {/* AI Recommendations */}
               <AIRecommendationPanel
+                schoolId={schoolInfo?.id || ''}
                 reportId={selectedReport.id}
                 schoolName={schoolInfo?.name || 'Your School'}
               />

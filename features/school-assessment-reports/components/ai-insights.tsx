@@ -1687,6 +1687,7 @@ export function AIAtRiskAlert({
 }
 
 interface AIRecommendationPanelProps {
+  schoolId: string
   reportId: string
   schoolName?: string
   categoryFocus?: string
@@ -1700,6 +1701,7 @@ interface AIRecommendationPanelProps {
  * - Caches results in session storage
  */
 export function AIRecommendationPanel({
+  schoolId,
   reportId,
   schoolName = "School",
   categoryFocus,
@@ -1732,8 +1734,7 @@ export function AIRecommendationPanel({
     setFromCache(false)
     
     try {
-      // Note: generateImprovementPlan uses the reportId to look up the school
-      const result = await generateImprovementPlan(reportId, reportId)
+      const result = await generateImprovementPlan(schoolId, reportId)
       if (result.error) {
         setError(result.error)
       } else if (result.insight) {
@@ -1746,7 +1747,7 @@ export function AIRecommendationPanel({
     } finally {
       setLoading(false)
     }
-  }, [reportId, cacheKey])
+  }, [schoolId, reportId, cacheKey])
 
   // Auto-load on mount
   useEffect(() => {
@@ -2039,6 +2040,8 @@ interface AIComparativeAnalysisProps {
     schoolId?: string
     regionId?: string
     periodId?: string
+    academicYear?: string
+    termName?: string
   }
   title?: string
   description?: string
@@ -2069,7 +2072,13 @@ export function AIComparativeAnalysis({
       
       if (type === 'categories' && filters?.regionId) {
         // Use regional assessment insight with category_comparison type
-        result = await generateRegionalAssessmentInsight(filters.regionId, filters.periodId || periodId, 'category_comparison')
+        result = await generateRegionalAssessmentInsight(
+          filters.regionId, 
+          filters.periodId || periodId, 
+          'category_comparison',
+          filters.academicYear,
+          filters.termName
+        )
       } else {
         // Use getCohortAnalysis for comparisons - requires a schoolId
         const criteriaType = type === 'regions' ? 'region' : 'score'

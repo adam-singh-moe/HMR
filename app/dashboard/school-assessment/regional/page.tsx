@@ -49,7 +49,7 @@ import {
   getRegionalReports,
   getReport,
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
+import { getOrGenerateRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getRegionalStatistics, 
   getRegionalSchoolRankings,
@@ -246,7 +246,8 @@ function RegionalOfficerAssessmentContent() {
         setCurrentTab('view')
 
         if (reportResult.report.status === 'submitted') {
-          void loadRecommendations(reportId, true)
+          console.log('Loading recommendations for report:', reportId)
+          loadRecommendations(reportId, true)
         }
       }
     } catch (error) {
@@ -264,8 +265,12 @@ function RegionalOfficerAssessmentContent() {
       setRecommendations([])
       setIsGeneratingRecommendations(false)
 
-      const existing = await getRecommendations(reportId)
-      if (existing.recommendations && existing.recommendations.length > 0) {
+      if (!reportId) return
+
+      const response = await fetch(`/api/recommendations?reportId=${reportId}`)
+      const existing = await response.json()
+      
+      if (existing && existing.recommendations && existing.recommendations.length > 0) {
         setRecommendations(existing.recommendations)
         return
       }
@@ -273,16 +278,29 @@ function RegionalOfficerAssessmentContent() {
       if (!allowAutoBackfill) return
 
       if (recGenerationInFlight.current.has(reportId)) return
+      
       recGenerationInFlight.current.add(reportId)
       setIsGeneratingRecommendations(true)
 
       const generated = await getOrGenerateRecommendations(reportId)
-      setRecommendations(generated.recommendations || [])
+      console.log('loadRecommendations: getOrGenerateRecommendations result:', generated)
+      
+      if (generated && generated.recommendations) {
+        setRecommendations(generated.recommendations)
+      } else {
+        console.warn('loadRecommendations: No recommendations generated.')
+      }
     } catch (err) {
-      console.error('Error loading recommendations:', err)
+      console.error('loadRecommendations: Error loading recommendations:', err)
+      toast({
+        title: 'Warning',
+        description: 'Could not load AI recommendations.',
+        variant: 'default',
+      })
     } finally {
       setIsGeneratingRecommendations(false)
       recGenerationInFlight.current.delete(reportId)
+      console.log('loadRecommendations: Finished for reportId:', reportId)
     }
   }
 
@@ -579,7 +597,11 @@ function RegionalOfficerAssessmentContent() {
             <AIComparativeAnalysis
               type="categories"
               entityIds={['academic', 'attendance', 'infrastructure', 'teaching_quality', 'management', 'student_welfare', 'community']}
-              filters={{ regionId: regionId || undefined }}
+              filters={{ 
+                regionId: regionId || undefined,
+                academicYear: activeWindow?.academicYear,
+                termName: activeWindow?.termName
+              }}
               title="AI Category Comparison"
               description="AI-powered analysis comparing performance across assessment categories"
             />
@@ -632,6 +654,7 @@ function RegionalOfficerAssessmentContent() {
         <TabsContent value="view">
           {selectedReport ? (
             <ReportView
+              key={selectedReport.id}
               report={{
                 id: selectedReport.id,
                 schoolId: selectedReport.schoolId || selectedReport.school?.id || '',

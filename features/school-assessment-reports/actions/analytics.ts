@@ -721,6 +721,8 @@ export async function getSchoolTrends(
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
+        academic_year,
+        term_name,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('school_id', schoolId)
@@ -734,14 +736,19 @@ export async function getSchoolTrends(
     }
     
     const trends: TrendData[] = (reports || [])
-      .filter((r: any) => r.hmr_school_assessment_periods)
-      .map((r: any) => ({
-        period: `${r.hmr_school_assessment_periods?.academic_year} - ${r.hmr_school_assessment_periods?.term_name}`,
-        academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-        termName: r.hmr_school_assessment_periods?.term_name || '',
-        averageScore: r.total_score || 0,
-        submissionCount: 1,
-      }))
+      .map((r: any) => {
+        const academicYear = r.academic_year || r.hmr_school_assessment_periods?.academic_year || 'Unknown'
+        const termName = r.term_name || r.hmr_school_assessment_periods?.term_name || 'Unknown'
+        
+        return {
+          period: `${academicYear} - ${termName}`,
+          academicYear,
+          termName,
+          averageScore: r.total_score || 0,
+          submissionCount: 1,
+        }
+      })
+      .filter(t => t.academicYear !== 'Unknown')
       .reverse() // Oldest first for chart display
     
     return { trends, error: null }
@@ -767,6 +774,8 @@ export async function getRegionalTrends(
       .select(`
         total_score,
         period_id,
+        academic_year,
+        term_name,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order),
         sms_schools!inner(region_id)
       `)
@@ -787,18 +796,23 @@ export async function getRegionalTrends(
     }> = {}
     
     ;(reports || []).forEach((r: any) => {
-      const periodId = r.period_id
-      if (periodId && r.hmr_school_assessment_periods) {
-        if (!periodGroups[periodId]) {
-          periodGroups[periodId] = {
-            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-            termName: r.hmr_school_assessment_periods?.term_name || '',
-            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
-            scores: [],
-          }
+      const academicYear = r.academic_year || r.hmr_school_assessment_periods?.academic_year
+      const termName = r.term_name || r.hmr_school_assessment_periods?.term_name
+      
+      if (!academicYear || !termName) return
+
+      // Create a unique key for the period if period_id is missing
+      const periodKey = r.period_id || `${academicYear}_${termName}`
+      
+      if (!periodGroups[periodKey]) {
+        periodGroups[periodKey] = {
+          academicYear,
+          termName,
+          sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
+          scores: [],
         }
-        periodGroups[periodId].scores.push(r.total_score || 0)
       }
+      periodGroups[periodKey].scores.push(r.total_score || 0)
     })
     
     // Convert to trends array and sort
@@ -841,6 +855,8 @@ export async function getNationalTrends(
       .select(`
         total_score,
         period_id,
+        academic_year,
+        term_name,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('status', 'submitted')
@@ -859,18 +875,23 @@ export async function getNationalTrends(
     }> = {}
     
     ;(reports || []).forEach((r: any) => {
-      const periodId = r.period_id
-      if (periodId && r.hmr_school_assessment_periods) {
-        if (!periodGroups[periodId]) {
-          periodGroups[periodId] = {
-            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-            termName: r.hmr_school_assessment_periods?.term_name || '',
-            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
-            scores: [],
-          }
+      const academicYear = r.academic_year || r.hmr_school_assessment_periods?.academic_year
+      const termName = r.term_name || r.hmr_school_assessment_periods?.term_name
+      
+      if (!academicYear || !termName) return
+
+      // Create a unique key for the period if period_id is missing
+      const periodKey = r.period_id || `${academicYear}_${termName}`
+      
+      if (!periodGroups[periodKey]) {
+        periodGroups[periodKey] = {
+          academicYear,
+          termName,
+          sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
+          scores: [],
         }
-        periodGroups[periodId].scores.push(r.total_score || 0)
       }
+      periodGroups[periodKey].scores.push(r.total_score || 0)
     })
     
     // Convert to trends array and sort
