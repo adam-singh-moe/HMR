@@ -1098,6 +1098,7 @@ function EducationOfficialAssessmentContent() {
         {selectedReport && (
           <TabsContent value="details">
             <ReportView
+              key={selectedReport.id}
               report={{
                 id: selectedReport.id,
                 schoolId: selectedReport.schoolId || selectedReport.school?.id || '',

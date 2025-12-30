@@ -40,19 +40,23 @@ import type { SchoolType } from "@/lib/school-type"
 /**
  * Calculate Academic Performance score (max 300 points)
  */
-export function calculateAcademicScore(data: Partial<AcademicScores>): number {
+export function calculateAcademicScore(data: any): number {
   let score = 0
   
   // Grade 6 Assessment Pass Rates (max 80 points)
-  // Each subject: 0-100% maps to 0-26.67 points
-  if (data.grade6MathPassRate !== undefined) {
-    score += (data.grade6MathPassRate / 100) * 26.67
+  // Handle both specific subject rates and general NGSE pass rate
+  const mathRate = data.grade6MathPassRate ?? data.ngsePassRate;
+  const englishRate = data.grade6EnglishPassRate ?? data.ngsePassRate;
+  const scienceRate = data.grade6SciencePassRate ?? data.ngsePassRate;
+
+  if (mathRate !== undefined) {
+    score += (mathRate / 100) * 26.67
   }
-  if (data.grade6EnglishPassRate !== undefined) {
-    score += (data.grade6EnglishPassRate / 100) * 26.67
+  if (englishRate !== undefined) {
+    score += (englishRate / 100) * 26.67
   }
-  if (data.grade6SciencePassRate !== undefined) {
-    score += (data.grade6SciencePassRate / 100) * 26.66
+  if (scienceRate !== undefined) {
+    score += (scienceRate / 100) * 26.66
   }
   
   // CSEC Results (max 80 points) - for secondary schools
@@ -159,7 +163,7 @@ export function calculateInfrastructureScore(data: Partial<InfrastructureScores>
   }
   
   // Library (max 25 points)
-  if (data.libraryExists) {
+  if (data.libraryExists || data.libraryCondition !== undefined) {
     score += 10
     if (data.libraryBookCount !== undefined) {
       // 500+ books = full 8 points
@@ -171,7 +175,7 @@ export function calculateInfrastructureScore(data: Partial<InfrastructureScores>
   }
   
   // Technology (max 30 points)
-  if (data.computerLabExists) {
+  if (data.computerLabExists || data.computerCount !== undefined) {
     score += 8
     if (data.computerCount !== undefined) {
       // 20+ computers = full 8 points

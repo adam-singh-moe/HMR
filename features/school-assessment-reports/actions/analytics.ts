@@ -14,14 +14,27 @@ async function assertCanAccessSchool(schoolId: string) {
     return { ok: false as const, error: 'You must be logged in.' }
   }
 
+  const supabase = createServiceRoleSupabaseClient()
+
+  // Resolve schoolId if it's not a UUID
+  let targetSchoolId = schoolId;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(schoolId)) {
+    const { data: school } = await supabase
+      .from('sms_schools')
+      .select('id')
+      .or(`school_code.eq.${schoolId},name.ilike.%${schoolId}%`)
+      .limit(1)
+      .single();
+    if (school) targetSchoolId = school.id;
+  }
+
   if (user.role === 'Admin' || user.role === 'Education Official') {
     return { ok: true as const, user }
   }
 
-  const supabase = createServiceRoleSupabaseClient()
-
   if (user.role === 'Head Teacher') {
-    if (user.school_id && user.school_id === schoolId) {
+    if (user.school_id && user.school_id === targetSchoolId) {
       return { ok: true as const, user }
     }
 
@@ -31,7 +44,7 @@ async function assertCanAccessSchool(schoolId: string) {
         .select('id')
         .eq('name', user.school_name)
         .single()
-      if (!schoolError && school?.id === schoolId) {
+      if (!schoolError && school?.id === targetSchoolId) {
         return { ok: true as const, user }
       }
     }
@@ -43,7 +56,7 @@ async function assertCanAccessSchool(schoolId: string) {
     const { data: school, error: schoolError } = await supabase
       .from('sms_schools')
       .select('region_id')
-      .eq('id', schoolId)
+      .eq('id', targetSchoolId)
       .single()
 
     if (schoolError || !school) {
@@ -717,6 +730,25 @@ export async function getSchoolTrends(
 
     const supabase = createServiceRoleSupabaseClient()
     
+    // If schoolId is not a UUID, try to find the school by code or name
+    let targetSchoolId = schoolId;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(schoolId)) {
+      console.log(`getSchoolTrends: schoolId ${schoolId} is not a UUID, searching for school...`);
+      const { data: school } = await supabase
+        .from('sms_schools')
+        .select('id')
+        .or(`school_code.eq.${schoolId},name.ilike.%${schoolId}%`)
+        .limit(1)
+        .single();
+      
+      if (school) {
+        targetSchoolId = school.id;
+        console.log(`getSchoolTrends: Found school UUID: ${targetSchoolId}`);
+      }
+    }
+
     const { data: reports, error } = await supabase
       .from('hmr_school_assessment_reports')
       .select(`
@@ -725,7 +757,7 @@ export async function getSchoolTrends(
         term_name,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
-      .eq('school_id', schoolId)
+      .eq('school_id', targetSchoolId)
       .eq('status', 'submitted')
       .order('created_at', { ascending: false })
       .limit(limit)

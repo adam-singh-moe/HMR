@@ -19,9 +19,13 @@ export async function createServerSupabaseClient() {
 
 // Server-side Supabase client with service role (bypasses RLS)
 export function createServiceRoleSupabaseClient() {
+  const serviceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE || 
+                         process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                         process.env.SUPABASE_SERVICE_KEY;
+                         
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE!,
+    serviceRoleKey!,
     {
       auth: {
         autoRefreshToken: false,

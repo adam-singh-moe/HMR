@@ -861,6 +861,7 @@ function AdminAssessmentContent() {
               </Card>
 
               <ReportView
+                key={selectedReport.id}
                 report={{
                   id: selectedReport.id,
                   schoolId: selectedReport.schoolId || selectedReport.school?.id || '',

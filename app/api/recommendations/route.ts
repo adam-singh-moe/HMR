@@ -12,6 +12,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createServiceRoleSupabaseClient()
+    
+    // Log for debugging (will show in Vercel logs)
+    console.log(`API: Fetching recommendations for reportId: ${reportId}`)
+    
     const { data, error } = await supabase
       .from('hmr_school_assessment_recommendations')
       .select('*')
@@ -19,8 +23,16 @@ export async function GET(request: NextRequest) {
       .order('priority', { ascending: true })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('API: Database error:', error)
+      return NextResponse.json({ error: error.message, recommendations: [] }, { status: 500 })
     }
+
+    if (!data || data.length === 0) {
+      console.log('API: No recommendations found in DB')
+      return NextResponse.json({ recommendations: [] })
+    }
+
+    console.log(`API: Found ${data.length} recommendations`)
 
     const mapped = data.map((row: any) => ({
       id: row.id,

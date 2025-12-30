@@ -955,6 +955,7 @@ function HeadTeacherAssessmentContent() {
         <TabsContent value="view">
           {selectedReport ? (
             <ReportView
+              key={selectedReport.id}
               report={{
                 id: selectedReport.id,
                 schoolId: schoolInfo.id,
