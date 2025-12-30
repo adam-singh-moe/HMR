@@ -185,7 +185,7 @@ export async function generateSchoolAssessmentInsight(
 export async function generateRegionalAssessmentInsight(
   regionId: string,
   periodId?: string,
-  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' = 'overview'
+  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' | 'category_comparison' = 'overview'
 ): Promise<AIInsightResult> {
   try {
     const user = await getUser()
@@ -1388,6 +1388,20 @@ Recommendations should be:
 2. Prioritized by impact
 3. Resource-conscious
 4. Measurable
+${formatInstructions}`
+
+    case 'category_comparison':
+      return `Analyze and compare performance across different assessment categories in this region.
+${baseContext}
+
+CATEGORY AVERAGES:
+${Object.entries(context.categoryAverages || {}).map(([cat, avg]) => `- ${cat}: ${Math.round(avg as number)}`).join('\n')}
+
+Provide:
+1. Comparison of performance across all categories
+2. Identification of the highest and lowest performing categories
+3. Analysis of why certain categories might be lagging
+4. Targeted recommendations for each category to improve regional scores
 ${formatInstructions}`
     
     default:

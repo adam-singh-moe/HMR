@@ -2035,6 +2035,11 @@ interface AIComparativeAnalysisProps {
   type: 'schools' | 'regions' | 'categories'
   entityIds: string[]
   periodId?: string
+  filters?: {
+    schoolId?: string
+    regionId?: string
+    periodId?: string
+  }
   title?: string
   description?: string
   className?: string
@@ -2047,6 +2052,7 @@ export function AIComparativeAnalysis({
   type,
   entityIds,
   periodId,
+  filters = {},
   title = "Comparative Analysis",
   description = "AI-powered comparison insights",
   className = ""
@@ -2059,15 +2065,24 @@ export function AIComparativeAnalysis({
     setLoading(true)
     setError(null)
     try {
-      // Use getCohortAnalysis for comparisons - requires a schoolId
-      const criteriaType = type === 'regions' ? 'region' : 'score'
-      const result = await getCohortAnalysis(entityIds[0], criteriaType as 'score' | 'region' | 'size')
+      let result: { insights?: string | null; insight?: string | null; error?: string | null }
+      
+      if (type === 'categories' && filters?.regionId) {
+        // Use regional assessment insight with category_comparison type
+        result = await generateRegionalAssessmentInsight(filters.regionId, filters.periodId || periodId, 'category_comparison')
+      } else {
+        // Use getCohortAnalysis for comparisons - requires a schoolId
+        const criteriaType = type === 'regions' ? 'region' : 'score'
+        result = await getCohortAnalysis(entityIds[0], criteriaType as 'score' | 'region' | 'size')
+      }
+
       if (result.error) {
         setError(result.error)
       } else {
-        setAnalysis(result.insights || null)
+        setAnalysis((result as any).insights || (result as any).insight || null)
       }
     } catch (err) {
+      console.error('Error generating comparative analysis:', err)
       setError('Failed to generate comparative analysis')
     } finally {
       setLoading(false)

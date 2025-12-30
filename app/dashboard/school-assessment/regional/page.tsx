@@ -579,6 +579,7 @@ function RegionalOfficerAssessmentContent() {
             <AIComparativeAnalysis
               type="categories"
               entityIds={['academic', 'attendance', 'infrastructure', 'teaching_quality', 'management', 'student_welfare', 'community']}
+              filters={{ regionId: regionId || undefined, periodId: periodId || undefined }}
               title="AI Category Comparison"
               description="AI-powered analysis comparing performance across assessment categories"
             />
