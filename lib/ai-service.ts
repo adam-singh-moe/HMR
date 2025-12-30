@@ -9,19 +9,28 @@ export class AIService {
     const key = process.env.DEEPSEEK_API_KEY || 
                 process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || 
                 process.env.NEXT_APP_DEEPSEEK_API_KEY ||
+                process.env.NEXT_PUBLIC_GEMINI_API_KEY || // Fallback in case user reused the old name
                 '';
     
     this.apiKey = key.trim();
     
     if (!this.apiKey) {
-      const envKeys = Object.keys(process.env).filter(k => k.includes('DEEPSEEK'));
+      const allKeys = Object.keys(process.env);
+      const aiRelatedKeys = allKeys.filter(k => 
+        k.includes('DEEPSEEK') || 
+        k.includes('GEMINI') || 
+        k.includes('AI') || 
+        k.includes('API_KEY')
+      );
+      
       console.error('AIService: DeepSeek API key is missing.', {
-        checkedKeys: ['DEEPSEEK_API_KEY', 'NEXT_PUBLIC_DEEPSEEK_API_KEY', 'NEXT_APP_DEEPSEEK_API_KEY'],
-        foundEnvKeys: envKeys,
-        nodeEnv: process.env.NODE_ENV
+        checkedKeys: ['DEEPSEEK_API_KEY', 'NEXT_PUBLIC_DEEPSEEK_API_KEY', 'NEXT_APP_DEEPSEEK_API_KEY', 'NEXT_PUBLIC_GEMINI_API_KEY'],
+        foundAiRelatedKeys: aiRelatedKeys,
+        nodeEnv: process.env.NODE_ENV,
+        isServer: typeof window === 'undefined'
       });
       
-      throw new Error(`DeepSeek API key is required. Please set DEEPSEEK_API_KEY in your deployment environment variables. (Checked: ${envKeys.length > 0 ? envKeys.join(', ') : 'none found'})`);
+      throw new Error(`DeepSeek API key is required. Please set DEEPSEEK_API_KEY in your deployment environment variables. (Available AI-related keys: ${aiRelatedKeys.length > 0 ? aiRelatedKeys.join(', ') : 'none found'})`);
     }
   }
 
