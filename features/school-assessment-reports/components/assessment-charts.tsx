@@ -1801,19 +1801,14 @@ export function CategoryGapAnalysisChart({
                 <div className="relative h-6 bg-muted rounded-full overflow-hidden">
                   {/* Filled portion */}
                   <div 
-                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                      isWeakest ? 'bg-red-400' : 
+                    className={`absolute inset-y-0 left-0 transition-all duration-500 ${
+                      isWeakest ? 'bg-red-500' : 
                       isStrongest ? 'bg-green-500' : 
                       gap.filledPercentage >= 70 ? 'bg-blue-500' :
                       gap.filledPercentage >= 50 ? 'bg-amber-500' :
-                      'bg-orange-400'
+                      'bg-orange-500'
                     }`}
                     style={{ width: `${gap.filledPercentage}%` }}
-                  />
-                  {/* Gap portion - striped pattern */}
-                  <div 
-                    className="absolute inset-y-0 right-0 bg-gradient-to-r from-transparent to-gray-200 opacity-50"
-                    style={{ width: `${gap.gapPercentage}%` }}
                   />
                   {/* Gap label */}
                   <div className="absolute inset-0 flex items-center justify-end pr-2">
@@ -1891,7 +1886,7 @@ export function SubmissionProgressBreakdown({
             style={{ width: `${inProgressPercentage}%` }}
           />
           <div 
-            className="h-full bg-red-400 transition-all duration-500"
+            className="h-full bg-red-500 transition-all duration-500"
             style={{ width: `${notStartedPercentage}%` }}
           />
         </div>
@@ -1916,7 +1911,7 @@ export function SubmissionProgressBreakdown({
           </div>
           <div className="text-center p-3 bg-red-50 rounded-lg border border-red-100">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full bg-red-400" />
+              <div className="w-3 h-3 rounded-full bg-red-500" />
               <span className="text-xs text-red-700 font-medium">Not Started</span>
             </div>
             <p className="text-2xl font-bold text-red-700">{notStarted}</p>
@@ -2198,7 +2193,7 @@ export function MostImprovedSchoolsTable({
                   className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-400 text-white flex items-center justify-center text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold">
                       {index + 1}
                     </div>
                     <div>

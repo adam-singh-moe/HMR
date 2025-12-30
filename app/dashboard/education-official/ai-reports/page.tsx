@@ -182,7 +182,7 @@ export default function AIReportsPage() {
         </div>
         {/* <Badge variant="secondary" className="flex items-center gap-2">
           <Sparkles className="h-4 w-4" />
-          Powered by Gemini AI
+          Powered by DeepSeek AI
         </Badge> */}
       </div>
 
@@ -203,7 +203,7 @@ export default function AIReportsPage() {
                 </p>
                 {/* <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
                   <Zap className="h-3 w-3" />
-                  <span>Powered by Gemini AI</span>
+                  <span>Powered by DeepSeek AI</span>
                 </div> */}
               </div>
             </CardContent>

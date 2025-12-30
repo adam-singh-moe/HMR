@@ -1,6 +1,6 @@
 "use server"
 
-import { GeminiService } from "@/lib/gemini-service"
+import { AIService } from "@/lib/ai-service"
 import { getUser } from "./auth"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 
@@ -31,17 +31,17 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
       return { insight: null, error: "No report data found for the selected criteria." }
     }
 
-    // Generate AI insight using Gemini
-    const geminiService = new GeminiService()
+    // Generate AI insight using DeepSeek
+    const aiService = new AIService()
     try {
-      const insight = await geminiService.generateInsight(prompt, reportData)
+      const insight = await aiService.generateInsight(prompt, reportData)
       return { insight, error: null }
-    } catch (geminiError) {
-      console.error("Gemini service error:", geminiError)
+    } catch (aiError) {
+      console.error("AI service error:", aiError)
       
       // Return user-friendly error message
-      const errorMessage = geminiError instanceof Error 
-        ? geminiError.message 
+      const errorMessage = aiError instanceof Error 
+        ? aiError.message 
         : "AI service is temporarily unavailable. Please try again later."
       
       return { insight: null, error: errorMessage }
@@ -455,7 +455,7 @@ export async function getAISuggestedPrompts(category: string) {
       return { prompts: [], error: "Only Education Officials, Regional Officers, and Admins can access AI features." }
     }
 
-    const prompts = GeminiService.getSuggestedPrompts(category as any)
+    const prompts = AIService.getSuggestedPrompts(category as any)
     return { prompts, error: null }
 
   } catch (error) {

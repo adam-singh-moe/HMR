@@ -1,7 +1,7 @@
 "use server"
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
-import { GeminiService } from "@/lib/gemini-service"
+import { AIService } from "@/lib/ai-service"
 import { 
   calculateAllCategoryScores, 
   identifyWeakCategories,
@@ -71,7 +71,7 @@ function mapDbRowToRecommendation(row: any): ReportRecommendation {
 }
 
 /**
- * Builds a detailed prompt for the Gemini AI to generate recommendations
+ * Builds a detailed prompt for the DeepSeek AI to generate recommendations
  */
 function buildRecommendationPrompt(
   schoolName: string,
@@ -417,7 +417,7 @@ export async function generateRecommendations(reportId: string) {
       )
     }
     
-    // Call Gemini AI
+    // Call DeepSeek AI
     let aiRecommendations: {
       category: CategoryName | TAPSCategoryName | 'general'
       priority: RecommendationPriority
@@ -426,11 +426,11 @@ export async function generateRecommendations(reportId: string) {
     }[] = []
     
     try {
-      const gemini = new GeminiService()
-      const response = await gemini.generateInsight(prompt, [])
+      const aiService = new AIService()
+      const response = await aiService.generateInsight(prompt, [])
       aiRecommendations = parseAIResponse(response)
     } catch (aiError) {
-      console.error('Error calling Gemini AI:', aiError)
+      console.error('Error calling DeepSeek AI:', aiError)
       // Generate fallback recommendations
       aiRecommendations = isTAPS
         ? [{

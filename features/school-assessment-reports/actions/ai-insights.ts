@@ -1,6 +1,6 @@
 "use server"
 
-import { GeminiService } from "@/lib/gemini-service"
+import { AIService } from "@/lib/ai-service"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "@/app/actions/auth"
 
@@ -165,8 +165,8 @@ export async function generateSchoolAssessmentInsight(
     // Generate prompt based on insight type
     const prompt = buildAssessmentPrompt(insightType, context)
     
-    const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, reports)
+    const aiService = new AIService()
+    const insight = await aiService.generateInsight(prompt, reports)
 
     return { insight, error: null }
 
@@ -276,8 +276,8 @@ export async function generateRegionalAssessmentInsight(
 
     const prompt = buildRegionalPrompt(insightType, context)
     
-    const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, systemReports)
+    const aiService = new AIService()
+    const insight = await aiService.generateInsight(prompt, systemReports)
 
     return { insight, error: null }
 
@@ -379,8 +379,8 @@ export async function generateNationalAssessmentInsight(
 
     const prompt = buildNationalPrompt(insightType, context)
     
-    const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, systemReports.slice(0, 50))
+    const aiService = new AIService()
+    const insight = await aiService.generateInsight(prompt, systemReports.slice(0, 50))
 
     return { insight, error: null }
 
@@ -791,7 +791,7 @@ export async function getCohortAnalysis(
     let insights: string | null = null
     if (cohortSchools.length >= 3) {
       try {
-        const geminiService = new GeminiService()
+        const aiService = new AIService()
         const cohortData = cohortSchools.map(s => ({
           school_name: s.schoolName,
           total_score: s.totalScore,
@@ -805,7 +805,7 @@ export async function getCohortAnalysis(
 3. Specific recommendations for improvement based on peer performance
 Focus on actionable insights.`
 
-        insights = await geminiService.generateInsight(prompt, cohortData)
+        insights = await aiService.generateInsight(prompt, cohortData)
       } catch (e) {
         console.error('Error generating cohort insights:', e)
       }
@@ -927,8 +927,8 @@ Please provide:
 
 Make recommendations specific, measurable, and practical for a Guyanese school context.`
 
-    const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, reports)
+    const aiService = new AIService()
+    const insight = await aiService.generateInsight(prompt, reports)
 
     return { insight, error: null }
 
@@ -1040,8 +1040,8 @@ Please provide:
 5. RECOMMENDED ACTIONS - 3-5 specific, actionable recommendations
 6. RESOURCES NEEDED - What support would help improve this category?`
 
-    const geminiService = new GeminiService()
-    const insight = await geminiService.generateInsight(prompt, reports)
+    const aiService = new AIService()
+    const insight = await aiService.generateInsight(prompt, reports)
 
     return { insight, error: null }
 
