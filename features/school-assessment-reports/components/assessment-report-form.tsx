@@ -36,7 +36,7 @@ import {
 } from "lucide-react"
 import { createAssessmentReport, saveSectionData, submitReport, getReport, calculateImprovementMetrics } from "../actions/reports"
 import { getActiveTermWindow, isSubmissionWindowOpen } from "../actions/assessment-periods"
-import { calculateAllCategoryScores, calculateAllTAPSCategoryScores, calculateTAPSTotalScore, assignTAPSRatingGrade, getTAPSRatingLabel } from "../actions/scoring"
+import { calculateAllCategoryScores, calculateAllTAPSCategoryScores, calculateTAPSTotalScore, assignTAPSRatingGrade, getTAPSRatingLabel, getRatingGrade } from "../actions/scoring"
 import { getSchoolTypeFromEmail, getSchoolTypeFromSchoolLevel, type SchoolType, SCHOOL_TYPE_LABELS } from "@/lib/school-type"
 import { 
   type FormFieldConfig,
@@ -1779,7 +1779,17 @@ export function AssessmentReportForm({
     })
     
     const totalScore = Object.values(scores).reduce((a, b) => a + b, 0)
+    const ratingGrade = getRatingGrade(totalScore)
     const progress = calculateProgress()
+
+    // Rating grade colors
+    const gradeColors: Record<string, string> = {
+      'A': 'text-green-600 bg-green-100',
+      'B': 'text-blue-600 bg-blue-100',
+      'C': 'text-amber-600 bg-amber-100',
+      'D': 'text-orange-600 bg-orange-100',
+      'E': 'text-red-600 bg-red-100',
+    }
     
     return (
       <div className="space-y-6">
@@ -1793,7 +1803,12 @@ export function AssessmentReportForm({
         
         <Card>
           <CardHeader>
-            <CardTitle>Score Summary</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Score Summary</span>
+              <span className={`text-2xl font-bold px-4 py-2 rounded-lg ${gradeColors[ratingGrade] || 'bg-gray-100'}`}>
+                Grade {ratingGrade}
+              </span>
+            </CardTitle>
             <CardDescription>
               Total Score: <span className="text-2xl font-bold text-primary">{totalScore}</span> / 1000 points
             </CardDescription>

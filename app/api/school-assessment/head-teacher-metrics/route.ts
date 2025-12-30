@@ -124,11 +124,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if submitted this term (get current active period)
-    const { data: activePeriod } = await supabase
+    let { data: activePeriod } = await supabase
       .from('hmr_school_assessment_periods')
       .select('id, term_name, end_date')
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
+
+    // Fallback: If no active period, get the most recent one
+    if (!activePeriod) {
+      const { data: recentPeriod } = await supabase
+        .from('hmr_school_assessment_periods')
+        .select('id, term_name, end_date')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      activePeriod = recentPeriod
+    }
 
     let hasSubmittedThisTerm = false
     let termName = activePeriod?.term_name || null
@@ -141,7 +153,7 @@ export async function GET(request: NextRequest) {
         .eq('school_id', schoolId)
         .eq('period_id', activePeriod.id)
         .eq('status', 'submitted')
-        .single()
+        .maybeSingle()
       
       hasSubmittedThisTerm = !!currentTermReport
 
@@ -152,13 +164,36 @@ export async function GET(request: NextRequest) {
         const diffTime = deadline.getTime() - today.getTime()
         daysUntilDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       }
+    } else {
+      // Fallback: Check if there's a report for the most recent academic year and term
+      const { data: latestReportInfo } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReportInfo) {
+        termName = latestReportInfo.term_name
+        const { data: currentTermReport } = await supabase
+          .from('hmr_school_assessment_reports')
+          .select('id')
+          .eq('school_id', schoolId)
+          .eq('academic_year', latestReportInfo.academic_year)
+          .eq('term_name', latestReportInfo.term_name)
+          .eq('status', 'submitted')
+          .maybeSingle()
+        
+        hasSubmittedThisTerm = !!currentTermReport
+      }
     }
 
     // NEW: Calculate regional rank
     let regionalRank: number | null = null
     let totalSchoolsInRegion = 0
 
-    if (school?.region_id && activePeriod) {
+    if (school?.region_id) {
       // Get all schools in region with their scores
       const { data: regionSchools } = await supabase
         .from('sms_schools')
@@ -169,13 +204,34 @@ export async function GET(request: NextRequest) {
 
       if (totalSchoolsInRegion > 0) {
         // Get scores for all schools in region for current period
-        const { data: regionReports } = await supabase
+        let regionReportsQuery = supabase
           .from('hmr_school_assessment_reports')
           .select('school_id, total_score')
-          .eq('period_id', activePeriod.id)
           .eq('status', 'submitted')
           .in('school_id', regionSchools?.map(s => s.id) || [])
           .order('total_score', { ascending: false })
+
+        if (activePeriod) {
+          regionReportsQuery = regionReportsQuery.eq('period_id', activePeriod.id)
+        } else {
+          // Fallback: Get the most recent academic year and term from reports for these schools
+          const { data: latest } = await supabase
+            .from('hmr_school_assessment_reports')
+            .select('academic_year, term_name')
+            .eq('status', 'submitted')
+            .in('school_id', regionSchools?.map(s => s.id) || [])
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+
+          if (latest) {
+            regionReportsQuery = regionReportsQuery
+              .eq('academic_year', latest.academic_year)
+              .eq('term_name', latest.term_name)
+          }
+        }
+
+        const { data: regionReports } = await regionReportsQuery
 
         if (regionReports && regionReports.length > 0) {
           const rank = regionReports.findIndex(r => r.school_id === schoolId) + 1

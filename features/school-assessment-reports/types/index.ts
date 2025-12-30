@@ -24,11 +24,11 @@ export const TOTAL_MAX_SCORE = 1000
  * Rating level thresholds for PRIMARY/NURSERY
  */
 export const RATING_THRESHOLDS = {
-  OUTSTANDING: { min: 850, max: 1000, label: 'Outstanding', percentage: '85-100%' },
-  VERY_GOOD: { min: 700, max: 849, label: 'Very Good', percentage: '70-84%' },
-  GOOD: { min: 550, max: 699, label: 'Good', percentage: '55-69%' },
-  SATISFACTORY: { min: 400, max: 549, label: 'Satisfactory', percentage: '40-54%' },
-  NEEDS_IMPROVEMENT: { min: 0, max: 399, label: 'Needs Improvement', percentage: '<40%' },
+  OUTSTANDING: { min: 850, max: 1000, label: 'Outstanding', grade: 'A', percentage: '85-100%' },
+  VERY_GOOD: { min: 700, max: 849, label: 'Very Good', grade: 'B', percentage: '70-84%' },
+  GOOD: { min: 550, max: 699, label: 'Good', grade: 'C', percentage: '55-69%' },
+  SATISFACTORY: { min: 400, max: 549, label: 'Satisfactory', grade: 'D', percentage: '40-54%' },
+  NEEDS_IMPROVEMENT: { min: 0, max: 399, label: 'Needs Improvement', grade: 'E', percentage: '<40%' },
 } as const
 
 // ============================================================================
@@ -798,7 +798,7 @@ export interface ReportSummary {
   isTAPS?: boolean
   tapsRatingGrade?: TAPSRatingGrade | null
   tapsCategoryScores?: {
-    school_inputs: number
+    school_inputs_operations: number
     leadership: number
     academics: number
     teacher_development: number

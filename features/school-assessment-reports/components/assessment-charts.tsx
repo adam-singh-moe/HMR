@@ -250,10 +250,14 @@ export function CategoryBarChart({ scores, title = "Category Scores", descriptio
             <XAxis type="number" domain={[0, 'dataMax']} />
             <YAxis type="category" dataKey="category" tick={{ fontSize: 12 }} width={90} />
             <Tooltip 
-              formatter={((value: any, n: any, name: any, props: any) => [
-                `${value} / ${props.payload.maxScore}`,
-                'Score'
-              ]) as any}
+              formatter={((value: any, name: string, entry: any) => {
+                const payload = entry?.payload;
+                if (!payload) return [value, 'Score'];
+                return [
+                  `${value} / ${payload.maxScore}`,
+                  'Score'
+                ];
+              }) as any}
             />
             <Bar dataKey="score" fill="#8884d8" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
@@ -297,10 +301,14 @@ export function TAPSCategoryBarChart({ scores, title = "TAPS Category Scores", d
             <XAxis type="number" domain={[0, 'dataMax']} />
             <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={120} />
             <Tooltip 
-              formatter={((value: number, name: string, props: any) => [
-                `${value} / ${props.payload.maxScore}`,
-                'Score'
-              ]) as any}
+              formatter={((value: number, name: string, entry: any) => {
+                const payload = entry?.payload;
+                if (!payload) return [value, 'Score'];
+                return [
+                  `${value} / ${payload.maxScore}`,
+                  'Score'
+                ];
+              }) as any}
             />
             <Bar dataKey="score" fill="#8884d8" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
@@ -557,13 +565,16 @@ export function CategoryRadarChart({
               )}
               <Tooltip 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                formatter={((value: any, n: any, name: string, props: any) => {
+                formatter={((value: any, name: string, entry: any) => {
                   const isComparison = name === comparisonLabel;
-                  const score = isComparison ? props.payload.comparisonScore : props.payload.score;
+                  const payload = entry?.payload;
+                  if (!payload) return [value, name];
+
+                  const score = isComparison ? payload.comparisonScore : payload.score;
                   return [
                     showPercentage 
-                      ? `${value}% (${score}/${props.payload.maxScore})`
-                      : `${value}/${props.payload.maxScore}`,
+                      ? `${value}% (${score}/${payload.maxScore})`
+                      : `${value}/${payload.maxScore}`,
                     name
                   ];
                 }) as any}
@@ -650,13 +661,16 @@ export function TAPSCategoryRadarChart({
               )}
               <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                formatter={((value: number, name: string, props: any) => {
+                formatter={((value: number, name: string, entry: any) => {
                   const isComparison = name === comparisonLabel;
-                  const score = isComparison ? props.payload.comparisonScore : props.payload.score;
+                  const payload = entry?.payload;
+                  if (!payload) return [value, name];
+
+                  const score = isComparison ? payload.comparisonScore : payload.score;
                   return [
                     showPercentage
-                      ? `${value}% (${score}/${props.payload.maxScore})`
-                      : `${value}/${props.payload.maxScore}`,
+                      ? `${value}% (${score}/${payload.maxScore})`
+                      : `${value}/${payload.maxScore}`,
                     name,
                   ]
                 }) as any}
@@ -744,10 +758,14 @@ export function RegionComparisonChart({
             <XAxis type="number" domain={[0, 1000]} />
             <YAxis type="category" dataKey="regionName" tick={{ fontSize: 12 }} width={90} />
             <Tooltip 
-              formatter={((value: any, name: string, props: any) => [
-                `${value} points (${props.payload.submittedCount} schools)`,
-                'Average Score'
-              ]) as any}
+              formatter={((value: any, name: string, entry: any) => {
+                const payload = entry?.payload;
+                if (!payload) return [value, 'Average Score'];
+                return [
+                  `${value} points (${payload.submittedCount} schools)`,
+                  'Average Score'
+                ];
+              }) as any}
             />
             <Bar 
               dataKey="averageScore" 
@@ -1669,10 +1687,14 @@ export function ScoreDistributionHistogram({
             />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip 
-              formatter={((value: any, name: string, props: any) => [
-                `${value} schools (${props.payload.percentage}%)`,
-                'Count'
-              ]) as any}
+              formatter={((value: any, name: string, entry: any) => {
+                const payload = entry?.payload;
+                if (!payload) return [value, 'Count'];
+                return [
+                  `${value} schools (${payload.percentage}%)`,
+                  'Count'
+                ];
+              }) as any}
               contentStyle={{ borderRadius: '8px' }}
             />
             <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -2572,11 +2594,13 @@ export function CategoryLeadersTable({
 interface UnderperformingRegionsProps {
   regions: { regionId: string; regionName: string; average: number; nationalAverage: number; deficit: number; schoolCount: number }[]
   title?: string
+  onRegionClick?: (regionName: string) => void
 }
 
 export function UnderperformingRegionsAlert({
   regions,
-  title = "Regions Below National Average"
+  title = "Regions Below National Average",
+  onRegionClick
 }: UnderperformingRegionsProps) {
   if (!regions || regions.length === 0) {
     return (
@@ -2614,7 +2638,8 @@ export function UnderperformingRegionsAlert({
           {regions.map(region => (
             <div 
               key={region.regionId}
-              className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100"
+              className={`flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100 ${onRegionClick ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
+              onClick={() => onRegionClick?.(region.regionName)}
             >
               <div>
                 <p className="font-medium text-orange-800">{region.regionName}</p>

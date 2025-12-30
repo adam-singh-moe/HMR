@@ -337,6 +337,7 @@ export async function generateRecommendations(reportId: string) {
       .from('hmr_school_assessment_reports')
       .select(`
         *,
+        school_type,
         sms_schools(name, sms_regions(name)),
         hmr_school_assessment_periods(academic_year, term_name)
       `)
@@ -461,9 +462,15 @@ export async function generateRecommendations(reportId: string) {
 
     // IMPORTANT: DB constraint currently only allows demo categories.
     // Store TAPS recommendations as category='general' so they display on TAPS report details.
-    if (isTAPS) {
-      aiRecommendations = aiRecommendations.map((r) => ({ ...r, category: 'general' }))
-    }
+    // Also ensure any non-demo categories for demo reports are mapped to 'general' to avoid DB errors.
+    const validDemoCategories = ['academic', 'attendance', 'infrastructure', 'teaching_quality', 'management', 'student_welfare', 'community', 'general']
+    
+    aiRecommendations = aiRecommendations.map((r) => {
+      if (isTAPS || !validDemoCategories.includes(r.category)) {
+        return { ...r, category: 'general' }
+      }
+      return r
+    })
     
     // Save recommendations to database
     const savedRecommendations = await saveRecommendations(reportId, aiRecommendations as any)

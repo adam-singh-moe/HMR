@@ -241,6 +241,21 @@ export async function getRegionalStatistics(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error: reportsError } = await query
@@ -380,6 +395,21 @@ export async function getRegionalSchoolRankings(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error } = await query
@@ -439,6 +469,21 @@ export async function getNationalStatistics(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error: reportsError } = await query
@@ -612,6 +657,21 @@ export async function getNationalSchoolRankings(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error } = await query
@@ -661,7 +721,7 @@ export async function getSchoolTrends(
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
-        hmr_school_assessment_periods(academic_year, term_name, term_sequence)
+        hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
@@ -707,7 +767,7 @@ export async function getRegionalTrends(
       .select(`
         total_score,
         period_id,
-        hmr_school_assessment_periods(academic_year, term_name, term_sequence),
+        hmr_school_assessment_periods(academic_year, term_name, sequence_order),
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
@@ -722,7 +782,7 @@ export async function getRegionalTrends(
     const periodGroups: Record<string, {
       academicYear: string
       termName: string
-      termSequence: number
+      sequenceOrder: number
       scores: number[]
     }> = {}
     
@@ -733,7 +793,7 @@ export async function getRegionalTrends(
           periodGroups[periodId] = {
             academicYear: r.hmr_school_assessment_periods?.academic_year || '',
             termName: r.hmr_school_assessment_periods?.term_name || '',
-            termSequence: r.hmr_school_assessment_periods?.term_sequence || 0,
+            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
             scores: [],
           }
         }
@@ -781,7 +841,7 @@ export async function getNationalTrends(
       .select(`
         total_score,
         period_id,
-        hmr_school_assessment_periods(academic_year, term_name, term_sequence)
+        hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('status', 'submitted')
     
@@ -794,7 +854,7 @@ export async function getNationalTrends(
     const periodGroups: Record<string, {
       academicYear: string
       termName: string
-      termSequence: number
+      sequenceOrder: number
       scores: number[]
     }> = {}
     
@@ -805,7 +865,7 @@ export async function getNationalTrends(
           periodGroups[periodId] = {
             academicYear: r.hmr_school_assessment_periods?.academic_year || '',
             termName: r.hmr_school_assessment_periods?.term_name || '',
-            termSequence: r.hmr_school_assessment_periods?.term_sequence || 0,
+            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
             scores: [],
           }
         }
@@ -868,6 +928,21 @@ export async function getCategoryPerformance(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     if (regionId) {
@@ -985,6 +1060,21 @@ export async function getSubmissionStatusByRegion(
     // Apply period filter only if periodId is provided
     if (periodId) {
       reportsQuery = applyPeriodFilter(reportsQuery, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        reportsQuery = reportsQuery
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error: reportsError } = await reportsQuery
@@ -1916,6 +2006,21 @@ export async function getUnderperformingRegions(
     
     if (periodId) {
       query = applyPeriodFilter(query, periodId)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('academic_year, term_name')
+        .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        query = query
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      }
     }
     
     const { data: reports, error } = await query

@@ -11,11 +11,23 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
 
     // Get active assessment period
-    const { data: activePeriod } = await supabase
+    let { data: activePeriod } = await supabase
       .from('hmr_school_assessment_periods')
       .select('id, end_date')
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
+
+    // Fallback: If no active period, get the most recent one
+    if (!activePeriod) {
+      const { data: recentPeriod } = await supabase
+        .from('hmr_school_assessment_periods')
+        .select('id, end_date')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      activePeriod = recentPeriod
+    }
 
     let totalSubmitted = 0
     let nationalAverage = 0
@@ -30,32 +42,75 @@ export async function GET(request: NextRequest) {
     let nationalTrend: 'improving' | 'declining' | 'stable' | null = null
     let weeklyChange = 0
 
+    // Determine which reports to fetch
+    let reportsQuery = supabase
+      .from('hmr_school_assessment_reports')
+      .select(`
+        id,
+        school_id,
+        total_score,
+        rating_level,
+        taps_rating_grade,
+        submitted_at,
+        academic_year,
+        term_name,
+        sms_schools(id, name, region_id, sms_regions(id, name))
+      `)
+      .eq('status', 'submitted')
+
     if (activePeriod) {
-      // Get all submitted reports for current period
-      const { data: reports, error } = await supabase
+      reportsQuery = reportsQuery.eq('period_id', activePeriod.id)
+    } else {
+      // Fallback: Get the most recent academic year and term from reports
+      const { data: latestReport } = await supabase
         .from('hmr_school_assessment_reports')
-        .select(`
-          id,
-          school_id,
-          total_score,
-          rating_level,
-          submitted_at,
-          sms_schools!inner(id, name, region_id, sms_regions(id, name))
-        `)
-        .eq('period_id', activePeriod.id)
+        .select('academic_year, term_name')
         .eq('status', 'submitted')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-      if (!error && reports) {
-        totalSubmitted = reports.length
+      if (latestReport?.academic_year && latestReport?.term_name) {
+        reportsQuery = reportsQuery
+          .eq('academic_year', latestReport.academic_year)
+          .eq('term_name', latestReport.term_name)
+      } else {
+        // No reports at all, or no year/term info
+        return NextResponse.json({
+          totalSchools: totalSchools || 0,
+          totalSubmitted: 0,
+          nationalAverage: 0,
+          outstandingCount: 0,
+          needsImprovementCount: 0,
+          regionalPerformance: [],
+          weeklyTrend: [],
+          criticalRegionsCount: 0,
+          neverAssessedCount: totalSchools || 0,
+          topRegion: null,
+          lowestRegion: null,
+          nationalTrend: null,
+          weeklyChange: 0
+        })
+      }
+    }
 
-        if (reports.length > 0) {
-          // Calculate national average
-          const totalScoreSum = reports.reduce((sum, r) => sum + (r.total_score || 0), 0)
-          nationalAverage = Math.round(totalScoreSum / reports.length)
+    const { data: reports, error } = await reportsQuery
 
-          // Count ratings
-          outstandingCount = reports.filter(r => r.rating_level === 'outstanding').length
-          needsImprovementCount = reports.filter(r => r.rating_level === 'needs_improvement').length
+    if (!error && reports) {
+      totalSubmitted = reports.length
+
+      if (reports.length > 0) {
+        // Calculate national average
+        const totalScoreSum = reports.reduce((sum, r) => sum + (r.total_score || 0), 0)
+        nationalAverage = Math.round(totalScoreSum / reports.length)
+
+        // Count ratings
+        outstandingCount = reports.filter(r => 
+          r.rating_level === 'outstanding' || r.taps_rating_grade === 'A'
+        ).length
+        needsImprovementCount = reports.filter(r => 
+          r.rating_level === 'needs_improvement' || r.taps_rating_grade === 'E' || r.taps_rating_grade === 'D'
+        ).length
 
           // Calculate regional averages and build performance data
           const regionScores: Record<string, { name: string; scores: number[]; submitted: number; total: number }> = {}
@@ -81,7 +136,7 @@ export async function GET(request: NextRequest) {
             const { count } = await supabase
               .from('sms_schools')
               .select('*', { count: 'exact', head: true })
-              .eq('region_id', region.name)
+              .eq('region_id', region.id)
 
             if (regionScores[region.id]) {
               regionScores[region.id].total = count || 0
@@ -178,7 +233,6 @@ export async function GET(request: NextRequest) {
         )
         neverAssessedCount = allSchools.filter(s => !submittedSchoolIds.has(s.id)).length
       }
-    }
 
     // Get total regions count
     const { count: totalRegions } = await supabase

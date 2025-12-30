@@ -473,6 +473,174 @@ export function assignRatingLevel(totalScore: number): RatingLevel {
 }
 
 /**
+ * Get letter grade based on total score for demo reports
+ */
+export function getRatingGrade(totalScore: number): string {
+  if (totalScore >= RATING_THRESHOLDS.OUTSTANDING.min) return 'A'
+  if (totalScore >= RATING_THRESHOLDS.VERY_GOOD.min) return 'B'
+  if (totalScore >= RATING_THRESHOLDS.GOOD.min) return 'C'
+  if (totalScore >= RATING_THRESHOLDS.SATISFACTORY.min) return 'D'
+  return 'E'
+}
+
+/**
+ * Calculate percentage safely
+ */
+export function getPercentage(score: number, max: number): number {
+  if (!max || max === 0) return 0
+  return Math.round((score / max) * 100)
+}
+
+/**
+ * Get performance tone based on percentage
+ */
+export function getPerformanceTone(percentage: number): {
+  label: string
+  barClass: string
+  borderClass: string
+  badgeClass: string
+  iconClass: string
+  textClass: string
+  bgClass: string
+} {
+  if (!Number.isFinite(percentage) || percentage <= 0) {
+    return {
+      label: 'Not started',
+      barClass: '[&>div]:bg-muted-foreground/30',
+      borderClass: 'border-border',
+      badgeClass: 'bg-muted text-muted-foreground border-border',
+      iconClass: 'text-muted-foreground',
+      textClass: 'text-muted-foreground',
+      bgClass: 'bg-muted/30',
+    }
+  }
+
+  if (percentage >= 85) {
+    return {
+      label: 'Excellent',
+      barClass: '[&>div]:bg-emerald-500',
+      borderClass: 'border-emerald-200',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      iconClass: 'text-emerald-600',
+      textClass: 'text-emerald-700',
+      bgClass: 'bg-emerald-50',
+    }
+  }
+
+  if (percentage >= 70) {
+    return {
+      label: 'Strong',
+      barClass: '[&>div]:bg-blue-500',
+      borderClass: 'border-blue-200',
+      badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+      iconClass: 'text-blue-600',
+      textClass: 'text-blue-700',
+      bgClass: 'bg-blue-50',
+    }
+  }
+
+  if (percentage >= 60) {
+    return {
+      label: 'On track',
+      barClass: '[&>div]:bg-amber-500',
+      borderClass: 'border-amber-200',
+      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+      iconClass: 'text-amber-600',
+      textClass: 'text-amber-700',
+      bgClass: 'bg-amber-50',
+    }
+  }
+
+  if (percentage >= 40) {
+    return {
+      label: 'Needs focus',
+      barClass: '[&>div]:bg-orange-500',
+      borderClass: 'border-orange-200',
+      badgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
+      iconClass: 'text-orange-600',
+      textClass: 'text-orange-700',
+      bgClass: 'bg-orange-50',
+    }
+  }
+
+  return {
+    label: 'Critical',
+    barClass: '[&>div]:bg-red-500',
+    borderClass: 'border-red-200',
+    badgeClass: 'bg-red-50 text-red-700 border-red-200',
+    iconClass: 'text-red-600',
+    textClass: 'text-red-700',
+    bgClass: 'bg-red-50',
+  }
+}
+
+/**
+ * Get TAPS grade tone for UI styling
+ */
+export function getTAPSGradeTone(grade: TAPSRatingGrade): {
+  barClass: string
+  badgeClass: string
+  iconClass: string
+  bgClass: string
+  ringClass: string
+  textClass: string
+  borderClass: string
+} {
+  switch (grade) {
+    case 'A':
+      return {
+        barClass: '[&>div]:bg-green-500',
+        badgeClass: 'bg-green-50 text-green-800 border-green-200',
+        iconClass: 'text-green-600',
+        bgClass: 'bg-green-50',
+        ringClass: 'ring-1 ring-green-200',
+        textClass: 'text-green-800',
+        borderClass: 'border-green-200',
+      }
+    case 'B':
+      return {
+        barClass: '[&>div]:bg-blue-500',
+        badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+        iconClass: 'text-blue-600',
+        bgClass: 'bg-blue-50',
+        ringClass: 'ring-1 ring-blue-200',
+        textClass: 'text-blue-800',
+        borderClass: 'border-blue-200',
+      }
+    case 'C':
+      return {
+        barClass: '[&>div]:bg-amber-500',
+        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+        iconClass: 'text-amber-600',
+        bgClass: 'bg-amber-50',
+        ringClass: 'ring-1 ring-amber-200',
+        textClass: 'text-amber-800',
+        borderClass: 'border-amber-200',
+      }
+    case 'D':
+      return {
+        barClass: '[&>div]:bg-orange-500',
+        badgeClass: 'bg-orange-50 text-orange-800 border-orange-200',
+        iconClass: 'text-orange-600',
+        bgClass: 'bg-orange-50',
+        ringClass: 'ring-1 ring-orange-200',
+        textClass: 'text-orange-800',
+        borderClass: 'border-orange-200',
+      }
+    default:
+      return {
+        barClass: '[&>div]:bg-red-500',
+        badgeClass: 'bg-red-50 text-red-800 border-red-200',
+        iconClass: 'text-red-600',
+        bgClass: 'bg-red-50',
+        ringClass: 'ring-1 ring-red-200',
+        textClass: 'text-red-800',
+        borderClass: 'border-red-200',
+      }
+  }
+}
+
+/**
  * Get human-readable label for rating level
  */
 export function getRatingLabel(ratingLevel: RatingLevel): string {

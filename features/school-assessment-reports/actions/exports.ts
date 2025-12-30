@@ -582,7 +582,7 @@ export async function startExportJob(
   exportType: 'pdf' | 'excel' = 'pdf'
 ) {
   try {
-    const supabase = await await createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) throw new Error('Unauthorized')
@@ -620,7 +620,7 @@ export async function startExportJob(
  */
 export async function getExportJobStatus(jobId: string) {
   try {
-    const supabase = await await createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: job, error } = await supabase
       .from('hmr_export_jobs')
       .select('*')

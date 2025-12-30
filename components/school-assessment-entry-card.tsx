@@ -425,7 +425,7 @@ export function RegionalOfficerAssessmentCard({
   return (
     <Card className={`overflow-hidden border-0 shadow-xl bg-white ${className}`}>
       <CardContent className="p-0">
-        <div className="flex flex-col lg:flex-row">
+        <div className="flex flex-col xl:flex-row">
           {/* Left Content */}
           <div className="flex-1 p-6 lg:p-8 flex flex-col justify-center">
             <div className="space-y-4">
@@ -535,7 +535,7 @@ export function RegionalOfficerAssessmentCard({
           </div>
 
           {/* Right Side - Submission Progress with Mini Chart */}
-          <div className={`relative w-full lg:w-80 xl:w-96 bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-6 min-h-[300px]`}>
+          <div className={`relative w-full xl:w-[400px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-6 min-h-[320px]`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute top-4 left-4 opacity-20">
@@ -548,10 +548,16 @@ export function RegionalOfficerAssessmentCard({
 
             {/* Main Metric Display */}
             <div className="relative z-10 text-center w-full">
+              {/* Status Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-4">
+                <div className={`w-2 h-2 rounded-full bg-white ${submissionRate < 40 ? 'animate-pulse' : ''}`} />
+                <span className="text-white font-semibold text-xs uppercase tracking-wider">{config.status} Compliance</span>
+              </div>
+
               {/* Submission Counter */}
               <div className="mb-4">
                 <div className="inline-flex items-baseline">
-                  <span className="text-6xl lg:text-7xl font-bold text-white">
+                  <span className="text-6xl lg:text-7xl font-bold text-white drop-shadow-md">
                     {metrics?.submittedCount ?? 0}
                   </span>
                   <span className="text-2xl lg:text-3xl text-white/70 font-medium ml-1">
@@ -564,7 +570,7 @@ export function RegionalOfficerAssessmentCard({
               </div>
               
               {/* Progress Bar */}
-              <div className="w-full max-w-[200px] mx-auto mb-4">
+              <div className="w-full max-w-[220px] mx-auto mb-4">
                 <div className="h-3 bg-white/20 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
@@ -578,41 +584,51 @@ export function RegionalOfficerAssessmentCard({
 
               {/* Mini Submission Velocity Chart */}
               {chartData.length > 0 && (
-                <div className="w-full h-20 mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                      <defs>
-                        <linearGradient id="submissionGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="white" stopOpacity={0.5}/>
-                          <stop offset="95%" stopColor="white" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <Area 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="white" 
-                        strokeWidth={2}
-                        fill="url(#submissionGradient)"
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          background: 'rgba(255,255,255,0.95)', 
-                          border: 'none', 
-                          borderRadius: '8px',
-                          fontSize: '12px'
-                        }}
-                        labelFormatter={(label) => `Day: ${label}`}
-                        formatter={((value: number) => [`${value} submissions`, 'Count']) as any}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                  <p className="text-white/70 text-xs mt-1">Submissions this week</p>
+                <div className="w-full mt-4 bg-white/10 rounded-xl p-3">
+                  <div className="h-20 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="submissionGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="white" stopOpacity={0.5}/>
+                            <stop offset="95%" stopColor="white" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <Area 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="white" 
+                          strokeWidth={2}
+                          fill="url(#submissionGradient)"
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            background: 'rgba(255,255,255,0.98)', 
+                            border: 'none', 
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            color: '#1f2937',
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                          }}
+                          itemStyle={{ color: '#1f2937', padding: '2px 0' }}
+                          labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
+                          labelFormatter={(label) => `Day: ${label}`}
+                          formatter={((value: number) => [`${value} submissions`, 'Count']) as any}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 mt-2">
+                    <Badge className="bg-white/20 text-white border-0 text-[10px] h-5">
+                      Submissions this week
+                    </Badge>
+                  </div>
                 </div>
               )}
 
               {/* Top School Callout */}
               {metrics?.topSchool && (
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 mt-3">
+                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 mt-4">
                   <div className="flex items-center justify-center gap-2">
                     <Award className="h-4 w-4 text-yellow-300" />
                     <span className="text-white/90 text-xs">
@@ -915,11 +931,15 @@ export function EducationOfficialAssessmentCard({
                       />
                       <Tooltip
                         contentStyle={{ 
-                          background: 'rgba(255,255,255,0.95)', 
+                          background: 'rgba(255,255,255,0.98)', 
                           border: 'none', 
                           borderRadius: '8px',
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          color: '#1f2937',
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                         }}
+                        itemStyle={{ color: '#1f2937', padding: '2px 0' }}
+                        labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
                         formatter={((value: number, name: string) => [
                           name === 'score' ? `${value} pts` : `${value}%`,
                           name === 'score' ? 'Avg Score' : 'Compliance'

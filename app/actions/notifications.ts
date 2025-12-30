@@ -29,7 +29,7 @@ export async function createNotification(data: CreateNotificationData) {
       return { error: "Unauthorized. Only admins can create notifications." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Validate that at least one targeting option is specified
     if (!data.target_all_users && 
@@ -633,7 +633,7 @@ export async function getUserNotifications(page: number = 1, limit: number = 20)
       return { error: "Unauthorized" }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const offset = (page - 1) * limit
 
     // Get user details for targeting
@@ -772,7 +772,7 @@ export async function getAllNotifications(page: number = 1, limit: number = 20) 
       return { error: "Unauthorized. Only admins can view all notifications." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const offset = (page - 1) * limit
 
     const { data: notifications, error } = await supabase
@@ -808,7 +808,7 @@ export async function deleteNotification(notificationId: string) {
       return { error: "Unauthorized. Only admins can delete notifications." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     const { error } = await supabase
       .from("hmr_notifications")
@@ -836,7 +836,7 @@ export async function getNotificationTargetingOptions() {
       return { error: "Unauthorized. Only admins can access targeting options." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     // Get user roles
     const { data: roles, error: rolesError } = await supabase
@@ -893,7 +893,7 @@ export async function restoreNotification(notificationId: string) {
       return { error: "Unauthorized. Only admins can restore notifications." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     const { error } = await supabase
       .from("hmr_notifications")
@@ -923,7 +923,7 @@ export async function permanentDeleteNotification(notificationId: string) {
       return { error: "Unauthorized. Only admins can permanently delete notifications." }
     }
 
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
 
     const { error } = await supabase
       .from("hmr_notifications")

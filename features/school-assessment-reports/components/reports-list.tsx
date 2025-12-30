@@ -35,7 +35,12 @@ import {
   ArrowUpDown,
   Trophy,
 } from "lucide-react"
-import type { RatingLevel, TAPSRatingGrade } from "../types"
+import { 
+  RatingLevel, 
+  TAPSRatingGrade,
+  RATING_THRESHOLDS,
+} from "../types"
+import { getRatingGrade, assignTAPSRatingGrade } from "../actions/scoring"
 
 // ============================================================================
 // TYPES
@@ -319,24 +324,47 @@ export function ReportsList({
                       ) : '-'}
                     </TableCell>
                     <TableCell>
-                      {/* Show TAPS grade for secondary schools, demo rating for primary */}
-                      {report.isTAPS && report.tapsRatingGrade ? (
-                        <Badge 
-                          variant="outline" 
-                          className={TAPS_GRADE_BADGE_COLORS[report.tapsRatingGrade]}
-                        >
-                          {TAPS_GRADE_DISPLAY_LABELS[report.tapsRatingGrade]}
-                        </Badge>
-                      ) : report.ratingLevel ? (
-                        <Badge 
-                          variant="outline" 
-                          className={RATING_BADGE_COLORS[report.ratingLevel]}
-                        >
-                          {RATING_DISPLAY_LABELS[report.ratingLevel]}
-                        </Badge>
-                      ) : (
-                        '-'
-                      )}
+                      {/* Show unified letter grade for all schools */}
+                      {(() => {
+                        let grade: TAPSRatingGrade | null = null;
+                        let label: string = '-';
+                        let colorClass: string = '';
+
+                        if (report.isTAPS && report.tapsRatingGrade) {
+                          grade = report.tapsRatingGrade;
+                          label = TAPS_GRADE_DISPLAY_LABELS[grade];
+                          colorClass = TAPS_GRADE_BADGE_COLORS[grade];
+                        } else if (report.ratingLevel) {
+                          // Map demo rating level to grade
+                          const level = report.ratingLevel.toUpperCase() as keyof typeof RATING_THRESHOLDS;
+                          grade = RATING_THRESHOLDS[level]?.grade as TAPSRatingGrade;
+                          label = RATING_DISPLAY_LABELS[report.ratingLevel];
+                          colorClass = RATING_BADGE_COLORS[report.ratingLevel];
+                        } else if (report.totalScore !== null) {
+                          // Fallback: calculate grade from score
+                          if (report.isTAPS) {
+                            grade = assignTAPSRatingGrade(report.totalScore);
+                          } else {
+                            grade = getRatingGrade(report.totalScore);
+                          }
+                        }
+
+                        if (!grade) return '-';
+
+                        return (
+                          <div className="flex items-center gap-2">
+                            <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold ${colorClass.split(' ')[0]} ${colorClass.split(' ')[1]}`}>
+                              {grade}
+                            </div>
+                            <Badge 
+                              variant="outline" 
+                              className={`${colorClass} text-[10px] px-1.5 py-0 h-5`}
+                            >
+                              {label}
+                            </Badge>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {report.status === 'submitted' 
@@ -635,9 +663,31 @@ export function SchoolRankingsTable({
                           {school.totalScore}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={RATING_BADGE_COLORS[school.ratingLevel]}>
-                            {RATING_DISPLAY_LABELS[school.ratingLevel]}
-                          </Badge>
+                          {(() => {
+                            const level = school.ratingLevel.toUpperCase() as keyof typeof RATING_THRESHOLDS;
+                            const grade = RATING_THRESHOLDS[level]?.grade as TAPSRatingGrade;
+                            const colorClass = RATING_BADGE_COLORS[school.ratingLevel];
+                            
+                            if (!grade) return (
+                              <Badge variant="outline" className={colorClass}>
+                                {RATING_DISPLAY_LABELS[school.ratingLevel]}
+                              </Badge>
+                            );
+
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold ${colorClass.split(' ')[0]} ${colorClass.split(' ')[1]}`}>
+                                  {grade}
+                                </div>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`${colorClass} text-[10px] px-1.5 py-0 h-5`}
+                                >
+                                  {RATING_DISPLAY_LABELS[school.ratingLevel]}
+                                </Badge>
+                              </div>
+                            );
+                          })()}
                         </TableCell>
                       </TableRow>
                     )

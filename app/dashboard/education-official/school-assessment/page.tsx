@@ -736,6 +736,10 @@ function EducationOfficialAssessmentContent() {
           {underperformingRegions && underperformingRegions.length > 0 && (
             <UnderperformingRegionsAlert
               regions={underperformingRegions}
+              onRegionClick={(regionName) => {
+                setRegionFilter(regionName)
+                handleTabChange('reports')
+              }}
             />
           )}
           
@@ -886,13 +890,20 @@ function EducationOfficialAssessmentContent() {
                           {report.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{report.totalScore || '-'}</TableCell>
                       <TableCell>
-                        {report.ratingLevel && (
-                          <Badge variant={getRatingVariant(report.ratingLevel)}>
-                            {formatRating(report.ratingLevel)}
-                          </Badge>
+                        {report.totalScore || '-'}
+                        {report.totalScore && (
+                          <span className="text-muted-foreground text-xs ml-1">
+                            /{report.isTAPS ? '419' : '1000'}
+                          </span>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        {(report.tapsRatingGrade || report.ratingLevel) ? (
+                          <Badge variant={getRatingVariant(report.tapsRatingGrade || report.ratingLevel)}>
+                            {formatRating(report.tapsRatingGrade || report.ratingLevel)}
+                          </Badge>
+                        ) : '-'}
                       </TableCell>
                       <TableCell>
                         {report.submittedAt 
@@ -1135,14 +1146,19 @@ function EducationOfficialAssessmentContent() {
 function getRatingVariant(rating: string): "default" | "secondary" | "destructive" | "outline" {
   switch (rating) {
     case 'outstanding':
+    case 'A':
       return 'default'
     case 'very_good':
+    case 'B':
       return 'default'
     case 'good':
+    case 'C':
       return 'secondary'
     case 'satisfactory':
       return 'outline'
     case 'needs_improvement':
+    case 'D':
+    case 'E':
       return 'destructive'
     default:
       return 'secondary'
@@ -1161,6 +1177,16 @@ function formatRating(rating: string): string {
       return 'Satisfactory'
     case 'needs_improvement':
       return 'Needs Improvement'
+    case 'A':
+      return 'Grade A - Outstanding'
+    case 'B':
+      return 'Grade B - High Achieving'
+    case 'C':
+      return 'Grade C - Standard'
+    case 'D':
+      return 'Grade D - Struggling'
+    case 'E':
+      return 'Grade E - Critical'
     default:
       return rating
   }
