@@ -7,6 +7,7 @@ import { NurseryAssessmentForm } from "@/components/nursery-assessment-form"
 import { NurseryAssessmentsList } from "@/components/nursery-assessments-list"
 import { SchoolReadinessStatus } from "@/components/school-readiness-status"
 import { HeadTeacherAssessmentCard } from "@/components/school-assessment-entry-card"
+import { TeachersList } from "@/components/teachers-list"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -544,6 +545,20 @@ function HeadTeacherDashboardContent() {
             >
               <BookOpenIcon className="h-4 w-4" />
               Nursery Assessment
+            </button>
+            
+            <button
+              onClick={() => updateMainTab('teachers')}
+              className={`
+                px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2
+                ${currentMainTab === 'teachers' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }
+              `}
+            >
+              <UsersIcon className="h-4 w-4" />
+              Teachers
             </button>
           </div>
         </div>
@@ -1084,6 +1099,21 @@ function HeadTeacherDashboardContent() {
               </div>
             </div>
           )}
+
+          {/* Teachers Tab Content */}
+          {currentMainTab === 'teachers' && (
+            <div className="space-y-6">
+              {/* Simple Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Teacher Management</h1>
+                  <p className="text-gray-600 mt-1">Add and manage your school's teaching staff information</p>
+                </div>
+              </div>
+              
+              <TeachersList />
+            </div>
+          )}
         </div>
       ) : (
         /* Non-Nursery Schools: Clean two-tab structure */
@@ -1117,6 +1147,20 @@ function HeadTeacherDashboardContent() {
               >
                 <FileTextIcon className="h-4 w-4" />
                 Monthly Report
+              </button>
+              
+              <button
+                onClick={() => updateMainTab('teachers')}
+                className={`
+                  px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2
+                  ${currentMainTab === 'teachers' 
+                    ? 'bg-blue-600 text-white shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }
+                `}
+              >
+                <UsersIcon className="h-4 w-4" />
+                Teachers
               </button>
             </div>
           </div>
@@ -1425,6 +1469,21 @@ function HeadTeacherDashboardContent() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Teachers Tab Content */}
+          {currentMainTab === 'teachers' && (
+            <div className="space-y-6">
+              {/* Simple Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Teacher Management</h1>
+                  <p className="text-gray-600 mt-1">Add and manage your school's teaching staff information</p>
+                </div>
+              </div>
+              
+              <TeachersList />
             </div>
           )}
         </div>
