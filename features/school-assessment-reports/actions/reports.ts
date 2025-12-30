@@ -918,6 +918,37 @@ export async function getReport(reportId: string) {
     
     const supabase = createServiceRoleSupabaseClient()
     
+    // Resolve reportId if it's not a UUID (e.g. if passed as a slug or code)
+    let targetReportId = reportId;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(reportId)) {
+      console.log(`getReport: reportId ${reportId} is not a UUID, searching for report...`);
+      // This is a fallback for cases where the ID might be passed incorrectly
+      // We'll try to find the most recent report for a school if reportId looks like a school code
+      const { data: school } = await supabase
+        .from('sms_schools')
+        .select('id')
+        .or(`school_code.eq.${reportId},name.ilike.%${reportId}%`)
+        .limit(1)
+        .single();
+      
+      if (school) {
+        const { data: latestReport } = await supabase
+          .from('hmr_school_assessment_reports')
+          .select('id')
+          .eq('school_id', school.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (latestReport) {
+          targetReportId = latestReport.id;
+          console.log(`getReport: Resolved to latest report ID: ${targetReportId}`);
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from('hmr_school_assessment_reports')
       .select(`
@@ -926,7 +957,7 @@ export async function getReport(reportId: string) {
         hmr_users(id, name, email),
         hmr_school_assessment_periods(*)
       `)
-      .eq('id', reportId)
+      .eq('id', targetReportId)
       .single()
     
     if (error) {

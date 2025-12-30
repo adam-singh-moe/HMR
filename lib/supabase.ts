@@ -19,12 +19,24 @@ export async function createServerSupabaseClient() {
 
 // Server-side Supabase client with service role (bypasses RLS)
 export function createServiceRoleSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
+                      process.env.SUPABASE_URL || 
+                      process.env.NEXT_APP_SUPABASE_URL;
+                      
   const serviceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE || 
                          process.env.SUPABASE_SERVICE_ROLE_KEY || 
-                         process.env.SUPABASE_SERVICE_KEY;
+                         process.env.SUPABASE_SERVICE_KEY ||
+                         process.env.SUPABASE_SERVICE_ROLE;
                          
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('Supabase Service Role Client: Missing environment variables.', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!serviceRoleKey
+    });
+  }
+
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl!,
     serviceRoleKey!,
     {
       auth: {
