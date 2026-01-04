@@ -108,9 +108,10 @@ function AdminAssessmentContent() {
   const [trends, setTrends] = useState<any[]>([])
   const [submissionStatus, setSubmissionStatus] = useState<any[]>([])
   const [selectedReport, setSelectedReport] = useState<any>(null)
-  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recommendationsByReportId, setRecommendationsByReportId] = useState<Record<string, any[]>>({})
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
+  const recLoadSeq = useRef(0)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeletingReport, setIsDeletingReport] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -129,6 +130,10 @@ function AdminAssessmentContent() {
   const [schoolOverviewTrends, setSchoolOverviewTrends] = useState<any[]>([])
   const [schoolOverviewRanking, setSchoolOverviewRanking] = useState<any>(null)
   const [schoolOverviewError, setSchoolOverviewError] = useState<string | null>(null)
+
+  const recommendations = selectedReport?.id
+    ? (recommendationsByReportId[selectedReport.id] ?? [])
+    : []
 
   const isAdmin = user?.role === 'Admin'
 
@@ -382,12 +387,10 @@ function AdminAssessmentContent() {
         
         if (reportResult.report) {
           setSelectedReport(reportResult.report)
-
-          setRecommendations([])
           setIsGeneratingRecommendations(false)
           setCurrentTab('view')
 
-          if (reportResult.report.status === 'submitted') {
+          if (reportResult.report.status !== 'draft' && reportResult.report.status !== 'expired_draft') {
             void loadRecommendations(reportId, true)
           }
 
@@ -413,13 +416,15 @@ function AdminAssessmentContent() {
   }
 
   const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    const requestId = ++recLoadSeq.current
     try {
-      setRecommendations([])
       setIsGeneratingRecommendations(false)
 
       const existing = await getRecommendations(reportId)
+      if (existing.error) return
       if (existing.recommendations && existing.recommendations.length > 0) {
-        setRecommendations(existing.recommendations)
+        if (requestId !== recLoadSeq.current) return
+        setRecommendationsByReportId(prev => ({ ...prev, [reportId]: existing.recommendations }))
         return
       }
 
@@ -430,11 +435,14 @@ function AdminAssessmentContent() {
       setIsGeneratingRecommendations(true)
 
       const generated = await getOrGenerateRecommendations(reportId)
-      setRecommendations(generated.recommendations || [])
+      if (requestId !== recLoadSeq.current) return
+      setRecommendationsByReportId(prev => ({ ...prev, [reportId]: generated.recommendations || [] }))
     } catch (err) {
       console.error('Error loading recommendations:', err)
     } finally {
-      setIsGeneratingRecommendations(false)
+      if (recLoadSeq.current === requestId) {
+        setIsGeneratingRecommendations(false)
+      }
       recGenerationInFlight.current.delete(reportId)
     }
   }
@@ -893,7 +901,7 @@ function AdminAssessmentContent() {
                   }),
                 }}
                 recommendations={recommendations}
-                isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
+                isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status !== 'draft' && selectedReport?.status !== 'expired_draft'}
               />
             </div>
           ) : (

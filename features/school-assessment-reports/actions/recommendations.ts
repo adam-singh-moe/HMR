@@ -576,12 +576,10 @@ export async function saveRecommendations(
 ) {
   try {
     const supabase = createServiceRoleSupabaseClient()
-    
-    // Delete existing recommendations for this report
-    await supabase
-      .from('hmr_school_assessment_recommendations')
-      .delete()
-      .eq('report_id', reportId)
+
+    // Use a batch timestamp so we can safely replace recommendations without
+    // deleting existing ones if the insert fails (e.g. transient connectivity).
+    const batchIso = new Date().toISOString()
     
     // Insert new recommendations
     const recommendationsToInsert = recommendations.map(rec => ({
@@ -590,7 +588,7 @@ export async function saveRecommendations(
       priority: rec.priority,
       recommendation_text: rec.recommendation,
       focus_areas: rec.focusAreas,
-      generated_at: new Date().toISOString(),
+      generated_at: batchIso,
     }))
     
     const { data, error } = await supabase
@@ -601,6 +599,17 @@ export async function saveRecommendations(
     if (error) {
       console.error('Error saving recommendations:', error)
       return []
+    }
+
+    // Best-effort cleanup: remove older batches (if this fails, user may see duplicates).
+    try {
+      await supabase
+        .from('hmr_school_assessment_recommendations')
+        .delete()
+        .eq('report_id', reportId)
+        .lt('generated_at', batchIso)
+    } catch (cleanupError) {
+      console.error('Error cleaning up old recommendations:', cleanupError)
     }
     
     return data.map(mapDbRowToRecommendation)

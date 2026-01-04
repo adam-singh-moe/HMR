@@ -1,11 +1,16 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase'
+
+export const runtime = 'nodejs'
 
 export async function GET() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE!
-  )
+  let supabase
+  try {
+    supabase = createServiceRoleSupabaseClient()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to initialize Supabase client'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 
   const { data: periods } = await supabase
     .from('hmr_reporting_periods')

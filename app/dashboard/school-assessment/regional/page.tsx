@@ -109,10 +109,15 @@ function RegionalOfficerAssessmentContent() {
   const [schoolsNeedingAttention, setSchoolsNeedingAttention] = useState<any[]>([])
   const [categoryPerformance, setCategoryPerformance] = useState<any[]>([])
   const [selectedReport, setSelectedReport] = useState<any>(null)
-  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recommendationsByReportId, setRecommendationsByReportId] = useState<Record<string, any[]>>({})
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
+  const recLoadSeq = useRef(0)
   const [isExporting, setIsExporting] = useState(false)
+
+  const recommendations = selectedReport?.id
+    ? (recommendationsByReportId[selectedReport.id] ?? [])
+    : []
 
   // ============================================================================
   // DATA LOADING
@@ -240,12 +245,10 @@ function RegionalOfficerAssessmentContent() {
       const reportResult = await getReport(reportId)
       if (reportResult.report) {
         setSelectedReport(reportResult.report)
-
-        setRecommendations([])
         setIsGeneratingRecommendations(false)
         setCurrentTab('view')
 
-        if (reportResult.report.status === 'submitted') {
+          if (reportResult.report.status !== 'draft' && reportResult.report.status !== 'expired_draft') {
           void loadRecommendations(reportId, true)
         }
       }
@@ -260,13 +263,15 @@ function RegionalOfficerAssessmentContent() {
   }
 
   const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    const requestId = ++recLoadSeq.current
     try {
-      setRecommendations([])
       setIsGeneratingRecommendations(false)
 
       const existing = await getRecommendations(reportId)
+      if (existing.error) return
       if (existing.recommendations && existing.recommendations.length > 0) {
-        setRecommendations(existing.recommendations)
+        if (requestId !== recLoadSeq.current) return
+        setRecommendationsByReportId(prev => ({ ...prev, [reportId]: existing.recommendations }))
         return
       }
 
@@ -277,11 +282,14 @@ function RegionalOfficerAssessmentContent() {
       setIsGeneratingRecommendations(true)
 
       const generated = await getOrGenerateRecommendations(reportId)
-      setRecommendations(generated.recommendations || [])
+      if (requestId !== recLoadSeq.current) return
+      setRecommendationsByReportId(prev => ({ ...prev, [reportId]: generated.recommendations || [] }))
     } catch (err) {
       console.error('Error loading recommendations:', err)
     } finally {
-      setIsGeneratingRecommendations(false)
+      if (recLoadSeq.current === requestId) {
+        setIsGeneratingRecommendations(false)
+      }
       recGenerationInFlight.current.delete(reportId)
     }
   }
@@ -667,7 +675,7 @@ function RegionalOfficerAssessmentContent() {
                 }),
               }}
               recommendations={recommendations}
-              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
+              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status !== 'draft' && selectedReport?.status !== 'expired_draft'}
             />
           ) : (
             <Card>

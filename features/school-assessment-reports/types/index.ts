@@ -750,6 +750,18 @@ export interface SchoolAssessmentReport {
     school_culture: number
   } | null
 
+  // Computed helper fields used by analytics/charts
+  isTAPS?: boolean
+  categoryScores?: {
+    academic: number
+    attendance: number
+    infrastructure: number
+    teaching_quality: number
+    management: number
+    student_welfare: number
+    community: number
+  } | null
+
   // Calculated fields
   totalScore: number | null
   ratingLevel: RatingLevel | null

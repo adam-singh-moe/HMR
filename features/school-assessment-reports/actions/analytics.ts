@@ -716,15 +716,19 @@ export async function getSchoolTrends(
     }
 
     const supabase = createServiceRoleSupabaseClient()
-    
+
     const { data: reports, error } = await supabase
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
+        academic_year,
+        term_name,
+        submitted_at,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
+      .order('submitted_at', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(limit)
     
@@ -733,16 +737,43 @@ export async function getSchoolTrends(
       return { trends: [], error: 'Failed to fetch trends.' }
     }
     
+    const inferTermOrder = (termName: string): number => {
+      const t = (termName || '').toLowerCase()
+      if (t.includes('first')) return 1
+      if (t.includes('second')) return 2
+      if (t.includes('third')) return 3
+      if (t.includes('september') || t.includes('december')) return 1
+      if (t.includes('january') || t.includes('march')) return 2
+      if (t.includes('april') || t.includes('july')) return 3
+      return 0
+    }
+
+    const parseAcademicYearStart = (academicYear: string): number => {
+      const start = Number.parseInt((academicYear || '').split('-')[0] || '', 10)
+      return Number.isFinite(start) ? start : 0
+    }
+
     const trends: TrendData[] = (reports || [])
-      .filter((r: any) => r.hmr_school_assessment_periods)
-      .map((r: any) => ({
-        period: `${r.hmr_school_assessment_periods?.academic_year} - ${r.hmr_school_assessment_periods?.term_name}`,
-        academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-        termName: r.hmr_school_assessment_periods?.term_name || '',
-        averageScore: r.total_score || 0,
-        submissionCount: 1,
-      }))
-      .reverse() // Oldest first for chart display
+      .map((r: any) => {
+        const period = r.hmr_school_assessment_periods
+        const academicYear = period?.academic_year ?? r.academic_year ?? ''
+        const termName = period?.term_name ?? r.term_name ?? ''
+        const sequenceOrder = period?.sequence_order ?? inferTermOrder(termName)
+
+        return {
+          period: academicYear && termName ? `${academicYear} - ${termName}` : 'Unknown Period',
+          academicYear,
+          termName,
+          averageScore: r.total_score ?? 0,
+          submissionCount: 1,
+          // local-only fields for sorting (will be stripped below)
+          _sequenceOrder: sequenceOrder,
+          _yearStart: parseAcademicYearStart(academicYear),
+        } as TrendData & { _sequenceOrder: number; _yearStart: number }
+      })
+      .filter((t: any) => t.academicYear && t.termName)
+      .sort((a: any, b: any) => (a._yearStart - b._yearStart) || (a._sequenceOrder - b._sequenceOrder))
+      .map(({ _sequenceOrder, _yearStart, ...rest }: any) => rest)
     
     return { trends, error: null }
   } catch (error) {

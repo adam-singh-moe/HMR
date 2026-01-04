@@ -1,12 +1,24 @@
+import "server-only"
+
 import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
+
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(
+      `Missing environment variable ${name}. Ensure you have a .env.local file in the project root and restart the dev server.`
+    )
+  }
+  return value
+}
 
 // Server-side Supabase client
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies()
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
         get: (name: string) => cookieStore.get(name)?.value,
@@ -20,8 +32,8 @@ export async function createServerSupabaseClient() {
 // Server-side Supabase client with service role (bypasses RLS)
 export function createServiceRoleSupabaseClient() {
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE!,
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE"),
     {
       auth: {
         autoRefreshToken: false,
@@ -29,14 +41,4 @@ export function createServiceRoleSupabaseClient() {
       }
     }
   )
-}
-
-// Client-side Supabase client (singleton pattern)
-let clientSupabase: ReturnType<typeof createClient> | null = null
-
-export function createClientSupabaseClient() {
-  if (!clientSupabase) {
-    clientSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-  }
-  return clientSupabase
 }

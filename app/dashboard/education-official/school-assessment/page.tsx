@@ -122,9 +122,10 @@ function EducationOfficialAssessmentContent() {
   const [trends, setTrends] = useState<any[]>([])
   const [submissionStatus, setSubmissionStatus] = useState<any[]>([])
   const [selectedReport, setSelectedReport] = useState<any>(null)
-  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recommendationsByReportId, setRecommendationsByReportId] = useState<Record<string, any[]>>({})
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
+  const recLoadSeq = useRef(0)
   const [isExporting, setIsExporting] = useState(false)
   const [underperformingSchools, setUnderperformingSchools] = useState<any[]>([])
   const [scoreThreshold, setScoreThreshold] = useState<number>(400)
@@ -136,6 +137,10 @@ function EducationOfficialAssessmentContent() {
   const [underperformingRegions, setUnderperformingRegions] = useState<any[] | null>(null)
   const [submissionProgress, setSubmissionProgress] = useState<any>(null)
   const [categoryLeaders, setCategoryLeaders] = useState<any[] | null>(null)
+
+  const recommendations = selectedReport?.id
+    ? (recommendationsByReportId[selectedReport.id] ?? [])
+    : []
 
   // ============================================================================
   // DATA LOADING
@@ -265,11 +270,10 @@ function EducationOfficialAssessmentContent() {
 
       if (reportResult.report) {
         setSelectedReport(reportResult.report)
-        setRecommendations([])
         setIsGeneratingRecommendations(false)
         router.push(`/dashboard/education-official/school-assessment?tab=details`)
 
-        if (reportResult.report.status === 'submitted') {
+        if (reportResult.report.status !== 'draft' && reportResult.report.status !== 'expired_draft') {
           void loadRecommendations(reportId, true)
         }
       } else {
@@ -285,13 +289,15 @@ function EducationOfficialAssessmentContent() {
   }
 
   const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    const requestId = ++recLoadSeq.current
     try {
-      setRecommendations([])
       setIsGeneratingRecommendations(false)
 
       const existing = await getRecommendations(reportId)
+      if (existing.error) return
       if (existing.recommendations && existing.recommendations.length > 0) {
-        setRecommendations(existing.recommendations)
+        if (requestId !== recLoadSeq.current) return
+        setRecommendationsByReportId(prev => ({ ...prev, [reportId]: existing.recommendations }))
         return
       }
 
@@ -302,11 +308,14 @@ function EducationOfficialAssessmentContent() {
       setIsGeneratingRecommendations(true)
 
       const generated = await getOrGenerateRecommendations(reportId)
-      setRecommendations(generated.recommendations || [])
+      if (requestId !== recLoadSeq.current) return
+      setRecommendationsByReportId(prev => ({ ...prev, [reportId]: generated.recommendations || [] }))
     } catch (err) {
       console.error('Error loading recommendations:', err)
     } finally {
-      setIsGeneratingRecommendations(false)
+      if (recLoadSeq.current === requestId) {
+        setIsGeneratingRecommendations(false)
+      }
       recGenerationInFlight.current.delete(reportId)
     }
   }
@@ -459,7 +468,9 @@ function EducationOfficialAssessmentContent() {
 
       {/* Tabs */}
       <Tabs value={currentTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList
+          className={`grid w-full ${selectedReport ? "grid-cols-5" : "grid-cols-4"} lg:w-auto lg:inline-grid`}
+        >
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -1130,7 +1141,7 @@ function EducationOfficialAssessmentContent() {
                 }),
               }}
               recommendations={recommendations}
-              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
+              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status !== 'draft' && selectedReport?.status !== 'expired_draft'}
             />
           </TabsContent>
         )}

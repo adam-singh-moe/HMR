@@ -101,6 +101,29 @@ export async function deleteAssessmentReport(reportId: string): Promise<{ succes
  * Converts database row to SchoolAssessmentReport type
  */
 function mapDbRowToReport(row: any): SchoolAssessmentReport {
+  // A report uses TAPS if it has a taps_rating_grade OR any taps scores
+  const hasTAPSData = Boolean(
+    row.taps_rating_grade ||
+    row.taps_school_inputs_scores ||
+    row.taps_leadership_scores ||
+    row.taps_academics_scores ||
+    row.taps_teacher_development_scores ||
+    row.taps_health_safety_scores ||
+    row.taps_school_culture_scores
+  )
+
+  const demoTotals = !hasTAPSData
+    ? calculateAllCategoryScores({
+        academic: row.academic_scores || {},
+        attendance: row.attendance_scores || {},
+        infrastructure: row.infrastructure_scores || {},
+        teachingQuality: row.teaching_quality_scores || {},
+        management: row.management_scores || {},
+        studentWelfare: row.student_welfare_scores || {},
+        community: row.community_scores || {},
+      })
+    : null
+
   return {
     id: row.id,
     schoolId: row.school_id,
@@ -109,6 +132,7 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
     status: row.status as ReportStatus,
     submittedAt: row.submitted_at,
     lockedAt: row.locked_at,
+    isTAPS: hasTAPSData,
     // Primary/Nursery scores
     academicScores: row.academic_scores || {},
     attendanceScores: row.attendance_scores || {},
@@ -125,7 +149,7 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
     tapsHealthSafetyScores: row.taps_health_safety_scores || undefined,
     tapsSchoolCultureScores: row.taps_school_culture_scores || undefined,
     // TAPS Category scores
-    tapsCategoryScores: (row.taps_school_inputs_scores || row.taps_leadership_scores || row.taps_academics_scores) ? {
+    tapsCategoryScores: hasTAPSData ? {
       school_inputs_operations: calculateTAPSSchoolInputsScore(row.taps_school_inputs_scores || {}),
       leadership: calculateTAPSLeadershipScore(row.taps_leadership_scores || {}),
       academics: calculateTAPSAcademicsScore(row.taps_academics_scores || {}),
@@ -133,10 +157,20 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
       health_safety: calculateTAPSHealthSafetyScore(row.taps_health_safety_scores || {}),
       school_culture: calculateTAPSSchoolCultureScore(row.taps_school_culture_scores || {}),
     } : null,
+    // Demo category totals for charts (Primary/Nursery)
+    categoryScores: !hasTAPSData ? {
+      academic: row.academic_scores?.total ?? demoTotals?.academic ?? 0,
+      attendance: row.attendance_scores?.total ?? demoTotals?.attendance ?? 0,
+      infrastructure: row.infrastructure_scores?.total ?? demoTotals?.infrastructure ?? 0,
+      teaching_quality: row.teaching_quality_scores?.total ?? demoTotals?.teaching_quality ?? 0,
+      management: row.management_scores?.total ?? demoTotals?.management ?? 0,
+      student_welfare: row.student_welfare_scores?.total ?? demoTotals?.student_welfare ?? 0,
+      community: row.community_scores?.total ?? demoTotals?.community ?? 0,
+    } : null,
     // Calculated fields
     totalScore: row.total_score,
     ratingLevel: row.rating_level,
-    tapsRatingGrade: row.taps_rating_grade || undefined,
+    tapsRatingGrade: row.taps_rating_grade || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

@@ -110,6 +110,7 @@ function HeadTeacherAssessmentContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { user } = useAuth()
+  const recLoadSeq = useRef(0)
   
   const currentTab = searchParams.get('tab') || 'overview'
 
@@ -125,10 +126,14 @@ function HeadTeacherAssessmentContent() {
   const [reports, setReports] = useState<ReportData[]>([])
   const [currentReport, setCurrentReport] = useState<ReportData | null>(null)
   const [selectedReport, setSelectedReport] = useState<any>(null)
-  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recommendationsByReportId, setRecommendationsByReportId] = useState<Record<string, any[]>>({})
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [trends, setTrends] = useState<any[]>([])
+
+  const recommendations = selectedReport?.id
+    ? (recommendationsByReportId[selectedReport.id] ?? [])
+    : []
   
   // New metrics state
   const [rankingData, setRankingData] = useState<{
@@ -296,11 +301,10 @@ function HeadTeacherAssessmentContent() {
       if (reportResult.report) {
         setSelectedReport(reportResult.report)
         setCurrentTab('view')
-        setRecommendations([])
         setIsGeneratingRecommendations(false)
         
-        // Load recommendations if submitted (saved first; auto-generate once if missing)
-        if (reportResult.report.status === 'submitted') {
+        // Load recommendations for any non-draft report (some legacy rows may lack submittedAt)
+        if (reportResult.report.status !== 'draft' && reportResult.report.status !== 'expired_draft') {
           void loadRecommendations(reportId, true)
         }
       }
@@ -330,13 +334,16 @@ function HeadTeacherAssessmentContent() {
   }
 
   const loadRecommendations = async (reportId: string, allowAutoBackfill: boolean) => {
+    const requestId = ++recLoadSeq.current
     try {
-      setRecommendations([])
       setIsGeneratingRecommendations(false)
 
       const existing = await getRecommendations(reportId)
+      // If we couldn't fetch, don't try to generate (avoids wiping existing recs on flaky networks)
+      if (existing.error) return
       if (existing.recommendations && existing.recommendations.length > 0) {
-        setRecommendations(existing.recommendations)
+        if (requestId !== recLoadSeq.current) return
+        setRecommendationsByReportId(prev => ({ ...prev, [reportId]: existing.recommendations }))
         return
       }
 
@@ -347,11 +354,15 @@ function HeadTeacherAssessmentContent() {
       setIsGeneratingRecommendations(true)
 
       const generated = await getOrGenerateRecommendations(reportId)
-      setRecommendations(generated.recommendations || [])
+      if (requestId !== recLoadSeq.current) return
+      setRecommendationsByReportId(prev => ({ ...prev, [reportId]: generated.recommendations || [] }))
     } catch (err) {
       console.error('Error loading recommendations:', err)
     } finally {
-      setIsGeneratingRecommendations(false)
+      // Only update loading state if this is the latest request
+      if (recLoadSeq.current === requestId) {
+        setIsGeneratingRecommendations(false)
+      }
       recGenerationInFlight.current.delete(reportId)
     }
   }
@@ -978,7 +989,7 @@ function HeadTeacherAssessmentContent() {
                 },
               }}
               recommendations={recommendations}
-              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status === 'submitted'}
+              isGeneratingRecommendations={isGeneratingRecommendations && selectedReport?.status !== 'draft' && selectedReport?.status !== 'expired_draft'}
               showExportButtons={selectedReport.status === 'submitted'}
             />
           ) : (
