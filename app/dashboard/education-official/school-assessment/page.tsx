@@ -49,29 +49,7 @@ import {
   AITrendPrediction,
   AIComparativeAnalysis,
 } from "@/features/school-assessment-reports/components"
-import { 
-  getActivePeriod,
-  getAllPeriods,
-} from "@/features/school-assessment-reports/actions/assessment-periods"
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
-import {
-  getNationalReports,
-  getReport,
-} from "@/features/school-assessment-reports/actions/reports"
-import { 
-  getNationalStatistics, 
-  getNationalSchoolRankings,
-  getNationalTrends,
-  getCategoryPerformance,
-  getSubmissionStatusByRegion,
-  getScoreDistribution,
-  getCategoryGapAnalysis,
-  getMostImprovedSchools,
-  getUnderperformingRegions,
-  getSubmissionProgressBreakdown,
-  getCategoryLeaders,
-} from "@/features/school-assessment-reports/actions/analytics"
-import { generateBulkExportCSV } from "@/features/school-assessment-reports/actions/exports"
 import type { AssessmentPeriod, RatingLevel } from "@/features/school-assessment-reports/types"
 import { ChevronLeft } from "lucide-react"
 
@@ -99,6 +77,11 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T
 }
 
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { method: "GET" })
+  return (await res.json()) as T
+}
+
 async function fetchRecommendations(reportId: string) {
   return postJson<{ recommendations: any[]; error: string | null }>(
     "/api/school-assessment/recommendations",
@@ -110,6 +93,44 @@ async function fetchOrGenerateRecommendations(reportId: string) {
   return postJson<{ recommendations: any[]; error: string | null }>(
     "/api/school-assessment/recommendations",
     { reportId, generate: true }
+  )
+}
+
+async function fetchPeriodsAndActive() {
+  return getJson<{ periods: AssessmentPeriod[]; activePeriod: AssessmentPeriod | null; error: string | null }>(
+    "/api/school-assessment/education-official/periods"
+  )
+}
+
+async function fetchDashboardData(periodId: string | null) {
+  return postJson<{
+    statsResult: any
+    reportsResult: any
+    rankingsResult: any
+    trendsResult: any
+    submissionResult: any
+    distributionResult: any
+    gapsResult: any
+    improvedResult: any
+    underperformingResult: any
+    progressResult: any
+    leadersResult: any
+    categoryPerformanceResult: any
+    error: string | null
+  }>("/api/school-assessment/education-official/dashboard-data", { periodId })
+}
+
+async function fetchReport(reportId: string) {
+  return postJson<{ report: any | null; error: string | null }>(
+    "/api/school-assessment/education-official/report",
+    { reportId }
+  )
+}
+
+async function fetchBulkExportCsv(periodId: string) {
+  return postJson<{ csv: string | null; error: string | null }>(
+    "/api/school-assessment/education-official/export-csv",
+    { periodId }
   )
 }
 
@@ -182,22 +203,19 @@ function EducationOfficialAssessmentContent() {
     setLoading(true)
     try {
       // Load all periods and active period
-      const [periodsResult, activeResult] = await Promise.all([
-        getAllPeriods(),
-        getActivePeriod(),
-      ])
+      const result = await fetchPeriodsAndActive()
 
-      if (periodsResult.periods) {
-        setAllPeriods(periodsResult.periods)
+      if (result.periods) {
+        setAllPeriods(result.periods)
       }
 
-      if (activeResult.period) {
-        setActivePeriod(activeResult.period)
-        setSelectedPeriodId(activeResult.period.id)
+      if (result.activePeriod) {
+        setActivePeriod(result.activePeriod)
+        setSelectedPeriodId(result.activePeriod.id)
         // Data will be loaded by the useEffect watching selectedPeriodId
-      } else if (periodsResult.periods && periodsResult.periods.length > 0) {
+      } else if (result.periods && result.periods.length > 0) {
         // Use most recent period if no active one
-        setSelectedPeriodId(periodsResult.periods[0].id)
+        setSelectedPeriodId(result.periods[0].id)
       } else {
         // No periods available - load data without period filter
         await loadPeriodData(null)
@@ -217,9 +235,7 @@ function EducationOfficialAssessmentContent() {
   async function loadPeriodData(periodId?: string | null) {
     setLoading(true)
     try {
-      const filters = periodId ? { periodId } : undefined
-      
-      const [
+      const {
         statsResult,
         reportsResult,
         rankingsResult,
@@ -231,19 +247,7 @@ function EducationOfficialAssessmentContent() {
         underperformingResult,
         progressResult,
         leadersResult,
-      ] = await Promise.all([
-        getNationalStatistics(periodId || undefined),
-        getNationalReports(filters),
-        getNationalSchoolRankings(periodId || undefined, 100),
-        getNationalTrends(9),
-        getSubmissionStatusByRegion(periodId || undefined),
-        getScoreDistribution(undefined, periodId || undefined),
-        getCategoryGapAnalysis(undefined, periodId || undefined),
-        getMostImprovedSchools(undefined, 5),
-        getUnderperformingRegions(periodId || undefined),
-        getSubmissionProgressBreakdown(undefined, periodId || undefined),
-        getCategoryLeaders(undefined, periodId || undefined),
-      ])
+      } = await fetchDashboardData(periodId ?? null)
 
       if (statsResult.stats) setStats(statsResult.stats)
       if (reportsResult.reports) {
@@ -288,7 +292,7 @@ function EducationOfficialAssessmentContent() {
 
   async function handleViewReport(reportId: string) {
     try {
-      const reportResult = await getReport(reportId)
+      const reportResult = await fetchReport(reportId)
 
       if (reportResult.report) {
         setSelectedReport(reportResult.report)
@@ -347,7 +351,7 @@ function EducationOfficialAssessmentContent() {
     
     setIsExporting(true)
     try {
-      const result = await generateBulkExportCSV(selectedPeriodId)
+      const result = await fetchBulkExportCsv(selectedPeriodId)
       if (result.csv) {
         // Create and download CSV
         const blob = new Blob([result.csv], { type: 'text/csv' })
