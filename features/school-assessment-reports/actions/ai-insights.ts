@@ -166,7 +166,7 @@ export async function generateSchoolAssessmentInsight(
     const prompt = buildAssessmentPrompt(insightType, context)
     
     const aiService = new AIService()
-    const insight = await aiService.generateInsight(prompt, reports)
+    const insight = await aiService.generateInsight(prompt, [])
 
     return { insight, error: null }
 
@@ -277,7 +277,7 @@ export async function generateRegionalAssessmentInsight(
     const prompt = buildRegionalPrompt(insightType, context)
     
     const aiService = new AIService()
-    const insight = await aiService.generateInsight(prompt, systemReports)
+    const insight = await aiService.generateInsight(prompt, [])
 
     return { insight, error: null }
 
@@ -380,7 +380,7 @@ export async function generateNationalAssessmentInsight(
     const prompt = buildNationalPrompt(insightType, context)
     
     const aiService = new AIService()
-    const insight = await aiService.generateInsight(prompt, systemReports.slice(0, 50))
+    const insight = await aiService.generateInsight(prompt, [])
 
     return { insight, error: null }
 

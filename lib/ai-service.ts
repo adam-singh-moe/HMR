@@ -41,9 +41,9 @@ export class AIService {
     while (attempt < maxRetries) {
       try {
         // Netlify/Vercel serverless functions can time out quickly; default to a fail-fast timeout.
-        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "9000", 10)
+        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "6000", 10)
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 9000)
+        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 6000)
 
         const response = await fetch(
           this.apiUrl,
@@ -66,8 +66,8 @@ export class AIService {
                   content: this.buildPrompt(prompt, reportData)
                 }
               ],
-              temperature: 0.7,
-              max_tokens: 1400,
+              temperature: 0.5,
+              max_tokens: 900,
             })
           }
         )
@@ -143,10 +143,16 @@ export class AIService {
   }
 
   private buildPrompt(userPrompt: string, reportData: any[]): string {
+    // Many call sites provide a complete, self-contained prompt (including context and formatting rules).
+    // In those cases, avoid bloating the request with redundant wrappers and report dumps.
+    if (!reportData || !Array.isArray(reportData) || reportData.length === 0) {
+      return userPrompt
+    }
+
     const dataContext = this.formatReportData(reportData)
-    
+
     return `
-You are an educational data analyst for the Ministry of Education in Guyana. 
+You are an educational data analyst for the Ministry of Education in Guyana.
 Analyze the following school report data and provide insights based on this request: "${userPrompt}"
 
 Report Data:
