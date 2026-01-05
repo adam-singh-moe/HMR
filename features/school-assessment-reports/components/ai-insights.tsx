@@ -59,12 +59,23 @@ function MarkdownRenderer({ content }: { content: string }) {
 }
 
 function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;")
+  // Avoid String.prototype.replaceAll for broader browser compatibility.
+  return value.replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case "&":
+        return "&amp;"
+      case "<":
+        return "&lt;"
+      case ">":
+        return "&gt;"
+      case '"':
+        return "&quot;"
+      case "'":
+        return "&#039;"
+      default:
+        return ch
+    }
+  })
 }
 
 function printElementToPdf(element: HTMLElement, title: string) {
