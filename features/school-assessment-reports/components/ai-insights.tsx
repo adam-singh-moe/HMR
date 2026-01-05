@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useMemo } from "react"
+import { useRef, useState, useCallback, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -34,6 +34,7 @@ import {
   Zap,
   Shield,
   BookOpen,
+  Printer,
 } from "lucide-react"
 
 // ============================================================================
@@ -55,6 +56,61 @@ function MarkdownRenderer({ content }: { content: string }) {
       ))}
     </div>
   )
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+}
+
+function printElementToPdf(element: HTMLElement, title: string) {
+  const printWindow = window.open("", "_blank", "noopener,noreferrer")
+  if (!printWindow) {
+    // If popups are blocked, fall back to printing the current page.
+    window.print()
+    return
+  }
+
+  const themeClass = document.documentElement.className
+  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    .map((node) => node.outerHTML)
+    .join("\n")
+
+  const html = element.outerHTML
+  const safeTitle = escapeHtml(title)
+
+  printWindow.document.open()
+  printWindow.document.write(`<!doctype html>
+<html class="${escapeHtml(themeClass)}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${safeTitle}</title>
+    ${styles}
+    <style>
+      :root { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { margin: 16px; }
+      [data-print-hide] { display: none !important; }
+      [data-print-scroll] { max-height: none !important; overflow: visible !important; }
+      @page { margin: 12mm; }
+    </style>
+  </head>
+  <body>
+    ${html}
+  </body>
+</html>`)
+  printWindow.document.close()
+
+  // Give the new window a moment to load styles before printing.
+  printWindow.focus()
+  window.setTimeout(() => {
+    printWindow.print()
+    window.setTimeout(() => printWindow.close(), 500)
+  }, 250)
 }
 
 interface ParsedSection {
@@ -1382,6 +1438,7 @@ export function AIInsightCard({
   const [error, setError] = useState<string | null>(null)
   const [hasGenerated, setHasGenerated] = useState(false)
   const [fromCache, setFromCache] = useState(false)
+  const printRef = useRef<HTMLDivElement | null>(null)
 
   // Get cache key based on type and filters
   const cacheKey = useMemo(() => 
@@ -1453,33 +1510,56 @@ export function AIInsightCard({
   }, [autoGenerate]) // Only run on mount
 
   return (
-    <Card className={`border-purple-200 dark:border-purple-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-purple-600" />
-              {title}
-            </CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-          {hasGenerated && (
-            <div className="flex items-center gap-2">
-              {fromCache && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <History className="h-3 w-3" />
-                  Cached
-                </Badge>
-              )}
-              <Badge variant="secondary" className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                <Sparkles className="h-3 w-3" />
-                AI
-              </Badge>
+    <div ref={printRef}>
+      <Card className={`border-purple-200 dark:border-purple-800 ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                {title}
+              </CardTitle>
+              <CardDescription>{description}</CardDescription>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              {hasGenerated && (
+                <>
+                  {fromCache && (
+                    <Badge variant="outline" className="text-xs gap-1">
+                      <History className="h-3 w-3" />
+                      Cached
+                    </Badge>
+                  )}
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI
+                  </Badge>
+                </>
+              )}
+
+              {insight && !loading && (
+                <Button
+                  data-print-hide
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    if (printRef.current) {
+                      printElementToPdf(printRef.current, title)
+                    }
+                  }}
+                >
+                  <Printer className="h-4 w-4" />
+                  Print / Save PDF
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
         {!hasGenerated && !loading && !autoGenerate && (
           <div className="text-center py-8">
             <Brain className="h-12 w-12 mx-auto text-purple-300 mb-4" />
@@ -1527,7 +1607,10 @@ export function AIInsightCard({
         
         {insight && !loading && (
           <div className="space-y-4">
-            <div className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30">
+            <div
+              data-print-scroll
+              className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
+            >
               <MarkdownRenderer content={insight} />
             </div>
             <div className="flex items-center gap-2">
@@ -1548,8 +1631,9 @@ export function AIInsightCard({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
@@ -2154,6 +2238,7 @@ export function AIComparativeAnalysis({
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const printRef = useRef<HTMLDivElement | null>(null)
 
   const generateAnalysis = async () => {
     setLoading(true)
@@ -2200,15 +2285,37 @@ export function AIComparativeAnalysis({
   }
 
   return (
-    <Card className={`border-teal-200 dark:border-teal-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <BarChart3 className="h-5 w-5 text-teal-600" />
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="p-4">
+    <div ref={printRef}>
+      <Card className={`border-teal-200 dark:border-teal-800 ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BarChart3 className="h-5 w-5 text-teal-600" />
+                {title}
+              </CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </div>
+
+            {analysis && !loading && (
+              <Button
+                data-print-hide
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  if (printRef.current) {
+                    printElementToPdf(printRef.current, title)
+                  }
+                }}
+              >
+                <Printer className="h-4 w-4" />
+                Print / Save PDF
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
         {!analysis && !loading && (
           <div className="text-center py-6">
             <BarChart3 className="h-10 w-10 mx-auto text-teal-300 mb-3" />
@@ -2238,7 +2345,10 @@ export function AIComparativeAnalysis({
 
         {analysis && !loading && (
           <div className="space-y-4">
-            <div className="max-h-[300px] overflow-y-auto rounded-lg border p-4 bg-muted/30">
+            <div
+              data-print-scroll
+              className="max-h-[300px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
+            >
               <MarkdownRenderer content={analysis} />
             </div>
             <Button 
@@ -2252,8 +2362,9 @@ export function AIComparativeAnalysis({
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 
