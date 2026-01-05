@@ -78,13 +78,12 @@ function escapeHtml(value: string) {
   })
 }
 
-function printElementToPdf(element: HTMLElement, title: string) {
+function printHtmlToPdf(bodyHtml: string, title: string) {
   const themeClass = document.documentElement.className
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map((node) => node.outerHTML)
     .join("\n")
 
-  const html = element.outerHTML
   const safeTitle = escapeHtml(title)
 
   const srcdoc = `<!doctype html>
@@ -104,7 +103,7 @@ function printElementToPdf(element: HTMLElement, title: string) {
     </style>
   </head>
   <body>
-    ${html}
+    ${bodyHtml}
   </body>
 </html>`
 
@@ -141,6 +140,103 @@ function printElementToPdf(element: HTMLElement, title: string) {
   }
 
   document.body.appendChild(iframe)
+}
+
+function printElementToPdf(element: HTMLElement, title: string) {
+  printHtmlToPdf(element.outerHTML, title)
+}
+
+function renderMarkdownToPrintHtml(content: string, title: string) {
+  const sections = parseMarkdownToSections(content)
+
+  const headingClasses: Record<number, string> = {
+    1: 'text-xl font-bold text-purple-800 dark:text-purple-200 border-b pb-2 mb-3',
+    2: 'text-lg font-semibold text-purple-700 dark:text-purple-300 mt-4 mb-2',
+    3: 'text-base font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2',
+    4: 'text-sm font-semibold text-gray-700 dark:text-gray-300 mt-2 mb-1',
+    5: 'text-sm font-medium text-gray-600 dark:text-gray-400 mt-2 mb-1',
+    6: 'text-xs font-medium text-gray-500 dark:text-gray-500 mt-1 mb-1',
+  }
+
+  const sectionsHtml = sections
+    .map((section) => {
+      switch (section.type) {
+        case 'heading': {
+          const level = Math.min(section.level || 2, 6)
+          const tag = `h${level}`
+          const className = headingClasses[level] || headingClasses[2]
+          return `<${tag} class="${className}">${escapeHtml(section.content)}</${tag}>`
+        }
+        case 'paragraph':
+          return `<p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">${escapeHtml(section.content)}</p>`
+        case 'list': {
+          const items = (section.items || [])
+            .map((item) => {
+              return `
+                <li class="flex items-start gap-2 text-sm">
+                  <span class="text-purple-500 mt-1.5">•</span>
+                  <span class="text-gray-700 dark:text-gray-300">${escapeHtml(item)}</span>
+                </li>
+              `.trim()
+            })
+            .join("\n")
+          return `<ul class="space-y-1.5 ml-1">${items}</ul>`
+        }
+        case 'table': {
+          const headers = (section.headers || [])
+            .map((h) => `<th class="text-left font-semibold text-purple-800 dark:text-purple-200 px-4 py-2">${escapeHtml(h)}</th>`)
+            .join("")
+
+          const rows = (section.rows || [])
+            .map((row) => {
+              const cells = row
+                .map((cell) => `<td class="text-sm px-4 py-2 align-top">${escapeHtml(cell)}</td>`)
+                .join("")
+              return `<tr class="border-t">${cells}</tr>`
+            })
+            .join("\n")
+
+          return `
+            <div class="rounded-lg border overflow-hidden my-3">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-purple-50 dark:bg-purple-950/30">${headers}</tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          `.trim()
+        }
+        case 'keyValue':
+          return `
+            <div class="flex flex-wrap gap-x-2 py-1">
+              <span class="font-semibold text-purple-700 dark:text-purple-300 text-sm">${escapeHtml(section.content)}:</span>
+              <span class="text-gray-700 dark:text-gray-300 text-sm">${escapeHtml(section.items?.[0] || "")}</span>
+            </div>
+          `.trim()
+        case 'divider':
+          return `<hr class="my-4 border-gray-200 dark:border-gray-700" />`
+        default:
+          return ''
+      }
+    })
+    .filter(Boolean)
+    .join("\n")
+
+  // Print-only document wrapper (keeps Tailwind styling, avoids printing headers/buttons).
+  return `
+    <div class="max-w-3xl mx-auto">
+      <div class="rounded-lg border p-6 bg-muted/30">
+        <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">${escapeHtml(title)}</h1>
+        <div class="space-y-4">${sectionsHtml}</div>
+      </div>
+    </div>
+  `.trim()
+}
+
+function printMarkdownToPdf(content: string, title: string) {
+  const bodyHtml = renderMarkdownToPrintHtml(content, title)
+  printHtmlToPdf(bodyHtml, title)
 }
 
 interface ParsedSection {
@@ -1468,7 +1564,7 @@ export function AIInsightCard({
   const [error, setError] = useState<string | null>(null)
   const [hasGenerated, setHasGenerated] = useState(false)
   const [fromCache, setFromCache] = useState(false)
-  const printRef = useRef<HTMLDivElement | null>(null)
+  const printContentRef = useRef<HTMLDivElement | null>(null)
 
   // Get cache key based on type and filters
   const cacheKey = useMemo(() => 
@@ -1540,7 +1636,7 @@ export function AIInsightCard({
   }, [autoGenerate]) // Only run on mount
 
   return (
-    <div ref={printRef}>
+    <div>
       <Card className={`border-purple-200 dark:border-purple-800 ${className}`}>
         <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
           <div className="flex items-center justify-between">
@@ -1577,9 +1673,7 @@ export function AIInsightCard({
                   size="sm"
                   className="gap-2"
                   onClick={() => {
-                    if (printRef.current) {
-                      printElementToPdf(printRef.current, title)
-                    }
+                    printMarkdownToPdf(insight, title)
                   }}
                 >
                   <Printer className="h-4 w-4" />
@@ -1638,6 +1732,7 @@ export function AIInsightCard({
         {insight && !loading && (
           <div className="space-y-4">
             <div
+              ref={printContentRef}
               data-print-scroll
               className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
             >
@@ -2247,6 +2342,8 @@ interface AIComparativeAnalysisProps {
     schoolId?: string
     regionId?: string
     periodId?: string
+    academicYear?: string
+    termName?: string
   }
   title?: string
   description?: string
@@ -2268,7 +2365,7 @@ export function AIComparativeAnalysis({
   const [analysis, setAnalysis] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const printRef = useRef<HTMLDivElement | null>(null)
+  const printContentRef = useRef<HTMLDivElement | null>(null)
 
   const generateAnalysis = async () => {
     setLoading(true)
@@ -2315,7 +2412,7 @@ export function AIComparativeAnalysis({
   }
 
   return (
-    <div ref={printRef}>
+    <div>
       <Card className={`border-teal-200 dark:border-teal-800 ${className}`}>
         <CardHeader className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30">
           <div className="flex items-center justify-between">
@@ -2334,9 +2431,7 @@ export function AIComparativeAnalysis({
                 size="sm"
                 className="gap-2"
                 onClick={() => {
-                  if (printRef.current) {
-                    printElementToPdf(printRef.current, title)
-                  }
+                  printMarkdownToPdf(analysis, title)
                 }}
               >
                 <Printer className="h-4 w-4" />
@@ -2376,6 +2471,7 @@ export function AIComparativeAnalysis({
         {analysis && !loading && (
           <div className="space-y-4">
             <div
+              ref={printContentRef}
               data-print-scroll
               className="max-h-[300px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
             >
