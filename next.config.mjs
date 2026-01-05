@@ -10,7 +10,9 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config) => {
-    config.output.hashFunction = 'xxhash64';
+    // Avoid wasm-based hashing (xxhash64) which can crash in some environments
+    // during production builds with an unhelpful stack trace.
+    config.output.hashFunction = 'sha256';
     return config;
   },
 }

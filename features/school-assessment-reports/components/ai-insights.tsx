@@ -1275,13 +1275,6 @@ export function CategoryAnalysisSelector({
 // MAIN DASHBOARD AI COMPONENTS (Wrapper Components for Page Integration)
 // ============================================================================
 
-import { 
-  generatePredictiveAnalytics,
-  getEarlyWarnings,
-  generateImprovementPlan,
-  getCohortAnalysis,
-} from "../actions/ai-insights"
-
 async function fetchAssessmentInsight(body: {
   scope: "national" | "regional" | "school"
   id?: string
@@ -1308,6 +1301,53 @@ async function fetchAssessmentInsight(body: {
     insight: data?.insight ?? null,
     error: data?.error ?? null,
   }
+}
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    const message = data?.error || `Request failed (${res.status})`
+    throw new Error(message)
+  }
+
+  return data as T
+}
+
+async function fetchEarlyWarnings(regionId?: string, threshold?: number) {
+  return postJson<{ warnings?: any[]; error?: string | null }>(
+    "/api/school-assessment/early-warnings",
+    { regionId, threshold }
+  )
+}
+
+async function fetchImprovementPlan(schoolId: string, reportId?: string) {
+  return postJson<{ insight?: string | null; error?: string | null }>(
+    "/api/school-assessment/improvement-plan",
+    { schoolId, reportId }
+  )
+}
+
+async function fetchPredictiveAnalytics(entityId: string) {
+  return postJson<{ predictions?: any; error?: string | null }>(
+    "/api/school-assessment/predictive-analytics",
+    { entityId }
+  )
+}
+
+async function fetchCohortAnalysis(
+  schoolId: string,
+  criteriaType: "score" | "region" | "size" = "score"
+) {
+  return postJson<{ cohort?: any[]; insights?: string | null; error?: string | null }>(
+    "/api/school-assessment/cohort-analysis",
+    { schoolId, criteriaType }
+  )
 }
 
 interface AIInsightCardProps {
@@ -1564,16 +1604,17 @@ export function AIAtRiskAlert({
     setFromCache(false)
     
     try {
-      const result = await getEarlyWarnings(regionId, threshold)
+      const result = await fetchEarlyWarnings(regionId, threshold)
       if (result.error) {
         setError(result.error)
-      } else {
-        const warnings = result.warnings || []
-        setSchools(warnings)
-        setHasLoaded(true)
-        // Cache the results
-        saveToCache(cacheKey, JSON.stringify(warnings))
+        return
       }
+
+      const warnings = result.warnings || []
+      setSchools(warnings)
+      setHasLoaded(true)
+      // Cache the results
+      saveToCache(cacheKey, JSON.stringify(warnings))
     } catch (err) {
       setError('Failed to identify at-risk schools')
     } finally {
@@ -1723,6 +1764,7 @@ export function AIAtRiskAlert({
 }
 
 interface AIRecommendationPanelProps {
+  schoolId?: string
   reportId: string
   schoolName?: string
   categoryFocus?: string
@@ -1736,6 +1778,7 @@ interface AIRecommendationPanelProps {
  * - Caches results in session storage
  */
 export function AIRecommendationPanel({
+  schoolId,
   reportId,
   schoolName = "School",
   categoryFocus,
@@ -1768,11 +1811,18 @@ export function AIRecommendationPanel({
     setFromCache(false)
     
     try {
-      // Note: generateImprovementPlan uses the reportId to look up the school
-      const result = await generateImprovementPlan(reportId, reportId)
+      if (!schoolId) {
+        setError('School not found.')
+        return
+      }
+
+      const result = await fetchImprovementPlan(schoolId, reportId)
       if (result.error) {
         setError(result.error)
-      } else if (result.insight) {
+        return
+      }
+
+      if (result.insight) {
         setRecommendations(result.insight)
         // Cache the results
         saveToCache(cacheKey, result.insight)
@@ -1782,7 +1832,7 @@ export function AIRecommendationPanel({
     } finally {
       setLoading(false)
     }
-  }, [reportId, cacheKey])
+  }, [schoolId, reportId, cacheKey])
 
   // Auto-load on mount
   useEffect(() => {
@@ -1935,10 +1985,18 @@ export function AITrendPrediction({
     setFromCache(false)
     
     try {
-      const result = await generatePredictiveAnalytics(entityId || '')
+      if (!entityId) {
+        setError('Missing school id')
+        return
+      }
+
+      const result = await fetchPredictiveAnalytics(entityId)
       if (result.error) {
         setError(result.error)
-      } else if (result.predictions) {
+        return
+      }
+
+      if (result.predictions) {
         setPrediction(result.predictions)
         // Cache the results
         saveToCache(cacheKey, JSON.stringify(result.predictions))
@@ -2123,8 +2181,9 @@ export function AIComparativeAnalysis({
         })
       } else {
         // Use getCohortAnalysis for comparisons - requires a schoolId
-        const criteriaType = type === 'regions' ? 'region' : 'score'
-        result = await getCohortAnalysis(entityIds[0], criteriaType as 'score' | 'region' | 'size')
+        const criteriaType: 'score' | 'region' | 'size' = 'score'
+        const cohort = await fetchCohortAnalysis(entityIds[0], criteriaType)
+        result = { insights: cohort.insights ?? null, error: cohort.error ?? null }
       }
 
       if (result.error) {
@@ -2222,12 +2281,12 @@ export function AIActionPlanCard({
     setLoading(true)
     setError(null)
     try {
-      const result = await generateImprovementPlan(schoolId, reportId)
+      const result = await fetchImprovementPlan(schoolId, reportId)
       if (result.error) {
         setError(result.error)
-      } else {
-        setPlan(result.insight || null)
+        return
       }
+      setPlan(result.insight || null)
     } catch (err) {
       setError('Failed to generate action plan')
     } finally {

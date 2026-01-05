@@ -35,14 +35,15 @@ export class AIService {
   }
 
   async generateInsight(prompt: string, reportData: any[]): Promise<string> {
-    const maxRetries = 3
+    const maxRetries = Number.parseInt(process.env.AI_MAX_RETRIES || "1", 10)
     let attempt = 0
     
     while (attempt < maxRetries) {
       try {
-        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "15000", 10)
+        // Netlify/Vercel serverless functions can time out quickly; default to a fail-fast timeout.
+        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "9000", 10)
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 15000)
+        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 9000)
 
         const response = await fetch(
           this.apiUrl,
@@ -105,11 +106,6 @@ export class AIService {
         attempt++
 
         if (error instanceof DOMException && error.name === "AbortError") {
-          if (attempt < maxRetries) {
-            const backoffDelay = Math.pow(2, attempt) * 500 + Math.random() * 500
-            await this.delay(backoffDelay)
-            continue
-          }
           throw new Error("AI request timed out. Please try again.")
         }
         

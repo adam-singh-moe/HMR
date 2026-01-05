@@ -798,6 +798,7 @@ function HeadTeacherAssessmentContent() {
               
               {/* AI Recommendations */}
               <AIRecommendationPanel
+                schoolId={schoolInfo?.id}
                 reportId={selectedReport.id}
                 schoolName={schoolInfo?.name || 'Your School'}
               />
