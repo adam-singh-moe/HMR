@@ -68,13 +68,6 @@ function escapeHtml(value: string) {
 }
 
 function printElementToPdf(element: HTMLElement, title: string) {
-  const printWindow = window.open("", "_blank", "noopener,noreferrer")
-  if (!printWindow) {
-    // If popups are blocked, fall back to printing the current page.
-    window.print()
-    return
-  }
-
   const themeClass = document.documentElement.className
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map((node) => node.outerHTML)
@@ -83,12 +76,12 @@ function printElementToPdf(element: HTMLElement, title: string) {
   const html = element.outerHTML
   const safeTitle = escapeHtml(title)
 
-  printWindow.document.open()
-  printWindow.document.write(`<!doctype html>
+  const srcdoc = `<!doctype html>
 <html class="${escapeHtml(themeClass)}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="${escapeHtml(window.location.origin)}" />
     <title>${safeTitle}</title>
     ${styles}
     <style>
@@ -102,15 +95,41 @@ function printElementToPdf(element: HTMLElement, title: string) {
   <body>
     ${html}
   </body>
-</html>`)
-  printWindow.document.close()
+</html>`
 
-  // Give the new window a moment to load styles before printing.
-  printWindow.focus()
-  window.setTimeout(() => {
-    printWindow.print()
-    window.setTimeout(() => printWindow.close(), 500)
-  }, 250)
+  // Use a hidden iframe so we can print just this element without popup blockers.
+  const iframe = document.createElement("iframe")
+  iframe.setAttribute("aria-hidden", "true")
+  iframe.style.position = "fixed"
+  iframe.style.right = "0"
+  iframe.style.bottom = "0"
+  iframe.style.width = "0"
+  iframe.style.height = "0"
+  iframe.style.border = "0"
+  iframe.srcdoc = srcdoc
+
+  const cleanup = () => {
+    try {
+      iframe.remove()
+    } catch {
+      /* ignore */
+    }
+  }
+
+  iframe.onload = () => {
+    const win = iframe.contentWindow
+    if (!win) {
+      cleanup()
+      return
+    }
+
+    // Print must be invoked from a user gesture; keep this synchronous after load.
+    win.focus()
+    win.print()
+    window.setTimeout(cleanup, 500)
+  }
+
+  document.body.appendChild(iframe)
 }
 
 interface ParsedSection {
