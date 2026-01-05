@@ -49,7 +49,6 @@ import {
   getRegionalReports,
   getReport,
 } from "@/features/school-assessment-reports/actions/reports"
-import { getOrGenerateRecommendations, getRecommendations } from "@/features/school-assessment-reports/actions/recommendations"
 import { 
   getRegionalStatistics, 
   getRegionalSchoolRankings,
@@ -65,6 +64,29 @@ import {
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
 import { generateBulkExportCSV } from "@/features/school-assessment-reports/actions/exports"
 import type { CurrentTermWindow, RatingLevel } from "@/features/school-assessment-reports/types"
+
+async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  return (await res.json()) as T
+}
+
+async function fetchRecommendations(reportId: string) {
+  return postJson<{ recommendations: any[]; error: string | null }>(
+    "/api/school-assessment/recommendations",
+    { reportId, generate: false }
+  )
+}
+
+async function fetchOrGenerateRecommendations(reportId: string) {
+  return postJson<{ recommendations: any[]; error: string | null }>(
+    "/api/school-assessment/recommendations",
+    { reportId, generate: true }
+  )
+}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -267,7 +289,7 @@ function RegionalOfficerAssessmentContent() {
     try {
       setIsGeneratingRecommendations(false)
 
-      const existing = await getRecommendations(reportId)
+      const existing = await fetchRecommendations(reportId)
       if (existing.error) return
       if (existing.recommendations && existing.recommendations.length > 0) {
         if (requestId !== recLoadSeq.current) return
@@ -281,7 +303,7 @@ function RegionalOfficerAssessmentContent() {
       recGenerationInFlight.current.add(reportId)
       setIsGeneratingRecommendations(true)
 
-      const generated = await getOrGenerateRecommendations(reportId)
+      const generated = await fetchOrGenerateRecommendations(reportId)
       if (requestId !== recLoadSeq.current) return
       setRecommendationsByReportId(prev => ({ ...prev, [reportId]: generated.recommendations || [] }))
     } catch (err) {
