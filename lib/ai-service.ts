@@ -40,6 +40,10 @@ export class AIService {
     
     while (attempt < maxRetries) {
       try {
+        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "15000", 10)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 15000)
+
         const response = await fetch(
           this.apiUrl,
           {
@@ -48,6 +52,7 @@ export class AIService {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${this.apiKey}`
             },
+            signal: controller.signal,
             body: JSON.stringify({
               model: this.model,
               messages: [
@@ -61,10 +66,11 @@ export class AIService {
                 }
               ],
               temperature: 0.7,
-              max_tokens: 2048,
+              max_tokens: 1400,
             })
           }
         )
+        clearTimeout(timeoutId)
 
         if (response.ok) {
           const data = await response.json()
@@ -97,6 +103,15 @@ export class AIService {
 
       } catch (error) {
         attempt++
+
+        if (error instanceof DOMException && error.name === "AbortError") {
+          if (attempt < maxRetries) {
+            const backoffDelay = Math.pow(2, attempt) * 500 + Math.random() * 500
+            await this.delay(backoffDelay)
+            continue
+          }
+          throw new Error("AI request timed out. Please try again.")
+        }
         
         if ((error instanceof TypeError && error.message.includes('fetch')) && attempt < maxRetries) {
           const backoffDelay = Math.pow(2, attempt) * 1000 + Math.random() * 1000

@@ -1276,14 +1276,39 @@ export function CategoryAnalysisSelector({
 // ============================================================================
 
 import { 
-  generateSchoolAssessmentInsight,
-  generateRegionalAssessmentInsight,
-  generateNationalAssessmentInsight,
   generatePredictiveAnalytics,
   getEarlyWarnings,
   generateImprovementPlan,
   getCohortAnalysis,
 } from "../actions/ai-insights"
+
+async function fetchAssessmentInsight(body: {
+  scope: "national" | "regional" | "school"
+  id?: string
+  periodId?: string
+  insightType?: string
+  academicYear?: string
+  termName?: string
+}): Promise<{ insight: string | null; error: string | null }> {
+  const res = await fetch("/api/school-assessment/ai-insights", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    return {
+      insight: null,
+      error: data?.error || `Request failed (${res.status})`,
+    }
+  }
+
+  return {
+    insight: data?.insight ?? null,
+    error: data?.error ?? null,
+  }
+}
 
 interface AIInsightCardProps {
   type: 'overview' | 'category_analysis' | 'regional_comparison' | 'improvement_opportunities' | 'trend_analysis'
@@ -1347,11 +1372,22 @@ export function AIInsightCard({
       // Use appropriate function based on filters
       let result: { insight?: string | null; error?: string | null }
       if (filters.schoolId) {
-        result = await generateSchoolAssessmentInsight(filters.schoolId, filters.periodId)
+        result = await fetchAssessmentInsight({
+          scope: "school",
+          id: filters.schoolId,
+          periodId: filters.periodId,
+        })
       } else if (filters.regionId) {
-        result = await generateRegionalAssessmentInsight(filters.regionId, filters.periodId)
+        result = await fetchAssessmentInsight({
+          scope: "regional",
+          id: filters.regionId,
+          periodId: filters.periodId,
+        })
       } else {
-        result = await generateNationalAssessmentInsight(filters.periodId)
+        result = await fetchAssessmentInsight({
+          scope: "national",
+          periodId: filters.periodId,
+        })
       }
       
       if (result.error) {
@@ -2067,9 +2103,24 @@ export function AIComparativeAnalysis({
     try {
       let result: { insights?: string | null; insight?: string | null; error?: string | null }
       
-      if (type === 'categories' && filters?.regionId) {
+      if (type === 'regions') {
+        // National-level region comparison.
+        // Avoid calling school-based cohort analysis (which can produce "School not found" when given a region id).
+        result = await fetchAssessmentInsight({
+          scope: "national",
+          periodId: filters.periodId || periodId,
+          insightType: "regional_comparison",
+        })
+      } else if (type === 'categories' && filters?.regionId) {
         // Use regional assessment insight with category_comparison type
-        result = await generateRegionalAssessmentInsight(filters.regionId, filters.periodId || periodId, 'category_comparison')
+        result = await fetchAssessmentInsight({
+          scope: "regional",
+          id: filters.regionId,
+          periodId: filters.periodId || periodId,
+          insightType: "category_comparison",
+          academicYear: filters.academicYear,
+          termName: filters.termName,
+        })
       } else {
         // Use getCohortAnalysis for comparisons - requires a schoolId
         const criteriaType = type === 'regions' ? 'region' : 'score'
