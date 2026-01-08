@@ -21,6 +21,7 @@ import {
   Settings,
   Globe,
   AlertTriangle,
+  ChevronLeft,
 } from "lucide-react"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { 
@@ -72,9 +73,21 @@ import {
   getSubmissionProgressBreakdown,
   getSchoolTrends,
   getSchoolRankingPosition,
+  getRegionalStatistics,
+  getRegionalSchoolRankings,
+  getRegionalTrends,
+  getRegionVsNationalComparison,
+  getCategoryLeaders,
+  getSchoolsNeedingAttention,
+  getAllRegions,
 } from "@/features/school-assessment-reports/actions/analytics"
 import { generateBulkExportCSV } from "@/features/school-assessment-reports/actions/exports"
 import type { AssessmentPeriod } from "@/features/school-assessment-reports/types"
+import { 
+  RegionVsNationalCard,
+  CategoryLeadersTable,
+  SubmissionProgressBreakdown
+} from "@/features/school-assessment-reports/components"
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -98,6 +111,24 @@ async function fetchOrGenerateRecommendations(reportId: string) {
     { reportId, generate: true }
   )
 }
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const REGIONS = [
+  { id: '1', name: 'Region 1' },
+  { id: '2', name: 'Region 2' },
+  { id: '3', name: 'Region 3' },
+  { id: '4', name: 'Region 4' },
+  { id: '5', name: 'Region 5' },
+  { id: '6', name: 'Region 6' },
+  { id: '7', name: 'Region 7' },
+  { id: '8', name: 'Region 8' },
+  { id: '9', name: 'Region 9' },
+  { id: '10', name: 'Region 10' },
+  { id: '11', name: 'Georgetown' },
+]
 
 // ============================================================================
 // MAIN COMPONENT
@@ -124,6 +155,7 @@ function AdminAssessmentContent() {
   const [activePeriod, setActivePeriod] = useState<AssessmentPeriod | null>(null)
   const [allPeriods, setAllPeriods] = useState<AssessmentPeriod[]>([])
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
+  const [dbRegions, setDbRegions] = useState<{ id: string; name: string }[]>([])
   const [stats, setStats] = useState<any>(null)
   const [reports, setReports] = useState<any[]>([])
   const [rankings, setRankings] = useState<any[]>([])
@@ -147,11 +179,27 @@ function AdminAssessmentContent() {
   const [mostImproved, setMostImproved] = useState<any>(null)
   const [underperformingRegions, setUnderperformingRegions] = useState<any[] | null>(null)
   const [submissionProgress, setSubmissionProgress] = useState<any>(null)
+
+  // Regional Drill-down State
+  const [selectedRegion, setSelectedRegion] = useState<{ id: string, name: string } | null>(null)
+  const [regionalStats, setRegionalStats] = useState<any>(null)
+  const [regionalRankings, setRegionalRankings] = useState<any[]>([])
+  const [regionalTrends, setRegionalTrends] = useState<any[]>([])
+  const [regionalLoading, setRegionalLoading] = useState(false)
+  const [regionalSubmissionProgress, setRegionalSubmissionProgress] = useState<any>(null)
+  const [regionalCategoryGaps, setRegionalCategoryGaps] = useState<any>(null)
+  const [regionalMostImproved, setRegionalMostImproved] = useState<any>(null)
+  const [regionVsNational, setRegionVsNational] = useState<any>(null)
+  const [regionalCategoryLeaders, setRegionalCategoryLeaders] = useState<any>(null)
+  const [regionalSchoolsNeedingAttention, setRegionalSchoolsNeedingAttention] = useState<any[]>([])
+
   const [schoolOverviewLoading, setSchoolOverviewLoading] = useState(false)
   const [schoolOverviewReports, setSchoolOverviewReports] = useState<any[]>([])
   const [schoolOverviewTrends, setSchoolOverviewTrends] = useState<any[]>([])
   const [schoolOverviewRanking, setSchoolOverviewRanking] = useState<any>(null)
   const [schoolOverviewError, setSchoolOverviewError] = useState<string | null>(null)
+  
+  const overviewSeq = useRef(0)
 
   const recommendations = selectedReport?.id
     ? (recommendationsByReportId[selectedReport.id] ?? [])
@@ -160,32 +208,118 @@ function AdminAssessmentContent() {
   const isAdmin = user?.role === 'Admin'
 
   const loadSchoolOverview = async (schoolId: string, periodId?: string) => {
-    setSchoolOverviewLoading(true)
+    const seq = ++overviewSeq.current
+    console.log(`[Admin] Loading school overview for ${schoolId}, seq: ${seq}`)
+    
+    // Reset state
+    setSchoolOverviewReports([])
+    setSchoolOverviewTrends([])
+    setSchoolOverviewRanking(null)
     setSchoolOverviewError(null)
+    setSchoolOverviewLoading(true)
+
+    // Parallel requests with independent resolution
+    // Each task handles its own errors so the Promise.allSettled always "succeeds"
+    const reportsTask = getSchoolReports(schoolId)
+      .then(res => {
+        if (seq !== overviewSeq.current) return
+        if (res.error) setSchoolOverviewError(res.error)
+        else setSchoolOverviewReports(res.reports || [])
+      })
+      .catch(err => {
+        console.error(`[Admin] reportsTask failure (seq ${seq}):`, err)
+      })
+
+    const trendsTask = getSchoolTrends(schoolId)
+      .then(res => {
+        if (seq !== overviewSeq.current) return
+        setSchoolOverviewTrends(res.error ? [] : (res.trends || []))
+      })
+      .catch(err => {
+        console.error(`[Admin] trendsTask failure (seq ${seq}):`, err)
+      })
+
+    const rankingTask = getSchoolRankingPosition(schoolId, periodId)
+      .then(res => {
+        if (seq !== overviewSeq.current) return
+        setSchoolOverviewRanking(res.error ? null : res)
+      })
+      .catch(err => {
+        console.error(`[Admin] rankingTask failure (seq ${seq}):`, err)
+      })
+
+    // Safety timeout to ensure spinner is removed even if tasks hang
+    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 15000))
+
     try {
-      const [reportsRes, trendsRes, rankingRes] = await Promise.all([
-        getSchoolReports(schoolId),
-        getSchoolTrends(schoolId),
-        getSchoolRankingPosition(schoolId, periodId),
+      // Race the core data against a safety timeout
+      await Promise.race([
+        Promise.allSettled([reportsTask, trendsTask]),
+        timeoutPromise
+      ])
+      
+      console.log(`[Admin] Primary overview loading finished for seq: ${seq}`)
+    } catch (error) {
+      console.error(`[Admin] Error in loadSchoolOverview (seq ${seq}):`, error)
+    } finally {
+      if (seq === overviewSeq.current) {
+        setSchoolOverviewLoading(false)
+        // If we still have no reports after timeout/completion, it might be an error
+      }
+    }
+
+    // Ranking is allowed to finish later in the background via its own .then()
+  }
+
+  const loadRegionalDetailOverview = async (regionId: string, regionName: string, periodId?: string) => {
+    setRegionalLoading(true)
+    setSelectedRegion({ id: regionId, name: regionName })
+    
+    try {
+      // Use "all" as undefined for backend calls if it's the period selector
+      const pId = periodId === 'all' ? undefined : periodId
+
+      const [
+        statsRes,
+        rankingsRes,
+        trendsRes,
+        progressRes,
+        gapsRes,
+        improvedRes,
+        vsNationalRes,
+        leadersRes,
+        needingAttentionRes
+      ] = await Promise.all([
+        getRegionalStatistics(regionId, pId).catch(err => { console.error('stats error:', err); return { stats: null, error: err.message }; }),
+        getRegionalSchoolRankings(regionId, pId).catch(err => { console.error('rankings error:', err); return { rankings: [], error: err.message }; }),
+        getRegionalTrends(regionId).catch(err => { console.error('trends error:', err); return { trends: [], error: err.message }; }),
+        getSubmissionProgressBreakdown(regionId, pId).catch(err => { console.error('progress error:', err); return { error: err.message }; }),
+        getCategoryGapAnalysis(regionId, pId).catch(err => { console.error('gaps error:', err); return { error: err.message }; }),
+        getMostImprovedSchools(regionId).catch(err => { console.error('improved error:', err); return { error: err.message }; }),
+        getRegionVsNationalComparison(regionId, pId).catch(err => { console.error('vsNational error:', err); return { error: err.message }; }),
+        getCategoryLeaders(regionId, pId).catch(err => { console.error('leaders error:', err); return { error: err.message }; }),
+        getSchoolsNeedingAttention(regionId, pId).catch(err => { console.error('attention error:', err); return { schools: [], error: err.message }; })
       ])
 
-      if (reportsRes.error) {
-        setSchoolOverviewError(reportsRes.error)
-        setSchoolOverviewReports([])
-      } else {
-        setSchoolOverviewReports(reportsRes.reports || [])
-      }
+      if (statsRes?.stats) setRegionalStats(statsRes.stats)
+      if (rankingsRes?.rankings) setRegionalRankings(rankingsRes.rankings)
+      if (trendsRes?.trends) setRegionalTrends(trendsRes.trends)
+      setRegionalSubmissionProgress(progressRes?.error ? null : progressRes)
+      setRegionalCategoryGaps(gapsRes?.error ? null : gapsRes)
+      setRegionalMostImproved(improvedRes?.error ? null : improvedRes)
+      setRegionVsNational(vsNationalRes?.error ? null : vsNationalRes)
+      setRegionalCategoryLeaders(leadersRes?.error ? null : leadersRes)
+      setRegionalSchoolsNeedingAttention(needingAttentionRes?.schools || [])
 
-      setSchoolOverviewTrends(trendsRes.error ? [] : (trendsRes.trends || []))
-      setSchoolOverviewRanking(rankingRes.error ? null : rankingRes)
     } catch (error) {
-      console.error('Error loading school overview:', error)
-      setSchoolOverviewError('Failed to load school overview.')
-      setSchoolOverviewReports([])
-      setSchoolOverviewTrends([])
-      setSchoolOverviewRanking(null)
+      console.error('Error loading regional detail:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load regional data.',
+        variant: 'destructive',
+      })
     } finally {
-      setSchoolOverviewLoading(false)
+      setRegionalLoading(false)
     }
   }
 
@@ -258,48 +392,93 @@ function AdminAssessmentContent() {
   useEffect(() => {
     if (selectedPeriodId) {
       loadNationalData(selectedPeriodId)
+      
+      // If a region is currently selected, refresh its data too
+      if (selectedRegion) {
+        loadRegionalDetailOverview(selectedRegion.id, selectedRegion.name, selectedPeriodId)
+      }
     }
   }, [selectedPeriodId])
   
   const loadInitialData = async () => {
     setLoading(true)
     try {
-      // Get active period from old system first
-      const periodResult = await getActivePeriod()
-      if (periodResult.period) {
-        setActivePeriod(periodResult.period)
-        setSelectedPeriodId(periodResult.period.id)
-      } else {
-        // Fallback: Try to get the active term window from new system
-        // and create a synthetic period object for compatibility
-        const termWindowResult = await getActiveTermWindow()
-        if (termWindowResult.window) {
-          const window = termWindowResult.window
-          // Create a synthetic period that matches the term window
-          const syntheticPeriod: AssessmentPeriod = {
-            id: `term-window-${window.academicYear}-${window.termNumber}`,
-            academicYear: window.academicYear,
-            termName: window.termNumber === 1 ? 'First Term' : window.termNumber === 2 ? 'Second Term' : 'Third Term',
-            startDate: window.submissionStart,
-            endDate: window.submissionEnd,
-            submissionStartDate: window.submissionStart,
-            submissionEndDate: window.submissionEnd,
-            isActive: window.isOpen,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          } as any
-          setActivePeriod(syntheticPeriod)
-          // Still set a fake period ID to trigger data loading - we'll handle this in getNationalReports
-          setSelectedPeriodId(syntheticPeriod.id)
-        }
+      // Get all legacy periods first
+      let fetchedPeriods: AssessmentPeriod[] = []
+      const periodsResult = await getAllPeriods()
+      if (periodsResult.periods) {
+        fetchedPeriods = [...periodsResult.periods]
       }
       
-      // Get all periods (for admin)
-      if (isAdmin) {
-        const periodsResult = await getAllPeriods()
-        if (periodsResult.periods) {
-          setAllPeriods(periodsResult.periods)
+      // Get active term window
+      const termWindowResult = await getActiveTermWindow()
+      let syntheticActive: AssessmentPeriod | null = null
+      
+      if (termWindowResult.window) {
+        const window = termWindowResult.window
+        syntheticActive = {
+          id: `term-window-${window.academicYear}-${window.termNumber}`,
+          academicYear: window.academicYear,
+          termName: window.termNumber === 1 ? 'First Term' : window.termNumber === 2 ? 'Second Term' : 'Third Term',
+          startDate: window.submissionStart,
+          endDate: window.submissionEnd,
+          submissionStartDate: window.submissionStart,
+          submissionEndDate: window.submissionEnd,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any
+        
+        // Add to periods list if not already present (match by year/term)
+        const exists = fetchedPeriods.some(p => 
+          p.academicYear === syntheticActive?.academicYear && 
+          p.termName === syntheticActive?.termName
+        )
+        if (!exists && syntheticActive) {
+          fetchedPeriods.unshift(syntheticActive)
         }
+      }
+
+      // Add "All Periods" option
+      const allOption = {
+        id: 'all',
+        academicYear: 'All Historical',
+        termName: 'Records',
+        isActive: false
+      } as any
+      
+      const periodsWithAll = [allOption, ...fetchedPeriods]
+      setAllPeriods(periodsWithAll)
+
+      // Set default selected period
+      // 1. Check if we have an active legacy period
+      const activeLegacy = fetchedPeriods.find(p => p.isActive && !p.id.startsWith('term-window-'))
+      if (activeLegacy) {
+        setActivePeriod(activeLegacy)
+        setSelectedPeriodId(activeLegacy.id)
+      } else if (syntheticActive) {
+        setActivePeriod(syntheticActive)
+        setSelectedPeriodId(syntheticActive.id)
+      } else if (fetchedPeriods.length > 0) {
+        setSelectedPeriodId(fetchedPeriods[0].id)
+      } else {
+        setSelectedPeriodId('all')
+      }
+      
+      // Fetch regions from database
+      const regionsResult = await getAllRegions()
+      if (regionsResult.regions && regionsResult.regions.length > 0) {
+        const sortedRegions = [...regionsResult.regions].sort((a, b) => {
+          // Helper to extract region number
+          const getRegionNum = (name: string) => {
+            if (name === 'Georgetown') return 0
+            const match = name.match(/Region (\d+)/i)
+            return match ? parseInt(match[1], 10) : 999
+          }
+          
+          return getRegionNum(a.name) - getRegionNum(b.name)
+        })
+        setDbRegions(sortedRegions)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -326,15 +505,19 @@ function AdminAssessmentContent() {
       if (reportsResult.reports) {
         setReports(reportsResult.reports.map((r: any) => ({
           id: r.id,
-          schoolId: r.schoolId,
-          schoolName: r.schoolName || 'Unknown School',
-          regionName: r.regionName || '',
+          schoolId: r.schoolId || r.school_id,
+          schoolName: r.schoolName || r.sms_schools?.name || 'Unknown School',
+          regionName: r.regionName || r.sms_schools?.sms_regions?.name || '',
           status: r.status,
-          totalScore: r.totalScore,
-          ratingLevel: r.ratingLevel,
-          submittedAt: r.submittedAt,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
+          totalScore: r.totalScore !== undefined ? r.totalScore : r.total_score,
+          ratingLevel: r.ratingLevel || r.rating_level,
+          submittedAt: r.submittedAt || r.submitted_at,
+          createdAt: r.createdAt || r.created_at,
+          updatedAt: r.updatedAt || r.updated_at,
+          academicYear: r.academicYear || r.academic_year,
+          termName: r.termName || r.term_name,
+          isTAPS: r.isTAPS,
+          tapsRatingGrade: r.tapsRatingGrade || r.taps_rating_grade,
         })))
       }
       
@@ -626,8 +809,8 @@ function AdminAssessmentContent() {
             />
           </div>
 
-          {/* Charts */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          {/* Charts Stacking */}
+          <div className="flex flex-col gap-6">
             {stats?.ratingDistribution && (
               <RatingDistributionChart 
                 distribution={stats.ratingDistribution}
@@ -642,16 +825,13 @@ function AdminAssessmentContent() {
                 description="Average scores by category"
               />
             )}
-          </div>
 
-          {/* Completion Rate Gauge and Score Distribution */}
-          <div className="grid gap-6 lg:grid-cols-2">
             {submissionProgress && !submissionProgress.error && (
               <CompletionRateGauge
                 submitted={submissionProgress.submitted}
-                total={submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted}
-                percentage={submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted > 0 
-                  ? Math.round((submissionProgress.submitted / (submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted)) * 100)
+                total={(submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)}
+                percentage={((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)) > 0 
+                  ? Math.round(((submissionProgress.submitted || 0) / ((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0))) * 100)
                   : 0}
                 title="National Completion Rate"
               />
@@ -705,17 +885,19 @@ function AdminAssessmentContent() {
           />
 
           {/* AI Insights Section */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-6">
             {/* AI National Overview */}
             <AIInsightCard
               type="overview"
               title="AI National Analysis"
               description="Get AI-powered insights about national assessment performance"
+              autoGenerate={false}
             />
             
             {/* AI At-Risk Schools */}
             <AIAtRiskAlert
               threshold={400}
+              autoGenerate={false}
             />
           </div>
 
@@ -729,6 +911,7 @@ function AdminAssessmentContent() {
               }))}
               title="AI Performance Prediction"
               description="AI-powered forecast of national assessment trends"
+              autoGenerate={false}
             />
           )}
 
@@ -745,27 +928,203 @@ function AdminAssessmentContent() {
 
         {/* Regions Tab */}
         <TabsContent value="regions" className="space-y-6">
-          {/* Underperforming Regions Alert */}
-          {underperformingRegions && underperformingRegions.length > 0 && (
-            <UnderperformingRegionsAlert
-              regions={underperformingRegions}
-            />
-          )}
-          
-          {stats?.regionComparison && (
-            <RegionComparisonChart
-              regions={stats.regionComparison}
-              title="Regional Comparison"
-              description="Average scores by region"
-            />
-          )}
-          
-          {submissionStatus.length > 0 && (
-            <SubmissionStatusChart
-              data={submissionStatus}
-              title="Submission Status by Region"
-              description="Report submission progress"
-            />
+          {!selectedRegion ? (
+            <>
+              {/* Region Selection Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5 text-primary" />
+                    Regional Dashboards
+                  </CardTitle>
+                  <CardDescription>
+                    Select a region to view its detailed performance overview and analytics.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {(dbRegions.length > 0 ? dbRegions : REGIONS).map((region) => (
+                      <Button
+                        key={region.id}
+                        variant="outline"
+                        className="h-auto py-4 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary/5 transition-colors"
+                        onClick={() => loadRegionalDetailOverview(region.id, region.name, selectedPeriodId || undefined)}
+                      >
+                        <MapPin className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium text-center">{region.name}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Underperforming Regions Alert */}
+              {underperformingRegions && underperformingRegions.length > 0 && (
+                <UnderperformingRegionsAlert
+                  regions={underperformingRegions}
+                />
+              )}
+              
+              <RegionComparisonChart
+                regions={stats?.regionComparison || []}
+                title="Regional Comparison"
+                description="Average scores by region"
+              />
+              
+              <SubmissionStatusChart
+                data={submissionStatus || []}
+                title="Submission Status by Region"
+                description="Report submission progress"
+              />
+            </>
+          ) : (
+            <>
+              {/* Regional Detail Dashboard */}
+              <div className="flex items-center justify-between mb-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedRegion(null)}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back to National Regions Overview
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="px-3 py-1 text-sm bg-primary/5 border-primary/20">
+                    <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary" />
+                    Currently Viewing: {selectedRegion.name}
+                  </Badge>
+                </div>
+              </div>
+
+              {regionalLoading ? (
+                <Card className="w-full flex flex-col items-center justify-center p-20">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="text-muted-foreground font-medium">Loading {selectedRegion.name} Data...</p>
+                </Card>
+              ) : (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {/* Regional Stat Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard
+                      title="Average Score"
+                      value={Math.round(regionalStats?.averageScore || 0)}
+                      description={`Across ${regionalStats?.submittedCount || 0} reports`}
+                      trend={regionVsNational ? {
+                        value: regionVsNational.difference,
+                        isPositive: regionVsNational.isAboveNational,
+                      } : undefined}
+                      icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
+                    />
+                    <StatCard
+                      title="Schools Submitted"
+                      value={regionalStats?.submittedCount || 0}
+                      description={`Out of ${regionalStats?.totalSchools || 0} schools`}
+                      icon={<School className="h-4 w-4 text-muted-foreground" />}
+                    />
+                    {regionVsNational && (
+                      <RegionVsNationalCard
+                        {...regionVsNational}
+                        regionName={selectedRegion.name}
+                      />
+                    )}
+                  </div>
+
+                  {/* Main Charts Row */}
+                  <div className={`grid gap-6 ${isAdmin ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                    <RatingDistributionChart
+                      distribution={regionalStats?.ratingDistribution || {}}
+                      title={`${selectedRegion.name} Rating Distribution`}
+                    />
+                    <TrendChart
+                      data={regionalTrends || []}
+                      title={`${selectedRegion.name} Performance Trend`}
+                    />
+                  </div>
+
+                  {/* Category Performance Row */}
+                  <div className={`grid gap-6 ${isAdmin ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                    <CategoryBarChart
+                      scores={regionalStats?.categoryAverages || {}}
+                      title="Category Performance"
+                    />
+                    <CategoryRadarChart
+                      scores={regionalStats?.categoryAverages || {}}
+                      title="Category Balance"
+                    />
+                  </div>
+
+                  {/* Regional Rankings & Analysis */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <SchoolRankingsTable
+                      rankings={regionalRankings}
+                      title={`Top Schools in ${selectedRegion.name}`}
+                      onViewSchool={(schoolId) => {
+                        // Navigate to view tab with this school
+                        const matchingReport = reports.find(r => r.schoolId === schoolId)
+                        if (matchingReport) {
+                          handleViewReport(matchingReport.id, matchingReport)
+                        } else {
+                          toast({
+                            title: "Information",
+                            description: "No current report details available for this school.",
+                          })
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Submission & Gap Analysis Row - Only show if data exists */}
+                  {(regionalSubmissionProgress || regionalCategoryGaps) && (
+                    <div className={`grid gap-6 ${isAdmin ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                      {regionalSubmissionProgress && (
+                        <SubmissionProgressBreakdown
+                          {...regionalSubmissionProgress}
+                          title="Report Status Breakdown"
+                        />
+                      )}
+                      {regionalCategoryGaps && (
+                        <CategoryGapAnalysisChart
+                          gaps={regionalCategoryGaps.gaps || []}
+                          weakestCategory={regionalCategoryGaps.weakestCategory}
+                          strongestCategory={regionalCategoryGaps.strongestCategory}
+                          title="Regional Gap Analysis"
+                          description={`How ${selectedRegion.name} compares to national averages by category`}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Improvement & Leaders Row - Only show if data exists */}
+                  {(regionalMostImproved || regionalCategoryLeaders) && (
+                    <div className={`grid gap-6 ${isAdmin ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+                      {regionalMostImproved && (
+                        <MostImprovedSchoolsTable
+                          improved={regionalMostImproved.improved || []}
+                          declined={regionalMostImproved.declined || []}
+                          title="Performance Gains"
+                        />
+                      )}
+                      {regionalCategoryLeaders && (
+                        <CategoryLeadersTable
+                          leaders={regionalCategoryLeaders.leaders || []}
+                          title="Category Excellence"
+                          regionId={selectedRegion.id}
+                          periodId={selectedPeriodId || undefined}
+                          onViewSchool={(schoolId) => {
+                            const matchingReport = reports.find(r => r.schoolId === schoolId)
+                            if (matchingReport) {
+                              handleViewReport(matchingReport.id, matchingReport)
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -869,13 +1228,13 @@ function AdminAssessmentContent() {
                         title="Performance Journey"
                         description="Submitted score trend over time"
                         showTarget={true}
-                        variant={Boolean(selectedReport.isTAPS || selectedReport.tapsRatingGrade) ? 'taps' : 'demo'}
+                        variant={Boolean(selectedReport.isTAPS || selectedReport.is_taps || selectedReport.tapsRatingGrade || selectedReport.taps_rating_grade) ? 'taps' : 'demo'}
                       />
 
                       <ReportsList
                         reports={schoolOverviewReports.map((r: any) => ({
                           ...r,
-                          ratingLevel: r.ratingLevel as any,
+                          ratingLevel: r.ratingLevel || r.rating_level as any,
                         }))}
                         onViewReport={handleViewReport}
                         showSchoolColumn={false}
@@ -890,36 +1249,38 @@ function AdminAssessmentContent() {
               <ReportView
                 report={{
                   id: selectedReport.id,
-                  schoolId: selectedReport.schoolId || selectedReport.school?.id || '',
-                  schoolName: selectedReport.school?.name || 'Unknown School',
-                  regionId: selectedReport.regionId || selectedReport.school?.regionId || '',
-                  regionName: selectedReport.school?.regionName || '',
-                  academicYear: selectedReport.academicYear || activePeriod?.academicYear || '',
-                  termName: selectedReport.termName || activePeriod?.termName || '',
-                  periodId: selectedReport.periodId || activePeriod?.id || '',
-                  totalScore: selectedReport.totalScore || 0,
-                  ratingLevel: selectedReport.ratingLevel || 'needs_improvement',
-                  submittedAt: selectedReport.submittedAt || '',
+                  schoolId: selectedReport.schoolId || selectedReport.school_id || selectedReport.school?.id || '',
+                  schoolName: selectedReport.schoolName || selectedReport.school?.name || 'Unknown School',
+                  regionId: selectedReport.regionId || selectedReport.region_id || selectedReport.school?.region_id || '',
+                  regionName: selectedReport.regionName || selectedReport.school?.regionName || selectedReport.school?.sms_regions?.name || '',
+                  academicYear: selectedReport.academicYear || selectedReport.academic_year || activePeriod?.academicYear || '',
+                  termName: selectedReport.termName || selectedReport.term_name || activePeriod?.termName || '',
+                  periodId: selectedReport.periodId || selectedReport.period_id || activePeriod?.id || '',
+                  totalScore: selectedReport.totalScore !== undefined ? selectedReport.totalScore : (selectedReport.total_score || 0),
+                  ratingLevel: selectedReport.ratingLevel || selectedReport.rating_level || 'needs_improvement',
+                  submittedAt: selectedReport.submittedAt || selectedReport.submitted_at || '',
                   // TAPS fields for secondary schools
-                  isTAPS: selectedReport.isTAPS || Boolean(selectedReport.tapsRatingGrade),
-                  tapsRatingGrade: selectedReport.tapsRatingGrade || undefined,
-                  tapsCategoryScores: selectedReport.tapsCategoryScores || (selectedReport.isTAPS ? {
-                    school_inputs: selectedReport.tapsSchoolInputsScores?.total || 0,
-                    leadership: selectedReport.tapsLeadershipScores?.total || 0,
-                    academics: selectedReport.tapsAcademicsScores?.total || 0,
-                    teacher_development: selectedReport.tapsTeacherDevelopmentScores?.total || 0,
-                    health_safety: selectedReport.tapsHealthSafetyScores?.total || 0,
-                    school_culture: selectedReport.tapsSchoolCultureScores?.total || 0,
-                  } : undefined),
+                  isTAPS: selectedReport.isTAPS || selectedReport.is_taps || Boolean(selectedReport.taps_rating_grade || selectedReport.tapsRatingGrade),
+                  tapsRatingGrade: selectedReport.tapsRatingGrade || selectedReport.taps_rating_grade || undefined,
+                  tapsCategoryScores: selectedReport.tapsCategoryScores || selectedReport.taps_category_scores || (
+                    (selectedReport.isTAPS || selectedReport.is_taps) ? {
+                      school_inputs: (selectedReport.tapsSchoolInputsScores || selectedReport.taps_school_inputs_scores)?.total || 0,
+                      leadership: (selectedReport.tapsLeadershipScores || selectedReport.taps_leadership_scores)?.total || 0,
+                      academics: (selectedReport.tapsAcademicsScores || selectedReport.taps_academics_scores)?.total || 0,
+                      teacher_development: (selectedReport.tapsTeacherDevelopmentScores || selectedReport.taps_teacher_development_scores)?.total || 0,
+                      health_safety: (selectedReport.tapsHealthSafetyScores || selectedReport.taps_health_safety_scores)?.total || 0,
+                      school_culture: (selectedReport.tapsSchoolCultureScores || selectedReport.taps_school_culture_scores)?.total || 0,
+                    } : undefined
+                  ),
                   // Demo category scores
                   categoryScores: calculateAllCategoryScores({
-                    academic: selectedReport.academicScores || {},
-                    attendance: selectedReport.attendanceScores || {},
-                    infrastructure: selectedReport.infrastructureScores || {},
-                    teachingQuality: selectedReport.teachingQualityScores || {},
-                    management: selectedReport.managementScores || {},
-                    studentWelfare: selectedReport.studentWelfareScores || {},
-                    community: selectedReport.communityScores || {},
+                    academic: selectedReport.academicScores || selectedReport.academic_scores || {},
+                    attendance: selectedReport.attendanceScores || selectedReport.attendance_scores || {},
+                    infrastructure: selectedReport.infrastructureScores || selectedReport.infrastructure_scores || {},
+                    teachingQuality: selectedReport.teachingQualityScores || selectedReport.teaching_quality_scores || {},
+                    management: selectedReport.managementScores || selectedReport.management_scores || {},
+                    studentWelfare: selectedReport.studentWelfareScores || selectedReport.student_welfare_scores || {},
+                    community: selectedReport.communityScores || selectedReport.community_scores || {},
                   }),
                 }}
                 recommendations={recommendations}

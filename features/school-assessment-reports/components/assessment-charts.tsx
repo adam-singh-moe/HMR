@@ -43,7 +43,7 @@ import {
 const PolarAngleAxisAny = PolarAngleAxis as any;
 import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar, LineChart as LineChartIcon, BarChart as BarChartIcon } from "lucide-react"
 import type { CategoryName, RatingLevel, TAPSCategoryName, TAPSRatingGrade } from "../types"
-import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE } from "../types"
+import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE, RATING_THRESHOLDS } from "../types"
 import { getRegionalCategoryRankings, getSchoolTrends } from "../actions/analytics"
 import { getReport, getReportBySchoolAndPeriod } from "../actions/reports"
 
@@ -191,30 +191,45 @@ export function TrendChart({ data, title = "Score Trends", description }: TrendC
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
+          <AreaChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 60 }}>
+            <defs>
+              <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.5} />
             <XAxis 
               dataKey="period" 
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 11, fill: '#64748b' }}
               angle={-45}
               textAnchor="end"
-              height={80}
+              height={70}
+              interval={0}
             />
-            <YAxis domain={[0, 1000]} />
+            <YAxis 
+              tick={{ fontSize: 11, fill: '#64748b' }} 
+              domain={[0, (dataMax: number) => Math.max(dataMax * 1.1, 100)]}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip 
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               formatter={((value: any) => [value, 'Average Score']) as any}
               labelStyle={{ fontWeight: 'bold' }}
             />
-            <Legend />
-            <Line
+            <Legend verticalAlign="top" height={40} align="right" iconType="circle" />
+            <Area
               type="monotone"
               dataKey="averageScore"
               stroke="#8884d8"
-              strokeWidth={2}
-              dot={{ fill: '#8884d8' }}
+              strokeWidth={3}
+              fillOpacity={1}
+              fill="url(#colorScore)"
               name="Average Score"
+              activeDot={{ r: 6, strokeWidth: 0 }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
@@ -248,7 +263,7 @@ export function CategoryBarChart({ scores, title = "Category Scores", descriptio
           <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" domain={[0, 'dataMax']} />
-            <YAxis type="category" dataKey="category" tick={{ fontSize: 12 }} width={90} />
+            <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={140} />
             <Tooltip 
               formatter={((value: any, name: string, entry: any) => {
                 const payload = entry?.payload;
@@ -299,7 +314,7 @@ export function TAPSCategoryBarChart({ scores, title = "TAPS Category Scores", d
           <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" domain={[0, 'dataMax']} />
-            <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={120} />
+            <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={140} />
             <Tooltip 
               formatter={((value: number, name: string, entry: any) => {
                 const payload = entry?.payload;
@@ -369,39 +384,62 @@ export function TAPSGradeDistributionChart({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-              label={({ name, value, percent }) => 
-                `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`
-              }
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm">
-          {(Object.entries(TAPS_GRADE_LABELS) as [TAPSRatingGrade, string][]).map(([grade, label]) => (
-            <div key={grade} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded" style={{ backgroundColor: TAPS_GRADE_COLORS[grade] }} />
-              <span>{grade}: {label}</span>
-            </div>
-          ))}
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="w-full flex-1 min-h-[300px]">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={95}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={false}
+                  labelLine={false}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="white" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-col gap-2 min-w-[280px] flex-shrink-0 bg-muted/10 p-4 rounded-xl border border-gray-100">
+            {(Object.entries(TAPS_GRADE_LABELS) as [TAPSRatingGrade, string][]).map(([grade, label]) => {
+              const count = distribution[grade] || 0;
+              const percent = total > 0 ? (count / total) * 100 : 0;
+              return (
+                <div key={grade} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm w-full py-1">
+                  <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 text-white`} style={{ backgroundColor: TAPS_GRADE_COLORS[grade] }}>
+                    {grade}
+                  </div>
+                  <span className="font-medium text-muted-foreground truncate" title={`${grade}: ${label}`}>
+                    {label}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-muted-foreground bg-white px-1.5 py-0.5 rounded border border-gray-100">
+                      {percent.toFixed(0)}%
+                    </span>
+                    <Badge variant={count > 0 ? "default" : "secondary"} className="font-mono flex justify-center h-6 min-w-[32px]">
+                      {count}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
   )
 }
+
+import { UnifiedRatingBadge } from "./unified-rating-badge"
 
 interface RatingDistributionChartProps {
   distribution: RatingDistribution
@@ -449,42 +487,57 @@ export function RatingDistributionChart({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                labelLine={false}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={((value: any) => [value, 'Schools']) as any}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-col gap-2 min-w-[150px]">
-            {(Object.entries(distribution) as [RatingLevel, number][]).map(([rating, count]) => (
-              <div key={rating} className="flex items-center justify-between gap-4 text-sm">
-                <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="w-full flex-1 min-h-[300px]">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={65}
+                  outerRadius={95}
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={false}
+                  labelLine={false}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="white" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={((value: any) => [value, 'Schools']) as any}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-col gap-2 min-w-[280px] flex-shrink-0 bg-muted/10 p-4 rounded-xl border border-gray-100">
+            {(Object.entries(distribution) as [RatingLevel, number][]).map(([rating, count]) => {
+              const percent = total > 0 ? (count / total) * 100 : 0;
+              return (
+                <div key={rating} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm w-full py-1">
                   <div 
-                    className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: RATING_COLORS[rating] }} 
-                  />
-                  <span>{RATING_LABELS[rating]}</span>
+                    className="h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 text-white"
+                    style={{ backgroundColor: RATING_COLORS[rating] }}
+                  >
+                    {RATING_THRESHOLDS[rating.toUpperCase() as keyof typeof RATING_THRESHOLDS]?.grade || rating[0].toUpperCase()}
+                  </div>
+                  <span className="font-medium text-muted-foreground truncate" title={RATING_LABELS[rating]}>
+                    {RATING_LABELS[rating]}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-muted-foreground bg-white px-1.5 py-0.5 rounded border border-gray-100">
+                      {percent.toFixed(0)}%
+                    </span>
+                    <Badge variant={count > 0 ? "default" : "secondary"} className="font-mono flex justify-center h-6 min-w-[32px]">
+                      {count}
+                    </Badge>
+                  </div>
                 </div>
-                <Badge variant="secondary">{count}</Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </CardContent>
@@ -756,7 +809,7 @@ export function RegionComparisonChart({
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" domain={[0, 1000]} />
-            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 12 }} width={90} />
+            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 11 }} width={140} />
             <Tooltip 
               formatter={((value: any, name: string, entry: any) => {
                 const payload = entry?.payload;
@@ -822,7 +875,7 @@ export function SubmissionStatusChart({
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis type="number" />
-            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 12 }} width={90} />
+            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 11 }} width={140} />
             <Tooltip />
             <Legend />
             <Bar dataKey="submitted" fill="#22c55e" stackId="a" name="Submitted" />
@@ -1676,16 +1729,22 @@ export function ScoreDistributionHistogram({
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={dataWithColors} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
             <XAxis 
               dataKey="range" 
-              tick={{ fontSize: 10 }}
-              angle={-25}
-              textAnchor="end"
-              height={80}
+              tick={({ x, y, payload }) => {
+                // Shorten labels on XAxis: "0-399 (Needs Improvement)" -> "0-399"
+                const label = payload.value.split(' ')[0];
+                return (
+                  <text x={x} y={y + 10} dy={16} textAnchor="middle" fill="#64748b" fontSize={10}>
+                    {label}
+                  </text>
+                );
+              }}
+              height={50}
               interval={0}
             />
-            <YAxis tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
             <Tooltip 
               formatter={((value: any, name: string, entry: any) => {
                 const payload = entry?.payload;
@@ -1695,9 +1754,9 @@ export function ScoreDistributionHistogram({
                   'Count'
                 ];
               }) as any}
-              contentStyle={{ borderRadius: '8px' }}
+              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={40}>
               {dataWithColors.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
@@ -1706,16 +1765,24 @@ export function ScoreDistributionHistogram({
         </ResponsiveContainer>
 
         {/* Legend */}
-        <div className="flex flex-wrap justify-center gap-4 mt-4">
-          {distribution.map((item, index) => (
-            <div key={item.range} className="flex items-center gap-2 text-sm">
-              <div 
-                className="w-3 h-3 rounded-sm" 
-                style={{ backgroundColor: RATING_BAR_COLORS[index] }}
-              />
-              <span className="text-muted-foreground">{item.count}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 px-2">
+          {distribution.map((item, index) => {
+            // Extract the label from "0-399 (Needs Improvement)" -> "Needs Improvement"
+            const label = item.range.includes('(') 
+              ? item.range.match(/\(([^)]+)\)/)?.[1] || item.range 
+              : item.range;
+            
+            return (
+              <div key={item.range} className="flex items-center gap-2 text-xs sm:text-sm">
+                <div 
+                  className="w-3 h-3 rounded-full shadow-sm" 
+                  style={{ backgroundColor: RATING_BAR_COLORS[index] }}
+                />
+                <span className="font-medium text-slate-700">{label}:</span>
+                <span className="text-muted-foreground">{item.count}</span>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

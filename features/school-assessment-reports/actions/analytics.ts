@@ -5,6 +5,7 @@ import { getUser } from "@/app/actions/auth"
 import type {
   CategoryName,
   RatingLevel,
+  TAPSRatingGrade,
 } from "../types"
 import { RATING_THRESHOLDS, SCORING_WEIGHTS, CATEGORY_NAMES } from "../types"
 
@@ -72,6 +73,8 @@ interface SchoolRanking {
   totalScore: number
   ratingLevel: RatingLevel
   rank: number
+  isTAPS?: boolean
+  tapsRatingGrade?: TAPSRatingGrade | null
 }
 
 interface CategoryPerformance {
@@ -162,37 +165,114 @@ function parseTermWindowPeriodId(periodId: string): { academicYear: string; term
   if (!periodId.startsWith('term-window-')) return null
   
   const parts = periodId.replace('term-window-', '').split('-')
-  // Should be like ["2024", "2025", "2"] for academic year "2024-2025" term 2
-  if (parts.length >= 3) {
+  // Should be like ["2024", "2025", "2"] for "2024-2025" term 2
+  // Or ["2025", "1"] for "2025" term 1
+  if (parts.length >= 2) {
     const termNumber = parseInt(parts[parts.length - 1], 10)
-    const academicYear = parts.slice(0, -1).join('-') // e.g., "2024-2025"
+    const academicYear = parts.slice(0, -1).join('-')
     return { academicYear, termNumber }
   }
   return null
 }
 
 /**
- * Applies period filtering to a query, handling both real period_id and synthetic term-window IDs
+ * Resolves the filter to use for a period. 
+ * If periodId is provided, it uses that.
+ * If not, it tries to find the current active term window.
+ * If no active window, it falls back to the latest term with a submitted report.
  */
-function applyPeriodFilter(query: any, periodId: string): any {
-  const termWindowInfo = parseTermWindowPeriodId(periodId)
-  
-  if (termWindowInfo) {
-    // Synthetic period from term window - filter by academic_year and term_name
-    const termNameMap: Record<number, string> = {
-      1: 'First Term',
-      2: 'Second Term', 
-      3: 'Third Term'
+async function resolvePeriodFilter(periodId?: string): Promise<{ academic_year?: string; term_name?: string; period_id?: string; original_period_id?: string } | null> {
+  // console.log('[Analytics] resolving period:', periodId)
+  const supabase = createServiceRoleSupabaseClient()
+
+  try {
+    if (periodId) {
+      const termWindowInfo = parseTermWindowPeriodId(periodId)
+      if (termWindowInfo) {
+        const termNameMap: Record<number, string> = {
+          1: 'First Term',
+          2: 'Second Term', 
+          3: 'Third Term'
+        }
+        return { 
+          academic_year: termWindowInfo.academicYear, 
+          term_name: termNameMap[termWindowInfo.termNumber] || `Term ${termWindowInfo.termNumber}` 
+        }
+      } else if (periodId !== 'all' && periodId !== 'all-historical') {
+        const { data: period } = await supabase
+          .from('hmr_school_assessment_periods')
+          .select('academic_year, term_name')
+          .eq('id', periodId)
+          .maybeSingle()
+        
+        if (period) {
+          return {
+            academic_year: period.academic_year,
+            term_name: period.term_name,
+            original_period_id: periodId
+          }
+        }
+        
+        return { period_id: periodId }
+      } else {
+        // Handle "all" or "all-historical"
+        return null
+      }
     }
-    const termName = termNameMap[termWindowInfo.termNumber] || `Term ${termWindowInfo.termNumber}`
+
+    // Fallback logic with explicit potential hang guards
+    // Use a shortened timeout for the RPC call
+    const { data: activeTerm, error: rpcError } = await supabase
+      .rpc('get_active_submission_term')
+      .abortSignal(AbortSignal.timeout(5000))
     
-    return query
-      .eq('academic_year', termWindowInfo.academicYear)
-      .eq('term_name', termName)
-  } else {
-    // Real period_id from old system
-    return query.eq('period_id', periodId)
+    if (activeTerm && activeTerm.length > 0) {
+      return { 
+        academic_year: activeTerm[0].academic_year, 
+        term_name: activeTerm[0].term_name 
+      }
+    }
+
+    const { data: latestReport } = await supabase
+      .from('hmr_school_assessment_reports')
+      .select('academic_year, term_name')
+      .eq('status', 'submitted')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (latestReport?.academic_year && latestReport?.term_name) {
+      return { 
+        academic_year: latestReport.academic_year, 
+        term_name: latestReport.term_name 
+      }
+    }
+  } catch (err) {
+    console.error('Error in resolvePeriodFilter:', err)
   }
+
+  return null
+}
+
+/**
+ * Applies resolved period filters to a query.
+ * Returns the query wrapped in an object to prevent accidental execution 
+ * due to Supabase queries being "thenables".
+ */
+async function applyResolvedPeriodFilter(query: any, periodId?: string): Promise<{ query: any }> {
+  const filters = await resolvePeriodFilter(periodId)
+  if (!filters) return { query }
+
+  if (filters.original_period_id && filters.academic_year && filters.term_name) {
+    // Legacy UUID that maps to specific strings - find reports matching either
+    return { query: query.or(`period_id.eq.${filters.original_period_id},and(academic_year.eq.${filters.academic_year},term_name.eq.${filters.term_name})`) }
+  } else if (filters.period_id) {
+    return { query: query.eq('period_id', filters.period_id) }
+  } else if (filters.academic_year && filters.term_name) {
+    return { query: query.eq('academic_year', filters.academic_year).eq('term_name', filters.term_name) }
+  }
+  
+  return { query }
 }
 
 // ============================================================================
@@ -207,6 +287,7 @@ export async function getRegionalStatistics(
   periodId?: string
 ): Promise<{ stats: AnalyticsRegionalStats | null; error: string | null }> {
   try {
+    console.log('[Analytics] getRegionalStatistics', { regionId, periodId });
     const supabase = createServiceRoleSupabaseClient()
     
     // Get region info
@@ -227,6 +308,7 @@ export async function getRegionalStatistics(
         id,
         total_score,
         rating_level,
+        taps_rating_grade,
         academic_scores,
         attendance_scores,
         infrastructure_scores,
@@ -239,24 +321,8 @@ export async function getRegionalStatistics(
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error: reportsError } = await query
     
@@ -300,9 +366,18 @@ export async function getRegionalStatistics(
       .select('id', { count: 'exact', head: true })
       .eq('region_id', regionId)
     
-    // Calculate statistics
-    const scores = reports.map(r => r.total_score || 0)
-    const averageScore = calculateAverage(scores)
+    // Calculate statistics - normalize TAPS scores to 1000 scale for unified average
+    const normalizedScores = reports.map(r => {
+      const score = r.total_score || 0
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      if (isTAPS) {
+        // TAPS max is 419, Primary max is 1000. 
+        // We scale TAPS to 1000 to keep the averages consistent.
+        return Math.min(1000, Math.round((score / 419) * 1000))
+      }
+      return score
+    })
+    const averageScore = calculateAverage(normalizedScores)
     
     // Rating distribution
     const ratingDistribution: Record<RatingLevel, number> = {
@@ -314,7 +389,23 @@ export async function getRegionalStatistics(
     }
     
     reports.forEach(r => {
-      const rating = r.rating_level as RatingLevel
+      // Priority: use taps_rating_grade if available, or rating_level
+      let rating: RatingLevel | null = null;
+      
+      if (r.taps_rating_grade) {
+        // Map TAPS grades A-E to Primary RatingLevels for unified distribution chart
+        const gradeMap: Record<string, RatingLevel> = {
+          'A': 'outstanding',
+          'B': 'very_good',
+          'C': 'good', 
+          'D': 'satisfactory',
+          'E': 'needs_improvement'
+        };
+        rating = gradeMap[r.taps_rating_grade] || null;
+      } else {
+        rating = r.rating_level as RatingLevel;
+      }
+
       if (rating && ratingDistribution[rating] !== undefined) {
         ratingDistribution[rating]++
       }
@@ -386,31 +477,17 @@ export async function getRegionalSchoolRankings(
         id,
         total_score,
         rating_level,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools!inner(id, name, region_id, sms_regions(name))
       `)
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
-      .order('total_score', { ascending: false })
-      .limit(limit)
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -418,15 +495,31 @@ export async function getRegionalSchoolRankings(
       console.error('Error fetching regional rankings:', error)
       return { rankings: [], error: 'Failed to fetch rankings.' }
     }
+
+    const processedRankings = (reports || []).map((r: any) => {
+      const isTAPS = !!(r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores || r.taps_rating_grade)
+      const score = r.total_score || 0
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      
+      return {
+        schoolId: r.sms_schools?.id || '',
+        schoolName: r.sms_schools?.name || '',
+        regionId: r.sms_schools?.region_id || '',
+        regionName: r.sms_schools?.sms_regions?.name || '',
+        totalScore: r.total_score || 0,
+        normalizedScore,
+        ratingLevel: r.rating_level as RatingLevel,
+        isTAPS,
+        tapsRatingGrade: r.taps_rating_grade as TAPSRatingGrade,
+      }
+    })
+
+    // Sort by normalized score (Performance)
+    processedRankings.sort((a, b) => b.normalizedScore - a.normalizedScore)
     
-    const rankings: SchoolRanking[] = (reports || []).map((r: any, index: number) => ({
-      schoolId: r.sms_schools?.id || '',
-      schoolName: r.sms_schools?.name || '',
-      regionId: r.sms_schools?.region_id || '',
-      regionName: r.sms_schools?.sms_regions?.name || '',
-      totalScore: r.total_score || 0,
-      ratingLevel: r.rating_level as RatingLevel,
-      rank: index + 1,
+    const rankings: SchoolRanking[] = processedRankings.slice(0, limit).map((r, index) => ({
+      ...r,
+      rank: index + 1
     }))
     
     return { rankings, error: null }
@@ -439,6 +532,29 @@ export async function getRegionalSchoolRankings(
 // ============================================================================
 // NATIONAL ANALYTICS
 // ============================================================================
+
+/**
+ * Gets all regions from the database
+ */
+export async function getAllRegions(): Promise<{ regions: { id: string; name: string }[]; error: string | null }> {
+  try {
+    const supabase = createServiceRoleSupabaseClient()
+    const { data: regions, error } = await supabase
+      .from('sms_regions')
+      .select('id, name')
+      .order('name')
+    
+    if (error) {
+      console.error('Error fetching regions:', error)
+      return { regions: [], error: 'Failed to fetch regions.' }
+    }
+    
+    return { regions: regions || [], error: null }
+  } catch (error) {
+    console.error('Error in getAllRegions:', error)
+    return { regions: [], error: 'An unexpected error occurred.' }
+  }
+}
 
 /**
  * Gets comprehensive national statistics
@@ -456,6 +572,7 @@ export async function getNationalStatistics(
         id,
         total_score,
         rating_level,
+        taps_rating_grade,
         academic_scores,
         attendance_scores,
         infrastructure_scores,
@@ -467,30 +584,41 @@ export async function getNationalStatistics(
       `)
       .eq('status', 'submitted')
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error: reportsError } = await query
     
     if (reportsError) {
       console.error('Error fetching national reports:', reportsError)
-      return { stats: null, error: 'Failed to fetch reports.' }
+      // Return empty stats instead of null to prevent UI from breaking
+      return { 
+        stats: {
+          totalRegions: 0,
+          totalSchools: 0,
+          submittedCount: 0,
+          nationalAverageScore: 0,
+          ratingDistribution: {
+            'outstanding': 0,
+            'very_good': 0,
+            'good': 0,
+            'satisfactory': 0,
+            'needs_improvement': 0
+          },
+          categoryAverages: {
+            academic: 0,
+            attendance: 0,
+            infrastructure: 0,
+            teaching_quality: 0,
+            management: 0,
+            student_welfare: 0,
+            community: 0
+          },
+          topPerformingRegion: null,
+          regionComparison: []
+        }, 
+        error: 'Failed to fetch reports: ' + reportsError.message 
+      }
     }
     
     // Get all regions
@@ -533,9 +661,18 @@ export async function getNationalStatistics(
       }
     }
     
-    // Calculate national average
-    const scores = reports.map(r => r.total_score || 0)
-    const nationalAverageScore = calculateAverage(scores)
+    // Calculate national average - normalize TAPS scores to 1000 scale for unified average
+    const normalizedScores = reports.map(r => {
+      const score = r.total_score || 0
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      if (isTAPS) {
+        // TAPS max is 419, Primary max is 1000. 
+        // We scale TAPS to 1000 for unified stats.
+        return Math.min(1000, Math.round((score / 419) * 1000))
+      }
+      return score
+    })
+    const nationalAverageScore = calculateAverage(normalizedScores)
     
     // Rating distribution
     const ratingDistribution: Record<RatingLevel, number> = {
@@ -547,7 +684,23 @@ export async function getNationalStatistics(
     }
     
     reports.forEach(r => {
-      const rating = r.rating_level as RatingLevel
+      // Priority: use taps_rating_grade if available, or rating_level
+      let rating: RatingLevel | null = null;
+      
+      if (r.taps_rating_grade) {
+        // Map TAPS grades A-E to Primary RatingLevels for unified distribution chart
+        const gradeMap: Record<string, RatingLevel> = {
+          'A': 'outstanding',
+          'B': 'very_good',
+          'C': 'good', 
+          'D': 'satisfactory',
+          'E': 'needs_improvement'
+        };
+        rating = gradeMap[r.taps_rating_grade] || null;
+      } else {
+        rating = r.rating_level as RatingLevel;
+      }
+
       if (rating && ratingDistribution[rating] !== undefined) {
         ratingDistribution[rating]++
       }
@@ -649,46 +802,49 @@ export async function getNationalSchoolRankings(
         id,
         total_score,
         rating_level,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools(id, name, region_id, sms_regions(name))
       `)
       .eq('status', 'submitted')
-      .order('total_score', { ascending: false })
-      .limit(limit)
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
-    const { data: reports, error } = await query
+    // For national rankings, we fetch up to 1000 reports to sort by normalized performance
+    const { data: reports, error } = await query.limit(1000).abortSignal(AbortSignal.timeout(10000))
     
     if (error) {
       console.error('Error fetching national rankings:', error)
       return { rankings: [], error: 'Failed to fetch rankings.' }
     }
     
-    const rankings: SchoolRanking[] = (reports || []).map((r: any, index: number) => ({
-      schoolId: r.sms_schools?.id || '',
-      schoolName: r.sms_schools?.name || '',
-      regionId: r.sms_schools?.region_id || '',
-      regionName: r.sms_schools?.sms_regions?.name || '',
-      totalScore: r.total_score || 0,
-      ratingLevel: r.rating_level as RatingLevel,
-      rank: index + 1,
+    const processedRankings = (reports || []).map((r: any) => {
+      const isTAPS = !!(r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores || r.taps_rating_grade)
+      const score = r.total_score || 0
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      
+      return {
+        schoolId: r.sms_schools?.id || '',
+        schoolName: r.sms_schools?.name || '',
+        regionId: r.sms_schools?.region_id || '',
+        regionName: r.sms_schools?.sms_regions?.name || '',
+        totalScore: r.total_score || 0,
+        normalizedScore,
+        ratingLevel: r.rating_level as RatingLevel,
+        isTAPS,
+        tapsRatingGrade: r.taps_rating_grade as TAPSRatingGrade,
+      }
+    })
+
+    // Sort by normalized score (Performance)
+    processedRankings.sort((a, b) => b.normalizedScore - a.normalizedScore)
+    
+    const rankings: SchoolRanking[] = processedRankings.slice(0, limit).map((r, index) => ({
+      ...r,
+      rank: index + 1
     }))
     
     return { rankings, error: null }
@@ -792,12 +948,17 @@ export async function getRegionalTrends(
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    // Get periods with reports for this region
     const { data: reports, error } = await supabase
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
         period_id,
+        academic_year,
+        term_name,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order),
         sms_schools!inner(region_id)
       `)
@@ -809,7 +970,15 @@ export async function getRegionalTrends(
       return { trends: [], error: 'Failed to fetch trends.' }
     }
     
-    // Group by period
+    const inferTermOrder = (termName: string): number => {
+      const t = (termName || '').toLowerCase()
+      if (t.includes('first') || t.includes('september')) return 1
+      if (t.includes('second') || t.includes('january')) return 2
+      if (t.includes('third') || t.includes('april')) return 3
+      return 0
+    }
+
+    // Group by academic year and term
     const periodGroups: Record<string, {
       academicYear: string
       termName: string
@@ -818,38 +987,48 @@ export async function getRegionalTrends(
     }> = {}
     
     ;(reports || []).forEach((r: any) => {
-      const periodId = r.period_id
-      if (periodId && r.hmr_school_assessment_periods) {
-        if (!periodGroups[periodId]) {
-          periodGroups[periodId] = {
-            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-            termName: r.hmr_school_assessment_periods?.term_name || '',
-            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
-            scores: [],
-          }
+      const period = r.hmr_school_assessment_periods
+      const academicYear = period?.academic_year || r.academic_year || 'Unknown Year'
+      const termName = period?.term_name || r.term_name || 'Unknown Term'
+      const sequenceOrder = period?.sequence_order || inferTermOrder(termName)
+      
+      const groupKey = `${academicYear}-${termName}`
+      
+      if (!periodGroups[groupKey]) {
+        periodGroups[groupKey] = {
+          academicYear,
+          termName,
+          sequenceOrder,
+          scores: [],
         }
-        periodGroups[periodId].scores.push(r.total_score || 0)
       }
+      
+      const score = r.total_score || 0
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      
+      periodGroups[groupKey].scores.push(normalizedScore)
     })
     
+    const parseAcademicYearStart = (academicYear: string): number => {
+      const start = Number.parseInt((academicYear || '').split('-')[0] || '', 10)
+      return Number.isFinite(start) ? start : 0
+    }
+
     // Convert to trends array and sort
-    const trends: TrendData[] = Object.entries(periodGroups)
-      .map(([periodId, data]) => ({
+    const trends: TrendData[] = Object.values(periodGroups)
+      .map((data) => ({
         period: `${data.academicYear} - ${data.termName}`,
         academicYear: data.academicYear,
         termName: data.termName,
         averageScore: calculateAverage(data.scores),
         submissionCount: data.scores.length,
+        _sequenceOrder: data.sequenceOrder,
+        _yearStart: parseAcademicYearStart(data.academicYear),
       }))
-      .sort((a, b) => {
-        // Sort by academic year, then term
-        if (a.academicYear !== b.academicYear) {
-          return a.academicYear.localeCompare(b.academicYear)
-        }
-        const termOrder = ['September-December', 'January-March', 'April-July']
-        return termOrder.indexOf(a.termName) - termOrder.indexOf(b.termName)
-      })
+      .sort((a: any, b: any) => (a._yearStart - b._yearStart) || (a._sequenceOrder - b._sequenceOrder))
       .slice(-limit) // Take most recent
+      .map(({ _sequenceOrder, _yearStart, ...rest }: any) => rest)
     
     return { trends, error: null }
   } catch (error) {
@@ -872,6 +1051,12 @@ export async function getNationalTrends(
       .select(`
         total_score,
         period_id,
+        academic_year,
+        term_name,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         hmr_school_assessment_periods(academic_year, term_name, sequence_order)
       `)
       .eq('status', 'submitted')
@@ -881,7 +1066,15 @@ export async function getNationalTrends(
       return { trends: [], error: 'Failed to fetch trends.' }
     }
     
-    // Group by period
+    const inferTermOrder = (termName: string): number => {
+      const t = (termName || '').toLowerCase()
+      if (t.includes('first') || t.includes('september')) return 1
+      if (t.includes('second') || t.includes('january')) return 2
+      if (t.includes('third') || t.includes('april')) return 3
+      return 0
+    }
+
+    // Group by academic year and term
     const periodGroups: Record<string, {
       academicYear: string
       termName: string
@@ -890,37 +1083,48 @@ export async function getNationalTrends(
     }> = {}
     
     ;(reports || []).forEach((r: any) => {
-      const periodId = r.period_id
-      if (periodId && r.hmr_school_assessment_periods) {
-        if (!periodGroups[periodId]) {
-          periodGroups[periodId] = {
-            academicYear: r.hmr_school_assessment_periods?.academic_year || '',
-            termName: r.hmr_school_assessment_periods?.term_name || '',
-            sequenceOrder: r.hmr_school_assessment_periods?.sequence_order || 0,
-            scores: [],
-          }
+      const period = r.hmr_school_assessment_periods
+      const academicYear = period?.academic_year || r.academic_year || 'Unknown Year'
+      const termName = period?.term_name || r.term_name || 'Unknown Term'
+      const sequenceOrder = period?.sequence_order || inferTermOrder(termName)
+      
+      const groupKey = `${academicYear}-${termName}`
+      
+      if (!periodGroups[groupKey]) {
+        periodGroups[groupKey] = {
+          academicYear,
+          termName,
+          sequenceOrder,
+          scores: [],
         }
-        periodGroups[periodId].scores.push(r.total_score || 0)
       }
+      
+      const score = r.total_score || 0
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      
+      periodGroups[groupKey].scores.push(normalizedScore)
     })
     
     // Convert to trends array and sort
-    const trends: TrendData[] = Object.entries(periodGroups)
-      .map(([periodId, data]) => ({
+    const parseAcademicYearStart = (academicYear: string): number => {
+      const start = Number.parseInt((academicYear || '').split('-')[0] || '', 10)
+      return Number.isFinite(start) ? start : 0
+    }
+
+    const trends: TrendData[] = Object.values(periodGroups)
+      .map((data) => ({
         period: `${data.academicYear} - ${data.termName}`,
         academicYear: data.academicYear,
         termName: data.termName,
         averageScore: calculateAverage(data.scores),
         submissionCount: data.scores.length,
+        _sequenceOrder: data.sequenceOrder,
+        _yearStart: parseAcademicYearStart(data.academicYear),
       }))
-      .sort((a, b) => {
-        if (a.academicYear !== b.academicYear) {
-          return a.academicYear.localeCompare(b.academicYear)
-        }
-        const termOrder = ['September-December', 'January-March', 'April-July']
-        return termOrder.indexOf(a.termName) - termOrder.indexOf(b.termName)
-      })
+      .sort((a: any, b: any) => (a._yearStart - b._yearStart) || (a._sequenceOrder - b._sequenceOrder))
       .slice(-limit)
+      .map(({ _sequenceOrder, _yearStart, ...rest }: any) => rest)
     
     return { trends, error: null }
   } catch (error) {
@@ -953,28 +1157,12 @@ export async function getCategoryPerformance(
         management_scores,
         student_welfare_scores,
         community_scores,
-        sms_schools(region_id)
+        sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -1088,25 +1276,9 @@ export async function getSubmissionStatusByRegion(
       .select('school_id, sms_schools(region_id)')
       .eq('status', 'submitted')
     
-    // Apply period filter only if periodId is provided
-    if (periodId) {
-      reportsQuery = applyPeriodFilter(reportsQuery, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        reportsQuery = reportsQuery
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    // Apply period filter (handles synthetic IDs and legacy UUID resolution)
+    const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, periodId)
+    reportsQuery = filteredReportsQuery
     
     const { data: reports, error: reportsError } = await reportsQuery
     
@@ -1167,21 +1339,76 @@ export async function getSchoolRankingPosition(
   error: string | null 
 }> {
   try {
+    if (!schoolId) {
+      return {
+        regionalRank: null, regionalTotal: 0,
+        nationalRank: null, nationalTotal: 0,
+        nationalPercentile: null, regionName: '',
+        error: 'School ID is required.',
+      }
+    }
+
     const access = await assertCanAccessSchool(schoolId)
     if (!access.ok) {
       return {
-        regionalRank: null,
-        regionalTotal: 0,
-        nationalRank: null,
-        nationalTotal: 0,
-        nationalPercentile: null,
-        regionName: '',
+        regionalRank: null, regionalTotal: 0,
+        nationalRank: null, nationalTotal: 0,
+        nationalPercentile: null, regionName: '',
         error: access.error,
       }
     }
 
     const supabase = createServiceRoleSupabaseClient()
     
+    // Resolve periodId if it depends on 'all'
+    let effectivePeriodId = periodId
+    if (periodId === 'all') {
+      // For ranking, 'all' historical is too broad/ambiguous. 
+      // Pick the period of the most recent submitted report for this school.
+      const { data: recentReport, error: recentError } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('period_id, academic_year, term_name')
+        .eq('school_id', schoolId)
+        .eq('status', 'submitted')
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      
+      if (recentError) {
+        console.error('Error fetching recent report for ranking:', recentError)
+      }
+      
+      if (recentReport) {
+        // Use the specific period ID if it exists, otherwise use a synthetic one
+        effectivePeriodId = recentReport.period_id || `term-window-${recentReport.academic_year}-${recentReport.term_name === 'First Term' ? 1 : recentReport.term_name === 'Second Term' ? 2 : 3}`
+      } else {
+        // Fallback: Use the overall latest submitted report period globally
+        const { data: latestGlobal, error: globalError } = await supabase
+          .from('hmr_school_assessment_reports')
+          .select('period_id, academic_year, term_name')
+          .eq('status', 'submitted')
+          .order('submitted_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (globalError) {
+          console.error('Error fetching latest global report for ranking:', globalError)
+        }
+
+        if (latestGlobal) {
+          effectivePeriodId = latestGlobal.period_id || `term-window-${latestGlobal.academic_year}-${latestGlobal.term_name === 'First Term' ? 1 : latestGlobal.term_name === 'Second Term' ? 2 : 3}`
+        } else {
+          // Absolute fallback if no submitted reports exist at all
+          return {
+            regionalRank: null, regionalTotal: 0,
+            nationalRank: null, nationalTotal: 0,
+            nationalPercentile: null, regionName: '',
+            error: null 
+          }
+        }
+      }
+    }
+
     // Get school's region
     const { data: school, error: schoolError } = await supabase
       .from('sms_schools')
@@ -1200,50 +1427,82 @@ export async function getSchoolRankingPosition(
     
     const regionId = school.region_id
     const regionName = (school.sms_regions as any)?.name || ''
-    
-    // Get all submitted reports with scores
-    let query = supabase
+
+    // NEW: Fast path - check if our school even has a report in this period 
+    // before we try to fetch thousands of other schools for comparison.
+    let baseQuery = supabase
       .from('hmr_school_assessment_reports')
-      .select(`
-        id,
-        school_id,
-        total_score,
-        sms_schools!inner(id, region_id)
-      `)
+      .select('id, total_score, is_taps, taps_rating_grade')
+      .eq('school_id', schoolId)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
-    
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
-    
-    const { data: reports, error: reportsError } = await query
-    
-    if (reportsError || !reports) {
+
+    const { query: filteredBase } = await applyResolvedPeriodFilter(baseQuery, effectivePeriodId)
+    const { data: schoolReportRef, error: schoolReportError } = await filteredBase.limit(1).maybeSingle()
+
+    if (schoolReportError || !schoolReportRef) {
+      console.log(`[Ranking] No report found for school ${schoolId} in period ${effectivePeriodId}, skipping expensive ranking calculation.`)
       return { 
         regionalRank: null, regionalTotal: 0, 
         nationalRank: null, nationalTotal: 0, 
         nationalPercentile: null, regionName,
-        error: 'Failed to fetch reports.' 
-      }
-    }
-    
-    // Get school's report
-    const schoolReport = reports.find(r => r.school_id === schoolId)
-    if (!schoolReport) {
-      return { 
-        regionalRank: null, regionalTotal: reports.length, 
-        nationalRank: null, nationalTotal: reports.length, 
-        nationalPercentile: null, regionName,
         error: null 
       }
     }
+
+    // Now we know the school exists, get the rest for comparison
+    let query = supabase
+      .from('hmr_school_assessment_reports')
+      .select(`
+        school_id,
+        total_score,
+        is_taps,
+        taps_rating_grade,
+        sms_schools!inner(region_id)
+      `)
+      .eq('status', 'submitted')
+      .not('total_score', 'is', null)
     
-    const schoolScore = schoolReport.total_score || 0
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, effectivePeriodId)
+    query = filteredQuery
     
-    // Calculate national ranking
-    const nationalScores = reports.map(r => r.total_score || 0).sort((a, b) => b - a)
-    const nationalRank = nationalScores.findIndex(s => s <= schoolScore) + 1
+    // Add a limit as a safety measure to prevent massive memory usage
+    // 5000 is enough to cover all schools in Guyana several times over
+    const { data: reports, error: reportsError } = await query.limit(2000).abortSignal(AbortSignal.timeout(10000))
+    
+    if (reportsError || !reports) {
+      console.error('Ranking reports error:', reportsError)
+      if (reportsError?.name === 'AbortError') {
+        return {
+          regionalRank: null, regionalTotal: 0,
+          nationalRank: null, nationalTotal: 0,
+          nationalPercentile: null, regionName,
+          error: 'Ranking calculation timed out.'
+        }
+      }
+      return { 
+        regionalRank: null, regionalTotal: 0, 
+        nationalRank: null, nationalTotal: 0, 
+        nationalPercentile: null, regionName,
+        error: 'Failed to fetch reports for ranking.' 
+      }
+    }
+    
+    // Get school's report from our earlier fetch or this set
+    const schoolReportEntry = schoolReportRef;
+    
+    // Helper to calculate normalized score (0-1000)
+    const getNormalizedScore = (r: any) => {
+      const is_taps_local = r.is_taps || Boolean(r.taps_rating_grade)
+      const score_local = r.total_score || 0
+      return is_taps_local ? Math.round((score_local / 419) * 1000) : score_local
+    }
+
+    const schoolScoreNormal = getNormalizedScore(schoolReportEntry)
+    
+    // Calculate national ranking using normalized scores
+    const nationalScores = reports.map(r => getNormalizedScore(r)).sort((a, b) => b - a)
+    const nationalRank = nationalScores.findIndex(s => s <= schoolScoreNormal) + 1
     const nationalTotal = nationalScores.length
     const nationalPercentile = nationalTotal > 0 
       ? Math.round(((nationalTotal - nationalRank + 1) / nationalTotal) * 100) 
@@ -1251,8 +1510,8 @@ export async function getSchoolRankingPosition(
     
     // Calculate regional ranking
     const regionalReports = reports.filter((r: any) => r.sms_schools?.region_id === regionId)
-    const regionalScores = regionalReports.map(r => r.total_score || 0).sort((a, b) => b - a)
-    const regionalRank = regionalScores.findIndex(s => s <= schoolScore) + 1
+    const regionalScores = regionalReports.map(r => getNormalizedScore(r)).sort((a, b) => b - a)
+    const regionalRank = regionalScores.findIndex(s => s <= schoolScoreNormal) + 1
     const regionalTotal = regionalScores.length
     
     return {
@@ -1384,9 +1643,8 @@ export async function getSubmissionProgressBreakdown(
       reportsQuery = reportsQuery.eq('sms_schools.region_id', regionId)
     }
     
-    if (periodId) {
-      reportsQuery = applyPeriodFilter(reportsQuery, periodId)
-    }
+    const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, periodId)
+    reportsQuery = filteredReportsQuery
     
     const { data: reports, error } = await reportsQuery
     
@@ -1574,9 +1832,8 @@ export async function getCategoryGapAnalysis(
       query = query.eq('sms_schools.region_id', regionId)
     }
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -1647,6 +1904,11 @@ export async function getScoreDistribution(
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
+        rating_level,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
@@ -1656,9 +1918,8 @@ export async function getScoreDistribution(
       query = query.eq('sms_schools.region_id', regionId)
     }
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -1666,20 +1927,61 @@ export async function getScoreDistribution(
       return { distribution: [], totalReports: 0, error: 'Failed to fetch data.' }
     }
     
-    const scores = (reports || []).map(r => r.total_score || 0)
-    const totalReports = scores.length
+    const totalReports = (reports || []).length
     
-    // Define score ranges with rating labels
+    // Bucket reports by their semantic rating level to ensure consistency with other charts
+    // and correctly handle different scoring systems (Primary vs TAPS)
+    const ratingBuckets: Record<RatingLevel, number> = {
+      outstanding: 0,
+      very_good: 0,
+      good: 0,
+      satisfactory: 0,
+      needs_improvement: 0,
+    }
+
+    ;(reports || []).forEach(r => {
+      let rating: RatingLevel | null = null
+      
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      
+      if (isTAPS && r.taps_rating_grade) {
+        // Map TAPS grades A-E to unified RatingLevels
+        const gradeMap: Record<string, RatingLevel> = {
+          'A': 'outstanding',
+          'B': 'very_good',
+          'C': 'good', 
+          'D': 'satisfactory',
+          'E': 'needs_improvement'
+        }
+        rating = gradeMap[r.taps_rating_grade] || null
+      } else if (r.rating_level) {
+        // Standardize rating_level from DB
+        const level = r.rating_level.toLowerCase().replace(' ', '_') as RatingLevel
+        if (ratingBuckets[level] !== undefined) {
+          rating = level
+        }
+      }
+
+      if (rating) {
+        ratingBuckets[rating]++
+      } else {
+        // Fallback to Needs Improvement if no rating level found
+        ratingBuckets.needs_improvement++
+      }
+    })
+    
+    // Define the display ranges with labels that work for both systems or emphasize the level
+    // We keep the primary score ranges in the labels for backwards compatibility with the UI
     const ranges = [
-      { label: '0-399 (Needs Improvement)', min: 0, max: 399 },
-      { label: '400-549 (Satisfactory)', min: 400, max: 549 },
-      { label: '550-699 (Good)', min: 550, max: 699 },
-      { label: '700-849 (Very Good)', min: 700, max: 849 },
-      { label: '850-1000 (Outstanding)', min: 850, max: 1000 },
+      { key: 'needs_improvement', label: '0-399 (Needs Improvement)', min: 0, max: 399 },
+      { key: 'satisfactory', label: '400-549 (Satisfactory)', min: 400, max: 549 },
+      { key: 'good', label: '550-699 (Good)', min: 550, max: 699 },
+      { key: 'very_good', label: '700-849 (Very Good)', min: 700, max: 849 },
+      { key: 'outstanding', label: '850-1000 (Outstanding)', min: 850, max: 1000 },
     ]
     
     const distribution = ranges.map(range => {
-      const count = scores.filter(s => s >= range.min && s <= range.max).length
+      const count = ratingBuckets[range.key as RatingLevel]
       return {
         range: range.label,
         count,
@@ -1725,9 +2027,8 @@ export async function getRegionVsNationalComparison(
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -1760,8 +2061,10 @@ export async function getRegionVsNationalComparison(
     
     // Sort by average to get rank
     regionAverages.sort((a, b) => b.average - a.average)
-    const regionRank = regionAverages.findIndex(r => r.regionId === regionId) + 1
-    const regionData = regionAverages.find(r => r.regionId === regionId)
+    
+    // Use loose comparison or string conversion for IDs to handle string/number mismatches
+    const regionRank = regionAverages.findIndex(r => String(r.regionId) === String(regionId)) + 1
+    const regionData = regionAverages.find(r => String(r.regionId) === String(regionId))
     const regionAverage = regionData?.average || 0
     
     const difference = regionAverage - nationalAverage
@@ -1819,9 +2122,8 @@ export async function getSchoolsNeedingAttention(
       query = query.eq('sms_schools.region_id', regionId)
     }
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -1877,9 +2179,8 @@ export async function getCategoryLeaders(
       query = query.eq('sms_schools.region_id', regionId)
     }
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     
@@ -1973,9 +2274,8 @@ export async function getRegionalCategoryRankings(
       query = query.eq('sms_schools.region_id', regionId)
     }
 
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
 
     const { data: reports, error } = await query
 
@@ -2035,24 +2335,8 @@ export async function getUnderperformingRegions(
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
     
-    if (periodId) {
-      query = applyPeriodFilter(query, periodId)
-    } else {
-      // Fallback: Get the most recent academic year and term from reports
-      const { data: latestReport } = await supabase
-        .from('hmr_school_assessment_reports')
-        .select('academic_year, term_name')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (latestReport?.academic_year && latestReport?.term_name) {
-        query = query
-          .eq('academic_year', latestReport.academic_year)
-          .eq('term_name', latestReport.term_name)
-      }
-    }
+    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
+    query = filteredQuery
     
     const { data: reports, error } = await query
     

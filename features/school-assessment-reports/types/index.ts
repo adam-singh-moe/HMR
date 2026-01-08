@@ -717,8 +717,12 @@ export interface TAPSAllCategoryScores {
 export interface SchoolAssessmentReport {
   id: string
   schoolId: string
+  schoolName?: string
+  regionName?: string
   headteacherId: string
   periodId: string
+  academicYear?: string
+  termName?: string
   status: ReportStatus
   submittedAt: string | null
   lockedAt: string | null

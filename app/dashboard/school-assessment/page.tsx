@@ -278,12 +278,46 @@ function HeadTeacherAssessmentContent() {
               }
             }
           }
+
+          // FALLBACK: If we still don't have a selected report for category details, 
+          // pull the most recent submitted one from history to populate the overview charts
+          if (!selectedReport && reportsResult.reports && reportsResult.reports.length > 0) {
+            const latestSubmitted = reportsResult.reports
+              .filter((r: any) => r.status === 'submitted')
+              .sort((a: any, b: any) => new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime())[0];
+            
+            if (latestSubmitted) {
+              const detailedResult = await getReport(latestSubmitted.id)
+              if (detailedResult.report) {
+                setSelectedReport(detailedResult.report)
+                
+                // Also fetch analysis and ranking for this fallback report's period
+                const [strengthResult, fallbackRankingResult] = await Promise.all([
+                  getCategoryStrengthAnalysis(latestSubmitted.id),
+                  getSchoolRankingPosition(school.id, latestSubmitted.periodId)
+                ])
+
+                if (!strengthResult.error) {
+                  setCategoryStrength({
+                    strongest: strengthResult.strongest,
+                    weakest: strengthResult.weakest,
+                  })
+                }
+
+                if (!fallbackRankingResult.error) {
+                  setRankingData(fallbackRankingResult)
+                }
+              }
+            }
+          }
         }
         
-        // Fetch school ranking position
-        const rankingResult = await getSchoolRankingPosition(school.id)
-        if (!rankingResult.error) {
-          setRankingData(rankingResult)
+        // Only fetch default ranking if it wasn't already set by the fallback logic
+        if (!rankingData) {
+          const rankingResult = await getSchoolRankingPosition(school.id)
+          if (!rankingResult.error) {
+            setRankingData(rankingResult)
+          }
         }
         
         // Get trends - build from reports if period-based trends aren't available
@@ -809,13 +843,17 @@ function HeadTeacherAssessmentContent() {
 
           {/* AI Insights Section */}
           {latestReport && selectedReport && (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="flex flex-col gap-6">
               {/* AI Performance Insight */}
               <AIInsightCard
                 type="overview"
                 title="AI Performance Analysis"
                 description="Get AI-powered insights about your school's assessment"
-                filters={{ schoolId: schoolInfo?.id }}
+                filters={{ 
+                  schoolId: schoolInfo?.id,
+                  periodId: selectedReport?.periodId 
+                }}
+                autoGenerate={false}
               />
               
               {/* AI Recommendations */}
@@ -823,6 +861,7 @@ function HeadTeacherAssessmentContent() {
                 schoolId={schoolInfo?.id}
                 reportId={selectedReport.id}
                 schoolName={schoolInfo?.name || 'Your School'}
+                autoGenerate={false}
               />
             </div>
           )}

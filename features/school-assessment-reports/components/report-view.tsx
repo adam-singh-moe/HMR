@@ -14,6 +14,8 @@ import {
   HeartPulse,
   Handshake,
   Download,
+  FileSpreadsheet,
+  Printer,
   Lightbulb,
   TrendingUp,
   AlertTriangle,
@@ -332,21 +334,186 @@ export function ReportView({
     }
   }, [activeExportJob])
 
-  const handleExportPDF = async () => {
-    setIsExporting(true)
-    const { jobId, error } = await startExportJob(report.id, 'pdf')
-    
-    if (error) {
-      toast.error(`Failed to start export: ${error}`)
-      setIsExporting(false)
-      return
-    }
+  const handleExportCSV = () => {
+    const configs = isTAPS ? TAPS_CATEGORY_CONFIG : CATEGORY_CONFIG
+    const headers = ['Category', 'Score', 'Max Score', 'Percentage', 'Rating']
+    const rows = (Object.entries(configs) as [any, { label: string; maxScore: number }][]).map(([category, config]) => {
+      const score = isTAPS ? report.tapsCategoryScores?.[category as TAPSCategoryName] || 0 : report.categoryScores[category as CategoryName] || 0
+      const percentage = getPercentage(score, config.maxScore)
+      const tone = getPerformanceTone(percentage)
+      return [
+        config.label,
+        score,
+        config.maxScore,
+        `${percentage}%`,
+        tone.label
+      ]
+    })
 
-    if (jobId) {
-      const { job } = await getExportJobStatus(jobId)
-      setActiveExportJob(job)
-      toast.info('Export started. Please wait...')
-    }
+    const csvContent = [
+      ['School Name', report.schoolName],
+      ['Region', report.regionName],
+      ['Academic Year', report.academicYear],
+      ['Term', report.termName],
+      ['Total Score', report.totalScore],
+      ['Grade', resolvedGrade],
+      [],
+      headers,
+      ...rows
+    ].map(e => e.join(",")).join("\n")
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `${report.schoolName.replace(/\s+/g, '_')}_Assessment_Report.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    toast.success('Report exported to CSV')
+  }
+
+  const handleExportPDF = async () => {
+    // Use the professional print-based PDF generation
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    document.body.appendChild(iframe)
+
+    const configs = isTAPS ? TAPS_CATEGORY_CONFIG : CATEGORY_CONFIG
+    const categoryRows = (Object.entries(configs) as [any, { label: string; maxScore: number }][]).map(([category, config]) => {
+      const score = isTAPS ? report.tapsCategoryScores?.[category as TAPSCategoryName] || 0 : report.categoryScores[category as CategoryName] || 0
+      const percentage = getPercentage(score, config.maxScore)
+      const tone = getPerformanceTone(percentage)
+      return `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #eee;"><strong>${config.label}</strong></td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${score} / ${config.maxScore}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${percentage}%</td>
+          <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;"><span style="padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; background: ${tone.bgClass.includes('emerald') ? '#ecfdf5' : tone.bgClass.includes('blue') ? '#eff6ff' : tone.bgClass.includes('amber') ? '#fffbeb' : tone.bgClass.includes('orange') ? '#fff7ed' : '#fef2f2'}; color: ${tone.textClass.includes('emerald') ? '#059669' : tone.textClass.includes('blue') ? '#2563eb' : tone.textClass.includes('amber') ? '#d97706' : tone.textClass.includes('orange') ? '#ea580c' : '#dc2626'};">${tone.label}</span></td>
+        </tr>
+      `
+    }).join('')
+
+    const recommendationItems = recommendations.map(rec => `
+      <div style="margin-bottom: 15px; padding: 15px; border-left: 4px solid ${rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#10b981'}; background: #f9fafb; border-radius: 0 8px 8px 0;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <strong style="font-size: 14px; color: #111827;">${isTAPS ? TAPS_CATEGORY_CONFIG[rec.category as TAPSCategoryName | 'general']?.label || rec.category : CATEGORY_CONFIG[rec.category as CategoryName | 'general']?.label || rec.category}</strong>
+          <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: ${rec.priority === 'high' ? '#ef4444' : rec.priority === 'medium' ? '#f59e0b' : '#10b981'};">${rec.priority} Priority</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #4b5563; line-height: 1.5;">${rec.recommendationText}</p>
+        ${rec.focusAreas && rec.focusAreas.length > 0 ? `<div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px;">${rec.focusAreas.map(area => `<span style="font-size: 10px; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; color: #374151;">${area}</span>`).join('')}</div>` : ''}
+      </div>
+    `).join('')
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Libre Baskerville', serif; color: #1a1a1a; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; }
+          h1, h2, h3 { font-family: 'Inter', sans-serif; color: #111827; }
+          .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+          .moe-title { font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+          .report-title { font-size: 18px; font-weight: 700; margin-top: 10px; color: #4b5563; }
+          .school-info { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f3f4f6; padding: 20px; border-radius: 12px; }
+          .info-item { font-family: 'Inter', sans-serif; font-size: 14px; }
+          .info-label { font-weight: 700; color: #6b7280; text-transform: uppercase; font-size: 11px; display: block; }
+          .info-value { font-size: 16px; font-weight: 700; color: #111827; }
+          .score-card { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 2px solid #e5e7eb; padding: 25px; border-radius: 16px; margin-bottom: 30px; }
+          .score-main { flex: 1; }
+          .score-label { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; }
+          .score-value { font-family: 'Inter', sans-serif; font-size: 48px; font-weight: 900; color: #111827; line-height: 1; }
+          .score-max { font-size: 18px; color: #9ca3af; }
+          .grade-badge { width: 80px; height: 80px; background: #111827; color: #fff; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+          .grade-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.7; }
+          .grade-value { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 900; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-family: 'Inter', sans-serif; font-size: 13px; }
+          th { text-align: left; padding: 12px; background: #f9fafb; color: #6b7280; text-transform: uppercase; font-size: 11px; border-bottom: 2px solid #e5e7eb; }
+          .footer { margin-top: 50px; border-top: 1px solid #e5e7eb; pt: 20px; font-size: 10px; color: #9ca3af; text-align: center; font-family: 'Inter', sans-serif; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="moe-title">Ministry of Education</div>
+          <div style="font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; color: #059669;">Co-operative Republic of Guyana</div>
+          <div class="report-title">School Performance Assessment Report</div>
+        </div>
+
+        <div class="school-info">
+          <div class="info-item">
+            <span class="info-label">School Name</span>
+            <span class="info-value">${report.schoolName}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Region</span>
+            <span class="info-value">${report.regionName}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Academic Period</span>
+            <span class="info-value">${report.academicYear} - ${report.termName}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Assessment Date</span>
+            <span class="info-value">${formatDate(report.submittedAt)}</span>
+          </div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-main">
+            <div class="score-label">Overall Performance Score</div>
+            <div class="score-value">${report.totalScore} <span class="score-max">/ ${maxScore}</span></div>
+            <div style="font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: #059669; margin-top: 5px;">${overallPercentage}% Achievement Index</div>
+          </div>
+          <div class="grade-badge" style="background: ${gradeTone.textClass.includes('emerald') ? '#059669' : gradeTone.textClass.includes('blue') ? '#2563eb' : gradeTone.textClass.includes('amber') ? '#d97706' : gradeTone.textClass.includes('orange') ? '#ea580c' : '#dc2626'};">
+            <span class="grade-label">Grade</span>
+            <span class="grade-value">${resolvedGrade}</span>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 40px; border-left: 4px solid #111827; padding-left: 15px;">Category Breakdown</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th style="text-align: center;">Score</th>
+              <th style="text-align: center;">Percentage</th>
+              <th style="text-align: right;">Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${categoryRows}
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 40px; border-left: 4px solid #111827; padding-left: 15px;">Actionable Roadmap & Recommendations</h3>
+        <div style="margin-top: 20px;">
+          ${recommendationItems || '<p style="font-style: italic; color: #6b7280;">No specific recommendations generated for this period.</p>'}
+        </div>
+
+        <div class="footer">
+          <p>This is an official document generated by the Ministry of Education School Assessment System.</p>
+          <p>Generated on ${new Date().toLocaleString()} | Report ID: ${report.id}</p>
+        </div>
+
+        <script>
+          window.onload = () => {
+            window.print();
+            setTimeout(() => {
+              window.frameElement.parentElement.removeChild(window.frameElement);
+            }, 1000);
+          };
+        </script>
+      </body>
+      </html>
+    `
+
+    iframe.srcdoc = htmlContent
   }
 
   // Load user preferences and default comparison
@@ -515,21 +682,25 @@ export function ReportView({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="h-9 shadow-sm" 
+                    className="h-9 shadow-sm gap-2" 
+                    onClick={handleExportCSV}
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Export CSV
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 shadow-sm gap-2" 
                     onClick={handleExportPDF}
                     disabled={isExporting}
                   >
                     {isExporting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {activeExportJob?.status === 'processing' ? 'Processing...' : 'Starting...'}
-                      </>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Export PDF
-                      </>
+                      <Printer className="h-4 w-4" />
                     )}
+                    Export PDF
                   </Button>
                   <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => {/* Open settings modal */}}>
                     <Settings2 className="h-4 w-4" />

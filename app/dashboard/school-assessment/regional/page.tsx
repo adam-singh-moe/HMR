@@ -594,6 +594,7 @@ function RegionalOfficerAssessmentContent() {
               title="AI Regional Analysis"
               description="Get AI-powered insights about your region's performance"
               filters={{ regionId: regionId || undefined }}
+              autoGenerate={false}
             />
             
             {/* AI At-Risk Schools Alert */}

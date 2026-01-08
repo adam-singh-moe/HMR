@@ -101,8 +101,9 @@ export async function deleteAssessmentReport(reportId: string): Promise<{ succes
  * Converts database row to SchoolAssessmentReport type
  */
 function mapDbRowToReport(row: any): SchoolAssessmentReport {
-  // A report uses TAPS if it has a taps_rating_grade OR any taps scores
+  // A report uses TAPS if it has the is_taps flag, a taps_rating_grade OR any taps scores
   const hasTAPSData = Boolean(
+    row.is_taps ||
     row.taps_rating_grade ||
     row.taps_school_inputs_scores ||
     row.taps_leadership_scores ||
@@ -127,8 +128,12 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
   return {
     id: row.id,
     schoolId: row.school_id,
+    schoolName: row.sms_schools?.name || row.schoolName || '',
+    regionName: row.sms_schools?.sms_regions?.name || row.regionName || '',
     headteacherId: row.headteacher_id,
     periodId: row.period_id,
+    academicYear: row.hmr_school_assessment_periods?.academic_year || row.academic_year,
+    termName: row.hmr_school_assessment_periods?.term_name || row.term_name,
     status: row.status as ReportStatus,
     submittedAt: row.submitted_at,
     lockedAt: row.locked_at,
@@ -1037,9 +1042,19 @@ export async function getSchoolReports(schoolId: string) {
     const { data, error } = await supabase
       .from('hmr_school_assessment_reports')
       .select(`
-        *,
+        id,
+        school_id,
+        status,
+        total_score,
+        rating_level,
+        academic_year,
+        term_name,
+        submitted_at,
+        created_at,
+        is_taps,
+        taps_rating_grade,
         sms_schools(id, name, region_id, sms_regions(name)),
-        hmr_school_assessment_periods(*)
+        hmr_school_assessment_periods(academic_year, term_name)
       `)
       .eq('school_id', schoolId)
       .order('created_at', { ascending: false })
@@ -1184,7 +1199,33 @@ export async function getRegionalReports(regionId?: string, periodId?: string) {
     }
     
     if (periodId) {
-      query = query.eq('period_id', periodId)
+      // Check if this is a synthetic period ID from term window system
+      if (periodId.startsWith('term-window-')) {
+        const parts = periodId.replace('term-window-', '').split('-')
+        if (parts.length >= 2) {
+          const academicYear = parts.slice(0, -1).join('-')
+          const termNumber = parseInt(parts[parts.length - 1])
+          const termName = termNumber === 1 ? 'First Term' : termNumber === 2 ? 'Second Term' : 'Third Term'
+          
+          query = query
+            .eq('academic_year', academicYear)
+            .eq('term_name', termName)
+        }
+      } else {
+        // First, get the period details to know what academic_year and term_name to filter by
+        const { data: period } = await supabase
+          .from('hmr_school_assessment_periods')
+          .select('academic_year, term_name')
+          .eq('id', periodId)
+          .single()
+        
+        if (period) {
+          // Filter by academic_year and term_name OR period_id (works for both old and new reports)
+          query = query.or(`period_id.eq.${periodId},and(academic_year.eq.${period.academic_year},term_name.eq.${period.term_name})`)
+        } else {
+          query = query.eq('period_id', periodId)
+        }
+      }
     }
     
     const { data, error } = await query
@@ -1224,7 +1265,7 @@ export async function getNationalReports(filters?: ReportFilters) {
       .order('submitted_at', { ascending: false, nullsFirst: false })
     
     // Apply filters
-    if (filters?.periodId) {
+    if (filters?.periodId && filters.periodId !== 'all') {
       // Check if this is a synthetic period ID from term window system
       if (filters.periodId.startsWith('term-window-')) {
         // Parse academic year and term from the synthetic ID
@@ -1251,10 +1292,8 @@ export async function getNationalReports(filters?: ReportFilters) {
           .single()
         
         if (period) {
-          // Filter by academic_year and term_name (works for both old and new reports)
-          query = query
-            .eq('academic_year', period.academic_year)
-            .eq('term_name', period.term_name)
+          // Filter by academic_year and term_name OR period_id (works for both old and new reports)
+          query = query.or(`period_id.eq.${filters.periodId},and(academic_year.eq.${period.academic_year},term_name.eq.${period.term_name})`)
         } else {
           // Fallback: only filter by period_id (old system)
           query = query.eq('period_id', filters.periodId)

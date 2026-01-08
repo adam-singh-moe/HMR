@@ -35,7 +35,73 @@ import {
   Shield,
   BookOpen,
   Printer,
+  Maximize2,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
+
+// ============================================================================
+// FULLSCREEN MODAL HELPER
+// ============================================================================
+
+function FullscreenInsightModal({ 
+  content, 
+  title, 
+  description,
+  trigger = null
+}: { 
+  content: string, 
+  title: string, 
+  description?: string,
+  trigger?: React.ReactNode
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="outline" size="sm" className="gap-2">
+            <Maximize2 className="h-4 w-4" />
+            Fullscreen
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-[95vw] w-[1200px] h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 border-b bg-muted/30">
+          <div className="flex items-center justify-between pr-8">
+            <div>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-purple-600" />
+                {title}
+              </DialogTitle>
+              {description && <DialogDescription className="text-base mt-1">{description}</DialogDescription>}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => printMarkdownToPdf(content, title)}
+            >
+              <Printer className="h-4 w-4" />
+              Print / Save PDF
+            </Button>
+          </div>
+        </DialogHeader>
+        <ScrollArea className="flex-1 p-8 bg-background">
+          <div className="max-w-4xl mx-auto py-4">
+            <MarkdownRenderer content={content} />
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 // ============================================================================
 // MARKDOWN RENDERER HELPER
@@ -79,31 +145,190 @@ function escapeHtml(value: string) {
 }
 
 function printHtmlToPdf(bodyHtml: string, title: string) {
-  const themeClass = document.documentElement.className
-  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-    .map((node) => node.outerHTML)
-    .join("\n")
-
   const safeTitle = escapeHtml(title)
 
   const srcdoc = `<!doctype html>
-<html class="${escapeHtml(themeClass)}">
+<html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <base href="${escapeHtml(window.location.origin)}" />
     <title>${safeTitle}</title>
-    ${styles}
     <style>
-      :root { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body { margin: 16px; }
-      [data-print-hide] { display: none !important; }
-      [data-print-scroll] { max-height: none !important; overflow: visible !important; }
-      @page { margin: 12mm; }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap');
+      
+      :root { 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+      }
+      
+      body { 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+        color: #1a1a1a;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+      }
+      
+      .page {
+        padding: 25mm;
+        max-width: 210mm;
+        margin: 20px auto;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        min-height: 297mm;
+      }
+      
+      @media print {
+        body { background: white; }
+        .page { 
+          padding: 0; 
+          margin: 0; 
+          max-width: none; 
+          box-shadow: none;
+          min-height: auto;
+        }
+        @page { 
+          margin: 20mm; 
+          size: A4;
+        }
+        .no-print { display: none; }
+      }
+      
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+      }
+      
+      .logo {
+        width: 90px;
+        height: auto;
+      }
+      
+      .header-text h1 {
+        margin: 0;
+        font-size: 20pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #000;
+        letter-spacing: 0.5px;
+      }
+      
+      .header-text h2 {
+        margin: 5px 0 0 0;
+        font-size: 14pt;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .document-title {
+        font-family: 'Libre Baskerville', serif;
+        font-size: 24pt;
+        font-weight: 700;
+        margin: 30px 0;
+        color: #000;
+        text-align: center;
+        line-height: 1.2;
+      }
+      
+      h1, h2, h3, h4 {
+        font-family: 'Inter', sans-serif;
+        color: #000;
+        margin-top: 1.8em;
+        margin-bottom: 0.8em;
+        line-height: 1.3;
+      }
+      
+      h1 { font-size: 18pt; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+      h2 { font-size: 16pt; color: #222; }
+      h3 { font-size: 14pt; color: #333; }
+      
+      p { 
+        margin-bottom: 1.2em; 
+        font-size: 11pt; 
+        text-align: justify;
+        color: #222;
+      }
+      
+      ul, ol { 
+        margin-bottom: 1.2em; 
+        padding-left: 30px; 
+      }
+      
+      li { 
+        margin-bottom: 0.6em; 
+        font-size: 11pt; 
+        color: #222;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 25px 0;
+        font-size: 10pt;
+        page-break-inside: avoid;
+      }
+      
+      th {
+        background-color: #f2f2f2;
+        border: 1.5px solid #333;
+        padding: 12px;
+        text-align: left;
+        font-weight: 700;
+        color: #000;
+      }
+      
+      td {
+        border: 1px solid #ccc;
+        padding: 10px 12px;
+        vertical-align: top;
+        color: #333;
+      }
+      
+      tr:nth-child(even) { background-color: #fafafa; }
+      
+      .footer {
+        margin-top: 60px;
+        border-top: 1px solid #000;
+        padding-top: 15px;
+        font-size: 9pt;
+        color: #555;
+        display: flex;
+        justify-content: space-between;
+        font-style: italic;
+      }
+      
+      .key-value {
+        display: flex;
+        margin-bottom: 8px;
+        font-size: 11pt;
+      }
+      
+      .key { 
+        font-weight: 700; 
+        width: 180px; 
+        color: #000;
+      }
+      
+      .divider {
+        height: 2px;
+        background: #000;
+        margin: 30px 0;
+      }
+
+      .document-content {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
-    ${bodyHtml}
+    <div class="page">
+      ${bodyHtml}
+    </div>
   </body>
 </html>`
 
@@ -149,13 +374,11 @@ function printElementToPdf(element: HTMLElement, title: string) {
 function renderMarkdownToPrintHtml(content: string, title: string) {
   const sections = parseMarkdownToSections(content)
 
-  const headingClasses: Record<number, string> = {
-    1: 'text-xl font-bold text-purple-800 dark:text-purple-200 border-b pb-2 mb-3',
-    2: 'text-lg font-semibold text-purple-700 dark:text-purple-300 mt-4 mb-2',
-    3: 'text-base font-semibold text-gray-800 dark:text-gray-200 mt-3 mb-2',
-    4: 'text-sm font-semibold text-gray-700 dark:text-gray-300 mt-2 mb-1',
-    5: 'text-sm font-medium text-gray-600 dark:text-gray-400 mt-2 mb-1',
-    6: 'text-xs font-medium text-gray-500 dark:text-gray-500 mt-1 mb-1',
+  const formatText = (text: string) => {
+    const escaped = escapeHtml(text)
+    return escaped
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
   }
 
   const sectionsHtml = sections
@@ -164,58 +387,48 @@ function renderMarkdownToPrintHtml(content: string, title: string) {
         case 'heading': {
           const level = Math.min(section.level || 2, 6)
           const tag = `h${level}`
-          const className = headingClasses[level] || headingClasses[2]
-          return `<${tag} class="${className}">${escapeHtml(section.content)}</${tag}>`
+          return `<${tag}>${formatText(section.content)}</${tag}>`
         }
         case 'paragraph':
-          return `<p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">${escapeHtml(section.content)}</p>`
+          return `<p>${formatText(section.content)}</p>`
         case 'list': {
           const items = (section.items || [])
-            .map((item) => {
-              return `
-                <li class="flex items-start gap-2 text-sm">
-                  <span class="text-purple-500 mt-1.5">•</span>
-                  <span class="text-gray-700 dark:text-gray-300">${escapeHtml(item)}</span>
-                </li>
-              `.trim()
-            })
+            .map((item) => `<li>${formatText(item)}</li>`)
             .join("\n")
-          return `<ul class="space-y-1.5 ml-1">${items}</ul>`
+          return `<ul>${items}</ul>`
         }
         case 'table': {
           const headers = (section.headers || [])
-            .map((h) => `<th class="text-left font-semibold text-purple-800 dark:text-purple-200 px-4 py-2">${escapeHtml(h)}</th>`)
+            .map((h) => `<th>${formatText(h)}</th>`)
             .join("")
 
           const rows = (section.rows || [])
             .map((row) => {
               const cells = row
-                .map((cell) => `<td class="text-sm px-4 py-2 align-top">${escapeHtml(cell)}</td>`)
+                .map((cell) => `<td>${formatText(cell)}</td>`)
                 .join("")
-              return `<tr class="border-t">${cells}</tr>`
+              return `<tr>${cells}</tr>`
             })
             .join("\n")
 
           return `
-            <div class="rounded-lg border overflow-hidden my-3">
-              <table class="w-full">
-                <thead>
-                  <tr class="bg-purple-50 dark:bg-purple-950/30">${headers}</tr>
-                </thead>
-                <tbody>${rows}</tbody>
-              </table>
-            </div>
+            <table>
+              <thead>
+                <tr>${headers}</tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
           `.trim()
         }
         case 'keyValue':
           return `
-            <div class="flex flex-wrap gap-x-2 py-1">
-              <span class="font-semibold text-purple-700 dark:text-purple-300 text-sm">${escapeHtml(section.content)}:</span>
-              <span class="text-gray-700 dark:text-gray-300 text-sm">${escapeHtml(section.items?.[0] || "")}</span>
+            <div class="key-value">
+              <span class="key">${formatText(section.content)}:</span>
+              <span class="value">${formatText(section.items?.[0] || "")}</span>
             </div>
           `.trim()
         case 'divider':
-          return `<hr class="my-4 border-gray-200 dark:border-gray-700" />`
+          return `<div class="divider"></div>`
         default:
           return ''
       }
@@ -223,14 +436,32 @@ function renderMarkdownToPrintHtml(content: string, title: string) {
     .filter(Boolean)
     .join("\n")
 
-  // Print-only document wrapper (keeps Tailwind styling, avoids printing headers/buttons).
+  const date = new Date().toLocaleDateString('en-GY', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+
+  // Print-only document wrapper with formal header
   return `
-    <div class="max-w-3xl mx-auto">
-      <div class="rounded-lg border p-6 bg-muted/30">
-        <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">${escapeHtml(title)}</h1>
-        <div class="space-y-4">${sectionsHtml}</div>
+    <header class="header">
+      <img src="${window.location.origin}/images/moe-logo.png" alt="MOE Logo" class="logo" />
+      <div class="header-text">
+        <h1>Ministry of Education</h1>
+        <h2>Co-operative Republic of Guyana</h2>
       </div>
+    </header>
+    
+    <div class="document-title">${escapeHtml(title)}</div>
+    
+    <div class="document-content">
+      ${sectionsHtml}
     </div>
+    
+    <footer class="footer">
+      <span>Official Assessment Analysis Report</span>
+      <span>Generated on ${date}</span>
+    </footer>
   `.trim()
 }
 
@@ -290,7 +521,7 @@ function parseMarkdownToSections(content: string): ParsedSection[] {
       sections.push({ 
         type: 'heading', 
         level: headingMatch[1].length, 
-        content: headingMatch[2].replace(/\*\*/g, '').trim() 
+        content: headingMatch[2].trim() 
       })
       continue
     }
@@ -336,7 +567,7 @@ function parseMarkdownToSections(content: string): ParsedSection[] {
       sections.push({ type: 'list', content: '', items: [...currentList] })
       currentList = []
     }
-    sections.push({ type: 'paragraph', content: line.replace(/\*\*/g, '').replace(/\*/g, '') })
+    sections.push({ type: 'paragraph', content: line })
   }
 
   // Close any remaining lists or tables
@@ -348,6 +579,27 @@ function parseMarkdownToSections(content: string): ParsedSection[] {
   }
 
   return sections
+}
+
+function FormattedText({ text, className }: { text: string, className?: string }) {
+  if (!text) return null
+  
+  // Split by bold (**text**) and italic (*text*) markers
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g)
+  
+  return (
+    <span className={className}>
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>
+        }
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return <em key={i} className="italic">{part.slice(1, -1)}</em>
+        }
+        return part
+      })}
+    </span>
+  )
 }
 
 function RenderSection({ section }: { section: ParsedSection }) {
@@ -365,17 +617,17 @@ function RenderSection({ section }: { section: ParsedSection }) {
       const className = headingClasses[level] || headingClasses[2]
       
       // Use explicit heading elements based on level
-      if (level === 1) return <h1 className={className}>{section.content}</h1>
-      if (level === 2) return <h2 className={className}>{section.content}</h2>
-      if (level === 3) return <h3 className={className}>{section.content}</h3>
-      if (level === 4) return <h4 className={className}>{section.content}</h4>
-      if (level === 5) return <h5 className={className}>{section.content}</h5>
-      return <h6 className={className}>{section.content}</h6>
+      if (level === 1) return <h1 className={className}><FormattedText text={section.content} /></h1>
+      if (level === 2) return <h2 className={className}><FormattedText text={section.content} /></h2>
+      if (level === 3) return <h3 className={className}><FormattedText text={section.content} /></h3>
+      if (level === 4) return <h4 className={className}><FormattedText text={section.content} /></h4>
+      if (level === 5) return <h5 className={className}><FormattedText text={section.content} /></h5>
+      return <h6 className={className}><FormattedText text={section.content} /></h6>
 
     case 'paragraph':
       return (
         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-          {section.content}
+          <FormattedText text={section.content} />
         </p>
       )
 
@@ -385,7 +637,9 @@ function RenderSection({ section }: { section: ParsedSection }) {
           {section.items?.map((item, idx) => (
             <li key={idx} className="flex items-start gap-2 text-sm">
               <span className="text-purple-500 mt-1.5">•</span>
-              <span className="text-gray-700 dark:text-gray-300">{item}</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                <FormattedText text={item} />
+              </span>
             </li>
           ))}
         </ul>
@@ -399,7 +653,7 @@ function RenderSection({ section }: { section: ParsedSection }) {
               <TableRow className="bg-purple-50 dark:bg-purple-950/30">
                 {section.headers?.map((header, idx) => (
                   <TableHead key={idx} className="font-semibold text-purple-800 dark:text-purple-200">
-                    {header}
+                    <FormattedText text={header} />
                   </TableHead>
                 ))}
               </TableRow>
@@ -409,7 +663,7 @@ function RenderSection({ section }: { section: ParsedSection }) {
                 <TableRow key={rowIdx} className="hover:bg-muted/50">
                   {row.map((cell, cellIdx) => (
                     <TableCell key={cellIdx} className="text-sm">
-                      {cell}
+                      <FormattedText text={cell} />
                     </TableCell>
                   ))}
                 </TableRow>
@@ -423,10 +677,10 @@ function RenderSection({ section }: { section: ParsedSection }) {
       return (
         <div className="flex flex-wrap gap-x-2 py-1">
           <span className="font-semibold text-purple-700 dark:text-purple-300 text-sm">
-            {section.content}:
+            <FormattedText text={section.content} />:
           </span>
           <span className="text-gray-700 dark:text-gray-300 text-sm">
-            {section.items?.[0]}
+            <FormattedText text={section.items?.[0] || ""} />
           </span>
         </div>
       )
@@ -1667,18 +1921,31 @@ export function AIInsightCard({
               )}
 
               {insight && !loading && (
-                <Button
-                  data-print-hide
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => {
-                    printMarkdownToPdf(insight, title)
-                  }}
-                >
-                  <Printer className="h-4 w-4" />
-                  Print / Save PDF
-                </Button>
+                <div className="flex items-center gap-2">
+                  <FullscreenInsightModal 
+                    content={insight} 
+                    title={title} 
+                    description={description}
+                    trigger={
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Maximize2 className="h-4 w-4" />
+                        Fullscreen
+                      </Button>
+                    }
+                  />
+                  <Button
+                    data-print-hide
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      printMarkdownToPdf(insight, title)
+                    }}
+                  >
+                    <Printer className="h-4 w-4" />
+                    Print / Save PDF
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -2071,6 +2338,31 @@ export function AIRecommendationPanel({
                 <Sparkles className="h-3 w-3" />
                 AI
               </Badge>
+              <div className="flex items-center gap-2 ml-2">
+                <FullscreenInsightModal 
+                  content={recommendations} 
+                  title="AI Recommendations" 
+                  description={`Personalized improvement recommendations for ${schoolName}`}
+                  trigger={
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Maximize2 className="h-4 w-4" />
+                      Fullscreen
+                    </Button>
+                  }
+                />
+                <Button
+                  data-print-hide
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    printMarkdownToPdf(recommendations, `AI Recommendations - ${schoolName}`)
+                  }}
+                >
+                  <Printer className="h-4 w-4" />
+                  Print / Save PDF
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -2194,12 +2486,15 @@ export function AITrendPrediction({
     setFromCache(false)
     
     try {
-      if (!entityId) {
-        setError('Missing school id')
+      const targetId = entityId || (type === 'national' ? 'national' : null)
+
+      if (!targetId) {
+        setError(type === 'region' ? 'Missing region id' : 'Missing school id')
+        setLoading(false)
         return
       }
 
-      const result = await fetchPredictiveAnalytics(entityId)
+      const result = await fetchPredictiveAnalytics(targetId)
       if (result.error) {
         setError(result.error)
         return
@@ -2253,6 +2548,33 @@ export function AITrendPrediction({
                 <Sparkles className="h-3 w-3" />
                 AI
               </Badge>
+              {prediction.insight && (
+                <div className="flex items-center gap-2 ml-2">
+                  <FullscreenInsightModal 
+                    content={prediction.insight} 
+                    title={title} 
+                    description={description}
+                    trigger={
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Maximize2 className="h-4 w-4" />
+                        Fullscreen
+                      </Button>
+                    }
+                  />
+                  <Button
+                    data-print-hide
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      printMarkdownToPdf(prediction.insight, title)
+                    }}
+                  >
+                    <Printer className="h-4 w-4" />
+                    Print / Save PDF
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -2291,7 +2613,7 @@ export function AITrendPrediction({
               <div className="p-3 rounded-lg bg-muted/50 text-center">
                 <p className="text-xs text-muted-foreground">Predicted Score</p>
                 <p className="text-2xl font-bold text-indigo-600">
-                  {prediction.predictedScore || '—'}
+                  {prediction.nextTermScore || prediction.predictedScore || '—'}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center">
@@ -2425,18 +2747,31 @@ export function AIComparativeAnalysis({
             </div>
 
             {analysis && !loading && (
-              <Button
-                data-print-hide
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => {
-                  printMarkdownToPdf(analysis, title)
-                }}
-              >
-                <Printer className="h-4 w-4" />
-                Print / Save PDF
-              </Button>
+              <div className="flex items-center gap-2">
+                <FullscreenInsightModal 
+                  content={analysis} 
+                  title={title} 
+                  description={description}
+                  trigger={
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Maximize2 className="h-4 w-4" />
+                      Fullscreen
+                    </Button>
+                  }
+                />
+                <Button
+                  data-print-hide
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    printMarkdownToPdf(analysis, title)
+                  }}
+                >
+                  <Printer className="h-4 w-4" />
+                  Print / Save PDF
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -2534,11 +2869,40 @@ export function AIActionPlanCard({
   return (
     <Card className={`border-green-200 dark:border-green-800 ${className}`}>
       <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <BookOpen className="h-5 w-5 text-green-600" />
-          AI Improvement Plan
-          <span className="text-sm font-normal text-muted-foreground">for {schoolName}</span>
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <BookOpen className="h-5 w-5 text-green-600" />
+            AI Improvement Plan
+            <span className="text-sm font-normal text-muted-foreground">for {schoolName}</span>
+          </CardTitle>
+          {plan && (
+            <div className="flex items-center gap-2">
+              <FullscreenInsightModal 
+                content={plan} 
+                title="AI Improvement Plan" 
+                description={`Comprehensive improvement plan for ${schoolName}`}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Maximize2 className="h-4 w-4" />
+                    Fullscreen
+                  </Button>
+                }
+              />
+              <Button
+                data-print-hide
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  printMarkdownToPdf(plan, `AI Improvement Plan - ${schoolName}`)
+                }}
+              >
+                <Printer className="h-4 w-4" />
+                Print / Save PDF
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-4">
         {!plan && !loading && (

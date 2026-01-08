@@ -3,6 +3,7 @@
 import { AIService } from "@/lib/ai-service"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "@/app/actions/auth"
+import { getNationalTrends } from "./analytics"
 
 import {
   calculateAllCategoryScores,
@@ -49,6 +50,7 @@ interface PredictiveResult {
     trend: 'improving' | 'declining' | 'stable'
     riskLevel: 'low' | 'medium' | 'high'
     factors: string[]
+    insight?: string
   } | null
   error: string | null
 }
@@ -410,29 +412,45 @@ export async function generatePredictiveAnalytics(
     }
 
     const supabase = createServiceRoleSupabaseClient()
+    let reports: any[] = []
+    let scores: number[] = []
+    let maxTotal = TOTAL_MAX_SCORE
 
-    // Fetch historical reports (at least 2 needed for prediction)
-    const { data: reports } = await supabase
-      .from('hmr_school_assessment_reports')
-      .select('*')
-      .eq('school_id', schoolId)
-      .eq('status', 'submitted')
-      .order('submitted_at', { ascending: true })
-      .limit(10)
-
-    if (!reports || reports.length < 2) {
-      return { 
-        predictions: null, 
-        error: "Insufficient historical data. At least 2 submitted reports are needed for predictions." 
+    if (schoolId === 'national') {
+      const { trends, error: trendError } = await getNationalTrends(12)
+      if (trendError || !trends || trends.length < 2) {
+        return { 
+          predictions: null, 
+          error: "Insufficient historical data for national trends. At least 2 periods are needed for predictions." 
+        }
       }
+      scores = trends.map(t => t.averageScore)
+      // For national stats, we assume the 1000 point scale (demo) as it's the benchmark
+      maxTotal = TOTAL_MAX_SCORE
+    } else {
+      // Fetch historical reports (at least 2 needed for prediction)
+      const { data: schoolReports } = await supabase
+        .from('hmr_school_assessment_reports')
+        .select('*')
+        .eq('school_id', schoolId)
+        .eq('status', 'submitted')
+        .order('submitted_at', { ascending: true })
+        .limit(10)
+
+      if (!schoolReports || schoolReports.length < 2) {
+        return { 
+          predictions: null, 
+          error: "Insufficient historical data. At least 2 submitted reports are needed for predictions." 
+        }
+      }
+      reports = schoolReports
+      scores = reports.map(r => r.total_score || 0)
+      
+      const system: AssessmentSystem = detectAssessmentSystem(reports[reports.length - 1])
+      maxTotal = getMaxTotal(system)
     }
 
-    // Avoid mixing scales: determine which assessment system these reports represent.
-    const system: AssessmentSystem = detectAssessmentSystem(reports[reports.length - 1])
-    const maxTotal = getMaxTotal(system)
-
     // Calculate trend
-    const scores = reports.map(r => r.total_score || 0)
     const avgChange = calculateTrendSlope(scores)
     const lastScore = scores[scores.length - 1]
     const predictedScore = Math.max(0, Math.min(maxTotal, lastScore + avgChange))
@@ -460,11 +478,34 @@ export async function generatePredictiveAnalytics(
     }
 
     // Identify contributing factors
-    const factors = identifyPerformanceFactors(reports)
+    const factors = schoolId === 'national' 
+      ? ['National performance trends', 'Regional aggregation', 'Macro-education indicators']
+      : identifyPerformanceFactors(reports)
 
     // Calculate confidence based on data quantity and consistency
+    const dataPoints = schoolId === 'national' ? scores.length : reports.length
     const variance = calculateVariance(scores)
-    const confidence = Math.max(0.3, Math.min(0.95, 1 - (variance / 50000) + (reports.length * 0.05)))
+    const confidence = Math.max(0.3, Math.min(0.95, 1 - (variance / (maxTotal * maxTotal * 0.05)) + (dataPoints * 0.05)))
+
+    // Generate a brief AI insight for the prediction
+    let insight = ""
+    try {
+      const aiService = new AIService()
+      const prompt = `
+        Analyze this performance prediction for ${schoolId === 'national' ? 'National Trends' : 'School Performance'}:
+        - Latest Score: ${lastScore} / ${maxTotal}
+        - Predicted Score: ${Math.round(predictedScore)}
+        - Trend: ${trend}
+        - Risk Level: ${riskLevel}
+        - Factors: ${factors.join(', ')}
+        
+        Provide a concise 2-3 sentence insight explaining the forecast and any key areas of focus.
+      `
+      insight = await aiService.generateInsight(prompt, [])
+    } catch (e) {
+      console.error("AI Insight generation failed for prediction:", e)
+      insight = `Based on historical data, performance is trending ${trend}. The predicted score for next term is ${Math.round(predictedScore)}.`
+    }
 
     return {
       predictions: {
@@ -472,7 +513,8 @@ export async function generatePredictiveAnalytics(
         confidence: Math.round(confidence * 100) / 100,
         trend,
         riskLevel,
-        factors
+        factors,
+        insight
       },
       error: null
     }

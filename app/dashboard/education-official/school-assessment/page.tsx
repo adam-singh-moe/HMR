@@ -48,6 +48,7 @@ import {
   AIAtRiskAlert,
   AITrendPrediction,
   AIComparativeAnalysis,
+  UnifiedRatingBadge,
 } from "@/features/school-assessment-reports/components"
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
 import type { AssessmentPeriod, RatingLevel } from "@/features/school-assessment-reports/types"
@@ -477,18 +478,6 @@ function EducationOfficialAssessmentContent() {
               </SelectContent>
             </Select>
           )}
-          <Button
-            variant="outline"
-            onClick={handleExportCSV}
-            disabled={isExporting || !reports.length}
-          >
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            Export CSV
-          </Button>
         </div>
       </div>
 
@@ -631,9 +620,9 @@ function EducationOfficialAssessmentContent() {
             {submissionProgress && !submissionProgress.error && (
               <CompletionRateGauge
                 submitted={submissionProgress.submitted}
-                total={submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted}
-                percentage={submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted > 0 
-                  ? Math.round((submissionProgress.submitted / (submissionProgress.submitted + submissionProgress.drafts + submissionProgress.notStarted)) * 100)
+                total={(submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)}
+                percentage={((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)) > 0 
+                  ? Math.round(((submissionProgress.submitted || 0) / ((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0))) * 100)
                   : 0}
                 title="National Completion Rate"
               />
@@ -710,9 +699,11 @@ function EducationOfficialAssessmentContent() {
                       <TableCell>{school.regionName}</TableCell>
                       <TableCell>{school.totalScore}</TableCell>
                       <TableCell>
-                        <Badge variant={getRatingVariant(school.ratingLevel)}>
-                          {formatRating(school.ratingLevel)}
-                        </Badge>
+                        <UnifiedRatingBadge 
+                          ratingLevel={school.ratingLevel}
+                          tapsRatingGrade={school.tapsRatingGrade}
+                          isTAPS={school.isTAPS}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -735,6 +726,7 @@ function EducationOfficialAssessmentContent() {
               type="overview"
               title="AI National Analysis"
               description="Get AI-powered insights about national assessment performance"
+              autoGenerate={false}
             />
             
             {/* AI At-Risk Schools */}
@@ -863,11 +855,27 @@ function EducationOfficialAssessmentContent() {
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Assessment Reports</CardTitle>
-              <CardDescription>
-                {filteredReports.length} of {reports.length} reports
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Assessment Reports</CardTitle>
+                <CardDescription>
+                  {filteredReports.length} of {reports.length} reports
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={isExporting || !reports.length}
+                className="gap-2"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export All (CSV)
+              </Button>
             </CardHeader>
             <CardContent>
               {/* Filters */}
@@ -936,11 +944,11 @@ function EducationOfficialAssessmentContent() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {(report.tapsRatingGrade || report.ratingLevel) ? (
-                          <Badge variant={getRatingVariant(report.tapsRatingGrade || report.ratingLevel)}>
-                            {formatRating(report.tapsRatingGrade || report.ratingLevel)}
-                          </Badge>
-                        ) : '-'}
+                        <UnifiedRatingBadge 
+                          ratingLevel={report.ratingLevel}
+                          tapsRatingGrade={report.tapsRatingGrade}
+                          isTAPS={report.isTAPS}
+                        />
                       </TableCell>
                       <TableCell>
                         {report.submittedAt 
@@ -1094,11 +1102,11 @@ function EducationOfficialAssessmentContent() {
                         {report.totalScore || 0}
                       </TableCell>
                       <TableCell>
-                        {report.ratingLevel && (
-                          <Badge variant={getRatingVariant(report.ratingLevel)}>
-                            {formatRating(report.ratingLevel)}
-                          </Badge>
-                        )}
+                        <UnifiedRatingBadge 
+                          ratingLevel={report.ratingLevel}
+                          tapsRatingGrade={report.tapsRatingGrade}
+                          isTAPS={report.isTAPS}
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-red-600">
