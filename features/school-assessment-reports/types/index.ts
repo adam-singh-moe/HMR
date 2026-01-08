@@ -37,7 +37,7 @@ export const RATING_THRESHOLDS = {
 // ============================================================================
 
 /**
- * TAPS Scoring Weights for SECONDARY schools (total: 419 points max)
+ * TAPS Scoring Weights for SECONDARY schools (total: 429 points max)
  * Based on official TAPS document metrics
  */
 export const TAPS_SCORING_WEIGHTS = {
@@ -47,19 +47,20 @@ export const TAPS_SCORING_WEIGHTS = {
   TEACHER_DEVELOPMENT: 20,        // Metrics 34-35: PD sessions, supervisory visits
   HEALTH_SAFETY: 50,              // Metrics 36-40: Incidents, safety, water
   SCHOOL_CULTURE: 70,             // Metrics 41-47: Clubs, remediation, PTA
+  BULLYING: 10,                   // Metrics 48: Bullying reports & resolution
 } as const
 
-export const TAPS_TOTAL_MAX_SCORE = 419
+export const TAPS_TOTAL_MAX_SCORE = 429
 
 /**
  * TAPS Rating Thresholds (A-E grades) for SECONDARY schools
  */
 export const TAPS_RATING_THRESHOLDS = {
-  A: { min: 357, max: 419, label: 'Outstanding', grade: 'A', description: 'Outstanding performance across all metrics' },
-  B: { min: 294, max: 356, label: 'High Achieving', grade: 'B', description: 'Strong performance with minor areas for improvement' },
-  C: { min: 210, max: 293, label: 'Standard', grade: 'C', description: 'Meeting basic expectations with room for growth' },
-  D: { min: 84, max: 209, label: 'Struggling', grade: 'D', description: 'Below expectations, requires focused improvement' },
-  E: { min: 0, max: 83, label: 'Critical Support', grade: 'E', description: 'Requires immediate intervention and support' },
+  A: { min: 365, max: 429, label: 'Outstanding', grade: 'A', description: 'Outstanding performance across all metrics' },
+  B: { min: 300, max: 364, label: 'High Achieving', grade: 'B', description: 'Strong performance with minor areas for improvement' },
+  C: { min: 215, max: 299, label: 'Standard', grade: 'C', description: 'Meeting basic expectations with room for growth' },
+  D: { min: 86, max: 214, label: 'Struggling', grade: 'D', description: 'Below expectations, requires focused improvement' },
+  E: { min: 0, max: 85, label: 'Critical Support', grade: 'E', description: 'Requires immediate intervention and support' },
 } as const
 
 export type TAPSRatingGrade = 'A' | 'B' | 'C' | 'D' | 'E'
@@ -74,6 +75,7 @@ export const TAPS_CATEGORY_NAMES = {
   TEACHER_DEVELOPMENT: 'teacher_development',
   HEALTH_SAFETY: 'health_safety',
   SCHOOL_CULTURE: 'school_culture',
+  BULLYING: 'bullying',
 } as const
 
 export type TAPSCategoryName = typeof TAPS_CATEGORY_NAMES[keyof typeof TAPS_CATEGORY_NAMES]
@@ -699,6 +701,18 @@ export interface TAPSSchoolCultureScores {
 }
 
 /**
+ * Bullying (max 10 points) - TAPS Metric 48
+ */
+export interface TAPSBullyingScores {
+  // Metric 48: Bullying Reports & Resolution
+  bullyingReportsCount: number    // Number of bullying reports recorded
+  bullyingIssuesSolved: number    // Number of those issues that have been solved
+  
+  // Calculated total for this category
+  total: number
+}
+
+/**
  * Combined TAPS category scores for secondary schools
  */
 export interface TAPSAllCategoryScores {
@@ -708,6 +722,7 @@ export interface TAPSAllCategoryScores {
   teacherDevelopment: TAPSTeacherDevelopmentScores
   healthSafety: TAPSHealthSafetyScores
   schoolCulture: TAPSSchoolCultureScores
+  bullying: TAPSBullyingScores
 }
 
 // ============================================================================
@@ -743,6 +758,7 @@ export interface SchoolAssessmentReport {
   tapsTeacherDevelopmentScores?: Partial<TAPSTeacherDevelopmentScores>
   tapsHealthSafetyScores?: Partial<TAPSHealthSafetyScores>
   tapsSchoolCultureScores?: Partial<TAPSSchoolCultureScores>
+  tapsBullyingScores?: Partial<TAPSBullyingScores>
   
   // TAPS Category totals for display
   tapsCategoryScores?: {
@@ -752,6 +768,7 @@ export interface SchoolAssessmentReport {
     teacher_development: number
     health_safety: number
     school_culture: number
+    bullying: number
   } | null
 
   // Computed helper fields used by analytics/charts
@@ -820,6 +837,7 @@ export interface ReportSummary {
     teacher_development: number
     health_safety: number
     school_culture: number
+    bullying: number
   } | null
   // Category scores (demo system for primary)
   categoryScores?: {
@@ -1065,4 +1083,17 @@ export interface RegionalTopPerformerCache {
   school_id: string
   highest_average_score: number
   calculated_at: string
+}
+
+// ============================================================================
+// MODULE CONFIGURATION
+// ============================================================================
+
+export interface AssessmentModuleConfig {
+  id: string
+  schoolType: 'nursery' | 'primary' | 'secondary'
+  isEnabled: boolean
+  createdAt: string
+  updatedAt: string
+  updatedBy: string | null
 }

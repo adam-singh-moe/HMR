@@ -939,7 +939,7 @@ function EducationOfficialAssessmentContent() {
                         {report.totalScore || '-'}
                         {report.totalScore && (
                           <span className="text-muted-foreground text-xs ml-1">
-                            /{report.isTAPS ? '419' : '1000'}
+                            /{report.isTAPS ? '429' : '1000'}
                           </span>
                         )}
                       </TableCell>

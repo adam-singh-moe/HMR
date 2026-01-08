@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { isAssessmentModuleEnabled } from "@/features/school-assessment-reports/actions/module-config"
+import { getSchoolTypeFromSchoolLevel } from "@/lib/school-type"
 import {
   calculateAllCategoryScores,
   calculateTAPSAcademicsScore,
@@ -52,12 +54,20 @@ export async function GET(request: NextRequest) {
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Get school info including region
+    // Get school info including region and level
     const { data: school } = await supabase
       .from('sms_schools')
-      .select('id, name, region_id')
+      .select('id, name, region_id, level')
       .eq('id', schoolId)
       .single()
+
+    if (!school) {
+      return NextResponse.json({ error: "School not found" }, { status: 404 })
+    }
+
+    // Check if module is enabled for this school type
+    const schoolType = getSchoolTypeFromSchoolLevel(school.level)
+    const isModuleEnabled = await isAssessmentModuleEnabled(schoolType)
 
     // Get school's assessment reports
     const { data: reports, error } = await supabase
@@ -353,6 +363,7 @@ export async function GET(request: NextRequest) {
       pointsToNextRating,
       nextRatingName,
       categoryScores,
+      isModuleEnabled,
     })
   } catch (error) {
     console.error('Error in head-teacher-metrics:', error)

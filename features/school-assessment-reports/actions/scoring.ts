@@ -29,6 +29,7 @@ import {
   type TAPSTeacherDevelopmentScores,
   type TAPSHealthSafetyScores,
   type TAPSSchoolCultureScores,
+  type TAPSBullyingScores,
 } from "../types"
 import type { SchoolType } from "@/lib/school-type"
 
@@ -1211,6 +1212,24 @@ export function calculateTAPSSchoolCultureScore(data: Partial<TAPSSchoolCultureS
 }
 
 /**
+ * Calculate TAPS Bullying score (max 10 points)
+ * Metric 48
+ */
+export function calculateTAPSBullyingScore(data: Partial<TAPSBullyingScores>): number {
+  let score = 0
+  
+  // Metric 48: Bullying Reports & Resolution (10 points max)
+  // "The difference between those two amounts will be used to create the score"
+  if (data.bullyingReportsCount !== undefined && data.bullyingIssuesSolved !== undefined) {
+    const unsolvedCount = Math.max(0, data.bullyingReportsCount - data.bullyingIssuesSolved)
+    // Points = Max Points (10) minus the number of unsolved cases
+    score = Math.max(0, 10 - unsolvedCount)
+  }
+  
+  return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.BULLYING)
+}
+
+/**
  * Calculate all TAPS category scores for secondary schools
  */
 export function calculateAllTAPSCategoryScores(data: {
@@ -1220,6 +1239,7 @@ export function calculateAllTAPSCategoryScores(data: {
   teacherDevelopment: Partial<TAPSTeacherDevelopmentScores>
   healthSafety: Partial<TAPSHealthSafetyScores>
   schoolCulture: Partial<TAPSSchoolCultureScores>
+  bullying?: Partial<TAPSBullyingScores>
 }): Record<TAPSCategoryName, number> {
   return {
     school_inputs_operations: calculateTAPSSchoolInputsScore(data.schoolInputs || {}),
@@ -1228,11 +1248,12 @@ export function calculateAllTAPSCategoryScores(data: {
     teacher_development: calculateTAPSTeacherDevelopmentScore(data.teacherDevelopment || {}),
     health_safety: calculateTAPSHealthSafetyScore(data.healthSafety || {}),
     school_culture: calculateTAPSSchoolCultureScore(data.schoolCulture || {}),
+    bullying: calculateTAPSBullyingScore(data.bullying || {}),
   }
 }
 
 /**
- * Calculate total TAPS score from category scores (max 419 points)
+ * Calculate total TAPS score from category scores (max 429 points)
  */
 export function calculateTAPSTotalScore(categoryScores: Record<TAPSCategoryName, number>): number {
   return Object.values(categoryScores).reduce((sum, score) => sum + score, 0)
@@ -1318,6 +1339,7 @@ export function getTAPSScoreBreakdown(categoryScores: Record<TAPSCategoryName, n
     teacher_development: 'Teacher Development / Accountability',
     health_safety: 'Health & Safety',
     school_culture: 'School Culture / Environment',
+    bullying: 'Bullying & Resolution',
   }
   
   const categoryMaxScores: Record<TAPSCategoryName, number> = {
@@ -1327,6 +1349,7 @@ export function getTAPSScoreBreakdown(categoryScores: Record<TAPSCategoryName, n
     teacher_development: TAPS_SCORING_WEIGHTS.TEACHER_DEVELOPMENT,
     health_safety: TAPS_SCORING_WEIGHTS.HEALTH_SAFETY,
     school_culture: TAPS_SCORING_WEIGHTS.SCHOOL_CULTURE,
+    bullying: TAPS_SCORING_WEIGHTS.BULLYING,
   }
   
   const categories: TAPSCategoryScoreBreakdown[] = Object.entries(categoryScores).map(([category, earned]) => ({
@@ -1367,6 +1390,7 @@ export function identifyWeakTAPSCategories(
     teacher_development: TAPS_SCORING_WEIGHTS.TEACHER_DEVELOPMENT,
     health_safety: TAPS_SCORING_WEIGHTS.HEALTH_SAFETY,
     school_culture: TAPS_SCORING_WEIGHTS.SCHOOL_CULTURE,
+    bullying: TAPS_SCORING_WEIGHTS.BULLYING,
   }
   
   const weakCategories: { category: TAPSCategoryName; percentage: number; priority: 'high' | 'medium' | 'low' }[] = []

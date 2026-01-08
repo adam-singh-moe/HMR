@@ -74,6 +74,7 @@ interface HeadTeacherMetrics {
   pointsToNextRating: number | null
   nextRatingName: string | null
   categoryScores: { category: string; score: number; max: number }[]
+  isModuleEnabled?: boolean
 }
 
 export function HeadTeacherAssessmentCard({ 
@@ -138,6 +139,32 @@ export function HeadTeacherAssessmentCard({
     score: Math.round((c.score / c.max) * 100),
     fullMark: 100
   })) || []
+
+  // Feature Toggle Check
+  if (metrics?.isModuleEnabled === false) {
+    return (
+      <Card className={`overflow-hidden border-2 border-dashed border-muted bg-muted/20 ${className}`}>
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <Activity className="h-8 w-8 text-muted-foreground opacity-40" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h3 className="text-xl font-bold text-muted-foreground">School Assessment Restricted</h3>
+              <p className="text-muted-foreground">
+                The school assessment module is currently not active for your school type. 
+                Reporting windows are managed by the Ministry of Education.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-md text-muted-foreground text-sm font-medium">
+              <Minus className="h-4 w-4" />
+              Module Inactive
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (loading) {
     return (
@@ -712,10 +739,19 @@ export function EducationOfficialAssessmentCard({
 
   // Prepare bar chart data for regional comparison
   const regionalData = (metrics?.regionalPerformance || [])
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6)
+    .sort((a, b) => {
+      const nameA = a.region.toLowerCase();
+      const nameB = b.region.toLowerCase();
+      if (nameA.includes('georgetown')) return -1;
+      if (nameB.includes('georgetown')) return 1;
+      const numA = parseInt(a.region.match(/\d+/)?.[0] || '0');
+      const numB = parseInt(b.region.match(/\d+/)?.[0] || '0');
+      return numA - numB;
+    })
+    .slice(0, 11)
     .map(r => ({
-      name: r.region.length > 10 ? r.region.substring(0, 10) + '...' : r.region,
+      name: r.region.toLowerCase().includes('georgetown') ? 'GT' : `R${r.region.match(/\d+/)?.[0] || ''}`,
+      fullName: r.region,
       score: r.score,
       compliance: r.total > 0 ? Math.round((r.submitted / r.total) * 100) : 0
     }))
@@ -802,12 +838,12 @@ export function EducationOfficialAssessmentCard({
 
               {/* Stats Cards with Urgency Indicators */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
                   <p className="text-2xl font-bold text-emerald-700">{metrics?.outstandingCount ?? 0}</p>
                   <p className="text-xs text-emerald-600 font-medium">Outstanding</p>
                 </div>
-                <div className={`border rounded-xl p-3 text-center hover:shadow-md transition-shadow cursor-pointer ${
+                <div className={`border rounded-xl p-3 text-center ${
                   (metrics?.needsImprovementCount ?? 0) > 10 
                     ? 'bg-red-50 border-red-300 animate-pulse' 
                     : 'bg-red-50 border-red-200'
@@ -816,12 +852,12 @@ export function EducationOfficialAssessmentCard({
                   <p className="text-2xl font-bold text-red-700">{metrics?.needsImprovementCount ?? 0}</p>
                   <p className="text-xs text-red-600 font-medium">Need Support</p>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center hover:shadow-md transition-shadow cursor-pointer">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
                   <School className="h-5 w-5 text-blue-600 mx-auto mb-1" />
                   <p className="text-2xl font-bold text-blue-700">{metrics?.totalSubmitted ?? 0}</p>
                   <p className="text-xs text-blue-600 font-medium">Assessed</p>
                 </div>
-                <div className={`border rounded-xl p-3 text-center hover:shadow-md transition-shadow cursor-pointer ${
+                <div className={`border rounded-xl p-3 text-center ${
                   (metrics?.neverAssessedCount ?? 0) > 50
                     ? 'bg-orange-50 border-orange-300'
                     : 'bg-purple-50 border-purple-200'
@@ -916,20 +952,25 @@ export function EducationOfficialAssessmentCard({
 
               {/* Regional Comparison Bar Chart */}
               {regionalData.length > 0 && (
-                <div className="w-full h-32 mt-2 bg-white/10 rounded-xl p-2">
-                  <p className="text-white/80 text-xs mb-1 font-medium">Top Regions Comparison</p>
+                <div className="w-full h-28 mt-2 bg-white/10 rounded-xl p-2 pb-0">
+                  <p className="text-white/80 text-[10px] mb-1 font-medium">Regional Performance (GT & R1-R10)</p>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={regionalData} layout="vertical" margin={{ top: 5, right: 30, left: 5, bottom: 5 }}>
-                      <XAxis type="number" domain={[0, 1000]} hide />
-                      <YAxis 
-                        type="category" 
+                    <BarChart data={regionalData} margin={{ top: 5, right: 5, left: 5, bottom: 15 }}>
+                      <XAxis 
                         dataKey="name" 
-                        width={60}
-                        tick={{ fill: 'white', fontSize: 9 }}
+                        tick={{ fill: 'white', fontSize: 8, fontWeight: 600 }}
                         tickLine={false}
                         axisLine={false}
+                        interval={0}
                       />
+                      <YAxis hide domain={[0, 1000]} />
                       <Tooltip
+                        labelFormatter={(label, payload) => {
+                          if (payload && payload.length > 0) {
+                            return payload[0].payload.fullName;
+                          }
+                          return label;
+                        }}
                         contentStyle={{ 
                           background: 'rgba(255,255,255,0.98)', 
                           border: 'none', 
@@ -947,7 +988,8 @@ export function EducationOfficialAssessmentCard({
                       />
                       <Bar 
                         dataKey="score" 
-                        radius={[0, 4, 4, 0]}
+                        radius={[2, 2, 0, 0]}
+                        barSize={18}
                       >
                         {regionalData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBarColor(entry.score)} />

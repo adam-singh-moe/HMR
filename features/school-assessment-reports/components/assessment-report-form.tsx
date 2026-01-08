@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   Save, 
   Send, 
   Loader2, 
@@ -60,12 +61,14 @@ import {
   TAPS_TEACHER_DEVELOPMENT_FIELDS,
   TAPS_HEALTH_SAFETY_FIELDS,
   TAPS_SCHOOL_CULTURE_FIELDS,
+  TAPS_BULLYING_FIELDS,
   TAPS_CATEGORY_CONFIGS,
   ALL_CATEGORY_CONFIGS,
 } from "../config/form-fields"
 import type { CategoryName, CurrentTermWindow, TAPSCategoryName } from "../types"
 import { TAPS_TOTAL_MAX_SCORE, TAPS_AUTO_CALC_REQUIRED_TERMS, RATING_THRESHOLDS, TAPS_RATING_THRESHOLDS } from "../types"
 import { Separator } from "@/components/ui/separator"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 import { TrendingUp } from "lucide-react"
 
 // ============================================================================
@@ -208,6 +211,11 @@ interface TAPSSchoolCultureData {
   parentsCollectingReportCards?: number
 }
 
+interface TAPSBullyingData {
+  bullyingReportsCount?: number
+  bullyingIssuesSolved?: number
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -260,6 +268,7 @@ const TAPS_FORM_SECTIONS: TAPSFormSection[] = [
   { id: 'teacher_development', title: 'Teacher Development', icon: <GraduationCap className="h-5 w-5" />, maxPoints: 20 },
   { id: 'health_safety', title: 'Health & Safety', icon: <Shield className="h-5 w-5" />, maxPoints: 50 },
   { id: 'school_culture', title: 'School Culture', icon: <Sparkles className="h-5 w-5" />, maxPoints: 70 },
+  { id: 'bullying', title: 'Bullying & Resolution', icon: <AlertTriangle className="h-5 w-5" />, maxPoints: 10 },
   { id: 'review', title: 'Review & Submit', icon: <CheckCircle2 className="h-5 w-5" />, maxPoints: 0 },
 ]
 
@@ -295,6 +304,7 @@ export function AssessmentReportForm({
   const [activeTermWindow, setActiveTermWindow] = useState<CurrentTermWindow | null>(null)
   const [submissionOpen, setSubmissionOpen] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [openGrade, setOpenGrade] = useState<string | null>('grade7')
   
   // Detect school type from school level first (DB), then fall back to email.
   const schoolTypeFromLevel = getSchoolTypeFromSchoolLevel(schoolLevel)
@@ -324,6 +334,7 @@ export function AssessmentReportForm({
   const [teacherDevelopmentData, setTeacherDevelopmentData] = useState<TAPSTeacherDevelopmentData>({})
   const [healthSafetyData, setHealthSafetyData] = useState<TAPSHealthSafetyData>({})
   const [schoolCultureData, setSchoolCultureData] = useState<TAPSSchoolCultureData>({})
+  const [bullyingData, setBullyingData] = useState<TAPSBullyingData>({})
   
   // Auto-calculated improvement metrics
   const [improvementMetrics, setImprovementMetrics] = useState<{ teacherAttendanceIncrease?: number, learnersAttendanceIncrease?: number } | null>(null)
@@ -384,6 +395,7 @@ export function AssessmentReportForm({
         teacherDevelopment: teacherDevelopmentData as any,
         healthSafety: healthSafetyData as any,
         schoolCulture: schoolCultureData as any,
+        bullying: bullyingData as any,
       })
     } else {
       return calculateAllCategoryScores({
@@ -399,7 +411,7 @@ export function AssessmentReportForm({
   }, [
     isTAPS,
     academicData, attendanceData, infrastructureData, teachingQualityData, managementData, studentWelfareData, communityData,
-    schoolInputsData, leadershipData, tapsAcademicsData, teacherDevelopmentData, healthSafetyData, schoolCultureData
+    schoolInputsData, leadershipData, tapsAcademicsData, teacherDevelopmentData, healthSafetyData, schoolCultureData, bullyingData
   ])
 
   const totalScore = useMemo(() => {
@@ -505,6 +517,7 @@ export function AssessmentReportForm({
       if (report.tapsTeacherDevelopmentScores) setTeacherDevelopmentData(report.tapsTeacherDevelopmentScores)
       if (report.tapsHealthSafetyScores) setHealthSafetyData(report.tapsHealthSafetyScores)
       if (report.tapsSchoolCultureScores) setSchoolCultureData(report.tapsSchoolCultureScores)
+      if (report.tapsBullyingScores) setBullyingData(report.tapsBullyingScores)
     } else {
       // Load demo data
       if (report.academicScores) setAcademicData(report.academicScores)
@@ -617,6 +630,7 @@ export function AssessmentReportForm({
       case 'teacher_development': return teacherDevelopmentData
       case 'health_safety': return healthSafetyData
       case 'school_culture': return schoolCultureData
+      case 'bullying': return bullyingData
       default: return {}
     }
   }
@@ -641,6 +655,7 @@ export function AssessmentReportForm({
         { id: 'teacher_development', data: teacherDevelopmentData, fields: TAPS_TEACHER_DEVELOPMENT_FIELDS },
         { id: 'health_safety', data: healthSafetyData, fields: TAPS_HEALTH_SAFETY_FIELDS },
         { id: 'school_culture', data: schoolCultureData, fields: TAPS_SCHOOL_CULTURE_FIELDS },
+        { id: 'bullying', data: bullyingData, fields: TAPS_BULLYING_FIELDS || [] },
       ]
 
       for (const section of sections) {
@@ -985,6 +1000,7 @@ export function AssessmentReportForm({
       teacherDevelopment: teacherDevelopmentData as any,
       healthSafety: healthSafetyData as any,
       schoolCulture: schoolCultureData as any,
+      bullying: bullyingData as any,
     })
     
     return scores[sectionId] || 0
@@ -1034,33 +1050,56 @@ export function AssessmentReportForm({
     suffix?: string,
     min?: number,
     max?: number
-  ) => (
-    <div className="space-y-2 p-4 border rounded-lg">
-      <div>
-        <Label className="text-base font-semibold">{label}</Label>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
+  ) => {
+    const isPercentage = suffix === '%'
+    const minVal = min ?? 0
+    const maxVal = max ?? 100
+
+    return (
+      <div className="space-y-2 p-4 border rounded-lg">
+        <div>
+          <Label className="text-base font-semibold">{label}</Label>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={value ?? ''}
+              onChange={(e) => {
+                const raw = e.target.value
+                if (raw === '') {
+                  onChange(undefined)
+                  return
+                }
+                const n = Number(raw)
+                onChange(Number.isFinite(n) ? n : undefined)
+              }}
+              min={minVal}
+              max={maxVal}
+              className="max-w-[100px]"
+            />
+            {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+          </div>
+          
+          {isPercentage && (
+            <div className="flex-1 flex items-center gap-3">
+              <span className="text-xs text-muted-foreground min-w-[24px]">{minVal}%</span>
+              <input
+                type="range"
+                min={minVal}
+                max={maxVal}
+                value={value ?? minVal}
+                onChange={(e) => onChange(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+              <span className="text-xs text-muted-foreground min-w-[32px]">{maxVal}%</span>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          value={value ?? ''}
-          onChange={(e) => {
-            const raw = e.target.value
-            if (raw === '') {
-              onChange(undefined)
-              return
-            }
-            const n = Number(raw)
-            onChange(Number.isFinite(n) ? n : undefined)
-          }}
-          min={min || 0}
-          max={max || 100}
-          className="max-w-[150px]"
-        />
-        {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
-      </div>
-    </div>
-  )
+    )
+  }
   
   // ============================================================================
   // DYNAMIC FIELD RENDERER
@@ -1154,6 +1193,9 @@ export function AssessmentReportForm({
     disabled?: boolean
   ) => {
     const isAutoCalc = field.autoCalculable && hasEnoughHistoricalData
+    const isPercentage = field.suffix === '%'
+    const minVal = field.min ?? 0
+    const maxVal = field.max ?? 100
     
     return (
       <div className="space-y-2 p-4 border rounded-lg">
@@ -1168,28 +1210,47 @@ export function AssessmentReportForm({
           )}
         </div>
         <p className="text-sm text-muted-foreground">{field.description}</p>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            id={field.id}
-            name={field.id}
-            value={value ?? ''}
-            onChange={(e) => {
-              const raw = e.target.value
-              if (raw === '') {
-                onChange(undefined)
-                return
-              }
-              const n = Number(raw)
-              onChange(Number.isFinite(n) ? n : undefined)
-            }}
-            min={field.min || 0}
-            max={field.max || 100}
-            step={field.step || 1}
-            className="max-w-[150px]"
-            disabled={disabled || isAutoCalc}
-          />
-          {field.suffix && <span className="text-sm text-muted-foreground">{field.suffix}</span>}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              id={field.id}
+              name={field.id}
+              value={value ?? ''}
+              onChange={(e) => {
+                const raw = e.target.value
+                if (raw === '') {
+                  onChange(undefined)
+                  return
+                }
+                const n = Number(raw)
+                onChange(Number.isFinite(n) ? n : undefined)
+              }}
+              min={minVal}
+              max={maxVal}
+              step={field.step || 1}
+              className="max-w-[100px]"
+              disabled={disabled || isAutoCalc}
+            />
+            {field.suffix && <span className="text-sm text-muted-foreground">{field.suffix}</span>}
+          </div>
+
+          {isPercentage && !isAutoCalc && (
+            <div className="flex-1 flex items-center gap-3">
+              <span className="text-xs text-muted-foreground min-w-[24px]">{minVal}%</span>
+              <input
+                type="range"
+                min={minVal}
+                max={maxVal}
+                step={field.step || 1}
+                value={value ?? minVal}
+                onChange={(e) => onChange(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                disabled={disabled}
+              />
+              <span className="text-xs text-muted-foreground min-w-[32px]">{maxVal}%</span>
+            </div>
+          )}
         </div>
         {field.autoCalculated && !hasEnoughHistoricalData && (
           <p className="text-xs text-amber-600 flex items-center gap-1">
@@ -1497,32 +1558,47 @@ export function AssessmentReportForm({
           
           if (gradeFieldEntries.length === 0) return null
           
+          const isOpen = openGrade === grade;
+          
           return (
-            <Card key={grade} className="border-l-4 border-l-primary">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-bold">
-                    {label}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {gradeFieldEntries.map(({ metricKey, fieldId, fieldConfig }) => (
-                    <div key={fieldId} id={`field-${fieldId}`}>
-                      {renderTAPSField(
-                        {
-                          ...fieldConfig,
-                          label: metricLabels[metricKey] || fieldConfig.label,
-                        },
-                        (tapsAcademicsData as any)[fieldId],
-                        (v) => setTapsAcademicsData(prev => ({ ...prev, [fieldId]: v }))
-                      )}
+            <Collapsible
+              key={grade}
+              open={isOpen}
+              onOpenChange={() => setOpenGrade(isOpen ? null : grade)}
+              className={`border rounded-lg overflow-hidden transition-all duration-200 ${isOpen ? 'ring-1 ring-primary/20 shadow-sm' : ''}`}
+            >
+              <CollapsibleTrigger asChild>
+                <div className={`flex items-center justify-between p-4 cursor-pointer transition-colors border-l-4 border-l-primary ${isOpen ? 'bg-muted/30' : 'bg-card hover:bg-muted/20'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-md text-sm font-bold min-w-[80px] text-center">
+                      {label}
                     </div>
-                  ))}
+                    <span className="text-sm font-medium">
+                       Academic Performance Indicators
+                    </span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </div>
-              </CardContent>
-            </Card>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="p-4 pt-2 bg-card border-t border-dashed">
+                  <div className="grid gap-4">
+                    {gradeFieldEntries.map(({ metricKey, fieldId, fieldConfig }) => (
+                      <div key={fieldId} id={`field-${fieldId}`} className="p-1">
+                        {renderTAPSField(
+                          {
+                            ...fieldConfig,
+                            label: metricLabels[metricKey] || fieldConfig.label,
+                          },
+                          (tapsAcademicsData as any)[fieldId],
+                          (v) => setTapsAcademicsData(prev => ({ ...prev, [fieldId]: v }))
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )
         })}
       </div>
@@ -1588,6 +1664,27 @@ export function AssessmentReportForm({
       </div>
     )
   }
+
+  const renderTAPSBullyingSection = () => {
+    // Bullying Section doesn't have complex groups, just two simple count fields
+    const sortedFields = getFieldsForSchoolType(TAPS_BULLYING_FIELDS, schoolType)
+
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4">
+          {sortedFields.map(field => (
+            <div key={field.id} id={`field-${field.id}`}>
+              {renderTAPSField(
+                field,
+                (bullyingData as any)[field.id],
+                (v) => setBullyingData(prev => ({ ...prev, [field.id]: v }))
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
   
   // ============================================================================
   // TAPS REVIEW SECTION
@@ -1639,6 +1736,7 @@ export function AssessmentReportForm({
       teacherDevelopment: teacherDevelopmentData as any,
       healthSafety: healthSafetyData as any,
       schoolCulture: schoolCultureData as any,
+      bullying: bullyingData as any,
     })
     
     const totalScore = calculateTAPSTotalScore(scores)
@@ -1731,23 +1829,23 @@ export function AssessmentReportForm({
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
               <div className="p-2 rounded bg-green-100 text-center">
-                <span className="font-bold text-green-700">A (357-419)</span>
+                <span className="font-bold text-green-700">A (365-429)</span>
                 <p className="text-xs text-green-600">Outstanding</p>
               </div>
               <div className="p-2 rounded bg-blue-100 text-center">
-                <span className="font-bold text-blue-700">B (294-356)</span>
+                <span className="font-bold text-blue-700">B (300-364)</span>
                 <p className="text-xs text-blue-600">High Achieving</p>
               </div>
               <div className="p-2 rounded bg-amber-100 text-center">
-                <span className="font-bold text-amber-700">C (210-293)</span>
+                <span className="font-bold text-amber-700">C (215-299)</span>
                 <p className="text-xs text-amber-600">Standard</p>
               </div>
               <div className="p-2 rounded bg-orange-100 text-center">
-                <span className="font-bold text-orange-700">D (84-209)</span>
+                <span className="font-bold text-orange-700">D (86-214)</span>
                 <p className="text-xs text-orange-600">Struggling</p>
               </div>
               <div className="p-2 rounded bg-red-100 text-center">
-                <span className="font-bold text-red-700">E (0-83)</span>
+                <span className="font-bold text-red-700">E (0-85)</span>
                 <p className="text-xs text-red-600">Critical Support</p>
               </div>
             </div>
@@ -1881,6 +1979,7 @@ export function AssessmentReportForm({
         case 'teacher_development': return renderTAPSTeacherDevelopmentSection()
         case 'health_safety': return renderTAPSHealthSafetySection()
         case 'school_culture': return renderTAPSSchoolCultureSection()
+        case 'bullying': return renderTAPSBullyingSection()
         case 'review': return renderTAPSReviewSection()
         default: return null
       }

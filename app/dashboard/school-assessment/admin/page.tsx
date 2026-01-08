@@ -46,6 +46,7 @@ import {
   AIAtRiskAlert,
   AITrendPrediction,
   AIComparativeAnalysis,
+  ModuleAccessSettings,
 } from "@/features/school-assessment-reports/components"
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
 import { 
@@ -1143,17 +1144,31 @@ function AdminAssessmentContent() {
         {/* Settings Tab (Admin only) */}
         {isAdmin && (
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Assessment Period Management</CardTitle>
-                <CardDescription>
-                  Configure recurring submission windows for each term
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PeriodManagement />
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Feature Access Control</CardTitle>
+                  <CardDescription>
+                    Enable or disable the School Assessment module for specific school types
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ModuleAccessSettings />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assessment Period Management</CardTitle>
+                  <CardDescription>
+                    Configure recurring submission windows for each term
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PeriodManagement />
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         )}
 

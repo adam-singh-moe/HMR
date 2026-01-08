@@ -328,7 +328,7 @@ export function ReportsList({
                         <>
                           {report.totalScore}
                           <span className="text-muted-foreground text-xs">
-                            /{report.isTAPS ? '419' : '1000'}
+                            /{report.isTAPS ? '429' : '1000'}
                           </span>
                         </>
                       ) : '-'}

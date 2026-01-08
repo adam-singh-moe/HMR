@@ -44,6 +44,7 @@ import type {
   TAPSTeacherDevelopmentScores,
   TAPSHealthSafetyScores,
   TAPSSchoolCultureScores,
+  TAPSBullyingScores,
 } from "../types"
 import { TAPS_AUTO_CALC_REQUIRED_TERMS } from "../types"
 import {
@@ -53,6 +54,7 @@ import {
   calculateTAPSTeacherDevelopmentScore,
   calculateTAPSHealthSafetyScore,
   calculateTAPSSchoolCultureScore,
+  calculateTAPSBullyingScore,
 } from "./scoring"
 
 // ============================================================================
@@ -101,16 +103,16 @@ export async function deleteAssessmentReport(reportId: string): Promise<{ succes
  * Converts database row to SchoolAssessmentReport type
  */
 function mapDbRowToReport(row: any): SchoolAssessmentReport {
-  // A report uses TAPS if it has the is_taps flag, a taps_rating_grade OR any taps scores
+  // A report uses TAPS if it has a taps_rating_grade OR any taps scores
   const hasTAPSData = Boolean(
-    row.is_taps ||
     row.taps_rating_grade ||
     row.taps_school_inputs_scores ||
     row.taps_leadership_scores ||
     row.taps_academics_scores ||
     row.taps_teacher_development_scores ||
     row.taps_health_safety_scores ||
-    row.taps_school_culture_scores
+    row.taps_school_culture_scores ||
+    row.taps_bullying_scores
   )
 
   const demoTotals = !hasTAPSData
@@ -153,6 +155,7 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
     tapsTeacherDevelopmentScores: row.taps_teacher_development_scores || undefined,
     tapsHealthSafetyScores: row.taps_health_safety_scores || undefined,
     tapsSchoolCultureScores: row.taps_school_culture_scores || undefined,
+    tapsBullyingScores: row.taps_bullying_scores || undefined,
     // TAPS Category scores
     tapsCategoryScores: hasTAPSData ? {
       school_inputs_operations: calculateTAPSSchoolInputsScore(row.taps_school_inputs_scores || {}),
@@ -161,6 +164,7 @@ function mapDbRowToReport(row: any): SchoolAssessmentReport {
       teacher_development: calculateTAPSTeacherDevelopmentScore(row.taps_teacher_development_scores || {}),
       health_safety: calculateTAPSHealthSafetyScore(row.taps_health_safety_scores || {}),
       school_culture: calculateTAPSSchoolCultureScore(row.taps_school_culture_scores || {}),
+      bullying: calculateTAPSBullyingScore(row.taps_bullying_scores || {}),
     } : null,
     // Demo category totals for charts (Primary/Nursery)
     categoryScores: !hasTAPSData ? {
@@ -381,6 +385,7 @@ function mapDbRowToReportSummary(row: any): ReportSummary {
       teacher_development: calculateTAPSTeacherDevelopmentScore(row.taps_teacher_development_scores || {}),
       health_safety: calculateTAPSHealthSafetyScore(row.taps_health_safety_scores || {}),
       school_culture: calculateTAPSSchoolCultureScore(row.taps_school_culture_scores || {}),
+      bullying: calculateTAPSBullyingScore(row.taps_bullying_scores || {}),
     } : null,
     // Demo category scores
     categoryScores: !hasTAPSData ? {
@@ -667,7 +672,7 @@ export async function saveSectionData(
     
     if (updatedReport) {
       if (isTAPSCategory) {
-        // Calculate TAPS total (419 max)
+        // Calculate TAPS total (including bullying)
         const tapsScores = {
           // Derive from the stored JSON to avoid stale/mismatched `total` values.
           school_inputs_operations: calculateTAPSSchoolInputsScore(updatedReport.taps_school_inputs_scores || {}),
@@ -676,17 +681,13 @@ export async function saveSectionData(
           teacher_development: calculateTAPSTeacherDevelopmentScore(updatedReport.taps_teacher_development_scores || {}),
           health_safety: calculateTAPSHealthSafetyScore(updatedReport.taps_health_safety_scores || {}),
           school_culture: calculateTAPSSchoolCultureScore(updatedReport.taps_school_culture_scores || {}),
+          bullying: calculateTAPSBullyingScore(updatedReport.taps_bullying_scores || {}),
         }
         
         const totalScore = Object.values(tapsScores).reduce((sum, score) => sum + score, 0)
         
         // Assign TAPS rating grade
-        let tapsRatingGrade: string
-        if (totalScore >= 357) tapsRatingGrade = 'A'
-        else if (totalScore >= 294) tapsRatingGrade = 'B'
-        else if (totalScore >= 210) tapsRatingGrade = 'C'
-        else if (totalScore >= 84) tapsRatingGrade = 'D'
-        else tapsRatingGrade = 'E'
+        const tapsRatingGrade = assignTAPSRatingGrade(totalScore)
         
         await supabase
           .from('hmr_school_assessment_reports')
@@ -786,7 +787,7 @@ export async function submitReport(reportId: string) {
     const isTAPSReport = report.school_type === 'secondary' || (!report.school_type && hasTAPSData)
     
     if (isTAPSReport) {
-      // Calculate TAPS final scores (419 max)
+      // Calculate TAPS final scores (429 max)
       const tapsScores = {
         school_inputs_operations: report.taps_school_inputs_scores?.total || 
           calculateTAPSSchoolInputsScore(report.taps_school_inputs_scores || {}),
@@ -800,17 +801,14 @@ export async function submitReport(reportId: string) {
           calculateTAPSHealthSafetyScore(report.taps_health_safety_scores || {}),
         school_culture: report.taps_school_culture_scores?.total || 
           calculateTAPSSchoolCultureScore(report.taps_school_culture_scores || {}),
+        bullying: report.taps_bullying_scores?.total || 
+          calculateTAPSBullyingScore(report.taps_bullying_scores || {}),
       }
       
       const totalScore = Object.values(tapsScores).reduce((sum, score) => sum + score, 0)
       
-      // Assign TAPS rating grade (A-E)
-      let tapsRatingGrade: string
-      if (totalScore >= 357) tapsRatingGrade = 'A'
-      else if (totalScore >= 294) tapsRatingGrade = 'B'
-      else if (totalScore >= 210) tapsRatingGrade = 'C'
-      else if (totalScore >= 84) tapsRatingGrade = 'D'
-      else tapsRatingGrade = 'E'
+      // Assign TAPS rating grade
+      const tapsRatingGrade = assignTAPSRatingGrade(totalScore)
       
       // Merge calculated totals into the TAPS score objects
       const tapsSchoolInputsWithTotal = { ...report.taps_school_inputs_scores, total: tapsScores.school_inputs_operations }
@@ -819,6 +817,7 @@ export async function submitReport(reportId: string) {
       const tapsTeacherDevWithTotal = { ...report.taps_teacher_development_scores, total: tapsScores.teacher_development }
       const tapsHealthSafetyWithTotal = { ...report.taps_health_safety_scores, total: tapsScores.health_safety }
       const tapsSchoolCultureWithTotal = { ...report.taps_school_culture_scores, total: tapsScores.school_culture }
+      const tapsBullyingWithTotal = { ...report.taps_bullying_scores, total: tapsScores.bullying }
       
       // Update TAPS report status
       const { error: updateError } = await supabase
@@ -836,6 +835,8 @@ export async function submitReport(reportId: string) {
           taps_teacher_development_scores: tapsTeacherDevWithTotal,
           taps_health_safety_scores: tapsHealthSafetyWithTotal,
           taps_school_culture_scores: tapsSchoolCultureWithTotal,
+          taps_bullying_scores: tapsBullyingWithTotal,
+          taps_category_scores: tapsScores,
         })
         .eq('id', reportId)
       
@@ -1051,8 +1052,10 @@ export async function getSchoolReports(schoolId: string) {
         term_name,
         submitted_at,
         created_at,
-        is_taps,
         taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools(id, name, region_id, sms_regions(name)),
         hmr_school_assessment_periods(academic_year, term_name)
       `)
@@ -1220,8 +1223,9 @@ export async function getRegionalReports(regionId?: string, periodId?: string) {
           .single()
         
         if (period) {
-          // Filter by academic_year and term_name OR period_id (works for both old and new reports)
-          query = query.or(`period_id.eq.${periodId},and(academic_year.eq.${period.academic_year},term_name.eq.${period.term_name})`)
+          // Since Migration 009 backfilled academic_year/term_name for legacy reports,
+          // we can simplify the filter to use these strings which avoids complex OR syntax issues.
+          query = query.eq('academic_year', period.academic_year).eq('term_name', period.term_name)
         } else {
           query = query.eq('period_id', periodId)
         }
@@ -1292,8 +1296,9 @@ export async function getNationalReports(filters?: ReportFilters) {
           .single()
         
         if (period) {
-          // Filter by academic_year and term_name OR period_id (works for both old and new reports)
-          query = query.or(`period_id.eq.${filters.periodId},and(academic_year.eq.${period.academic_year},term_name.eq.${period.term_name})`)
+          // Since Migration 009 backfilled academic_year/term_name for legacy reports,
+          // we can simplify the filter to use these strings which avoids complex OR syntax issues.
+          query = query.eq('academic_year', period.academic_year).eq('term_name', period.term_name)
         } else {
           // Fallback: only filter by period_id (old system)
           query = query.eq('period_id', filters.periodId)

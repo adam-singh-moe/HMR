@@ -22,6 +22,7 @@ import {
   Target,
   Calendar,
   ChevronLeft,
+  School,
 } from "lucide-react"
 import { getUserSchoolInfo } from "@/app/actions/auth"
 import { 
@@ -58,6 +59,7 @@ import {
   getSchoolRankingPosition,
   getCategoryStrengthAnalysis,
 } from "@/features/school-assessment-reports/actions/analytics"
+import { isAssessmentModuleEnabled } from "@/features/school-assessment-reports/actions/module-config"
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
 import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE, TOTAL_MAX_SCORE } from "@/features/school-assessment-reports/types"
 import type { CurrentTermWindow, RatingLevel, TAPSRatingGrade } from "@/features/school-assessment-reports/types"
@@ -142,6 +144,7 @@ function HeadTeacherAssessmentContent() {
   
   // State
   const [loading, setLoading] = useState(true)
+  const [isModuleEnabled, setIsModuleEnabled] = useState(true)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
   const [activeWindow, setActiveWindow] = useState<CurrentTermWindow | null>(null)
   const [submissionOpen, setSubmissionOpen] = useState(false)
@@ -191,6 +194,17 @@ function HeadTeacherAssessmentContent() {
       }
       
       const school = schoolResult.school
+      
+      // Check if module is enabled for this school type
+      const schoolType = getSchoolTypeFromSchoolLevel(school.level)
+      const enabled = await isAssessmentModuleEnabled(schoolType)
+      setIsModuleEnabled(enabled)
+      
+      if (!enabled) {
+        setLoading(false)
+        return
+      }
+
       setSchoolInfo({
         id: school.id,
         name: school.name,
@@ -431,6 +445,49 @@ function HeadTeacherAssessmentContent() {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!isModuleEnabled) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={handleBackToDashboard} className="pl-0 gap-2 hover:bg-transparent">
+          <ChevronLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+        <Alert variant="destructive" className="bg-red-50 border-red-200">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertTitle className="text-red-800">Feature Restricted</AlertTitle>
+          <AlertDescription className="text-red-700">
+            The School Assessment module is currently disabled for your school type by the Ministry of Education administrator.
+            Please contact the help desk if you believe this is an error.
+          </AlertDescription>
+        </Alert>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <School className="h-5 w-5 text-muted-foreground" />
+              Access Denied
+            </CardTitle>
+            <CardDescription>
+              Your school ({schoolInfo?.name}) cannot participate in school assessments at this time.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <PlusCircleIcon className="h-8 w-8 text-muted-foreground opacity-20" />
+            </div>
+            <h3 className="text-lg font-medium">Assessment Module Disabled</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+              The reporting period for {getSchoolTypeFromSchoolLevel(schoolInfo?.level || '')} schools has not yet been enabled or has been temporarily suspended.
+            </p>
+            <Button onClick={handleBackToDashboard} className="mt-8">
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }

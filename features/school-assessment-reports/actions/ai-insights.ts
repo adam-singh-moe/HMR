@@ -137,7 +137,7 @@ export async function generateSchoolAssessmentInsight(
       .from('hmr_school_assessment_reports')
       .select(
         system === 'taps'
-          ? 'total_score, school_type, taps_rating_grade, taps_school_inputs_scores, taps_leadership_scores, taps_academics_scores, taps_teacher_development_scores, taps_health_safety_scores, taps_school_culture_scores, sms_schools!inner(region_id)'
+          ? 'total_score, school_type, taps_rating_grade, taps_school_inputs_scores, taps_leadership_scores, taps_academics_scores, taps_teacher_development_scores, taps_health_safety_scores, taps_school_culture_scores, taps_bullying_scores, sms_schools!inner(region_id)'
           : 'total_score, school_type, rating_level, academic_scores, attendance_scores, infrastructure_scores, teaching_quality_scores, management_scores, student_welfare_scores, community_scores, sms_schools!inner(region_id)'
       )
       .eq('status', 'submitted')

@@ -7,7 +7,7 @@ import type {
   RatingLevel,
   TAPSRatingGrade,
 } from "../types"
-import { RATING_THRESHOLDS, SCORING_WEIGHTS, CATEGORY_NAMES } from "../types"
+import { RATING_THRESHOLDS, SCORING_WEIGHTS, CATEGORY_NAMES, TAPS_TOTAL_MAX_SCORE } from "../types"
 
 async function assertCanAccessSchool(schoolId: string) {
   const user = await getUser()
@@ -109,6 +109,7 @@ interface AnalyticsRegionalStats {
   regionName: string
   totalSchools: number
   submittedCount: number
+  pendingCount: number
   averageScore: number
   ratingDistribution: Record<RatingLevel, number>
   categoryAverages: Record<CategoryName, number>
@@ -227,9 +228,18 @@ async function resolvePeriodFilter(periodId?: string): Promise<{ academic_year?:
       .abortSignal(AbortSignal.timeout(5000))
     
     if (activeTerm && activeTerm.length > 0) {
+      // Map the descriptive term names from the DB config back to our standard 'First Term' format
+      // as used in the reports table.
+      const termNo = activeTerm[0].term_number;
+      const termNameMap: Record<number, string> = {
+        1: 'First Term',
+        2: 'Second Term',
+        3: 'Third Term'
+      };
+      
       return { 
         academic_year: activeTerm[0].academic_year, 
-        term_name: activeTerm[0].term_name 
+        term_name: termNameMap[termNo] || activeTerm[0].term_name 
       }
     }
 
@@ -263,9 +273,10 @@ async function applyResolvedPeriodFilter(query: any, periodId?: string): Promise
   const filters = await resolvePeriodFilter(periodId)
   if (!filters) return { query }
 
-  if (filters.original_period_id && filters.academic_year && filters.term_name) {
-    // Legacy UUID that maps to specific strings - find reports matching either
-    return { query: query.or(`period_id.eq.${filters.original_period_id},and(academic_year.eq.${filters.academic_year},term_name.eq.${filters.term_name})`) }
+  if (filters.academic_year && filters.term_name) {
+    // Since Migration 009 backfilled academic_year/term_name for legacy reports,
+    // we can simplify the filter to use these strings which avoids complex OR syntax issues.
+    return { query: query.eq('academic_year', filters.academic_year).eq('term_name', filters.term_name) }
   } else if (filters.period_id) {
     return { query: query.eq('period_id', filters.period_id) }
   } else if (filters.academic_year && filters.term_name) {
@@ -302,13 +313,19 @@ export async function getRegionalStatistics(
     }
     
     // Build query for submitted reports
-    let query = supabase
+    let reportsQuery = supabase
       .from('hmr_school_assessment_reports')
       .select(`
         id,
         total_score,
         rating_level,
         taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
+        taps_teacher_development_scores,
+        taps_health_safety_scores,
+        taps_school_culture_scores, taps_bullying_scores,
         academic_scores,
         attendance_scores,
         infrastructure_scores,
@@ -321,23 +338,51 @@ export async function getRegionalStatistics(
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
     
-    const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
-    query = filteredQuery
+    // Get pending (draft) reports count for this region/period too
+    let pendingQuery = supabase
+      .from('hmr_school_assessment_reports')
+      .select('id, sms_schools!inner(region_id)', { count: 'exact', head: true })
+      .eq('status', 'draft')
+      .eq('sms_schools.region_id', regionId)
+
+    const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, periodId)
+    const { query: filteredPendingQuery } = await applyResolvedPeriodFilter(pendingQuery, periodId)
     
-    const { data: reports, error: reportsError } = await query
+    // Execute baseline queries in parallel
+    const [
+      reportsResponse,
+      pendingResponse,
+      totalSchoolsResponse
+    ] = await Promise.all([
+      filteredReportsQuery,
+      filteredPendingQuery,
+      supabase.from('sms_schools').select('id', { count: 'exact', head: true }).eq('region_id', regionId)
+    ]);
     
-    if (reportsError) {
-      console.error('Error fetching regional reports:', reportsError)
-      return { stats: null, error: 'Failed to fetch reports.' }
+    // Explicitly destructure results to be sure
+    const { data: reports, error: reportsError } = reportsResponse;
+    const { count: pendingCount, error: pendingError } = pendingResponse;
+    const { count: totalSchoolsCount, error: totalSchoolsError } = totalSchoolsResponse;
+    
+    if (reportsError || totalSchoolsError) {
+      console.error('Error fetching regional dashboard data:', { reportsError, totalSchoolsError, pendingError });
+      // Even if reporting has an error, we can still try to return the school count if available
     }
     
+    const totalSchools = (totalSchoolsCount !== null && totalSchoolsCount !== undefined) ? totalSchoolsCount : 0;
+    const submittedCount = reports?.length || 0;
+    const pendingCountVal = pendingCount || 0;
+
+    // Use totalSchools even if no reports exist - this prevents the "0 schools" bug for empty regions
     if (!reports || reports.length === 0) {
+      console.log(`[Analytics] No reports found for region ${regionId}, returning baseline stats with ${totalSchools} schools`);
       return {
         stats: {
           regionId,
           regionName: region.name,
-          totalSchools: 0,
+          totalSchools,
           submittedCount: 0,
+          pendingCount: pendingCountVal,
           averageScore: 0,
           ratingDistribution: {
             outstanding: 0,
@@ -360,24 +405,16 @@ export async function getRegionalStatistics(
       }
     }
     
-    // Get total schools in region
-    const { count: totalSchools } = await supabase
-      .from('sms_schools')
-      .select('id', { count: 'exact', head: true })
-      .eq('region_id', regionId)
-    
-    // Calculate statistics - normalize TAPS scores to 1000 scale for unified average
+    // Calculate statistics...
     const normalizedScores = reports.map(r => {
       const score = r.total_score || 0
       const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
-      if (isTAPS) {
-        // TAPS max is 419, Primary max is 1000. 
-        // We scale TAPS to 1000 to keep the averages consistent.
-        return Math.min(1000, Math.round((score / 419) * 1000))
-      }
+      if (isTAPS) return Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000))
       return score
     })
     const averageScore = calculateAverage(normalizedScores)
+    
+    // ... rest of logic
     
     // Rating distribution
     const ratingDistribution: Record<RatingLevel, number> = {
@@ -389,68 +426,68 @@ export async function getRegionalStatistics(
     }
     
     reports.forEach(r => {
-      // Priority: use taps_rating_grade if available, or rating_level
-      let rating: RatingLevel | null = null;
-      
-      if (r.taps_rating_grade) {
-        // Map TAPS grades A-E to Primary RatingLevels for unified distribution chart
-        const gradeMap: Record<string, RatingLevel> = {
-          'A': 'outstanding',
-          'B': 'very_good',
-          'C': 'good', 
-          'D': 'satisfactory',
-          'E': 'needs_improvement'
-        };
-        rating = gradeMap[r.taps_rating_grade] || null;
-      } else {
-        rating = r.rating_level as RatingLevel;
-      }
+      const score = r.total_score || 0
+      const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      const normalizedScore = is_taps ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
 
-      if (rating && ratingDistribution[rating] !== undefined) {
-        ratingDistribution[rating]++
+      let rating: RatingLevel | null = null;
+      if (r.taps_rating_grade) {
+        const gradeMap: Record<string, RatingLevel> = { 'A': 'outstanding', 'B': 'very_good', 'C': 'good', 'D': 'satisfactory', 'E': 'needs_improvement' };
+        rating = gradeMap[r.taps_rating_grade] || null;
+      } else if (is_taps && score > 0) {
+        rating = calculateRating(normalizedScore)
+      } else {
+        rating = (r.rating_level as string)?.toLowerCase() as RatingLevel;
       }
+      if (rating && ratingDistribution[rating] !== undefined) ratingDistribution[rating]++
     })
     
-    // Category averages
     const categoryTotals: Record<CategoryName, number[]> = {
-      academic: [],
-      attendance: [],
-      infrastructure: [],
-      teaching_quality: [],
-      management: [],
-      student_welfare: [],
-      community: [],
+      academic: [], attendance: [], infrastructure: [], teaching_quality: [], management: [], student_welfare: [], community: [],
     }
     
     reports.forEach(r => {
-      if (r.academic_scores?.total) categoryTotals.academic.push(r.academic_scores.total)
-      if (r.attendance_scores?.total) categoryTotals.attendance.push(r.attendance_scores.total)
-      if (r.infrastructure_scores?.total) categoryTotals.infrastructure.push(r.infrastructure_scores.total)
-      if (r.teaching_quality_scores?.total) categoryTotals.teaching_quality.push(r.teaching_quality_scores.total)
-      if (r.management_scores?.total) categoryTotals.management.push(r.management_scores.total)
-      if (r.student_welfare_scores?.total) categoryTotals.student_welfare.push(r.student_welfare_scores.total)
-      if (r.community_scores?.total) categoryTotals.community.push(r.community_scores.total)
+      const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      if (is_taps) {
+        if (r.taps_academics_scores?.total !== undefined) categoryTotals.academic.push(Math.round((r.taps_academics_scores.total / 200) * 300))
+        if (r.taps_health_safety_scores?.total !== undefined || r.taps_bullying_scores?.total !== undefined) {
+          const hs = r.taps_health_safety_scores?.total || 0;
+          const b = r.taps_bullying_scores?.total || 0;
+          categoryTotals.student_welfare.push(Math.round(((hs + b) / 60) * 100))
+        }
+        if (r.taps_leadership_scores?.total !== undefined) categoryTotals.management.push(Math.round((r.taps_leadership_scores.total / 30) * 100))
+        if (r.taps_school_inputs_scores?.total !== undefined) categoryTotals.infrastructure.push(Math.round((r.taps_school_inputs_scores.total / 80) * 150))
+        if (r.taps_teacher_development_scores?.total !== undefined) categoryTotals.teaching_quality.push(Math.round((r.taps_teacher_development_scores.total / 20) * 150))
+        if (r.taps_school_culture_scores?.total !== undefined) categoryTotals.community.push(Math.round((r.taps_school_culture_scores.total / 70) * 50))
+      } else {
+        if (r.academic_scores?.total) categoryTotals.academic.push(r.academic_scores.total)
+        if (r.attendance_scores?.total) categoryTotals.attendance.push(r.attendance_scores.total)
+        if (r.infrastructure_scores?.total) categoryTotals.infrastructure.push(r.infrastructure_scores.total)
+        if (r.teaching_quality_scores?.total) categoryTotals.teaching_quality.push(r.teaching_quality_scores.total)
+        if (r.management_scores?.total) categoryTotals.management.push(r.management_scores.total)
+        if (r.student_welfare_scores?.total) categoryTotals.student_welfare.push(r.student_welfare_scores.total)
+        if (r.community_scores?.total) categoryTotals.community.push(r.community_scores.total)
+      }
     })
-    
-    const categoryAverages: Record<CategoryName, number> = {
-      academic: calculateAverage(categoryTotals.academic),
-      attendance: calculateAverage(categoryTotals.attendance),
-      infrastructure: calculateAverage(categoryTotals.infrastructure),
-      teaching_quality: calculateAverage(categoryTotals.teaching_quality),
-      management: calculateAverage(categoryTotals.management),
-      student_welfare: calculateAverage(categoryTotals.student_welfare),
-      community: calculateAverage(categoryTotals.community),
-    }
     
     return {
       stats: {
         regionId,
         regionName: region.name,
-        totalSchools: totalSchools || 0,
-        submittedCount: reports.length,
+        totalSchools,
+        submittedCount,
+        pendingCount: pendingCountVal,
         averageScore,
         ratingDistribution,
-        categoryAverages,
+        categoryAverages: {
+          academic: calculateAverage(categoryTotals.academic),
+          attendance: calculateAverage(categoryTotals.attendance),
+          infrastructure: calculateAverage(categoryTotals.infrastructure),
+          teaching_quality: calculateAverage(categoryTotals.teaching_quality),
+          management: calculateAverage(categoryTotals.management),
+          student_welfare: calculateAverage(categoryTotals.student_welfare),
+          community: calculateAverage(categoryTotals.community),
+        },
       },
       error: null,
     }
@@ -481,7 +518,7 @@ export async function getRegionalSchoolRankings(
         taps_school_inputs_scores,
         taps_leadership_scores,
         taps_academics_scores,
-        sms_schools!inner(id, name, region_id, sms_regions(name))
+        sms_schools!inner(id, name, region_id, sms_regions:region_id(name))
       `)
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
@@ -497,15 +534,19 @@ export async function getRegionalSchoolRankings(
     }
 
     const processedRankings = (reports || []).map((r: any) => {
+      // Handle potential array return from join
+      const schoolInfo = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools
+      const regionInfo = Array.isArray(schoolInfo?.sms_regions) ? schoolInfo.sms_regions[0] : schoolInfo?.sms_regions
+
       const isTAPS = !!(r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores || r.taps_rating_grade)
       const score = r.total_score || 0
-      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
       
       return {
-        schoolId: r.sms_schools?.id || '',
-        schoolName: r.sms_schools?.name || '',
-        regionId: r.sms_schools?.region_id || '',
-        regionName: r.sms_schools?.sms_regions?.name || '',
+        schoolId: schoolInfo?.id || '',
+        schoolName: schoolInfo?.name || '',
+        regionId: schoolInfo?.region_id || '',
+        regionName: regionInfo?.name || '',
         totalScore: r.total_score || 0,
         normalizedScore,
         ratingLevel: r.rating_level as RatingLevel,
@@ -549,7 +590,12 @@ export async function getAllRegions(): Promise<{ regions: { id: string; name: st
       return { regions: [], error: 'Failed to fetch regions.' }
     }
     
-    return { regions: regions || [], error: null }
+    // Proper numerical sort so Region 10 comes after Region 9
+    const sortedRegions = (regions || []).sort((a, b) => 
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    )
+    
+    return { regions: sortedRegions, error: null }
   } catch (error) {
     console.error('Error in getAllRegions:', error)
     return { regions: [], error: 'An unexpected error occurred.' }
@@ -573,6 +619,12 @@ export async function getNationalStatistics(
         total_score,
         rating_level,
         taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
+        taps_teacher_development_scores,
+        taps_health_safety_scores,
+        taps_school_culture_scores, taps_bullying_scores,
         academic_scores,
         attendance_scores,
         infrastructure_scores,
@@ -580,7 +632,7 @@ export async function getNationalStatistics(
         management_scores,
         student_welfare_scores,
         community_scores,
-        sms_schools(id, name, region_id, sms_regions(id, name))
+        sms_schools:school_id(id, name, region_id, sms_regions:region_id(id, name))
       `)
       .eq('status', 'submitted')
     
@@ -668,7 +720,7 @@ export async function getNationalStatistics(
       if (isTAPS) {
         // TAPS max is 419, Primary max is 1000. 
         // We scale TAPS to 1000 for unified stats.
-        return Math.min(1000, Math.round((score / 419) * 1000))
+        return Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000))
       }
       return score
     })
@@ -684,11 +736,14 @@ export async function getNationalStatistics(
     }
     
     reports.forEach(r => {
-      // Priority: use taps_rating_grade if available, or rating_level
+      const score = r.total_score || 0
+      const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      const normalizedScore = is_taps ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
+      
+      // Priority: use taps_rating_grade if available, or calculate from score, or use rating_level
       let rating: RatingLevel | null = null;
       
       if (r.taps_rating_grade) {
-        // Map TAPS grades A-E to Primary RatingLevels for unified distribution chart
         const gradeMap: Record<string, RatingLevel> = {
           'A': 'outstanding',
           'B': 'very_good',
@@ -697,8 +752,10 @@ export async function getNationalStatistics(
           'E': 'needs_improvement'
         };
         rating = gradeMap[r.taps_rating_grade] || null;
+      } else if (is_taps && score > 0) {
+        rating = calculateRating(normalizedScore)
       } else {
-        rating = r.rating_level as RatingLevel;
+        rating = (r.rating_level as string)?.toLowerCase() as RatingLevel;
       }
 
       if (rating && ratingDistribution[rating] !== undefined) {
@@ -718,13 +775,37 @@ export async function getNationalStatistics(
     }
     
     reports.forEach(r => {
-      if (r.academic_scores?.total) categoryTotals.academic.push(r.academic_scores.total)
-      if (r.attendance_scores?.total) categoryTotals.attendance.push(r.attendance_scores.total)
-      if (r.infrastructure_scores?.total) categoryTotals.infrastructure.push(r.infrastructure_scores.total)
-      if (r.teaching_quality_scores?.total) categoryTotals.teaching_quality.push(r.teaching_quality_scores.total)
-      if (r.management_scores?.total) categoryTotals.management.push(r.management_scores.total)
-      if (r.student_welfare_scores?.total) categoryTotals.student_welfare.push(r.student_welfare_scores.total)
-      if (r.community_scores?.total) categoryTotals.community.push(r.community_scores.total)
+      const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+
+      if (is_taps) {
+        // Map TAPS fields to generic categories
+        if (r.taps_academics_scores?.total !== undefined) {
+          categoryTotals.academic.push(Math.round((r.taps_academics_scores.total / 200) * 300))
+        }
+        if (r.taps_health_safety_scores?.total !== undefined || r.taps_bullying_scores?.total !== undefined) {
+          const hs = r.taps_health_safety_scores?.total || 0; const b = r.taps_bullying_scores?.total || 0; categoryTotals.student_welfare.push(Math.round(((hs + b) / 60) * 100))
+        }
+        if (r.taps_leadership_scores?.total !== undefined) {
+          categoryTotals.management.push(Math.round((r.taps_leadership_scores.total / 30) * 100))
+        }
+        if (r.taps_school_inputs_scores?.total !== undefined) {
+          categoryTotals.infrastructure.push(Math.round((r.taps_school_inputs_scores.total / 80) * 150))
+        }
+        if (r.taps_teacher_development_scores?.total !== undefined) {
+          categoryTotals.teaching_quality.push(Math.round((r.taps_teacher_development_scores.total / 20) * 150))
+        }
+        if (r.taps_school_culture_scores?.total !== undefined) {
+          categoryTotals.community.push(Math.round((r.taps_school_culture_scores.total / 70) * 50))
+        }
+      } else {
+        if (r.academic_scores?.total) categoryTotals.academic.push(r.academic_scores.total)
+        if (r.attendance_scores?.total) categoryTotals.attendance.push(r.attendance_scores.total)
+        if (r.infrastructure_scores?.total) categoryTotals.infrastructure.push(r.infrastructure_scores.total)
+        if (r.teaching_quality_scores?.total) categoryTotals.teaching_quality.push(r.teaching_quality_scores.total)
+        if (r.management_scores?.total) categoryTotals.management.push(r.management_scores.total)
+        if (r.student_welfare_scores?.total) categoryTotals.student_welfare.push(r.student_welfare_scores.total)
+        if (r.community_scores?.total) categoryTotals.community.push(r.community_scores.total)
+      }
     })
     
     const categoryAverages: Record<CategoryName, number> = {
@@ -741,13 +822,23 @@ export async function getNationalStatistics(
     const regionScores: Record<string, { name: string; scores: number[] }> = {}
     
     reports.forEach((r: any) => {
-      const regionId = r.sms_schools?.region_id
-      const regionName = r.sms_schools?.sms_regions?.name
+      // Handle potential array from Supabase join
+      const school = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools;
+      const region = Array.isArray(school?.sms_regions) ? school.sms_regions[0] : school?.sms_regions;
+      
+      const regionId = school?.region_id
+      const regionName = region?.name
+      
       if (regionId && regionName) {
         if (!regionScores[regionId]) {
           regionScores[regionId] = { name: regionName, scores: [] }
         }
-        regionScores[regionId].scores.push(r.total_score || 0)
+        
+        const score = r.total_score || 0
+        const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+        const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
+        
+        regionScores[regionId].scores.push(normalizedScore)
       }
     })
     
@@ -806,7 +897,7 @@ export async function getNationalSchoolRankings(
         taps_school_inputs_scores,
         taps_leadership_scores,
         taps_academics_scores,
-        sms_schools(id, name, region_id, sms_regions(name))
+        sms_schools:school_id(id, name, region_id, sms_regions:region_id(name))
       `)
       .eq('status', 'submitted')
     
@@ -822,15 +913,19 @@ export async function getNationalSchoolRankings(
     }
     
     const processedRankings = (reports || []).map((r: any) => {
+      // Handle potential array return from join
+      const schoolInfo = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools
+      const regionInfo = Array.isArray(schoolInfo?.sms_regions) ? schoolInfo.sms_regions[0] : schoolInfo?.sms_regions
+
       const isTAPS = !!(r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores || r.taps_rating_grade)
       const score = r.total_score || 0
-      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
       
       return {
-        schoolId: r.sms_schools?.id || '',
-        schoolName: r.sms_schools?.name || '',
-        regionId: r.sms_schools?.region_id || '',
-        regionName: r.sms_schools?.sms_regions?.name || '',
+        schoolId: schoolInfo?.id || '',
+        schoolName: schoolInfo?.name || '',
+        regionId: schoolInfo?.region_id || '',
+        regionName: regionInfo?.name || '',
         totalScore: r.total_score || 0,
         normalizedScore,
         ratingLevel: r.rating_level as RatingLevel,
@@ -1005,7 +1100,7 @@ export async function getRegionalTrends(
       
       const score = r.total_score || 0
       const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
-      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
       
       periodGroups[groupKey].scores.push(normalizedScore)
     })
@@ -1101,7 +1196,7 @@ export async function getNationalTrends(
       
       const score = r.total_score || 0
       const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
-      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / 419) * 1000)) : score
+      const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
       
       periodGroups[groupKey].scores.push(normalizedScore)
     })
@@ -1432,7 +1527,7 @@ export async function getSchoolRankingPosition(
     // before we try to fetch thousands of other schools for comparison.
     let baseQuery = supabase
       .from('hmr_school_assessment_reports')
-      .select('id, total_score, is_taps, taps_rating_grade')
+      .select('id, total_score, taps_rating_grade')
       .eq('school_id', schoolId)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
@@ -1456,9 +1551,8 @@ export async function getSchoolRankingPosition(
       .select(`
         school_id,
         total_score,
-        is_taps,
         taps_rating_grade,
-        sms_schools!inner(region_id)
+        sms_schools:school_id!inner(region_id)
       `)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
@@ -1493,9 +1587,9 @@ export async function getSchoolRankingPosition(
     
     // Helper to calculate normalized score (0-1000)
     const getNormalizedScore = (r: any) => {
-      const is_taps_local = r.is_taps || Boolean(r.taps_rating_grade)
+      const is_taps_local = Boolean(r.taps_rating_grade)
       const score_local = r.total_score || 0
-      return is_taps_local ? Math.round((score_local / 419) * 1000) : score_local
+      return is_taps_local ? Math.round((score_local / TAPS_TOTAL_MAX_SCORE) * 1000) : score_local
     }
 
     const schoolScoreNormal = getNormalizedScore(schoolReportEntry)
@@ -1509,7 +1603,10 @@ export async function getSchoolRankingPosition(
       : null
     
     // Calculate regional ranking
-    const regionalReports = reports.filter((r: any) => r.sms_schools?.region_id === regionId)
+    const regionalReports = reports.filter((r: any) => {
+      const s = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools;
+      return s?.region_id === regionId;
+    })
     const regionalScores = regionalReports.map(r => getNormalizedScore(r)).sort((a, b) => b - a)
     const regionalRank = regionalScores.findIndex(s => s <= schoolScoreNormal) + 1
     const regionalTotal = regionalScores.length
@@ -1557,7 +1654,14 @@ export async function getCategoryStrengthAnalysis(
         teaching_quality_scores,
         management_scores,
         student_welfare_scores,
-        community_scores
+        community_scores,
+        taps_rating_grade,
+        taps_academics_scores,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_teacher_development_scores,
+        taps_health_safety_scores,
+        taps_school_culture_scores
       `)
       .eq('id', reportId)
       .single()
@@ -1566,7 +1670,16 @@ export async function getCategoryStrengthAnalysis(
       return { strongest: null, weakest: null, allCategories: [], error: 'Report not found.' }
     }
     
-    const categoryConfig: { key: string; label: string; maxScore: number; scoreKey: string }[] = [
+    const isTAPS = !!(report.taps_rating_grade || report.taps_academics_scores || report.taps_leadership_scores)
+
+    const categoryConfig: { key: string; label: string; maxScore: number; scoreKey: string }[] = isTAPS ? [
+      { key: 'academic', label: 'Academic Performance', maxScore: 200, scoreKey: 'taps_academics_scores' },
+      { key: 'infrastructure', label: 'School Inputs', maxScore: 80, scoreKey: 'taps_school_inputs_scores' },
+      { key: 'teaching_quality', label: 'Teacher Development', maxScore: 20, scoreKey: 'taps_teacher_development_scores' },
+      { key: 'management', label: 'Leadership', maxScore: 30, scoreKey: 'taps_leadership_scores' },
+      { key: 'student_welfare', label: 'Health & Safety', maxScore: 50, scoreKey: 'taps_health_safety_scores' },
+      { key: 'community', label: 'School Culture', maxScore: 70, scoreKey: 'taps_school_culture_scores' },
+    ] : [
       { key: 'academic', label: 'Academic Performance', maxScore: 300, scoreKey: 'academic_scores' },
       { key: 'attendance', label: 'Attendance', maxScore: 150, scoreKey: 'attendance_scores' },
       { key: 'infrastructure', label: 'Infrastructure', maxScore: 150, scoreKey: 'infrastructure_scores' },
@@ -1583,7 +1696,7 @@ export async function getCategoryStrengthAnalysis(
         label: cat.label,
         score,
         maxScore: cat.maxScore,
-        percentage: Math.round((score / cat.maxScore) * 100),
+        percentage: cat.maxScore > 0 ? Math.round((score / cat.maxScore) * 100) : 0,
       }
     })
     
@@ -1705,6 +1818,10 @@ export async function getMostImprovedSchools(
         submitted_at,
         academic_year,
         term_name,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools!inner(id, name, region_id, sms_regions(name))
       `)
       .eq('status', 'submitted')
@@ -1746,8 +1863,14 @@ export async function getMostImprovedSchools(
         const current = sorted[0]
         const previous = sorted[1]
         
-        const currentScore = current.total_score || 0
-        const previousScore = previous.total_score || 0
+        const getNormalizedScore = (r: any) => {
+          const score = r.total_score || 0
+          const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+          return isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
+        }
+        
+        const currentScore = getNormalizedScore(current)
+        const previousScore = getNormalizedScore(previous)
         const change = currentScore - previousScore
         const changePercent = previousScore > 0 ? Math.round((change / previousScore) * 100) : 0
         
@@ -1824,6 +1947,13 @@ export async function getCategoryGapAnalysis(
         management_scores,
         student_welfare_scores,
         community_scores,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
+        taps_teacher_development_scores,
+        taps_health_safety_scores,
+        taps_school_culture_scores, taps_bullying_scores,
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
@@ -1841,24 +1971,64 @@ export async function getCategoryGapAnalysis(
       return { gaps: [], weakestCategory: null, strongestCategory: null, error: error ? 'Failed to fetch data.' : null }
     }
     
-    const categoryConfig: { key: string; label: string; maxScore: number; scoreKey: string }[] = [
-      { key: 'academic', label: 'Academic Performance', maxScore: 300, scoreKey: 'academic_scores' },
-      { key: 'attendance', label: 'Attendance', maxScore: 150, scoreKey: 'attendance_scores' },
-      { key: 'infrastructure', label: 'Infrastructure', maxScore: 150, scoreKey: 'infrastructure_scores' },
-      { key: 'teaching_quality', label: 'Teaching Quality', maxScore: 150, scoreKey: 'teaching_quality_scores' },
-      { key: 'management', label: 'Management', maxScore: 100, scoreKey: 'management_scores' },
-      { key: 'student_welfare', label: 'Student Welfare', maxScore: 100, scoreKey: 'student_welfare_scores' },
-      { key: 'community', label: 'Community Engagement', maxScore: 50, scoreKey: 'community_scores' },
+    // Category totals for normalization
+    const categoryTotals: Record<CategoryName, number[]> = {
+      academic: [],
+      attendance: [],
+      infrastructure: [],
+      teaching_quality: [],
+      management: [],
+      student_welfare: [],
+      community: [],
+    }
+
+    reports.forEach((r: any) => {
+      const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      
+      if (is_taps) {
+        if (r.taps_academics_scores?.total !== undefined) {
+          categoryTotals.academic.push(Math.round((r.taps_academics_scores.total / 200) * 300))
+        }
+        if (r.taps_health_safety_scores?.total !== undefined || r.taps_bullying_scores?.total !== undefined) {
+          const hs = r.taps_health_safety_scores?.total || 0; const b = r.taps_bullying_scores?.total || 0; categoryTotals.student_welfare.push(Math.round(((hs + b) / 60) * 100))
+        }
+        if (r.taps_leadership_scores?.total !== undefined) {
+          categoryTotals.management.push(Math.round((r.taps_leadership_scores.total / 30) * 100))
+        }
+        if (r.taps_school_inputs_scores?.total !== undefined) {
+          categoryTotals.infrastructure.push(Math.round((r.taps_school_inputs_scores.total / 80) * 150))
+        }
+        if (r.taps_teacher_development_scores?.total !== undefined) {
+          categoryTotals.teaching_quality.push(Math.round((r.taps_teacher_development_scores.total / 20) * 150))
+        }
+        if (r.taps_school_culture_scores?.total !== undefined) {
+          categoryTotals.community.push(Math.round((r.taps_school_culture_scores.total / 70) * 50))
+        }
+      } else {
+        if (r.academic_scores?.total !== undefined) categoryTotals.academic.push(r.academic_scores.total)
+        if (r.attendance_scores?.total !== undefined) categoryTotals.attendance.push(r.attendance_scores.total)
+        if (r.infrastructure_scores?.total !== undefined) categoryTotals.infrastructure.push(r.infrastructure_scores.total)
+        if (r.teaching_quality_scores?.total !== undefined) categoryTotals.teaching_quality.push(r.teaching_quality_scores.total)
+        if (r.management_scores?.total !== undefined) categoryTotals.management.push(r.management_scores.total)
+        if (r.student_welfare_scores?.total !== undefined) categoryTotals.student_welfare.push(r.student_welfare_scores.total)
+        if (r.community_scores?.total !== undefined) categoryTotals.community.push(r.community_scores.total)
+      }
+    })
+
+    const categoryConfig: { key: CategoryName; label: string; maxScore: number }[] = [
+      { key: 'academic', label: 'Academic Performance', maxScore: 300 },
+      { key: 'attendance', label: 'Attendance', maxScore: 150 },
+      { key: 'infrastructure', label: 'Infrastructure', maxScore: 150 },
+      { key: 'teaching_quality', label: 'Teaching Quality', maxScore: 150 },
+      { key: 'management', label: 'Management', maxScore: 100 },
+      { key: 'student_welfare', label: 'Student Welfare', maxScore: 100 },
+      { key: 'community', label: 'Community Engagement', maxScore: 50 },
     ]
     
     const gaps = categoryConfig.map(cat => {
-      const scores = reports
-        .map(r => (r as any)[cat.scoreKey]?.total)
-        .filter((s): s is number => typeof s === 'number')
-      
-      const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
+      const averageScore = calculateAverage(categoryTotals[cat.key])
       const gap = cat.maxScore - averageScore
-      const filledPercentage = Math.round((averageScore / cat.maxScore) * 100)
+      const filledPercentage = cat.maxScore > 0 ? Math.round((averageScore / cat.maxScore) * 100) : 0
       
       return {
         category: cat.key,
@@ -1866,7 +2036,7 @@ export async function getCategoryGapAnalysis(
         averageScore,
         maxScore: cat.maxScore,
         gap,
-        gapPercentage: Math.round((gap / cat.maxScore) * 100),
+        gapPercentage: cat.maxScore > 0 ? Math.round((gap / cat.maxScore) * 100) : 0,
         filledPercentage,
       }
     })
@@ -2022,6 +2192,10 @@ export async function getRegionVsNationalComparison(
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools!inner(region_id, sms_regions(id, name))
       `)
       .eq('status', 'submitted')
@@ -2040,17 +2214,25 @@ export async function getRegionVsNationalComparison(
       }
     }
     
+    // Helper to calculate normalized score (0-1000)
+    const getNormalizedScore = (r: any) => {
+      const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+      const score = r.total_score || 0
+      return isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
+    }
+
     // Calculate national average
-    const allScores = reports.map(r => r.total_score || 0)
+    const allScores = reports.map(r => getNormalizedScore(r))
     const nationalAverage = Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
     
     // Calculate regional averages
     const regionScores: Record<string, number[]> = {}
     reports.forEach((r: any) => {
-      const rId = r.sms_schools?.region_id
+      const school = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools;
+      const rId = school?.region_id
       if (rId) {
         if (!regionScores[rId]) regionScores[rId] = []
-        regionScores[rId].push(r.total_score || 0)
+        regionScores[rId].push(getNormalizedScore(r))
       }
     })
     
@@ -2112,10 +2294,13 @@ export async function getSchoolsNeedingAttention(
         school_id,
         total_score,
         rating_level,
+        taps_rating_grade,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_academics_scores,
         sms_schools!inner(id, name, region_id, sms_regions(name))
       `)
       .eq('status', 'submitted')
-      .lt('total_score', threshold)
       .order('total_score', { ascending: true })
     
     if (regionId) {
@@ -2131,14 +2316,23 @@ export async function getSchoolsNeedingAttention(
       return { schools: [], count: 0, error: 'Failed to fetch data.' }
     }
     
-    const schools = (reports || []).map((r: any) => ({
-      schoolId: r.school_id,
-      schoolName: r.sms_schools?.name || 'Unknown',
-      regionName: r.sms_schools?.sms_regions?.name || '',
-      score: r.total_score || 0,
-      deficit: threshold - (r.total_score || 0),
-      ratingLevel: r.rating_level || 'needs_improvement',
-    }))
+    const schools = (reports || [])
+      .map((r: any) => {
+        const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+        const score = r.total_score || 0
+        const normalizedScore = isTAPS ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
+        
+        return {
+          schoolId: r.school_id,
+          schoolName: r.sms_schools?.name || 'Unknown',
+          regionName: r.sms_schools?.sms_regions?.name || '',
+          score: r.total_score || 0,
+          normalizedScore,
+          deficit: threshold - normalizedScore,
+          ratingLevel: r.rating_level || 'needs_improvement',
+        }
+      })
+      .filter(s => s.normalizedScore < threshold)
     
     return { schools, count: schools.length, error: null }
   } catch (error) {
@@ -2171,6 +2365,13 @@ export async function getCategoryLeaders(
         management_scores,
         student_welfare_scores,
         community_scores,
+        taps_rating_grade,
+        taps_academics_scores,
+        taps_school_inputs_scores,
+        taps_leadership_scores,
+        taps_teacher_development_scores,
+        taps_health_safety_scores,
+        taps_school_culture_scores, taps_bullying_scores,
         sms_schools!inner(id, name, region_id)
       `)
       .eq('status', 'submitted')
@@ -2188,14 +2389,14 @@ export async function getCategoryLeaders(
       return { leaders: [], error: error ? 'Failed to fetch data.' : null }
     }
     
-    const categoryConfig: { key: string; label: string; maxScore: number; scoreKey: string }[] = [
-      { key: 'academic', label: 'Academic Performance', maxScore: 300, scoreKey: 'academic_scores' },
-      { key: 'attendance', label: 'Attendance', maxScore: 150, scoreKey: 'attendance_scores' },
-      { key: 'infrastructure', label: 'Infrastructure', maxScore: 150, scoreKey: 'infrastructure_scores' },
-      { key: 'teaching_quality', label: 'Teaching Quality', maxScore: 150, scoreKey: 'teaching_quality_scores' },
-      { key: 'management', label: 'Management', maxScore: 100, scoreKey: 'management_scores' },
-      { key: 'student_welfare', label: 'Student Welfare', maxScore: 100, scoreKey: 'student_welfare_scores' },
-      { key: 'community', label: 'Community Engagement', maxScore: 50, scoreKey: 'community_scores' },
+    const categoryConfig: { key: CategoryName; label: string; maxScore: number }[] = [
+      { key: 'academic', label: 'Academic Performance', maxScore: 300 },
+      { key: 'attendance', label: 'Attendance', maxScore: 150 },
+      { key: 'infrastructure', label: 'Infrastructure', maxScore: 150 },
+      { key: 'teaching_quality', label: 'Teaching Quality', maxScore: 150 },
+      { key: 'management', label: 'Management', maxScore: 100 },
+      { key: 'student_welfare', label: 'Student Welfare', maxScore: 100 },
+      { key: 'community', label: 'Community Engagement', maxScore: 50 },
     ]
     
     const leaders = categoryConfig.map(cat => {
@@ -2204,17 +2405,50 @@ export async function getCategoryLeaders(
       let topScore = -1
       
       reports.forEach((r: any) => {
-        const score = r[cat.scoreKey]?.total || 0
+        let score = 0
+        const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
+        
+        if (is_taps) {
+          if (cat.key === 'academic' && r.taps_academics_scores?.total !== undefined) {
+             score = Math.round((r.taps_academics_scores.total / 200) * 300)
+          } else if (cat.key === 'student_welfare' && (r.taps_health_safety_scores?.total !== undefined || r.taps_bullying_scores?.total !== undefined)) {
+             const hs = r.taps_health_safety_scores?.total || 0;
+             const b = r.taps_bullying_scores?.total || 0;
+             score = Math.round(((hs + b) / 60) * 100)
+          } else if (cat.key === 'management' && r.taps_leadership_scores?.total !== undefined) {
+             score = Math.round((r.taps_leadership_scores.total / 30) * 100)
+          } else if (cat.key === 'infrastructure' && r.taps_school_inputs_scores?.total !== undefined) {
+             score = Math.round((r.taps_school_inputs_scores.total / 80) * 150)
+          } else if (cat.key === 'teaching_quality' && r.taps_teacher_development_scores?.total !== undefined) {
+             score = Math.round((r.taps_teacher_development_scores.total / 20) * 150)
+          } else if (cat.key === 'community' && r.taps_school_culture_scores?.total !== undefined) {
+             score = Math.round((r.taps_school_culture_scores.total / 70) * 50)
+          }
+        } else {
+          const scoreKeyMap: Record<string, string> = {
+            academic: 'academic_scores',
+            attendance: 'attendance_scores',
+            infrastructure: 'infrastructure_scores',
+            teaching_quality: 'teaching_quality_scores',
+            management: 'management_scores',
+            student_welfare: 'student_welfare_scores',
+            community: 'community_scores'
+          }
+          score = (r as any)[scoreKeyMap[cat.key]]?.total || 0
+        }
+
         if (score > topScore) {
           topScore = score
           topSchool = r
         }
       })
       
+      const schoolInfo = Array.isArray(topSchool?.sms_schools) ? topSchool.sms_schools[0] : topSchool?.sms_schools
+
       return {
         category: cat.key,
         label: cat.label,
-        schoolName: topSchool?.sms_schools?.name || 'N/A',
+        schoolName: schoolInfo?.name || 'N/A',
         schoolId: topSchool?.school_id || '',
         score: topScore >= 0 ? topScore : 0,
         maxScore: cat.maxScore,

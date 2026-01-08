@@ -1272,6 +1272,29 @@ export const TAPS_SCHOOL_CULTURE_FIELDS: FormFieldConfig[] = [
   },
 ]
 
+export const TAPS_BULLYING_FIELDS: FormFieldConfig[] = [
+  {
+    id: 'bullyingReportsCount',
+    label: 'Bullying Reports',
+    description: 'Number of bullying reports recorded for the term',
+    appliesTo: ['secondary'],
+    type: 'number',
+    min: 0,
+    max: 1000,
+    importance: 2,
+  },
+  {
+    id: 'bullyingIssuesSolved',
+    label: 'Bullying Issues Solved',
+    description: 'Number of those bullying issues that have been solved',
+    appliesTo: ['secondary'],
+    type: 'number',
+    min: 0,
+    max: 1000,
+    importance: 2,
+  },
+]
+
 /**
  * TAPS Category configurations for Secondary Schools
  * Based on Termly Accountability Performance for Secondary Schools document
@@ -1312,6 +1335,12 @@ export const TAPS_CATEGORY_CONFIGS: CategoryFieldConfig[] = [
     categoryLabel: 'School Culture / Environment',
     fields: TAPS_SCHOOL_CULTURE_FIELDS,
     maxPoints: 70,
+  },
+  {
+    categoryId: 'bullying',
+    categoryLabel: 'Bullying & Resolution',
+    fields: TAPS_BULLYING_FIELDS,
+    maxPoints: 10,
   },
 ]
 

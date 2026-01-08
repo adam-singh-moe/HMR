@@ -103,6 +103,7 @@ interface ReportViewProps {
       teacher_development: number
       health_safety: number
       school_culture: number
+      bullying: number
     }
     submittedAt: string
     categoryScores: {
@@ -155,6 +156,7 @@ const TAPS_CATEGORY_ICONS: Record<TAPSCategoryName | 'general', React.ReactNode>
   teacher_development: <GraduationCap className="h-5 w-5" />,
   health_safety: <Shield className="h-5 w-5" />,
   school_culture: <Sparkles className="h-5 w-5" />,
+  bullying: <AlertTriangle className="h-5 w-5" />,
   general: <Lightbulb className="h-5 w-5" />,
 }
 
@@ -178,6 +180,7 @@ const TAPS_CATEGORY_CONFIG: Record<TAPSCategoryName | 'general', { label: string
   teacher_development: { label: 'Teacher Development', maxScore: 20 },
   health_safety: { label: 'Health & Safety', maxScore: 50 },
   school_culture: { label: 'School Culture', maxScore: 70 },
+  bullying: { label: 'Bullying & Resolution', maxScore: 10 },
   general: { label: 'General Improvement' },
 }
 

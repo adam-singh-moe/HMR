@@ -38,6 +38,7 @@ const CATEGORY_LABELS: Record<CategoryName | TAPSCategoryName | 'general', strin
   teacher_development: 'Teacher Development',
   health_safety: 'Health & Safety',
   school_culture: 'School Culture',
+  bullying: 'Bullying & Resolution',
   general: 'General',
 }
 
@@ -48,6 +49,7 @@ const TAPS_CATEGORY_MAX: Record<TAPSCategoryName, number> = {
   teacher_development: 20,
   health_safety: 50,
   school_culture: 70,
+  bullying: 10,
 }
 
 // ============================================================================
