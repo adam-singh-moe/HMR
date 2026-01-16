@@ -196,43 +196,46 @@ STAFFING DATA:
 `
       }
 
-      // Add attendance data formatting
-      if (report.school_days_opened !== undefined || report.total_attendance !== undefined || report.average_daily_attendance !== undefined) {
+      // Add attendance data formatting (hmr_attendance table)
+      // Fields: type ('student'|'teacher'), attendance_rate, punctuality_rate
+      if (report.attendance_rate !== undefined || report.punctuality_rate !== undefined || report.type !== undefined) {
         reportText += `
 ATTENDANCE DATA:
-- School Days Opened: ${report.school_days_opened || 'Not specified'}
-- Total Student Attendance: ${report.total_attendance || 'Not specified'}
-- Average Daily Attendance: ${report.average_daily_attendance || 'Not specified'}
-- Attendance Rate: ${report.attendance_rate ? `${report.attendance_rate}%` : 'Not specified'}
-- Absences: ${report.total_absences || 'Not specified'}
-- Late Arrivals: ${report.late_arrivals || 'Not specified'}
-- Early Departures: ${report.early_departures || 'Not specified'}
-- Comments: ${report.attendance_comments || 'Not specified'}
+- Type: ${report.type || 'Not specified'}
+- Attendance Rate: ${report.attendance_rate !== undefined ? `${report.attendance_rate}%` : 'Not specified'}
+- Punctuality Rate: ${report.punctuality_rate !== undefined ? `${report.punctuality_rate}%` : 'Not specified'}
 `
       }
 
-      if (report.data_type === 'teacher_updates' || report.category !== undefined) {
+      // Add teacher status updates formatting (hmr_teacher_status_updates table)
+      // Fields: category, teacher_name, teacher_status, reason, offence, days_absent, action_taken
+      if (report.data_type === 'teacher_updates' || (report.category !== undefined && report.teacher_name !== undefined)) {
         reportText += `
-TEACHER STATUS:
+TEACHER STATUS UPDATE:
 - Category: ${report.category || 'Not specified'}
 - Teacher Name: ${report.teacher_name || 'Not specified'}
-- Status: ${report.teacher_status || 'Not specified'}
+- Teacher Status: ${report.teacher_status || 'Not specified'}
 - Reason: ${report.reason || 'Not specified'}
+- Offence: ${report.offence || 'Not specified'}
 - Days Absent: ${report.days_absent || 'Not specified'}
+- Action Taken: ${report.action_taken || 'Not specified'}
 `
       }
 
-      // Generic fields for other types of reports
-      if (report.total_students_enrolled !== undefined) {
+      // Add student enrollment data formatting (hmr_student_enrollment table)
+      // Fields: total_enrollment, transferred_in, transferred_out
+      if (report.total_enrollment !== undefined || report.transferred_in !== undefined || report.transferred_out !== undefined) {
         reportText += `
-ENROLLMENT DATA:
-- Total Students: ${report.total_students_enrolled || 'Not specified'}
-- Transferred In: ${report.students_transferred_in || 0}
-- Transferred Out: ${report.students_transferred_out || 0}
+STUDENT ENROLLMENT DATA:
+- Total Enrollment: ${report.total_enrollment || 'Not specified'}
+- Transferred In: ${report.transferred_in || 0}
+- Transferred Out: ${report.transferred_out || 0}
 `
       }
 
-      if (report.opening_balance !== undefined) {
+      // Add finance data formatting (hmr_finance table)
+      // Fields: opening_balance, total_income, total_expenditure, closing_balance
+      if (report.opening_balance !== undefined || report.closing_balance !== undefined) {
         reportText += `
 FINANCE DATA:
 - Opening Balance: ${report.opening_balance || 'Not specified'}
@@ -242,15 +245,115 @@ FINANCE DATA:
 `
       }
 
-      // Add physical education data formatting
-      if (report.total_students !== undefined || report.activities_performed !== undefined || report.challenges !== undefined) {
+      // Add physical education data formatting (hmr_physical_education table)
+      // Fields: activities_performed, challenges
+      if (report.activities_performed !== undefined || (report.challenges !== undefined && report.activities_performed !== undefined)) {
         reportText += `
 PHYSICAL EDUCATION DATA:
-- Total Students: ${report.total_students || 'Not specified'}
-- Activities Performed: ${report.activities_performed || report.activities || 'Not specified'}
+- Activities Performed: ${report.activities_performed || 'Not specified'}
 - Challenges: ${report.challenges || 'Not specified'}
-- Equipment Available: ${report.equipment_available || 'Not specified'}
-- Facilities Used: ${report.facilities_used || 'Not specified'}
+`
+      }
+
+      // Add income sources data formatting (hmr_income table)
+      // Fields: source, amount
+      if (report.source !== undefined || report.amount !== undefined) {
+        reportText += `
+INCOME SOURCE DATA:
+- Source: ${report.source || 'Not specified'}
+- Amount: ${report.amount || 'Not specified'}
+`
+      }
+
+      // Add safety/accident data formatting (hmr_accident_safety table)
+      // Fields: evacuation_drill, persons_involved, time_taken, observations, 
+      //         first_aid_kit, fire_extinguisher, total_accidents, students_involved, 
+      //         teachers_involved, actions_taken
+      if (report.evacuation_drill !== undefined || report.total_accidents !== undefined || report.first_aid_kit !== undefined) {
+        reportText += `
+SAFETY/ACCIDENT DATA:
+- Evacuation Drill Conducted: ${report.evacuation_drill || 'Not specified'}
+- Persons Involved in Drill: ${report.persons_involved || 'Not specified'}
+- Time Taken (minutes): ${report.time_taken || 'Not specified'}
+- Drill Observations: ${report.observations || 'Not specified'}
+- First Aid Kit Available: ${report.first_aid_kit || 'Not specified'}
+- Fire Extinguisher Available: ${report.fire_extinguisher || 'Not specified'}
+- Total Accidents: ${report.total_accidents || 0}
+- Students Involved in Accidents: ${report.students_involved || 0}
+- Teachers Involved in Accidents: ${report.teachers_involved || 0}
+- Actions Taken: ${report.actions_taken || 'Not specified'}
+`
+      }
+
+      // Add staff meetings data formatting (hmr_staff_meetings table)
+      // Fields: meeting_held, key_issues, decisions_implemented
+      if (report.meeting_held !== undefined || report.key_issues !== undefined || report.decisions_implemented !== undefined) {
+        reportText += `
+STAFF MEETING DATA:
+- Meeting Held: ${report.meeting_held || 'Not specified'}
+- Key Issues Discussed: ${report.key_issues || 'Not specified'}
+- Decisions Implemented (%): ${report.decisions_implemented !== undefined ? `${report.decisions_implemented}%` : 'Not specified'}
+`
+      }
+
+      // Add physical facilities data formatting (hmr_facilities table)
+      // Fields: type ('Teachers'|'Students'), functional_percentage, working_sinks, 
+      //         working_taps, overcrowded_classrooms
+      if (report.functional_percentage !== undefined || report.working_sinks !== undefined || report.working_taps !== undefined) {
+        reportText += `
+FACILITIES DATA:
+- Facility Type: ${report.type || 'Not specified'}
+- Functional Washrooms/Toilets (%): ${report.functional_percentage !== undefined ? `${report.functional_percentage}%` : 'Not specified'}
+- Working Sinks (%): ${report.working_sinks !== undefined ? `${report.working_sinks}%` : 'Not specified'}
+- Working Taps (%): ${report.working_taps !== undefined ? `${report.working_taps}%` : 'Not specified'}
+- Overcrowded Classrooms (%): ${report.overcrowded_classrooms !== undefined ? `${report.overcrowded_classrooms}%` : 'Not specified'}
+`
+      }
+
+      // Add resources needed data formatting (hmr_resources_needed table)
+      // Fields: curriculum_resources, janitorial_supplies, other_issues
+      if (report.curriculum_resources !== undefined || report.janitorial_supplies !== undefined || report.other_issues !== undefined) {
+        reportText += `
+RESOURCES NEEDED DATA:
+- Curriculum Resources Needed: ${report.curriculum_resources || 'Not specified'}
+- Janitorial Supplies Needed: ${report.janitorial_supplies || 'Not specified'}
+- Other Issues/Needs: ${report.other_issues || 'Not specified'}
+`
+      }
+
+      // Add staff development data formatting (hmr_staff_development table)
+      // Fields: session_held, attendance_percentage, topic, outcomes, reason
+      if (report.session_held !== undefined || report.topic !== undefined || report.attendance_percentage !== undefined) {
+        reportText += `
+STAFF DEVELOPMENT DATA:
+- PD Session Held: ${report.session_held || 'Not specified'}
+- Attendance (%): ${report.attendance_percentage !== undefined ? `${report.attendance_percentage}%` : 'Not specified'}
+- Topic: ${report.topic || 'Not specified'}
+- Outcomes: ${report.outcomes || 'Not specified'}
+- Reason (if not held): ${report.reason || 'Not specified'}
+`
+      }
+
+      // Add supervision data formatting (hmr_supervision table)
+      // Fields: supervisor_type, lessons_observed, positive_findings, negative_findings, follow_up
+      if (report.supervisor_type !== undefined || report.lessons_observed !== undefined || report.positive_findings !== undefined) {
+        reportText += `
+SUPERVISION DATA:
+- Supervisor Type: ${report.supervisor_type || 'Not specified'}
+- Lessons Observed: ${report.lessons_observed || 'Not specified'}
+- Positive Findings: ${report.positive_findings || 'Not specified'}
+- Negative Findings: ${report.negative_findings || 'Not specified'}
+- Follow-up Actions: ${report.follow_up || 'Not specified'}
+`
+      }
+
+      // Add curriculum data formatting (hmr_curriculum table)
+      // Fields: teachers_without_plans, actions_taken
+      if (report.teachers_without_plans !== undefined || (report.actions_taken !== undefined && report.teachers_without_plans !== undefined)) {
+        reportText += `
+CURRICULUM DATA:
+- Teachers Without Lesson Plans: ${report.teachers_without_plans || 0}
+- Actions Taken: ${report.actions_taken || 'Not specified'}
 `
       }
 
@@ -309,6 +412,41 @@ PHYSICAL EDUCATION DATA:
         'Compare financial management practices across schools',
         'Assess the impact of budget constraints on educational delivery',
         'Recommend strategies for improved financial planning and resource allocation'
+      ],
+      'income-sources': [
+        'Analyze the diversity of income sources across schools',
+        'Identify schools with limited income streams and suggest alternatives',
+        'Compare government funding vs other income sources',
+        'Assess the sustainability of current income patterns',
+        'Recommend strategies to increase school funding diversity'
+      ],
+      'safety': [
+        'Analyze accident and safety incident patterns across schools',
+        'Identify schools with recurring safety concerns',
+        'Compare safety records between different school types',
+        'Assess the effectiveness of current safety protocols',
+        'Recommend safety improvements and preventive measures'
+      ],
+      'staff-meetings': [
+        'Analyze the frequency and effectiveness of staff meetings',
+        'Identify patterns in staff meeting attendance and participation',
+        'Compare meeting practices across schools in the region',
+        'Assess the quality of meeting documentation and follow-ups',
+        'Recommend best practices for productive staff meetings'
+      ],
+      'physical-facilities': [
+        'Analyze the condition of physical facilities across schools',
+        'Identify schools with critical infrastructure needs',
+        'Compare facility standards between urban and rural schools',
+        'Assess maintenance and repair priorities',
+        'Recommend capital investment priorities for facilities'
+      ],
+      'resources': [
+        'Analyze resource needs and shortages across schools',
+        'Identify the most commonly needed resources in the region',
+        'Compare resource allocation between schools',
+        'Assess the urgency of different resource requests',
+        'Recommend resource procurement and distribution strategies'
       ],
       'physical-education': [
         'Analyze physical education activities across schools and identify the most effective programs',
