@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { AuthWrapper } from "@/components/auth-wrapper"
 import { RegionalPEReportsContent } from "./pe-reports/pe-reports-content"
-import { RegionalAIInsightsContent } from "./ai-insights/ai-insights-content"
+import { RegionalAIInsightsContent } from "./ai-insights/page"
 import { RegionalOfficerAssessmentCard } from "@/components/school-assessment-entry-card"
 import {
   BarChart,
