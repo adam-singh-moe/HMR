@@ -897,51 +897,6 @@ function HeadTeacherDashboardContent() {
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Quick Actions Grid */}
-              <Card className="bg-white border border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <TrendingUpIcon className="h-5 w-5 text-blue-600" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={`grid gap-4 ${
-                    isNurserySchool 
-                      ? 'grid-cols-1 sm:grid-cols-3' 
-                      : 'grid-cols-1 sm:grid-cols-2'
-                  }`}>
-                    <button 
-                      onClick={() => {updateMainTab('monthly-reports'); updateURL('current-report')}}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left"
-                    >
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FileTextIcon className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">Start Monthly Report</h3>
-                        <p className="text-sm text-gray-600">Submit your current period report</p>
-                      </div>
-                    </button>
-                    
-                    {isNurserySchool && (
-                      <button 
-                        onClick={() => updateMainTab('nursery-assessment')}
-                        className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
-                      >
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <BookOpenIcon className="h-5 w-5 text-green-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">Submit Assessment</h3>
-                          <p className="text-sm text-gray-600">Complete nursery assessments</p>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           )}
 
@@ -1184,38 +1139,6 @@ function HeadTeacherDashboardContent() {
                       <p className="text-sm text-gray-500">School</p>
                       <p className="font-medium text-gray-900">{schoolInfo?.name || 'Loading...'}</p>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Quick Actions */}
-                <div className="mt-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <button 
-                      onClick={() => {updateMainTab('monthly-reports'); updateURL('current-report')}}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 text-left"
-                    >
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FileTextIcon className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">Start Monthly Report</h3>
-                        <p className="text-sm text-gray-600">Submit your current period report</p>
-                      </div>
-                    </button>
-                    
-                    <button 
-                      onClick={() => {updateMainTab('monthly-reports'); updateURL('view-reports')}}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 text-left"
-                    >
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <EyeIcon className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">View Reports</h3>
-                        <p className="text-sm text-gray-600">Browse previous submissions</p>
-                      </div>
-                    </button>
                   </div>
                 </div>
 
