@@ -70,11 +70,19 @@ const formatDate = (dateString?: string) => {
   }
 }
 
-export function TeachersList() {
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [deletedTeachers, setDeletedTeachers] = useState<Teacher[]>([])
+export function TeachersList({ 
+  initialTeachers,
+  initialDeletedTeachers,
+  onDataLoaded
+}: { 
+  initialTeachers?: Teacher[]
+  initialDeletedTeachers?: Teacher[]
+  onDataLoaded?: (teachers: Teacher[], deletedTeachers: Teacher[]) => void
+} = {}) {
+  const [teachers, setTeachers] = useState<Teacher[]>(initialTeachers || [])
+  const [deletedTeachers, setDeletedTeachers] = useState<Teacher[]>(initialDeletedTeachers || [])
   const [showTrash, setShowTrash] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialTeachers)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -87,6 +95,7 @@ export function TeachersList() {
   const [isRestoring, setIsRestoring] = useState(false)
   const [permanentlyDeletingTeacher, setPermanentlyDeletingTeacher] = useState<Teacher | null>(null)
   const [isPermanentlyDeleting, setIsPermanentlyDeleting] = useState(false)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(!!initialTeachers)
 
   const toggleRow = (id: string) => {
     setExpandedRows(prev => {
@@ -100,7 +109,10 @@ export function TeachersList() {
     })
   }
 
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (forceRefresh = false) => {
+    // Skip if already loaded and not forcing refresh
+    if (hasLoadedOnce && !forceRefresh) return
+    
     setLoading(true)
     setError(null)
     try {
@@ -108,7 +120,13 @@ export function TeachersList() {
       if (result.error) {
         setError(result.error)
       } else {
-        setTeachers(result.teachers as Teacher[])
+        const loadedTeachers = result.teachers as Teacher[]
+        setTeachers(loadedTeachers)
+        setHasLoadedOnce(true)
+        // Notify parent of loaded data for caching
+        if (onDataLoaded) {
+          onDataLoaded(loadedTeachers, deletedTeachers)
+        }
       }
     } catch (err) {
       setError("Failed to load teachers")
@@ -117,7 +135,7 @@ export function TeachersList() {
     }
   }
 
-  const fetchDeletedTeachers = async () => {
+  const fetchDeletedTeachers = async (forceRefresh = false) => {
     setLoading(true)
     setError(null)
     try {
@@ -125,7 +143,12 @@ export function TeachersList() {
       if (result.error) {
         setError(result.error)
       } else {
-        setDeletedTeachers(result.teachers as Teacher[])
+        const loadedDeleted = result.teachers as Teacher[]
+        setDeletedTeachers(loadedDeleted)
+        // Notify parent of loaded data for caching
+        if (onDataLoaded) {
+          onDataLoaded(teachers, loadedDeleted)
+        }
       }
     } catch (err) {
       setError("Failed to load deleted teachers")
@@ -142,8 +165,10 @@ export function TeachersList() {
     }
   }, [showTrash])
 
-  // Also fetch deleted teachers count on initial load
+  // Also fetch deleted teachers count on initial load (only if not provided)
   useEffect(() => {
+    if (initialDeletedTeachers) return
+    
     const fetchDeletedCount = async () => {
       const result = await getDeletedTeachers()
       if (!result.error) {
@@ -271,7 +296,7 @@ export function TeachersList() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={showTrash ? fetchDeletedTeachers : fetchTeachers}
+              onClick={() => showTrash ? fetchDeletedTeachers(true) : fetchTeachers(true)}
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

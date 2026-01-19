@@ -92,14 +92,44 @@ function HeadTeacherDashboardContent() {
   const [nurseryAssessmentsLoading, setNurseryAssessmentsLoading] = useState(false)
   const [nurseryAssessmentsError, setNurseryAssessmentsError] = useState<string | null>(null)
   
+  // State for teachers (cached to prevent re-fetching on tab switch)
+  const [cachedTeachers, setCachedTeachers] = useState<any[] | undefined>(undefined)
+  const [cachedDeletedTeachers, setCachedDeletedTeachers] = useState<any[] | undefined>(undefined)
+  
+  // State for current report status (cached to prevent re-fetching on tab switch)
+  const [cachedReportStatus, setCachedReportStatus] = useState<{
+    reportId: string | null
+    isSubmitted: boolean
+    status: string
+    hasExistingReport: boolean
+  } | undefined>(undefined)
+  
   // State for dashboard trends
   const [trendsData, setTrendsData] = useState<any>({
     enrollmentTrends: [],
     attendanceTrends: [],
     punctualityTrends: [],
-    expenditureTrends: []
+    expenditureTrends: [],
+    availableYears: []
   })
   const [trendsLoading, setTrendsLoading] = useState(false)
+  const [selectedTrendsYear, setSelectedTrendsYear] = useState<number>(new Date().getFullYear())
+  
+  // Callback to cache teachers data
+  const handleTeachersDataLoaded = (teachers: any[], deletedTeachers: any[]) => {
+    setCachedTeachers(teachers)
+    setCachedDeletedTeachers(deletedTeachers)
+  }
+  
+  // Callback to cache report status
+  const handleReportStatusLoaded = (status: {
+    reportId: string | null
+    isSubmitted: boolean
+    status: string
+    hasExistingReport: boolean
+  }) => {
+    setCachedReportStatus(status)
+  }
   
   // Function to update URL parameters and handle tab changes
   const updateURL = (newTab: string, mainTab?: string) => {
@@ -224,14 +254,20 @@ function HeadTeacherDashboardContent() {
   }
 
   // Function to fetch trends data
-  const fetchTrendsData = async () => {
+  const fetchTrendsData = async (year?: number) => {
     setTrendsLoading(true)
     try {
-      const result = await getHeadTeacherDashboardTrends()
+      console.log('Fetching trends for year:', year)
+      const result = await getHeadTeacherDashboardTrends(year)
+      console.log('Trends result:', result)
       if (result.error) {
         console.error('Error fetching trends:', result.error)
       } else {
         setTrendsData(result)
+        // Set the selected year if available years exist and current selection isn't in the list
+        if (result.availableYears?.length > 0 && !result.availableYears.includes(selectedTrendsYear)) {
+          setSelectedTrendsYear(result.availableYears[0])
+        }
       }
     } catch (error) {
       console.error('Error fetching trends data:', error)
@@ -239,6 +275,13 @@ function HeadTeacherDashboardContent() {
       setTrendsLoading(false)
     }
   }
+
+  // Re-fetch trends when year changes
+  useEffect(() => {
+    if (selectedTrendsYear) {
+      fetchTrendsData(selectedTrendsYear)
+    }
+  }, [selectedTrendsYear])
 
   useEffect(() => {
     fetchSchoolInfo()
@@ -572,330 +615,294 @@ function HeadTeacherDashboardContent() {
           {/* Dashboard Tab Content */}
           {currentMainTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Welcome Header */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                      Welcome back, <span className="text-blue-600">Head Teacher</span>
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                      Here's an overview of your school reports and submission status.
-                    </p>
+              {/* Compact Welcome Header with School Info */}
+              <div className="flex flex-col lg:flex-row gap-3">
+                {/* Welcome Card */}
+                <div className="flex-1 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl p-4 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-blue-200 text-xs mb-0.5">Welcome back</p>
+                        <h1 className="text-lg sm:text-xl font-bold text-white">
+                          Hello, Head Teacher
+                        </h1>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-white/20">
+                        <GraduationCapIcon className="h-3.5 w-3.5 text-white" />
+                        <span className="text-white text-xs font-medium">{schoolInfo?.name || 'Loading...'}</span>
+                      </div>
+                    </div>
+                    {/* Stats Row Inside Header */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-md p-2 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-white/20 rounded">
+                            <FileTextIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white">{reports.length}</p>
+                            <p className="text-[10px] text-blue-200">Reports This Year</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-md p-2 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-white/20 rounded">
+                            <TrendingUpIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white">{calculateCompliancePercentage()}%</p>
+                            <p className="text-[10px] text-blue-200">Submission Rate</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-md p-2 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-white/20 rounded">
+                            <ClockIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white">{calculateOverdueReports()}</p>
+                            <p className="text-[10px] text-blue-200">Overdue Reports</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-md p-2 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-white/20 rounded">
+                            <BookOpenIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white">{calculateNurseryAssessmentPercentage()}%</p>
+                            <p className="text-[10px] text-blue-200">Assessment</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <SchoolReadinessStatus className="justify-start sm:justify-end" />
-                  </div>
+                </div>
+
+                {/* School Assessment Mini Card */}
+                <div className="lg:w-72">
+                  <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} compact />
                 </div>
               </div>
 
-              {/* School Assessment Entry Card - Top Priority */}
-              <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} />
-
-              {/* Stats Overview Cards */}
-              <div className={`grid gap-6 ${
-                isNurserySchool 
-                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' 
-                  : 'grid-cols-1 md:grid-cols-3'
-              }`}>
-                {/* Overall Compliance */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Overall Compliance</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">Academic year compliance rate</p>
-                        <p className="text-3xl font-bold text-gray-900">
-                          {calculateCompliancePercentage()}%
-                        </p>
-                      </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <TrendingUpIcon className="h-6 w-6 text-green-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Monthly Reports */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Monthly Reports</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">Reports submitted this year</p>
-                        <p className="text-3xl font-bold text-gray-900">{reports.length}</p>
-                      </div>
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <FileTextIcon className="h-6 w-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Assessment Status - Only show for nursery schools */}
-                {isNurserySchool && (
-                  <Card className="bg-white border border-gray-200 shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">Assessment Status</span>
-                          </div>
-                          <p className="text-sm text-gray-500 mb-3">Nursery assessments completed</p>
-                          <p className="text-3xl font-bold text-gray-900">{calculateNurseryAssessmentPercentage()}%</p>
-                        </div>
-                        <div className="p-3 bg-orange-100 rounded-lg">
-                          <BookOpenIcon className="h-6 w-6 text-orange-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Year Filter and Charts Grid */}
+              <div className="space-y-4">
+                {/* Year Filter */}
+                {trendsData.availableYears?.length > 0 && (
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-xs text-gray-500">Year:</span>
+                    <select
+                      value={selectedTrendsYear}
+                      onChange={(e) => setSelectedTrendsYear(Number(e.target.value))}
+                      className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {trendsData.availableYears.map((year: number) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
 
-                {/* Recent Activity */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Recent Activity</span>
+                {/* Charts Grid - Modern Design with Legends */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Monthly Enrollment Trends */}
+                  <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2 pt-4 px-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                          <div className="p-1.5 bg-blue-100 rounded-lg">
+                            <UsersIcon className="h-4 w-4 text-blue-600" />
+                          </div>
+                          Enrollment Trends
+                        </CardTitle>
+                        <span className="text-xs text-gray-500">{selectedTrendsYear}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                      {trendsLoading ? (
+                        <div className="h-48 flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                         </div>
-                        <p className="text-sm text-gray-500 mb-3">Reports in last 3 months</p>
-                        <p className="text-3xl font-bold text-gray-900">
-                          {
-                            reports.filter((r) => {
-                              const reportDate = new Date(r.updated_at)
-                              const threeMonthsAgo = new Date()
-                              threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-                              return reportDate >= threeMonthsAgo
-                            }).length
-                          }
-                        </p>
-                      </div>
-                      <div className="p-3 bg-purple-100 rounded-lg">
-                        <UsersIcon className="h-6 w-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Charts Section - Monthly Trends */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Monthly Enrollment Trends */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Monthly Enrollment Trends</CardTitle>
-                    <p className="text-sm text-gray-500">Student enrollment for each month of {new Date().getFullYear()}</p>
-                  </CardHeader>
-                  <CardContent>
-                    {trendsLoading ? (
-                      <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                      </div>
-                    ) : (
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={trendsData.enrollmentTrends}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis 
-                              dataKey="month" 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <YAxis 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                              }}
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="enrollment" 
-                              stroke="#3b82f6" 
-                              strokeWidth={3}
-                              dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                              name="Students Enrolled"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                      ) : trendsData.enrollmentTrends?.length === 0 ? (
+                        <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+                          No enrollment data for {selectedTrendsYear}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={trendsData.enrollmentTrends}>
+                                <defs>
+                                  <linearGradient id="enrollmentGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                                <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={35} />
+                                <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} />
+                                <Line type="monotone" dataKey="enrollment" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 3 }} name="Students" />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            <span className="text-gray-600">Students Enrolled</span>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* Monthly Attendance Trends */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Attendance Trends</CardTitle>
-                    <p className="text-sm text-gray-500">Student and teacher attendance rates for {new Date().getFullYear()}</p>
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-green-100 rounded-lg">
+                          <TrendingUpIcon className="h-4 w-4 text-green-600" />
+                        </div>
+                        Attendance Rates
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">Percentage</span>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 pb-4">
                     {trendsLoading ? (
-                      <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      <div className="h-48 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-green-600" />
                       </div>
                     ) : (
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={trendsData.attendanceTrends}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis 
-                              dataKey="month" 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <YAxis 
-                              stroke="#666"
-                              fontSize={12}
-                              domain={[0, 100]}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                              }}
-                              formatter={(value, name) => [`${value}%`, name]}
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="studentAttendance" 
-                              stroke="#10b981" 
-                              strokeWidth={2}
-                              dot={{ fill: '#10b981', strokeWidth: 2, r: 3 }}
-                              name="Student Attendance"
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="teacherAttendance" 
-                              stroke="#f59e0b" 
-                              strokeWidth={2}
-                              dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
-                              name="Teacher Attendance"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <>
+                        <div className="h-48">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendsData.attendanceTrends}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                              <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} tickLine={false} axisLine={false} width={35} />
+                              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(value) => [`${value}%`]} />
+                              <Line type="monotone" dataKey="studentAttendance" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 3 }} name="Students" />
+                              <Line type="monotone" dataKey="teacherAttendance" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 3 }} name="Teachers" />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span className="text-gray-600">Students</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                            <span className="text-gray-600">Teachers</span>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* Monthly Punctuality Trends */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Punctuality Trends</CardTitle>
-                    <p className="text-sm text-gray-500">Student and teacher punctuality rates for {new Date().getFullYear()}</p>
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                          <ClockIcon className="h-4 w-4 text-purple-600" />
+                        </div>
+                        Punctuality Rates
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">Percentage</span>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 pb-4">
                     {trendsLoading ? (
-                      <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      <div className="h-48 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
                       </div>
                     ) : (
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={trendsData.punctualityTrends}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis 
-                              dataKey="month" 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <YAxis 
-                              stroke="#666"
-                              fontSize={12}
-                              domain={[0, 100]}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                              }}
-                              formatter={(value, name) => [`${value}%`, name]}
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="studentPunctuality" 
-                              stroke="#8b5cf6" 
-                              strokeWidth={2}
-                              dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 3 }}
-                              name="Student Punctuality"
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="teacherPunctuality" 
-                              stroke="#ef4444" 
-                              strokeWidth={2}
-                              dot={{ fill: '#ef4444', strokeWidth: 2, r: 3 }}
-                              name="Teacher Punctuality"
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <>
+                        <div className="h-48">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendsData.punctualityTrends}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                              <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#9ca3af" fontSize={11} domain={[0, 100]} tickLine={false} axisLine={false} width={35} />
+                              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(value) => [`${value}%`]} />
+                              <Line type="monotone" dataKey="studentPunctuality" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 3 }} name="Students" />
+                              <Line type="monotone" dataKey="teacherPunctuality" stroke="#ec4899" strokeWidth={2} dot={{ fill: '#ec4899', r: 3 }} name="Teachers" />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                            <span className="text-gray-600">Students</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
+                            <span className="text-gray-600">Teachers</span>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* Monthly Expenditure Trends */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Monthly Expenditure Trends</CardTitle>
-                    <p className="text-sm text-gray-500">School expenditure for each month of {new Date().getFullYear()}</p>
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-red-100 rounded-lg">
+                          <BarChart3Icon className="h-4 w-4 text-red-600" />
+                        </div>
+                        Expenditure
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">Monthly</span>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4 pb-4">
                     {trendsLoading ? (
-                      <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                      <div className="h-48 flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-red-600" />
                       </div>
                     ) : (
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={trendsData.expenditureTrends}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis 
-                              dataKey="month" 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <YAxis 
-                              stroke="#666"
-                              fontSize={12}
-                            />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                              }}
-                              formatter={(value) => [`$${value?.toLocaleString()}`, 'Total Expenditure']}
-                            />
-                            <Bar 
-                              dataKey="expenditure" 
-                              fill="#dc2626" 
-                              radius={[4, 4, 0, 0]}
-                              name="Total Expenditure"
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <>
+                        <div className="h-48">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={trendsData.expenditureTrends}>
+                              <defs>
+                                <linearGradient id="expenditureGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.4}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                              <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} width={45} />
+                              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '12px' }} formatter={(value) => [`$${value?.toLocaleString()}`]} />
+                              <Bar dataKey="expenditure" fill="url(#expenditureGradient)" radius={[4, 4, 0, 0]} name="Expenditure" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <span className="text-gray-600">Total Expenditure</span>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
+              </div>
               </div>
             </div>
           )}
@@ -949,7 +956,11 @@ function HeadTeacherDashboardContent() {
               <div className="bg-white">
                 {currentTab === 'current-report' && (
                   <div>
-                    <MonthlyReportForm onSuccess={handleReportSuccess} />
+                    <MonthlyReportForm 
+                      onSuccess={handleReportSuccess}
+                      cachedReportStatus={cachedReportStatus}
+                      onReportStatusLoaded={handleReportStatusLoaded}
+                    />
                   </div>
                 )}
                 {currentTab === 'previous-report' && (
@@ -1066,7 +1077,11 @@ function HeadTeacherDashboardContent() {
                 </div>
               </div>
               
-              <TeachersList />
+              <TeachersList 
+                initialTeachers={cachedTeachers}
+                initialDeletedTeachers={cachedDeletedTeachers}
+                onDataLoaded={handleTeachersDataLoaded}
+              />
             </div>
           )}
         </div>
@@ -1123,184 +1138,302 @@ function HeadTeacherDashboardContent() {
           {/* Dashboard Tab Content */}
           {currentMainTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Welcome Header */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                      Welcome back, <span className="text-blue-600">Head Teacher</span>
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                      Here's an overview of your school reports and submission status.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">School</p>
-                      <p className="font-medium text-gray-900">{schoolInfo?.name || 'Loading...'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* School Assessment Entry Card */}
-                <div className="mt-6">
-                  <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} />
-                </div>
-              </div>
-
-              {/* Analytics Dashboard */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Monthly Reports */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
+              {/* Compact Welcome Header with School Info */}
+              <div className="flex flex-col lg:flex-row gap-3">
+                {/* Welcome Card */}
+                <div className="flex-1 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-xl p-4 shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-3">
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Monthly Reports</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">Reports submitted this year</p>
-                        <p className="text-3xl font-bold text-gray-900">{reports.length}</p>
+                        <p className="text-blue-200 text-xs mb-0.5">Welcome back</p>
+                        <h1 className="text-lg sm:text-xl font-bold text-white">
+                          Hello, Head Teacher
+                        </h1>
                       </div>
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <FileTextIcon className="h-6 w-6 text-blue-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Submission Rate */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Submission Rate</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">Academic year compliance rate</p>
-                        <p className="text-3xl font-bold text-gray-900">{calculateCompliancePercentage()}%</p>
-                      </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <TrendingUpIcon className="h-6 w-6 text-green-600" />
+                      <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-white/20">
+                        <GraduationCapIcon className="h-3.5 w-3.5 text-white" />
+                        <span className="text-white text-xs font-medium">{schoolInfo?.name || 'Loading...'}</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Activity */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">Recent Activity</span>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">Reports in last 3 months</p>
-                        <p className="text-3xl font-bold text-gray-900">
-                          {
-                            reports.filter((r) => {
-                              const reportDate = new Date(r.updated_at)
-                              const threeMonthsAgo = new Date()
-                              threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-                              return reportDate >= threeMonthsAgo
-                            }).length
-                          }
-                        </p>
-                      </div>
-                      <div className="p-3 bg-purple-100 rounded-lg">
-                        <CalendarIcon className="h-6 w-6 text-purple-600" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Report Status Distribution */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Report Status Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {(() => {
-                        const stats = getReportStatistics()
-                        return (
-                          <>
-                            {/* Submitted Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Submitted: {stats.submitted}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">
-                                {stats.submittedPercentage}%
-                              </span>
-                            </div>
-                            
-                            {/* Progress Bar */}
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${stats.submittedPercentage}%` }}
-                              ></div>
-                            </div>
-
-                            {/* Draft Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Draft: {stats.draft}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">{stats.draftPercentage}%</span>
-                            </div>
-
-                            {/* Overdue Reports */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                <span className="text-sm text-gray-600">Overdue: {stats.overdue}</span>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">{stats.overduePercentage}%</span>
-                            </div>
-                          </>
-                        )
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Reports */}
-                <Card className="bg-white border border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Recent Reports</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {reports.slice(0, 3).map((report) => (
-                        <div key={report.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-sm text-gray-900">
-                              {formatReportMonth(report.month, report.year)}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Submitted: {formatDate(report.updated_at)}
-                            </p>
+                    {/* Stats Row Inside Header */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-white/20 rounded-lg">
+                            <FileTextIcon className="h-4 w-4 text-white" />
                           </div>
-                          <Badge className="bg-green-100 text-green-700 text-xs">
-                            Submitted
-                          </Badge>
+                          <div>
+                            <p className="text-lg font-bold text-white">{reports.length}</p>
+                            <p className="text-xs text-blue-200">Reports This Year</p>
+                          </div>
                         </div>
-                      ))}
-                      {reports.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-4">No reports submitted yet</p>
-                      )}
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-white/20 rounded-lg">
+                            <TrendingUpIcon className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-white">{calculateCompliancePercentage()}%</p>
+                            <p className="text-xs text-blue-200">Submission Rate</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-white/20 rounded-lg">
+                            <ClockIcon className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-white">{calculateOverdueReports()}</p>
+                            <p className="text-xs text-blue-200">Overdue Reports</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-white/20 rounded-lg">
+                            <CalendarIcon className="h-4 w-4 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-white">
+                              {reports.filter((r) => {
+                                const reportDate = new Date(r.updated_at)
+                                const threeMonthsAgo = new Date()
+                                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+                                return reportDate >= threeMonthsAgo
+                              }).length}
+                            </p>
+                            <p className="text-[10px] text-blue-200">Last 90 Days</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* School Assessment Mini Card */}
+                <div className="lg:w-72">
+                  <HeadTeacherAssessmentCard schoolId={schoolInfo?.id || ''} compact />
+                </div>
+              </div>
+
+              {/* Year Filter and Charts Grid */}
+              <div className="space-y-4">
+                {/* Year Filter */}
+                {trendsData.availableYears?.length > 0 && (
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-xs text-gray-500">Year:</span>
+                    <select
+                      value={selectedTrendsYear}
+                      onChange={(e) => setSelectedTrendsYear(Number(e.target.value))}
+                      className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {trendsData.availableYears.map((year: number) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Charts Grid - 2x2 Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Attendance Trends Chart */}
+                  <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2 pt-4 px-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                          <div className="p-1.5 bg-green-100 rounded-lg">
+                            <TrendingUpIcon className="h-4 w-4 text-green-600" />
+                          </div>
+                          Attendance Rates
+                        </CardTitle>
+                        <span className="text-xs text-gray-500">{selectedTrendsYear}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4">
+                      {trendsLoading ? (
+                        <div className="h-44 flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+                        </div>
+                      ) : trendsData.attendanceTrends?.length === 0 ? (
+                        <div className="h-44 flex items-center justify-center text-gray-400 text-sm">
+                          No attendance data for {selectedTrendsYear}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="h-40">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={trendsData.attendanceTrends}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                                <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#9ca3af" fontSize={10} domain={[0, 100]} tickLine={false} axisLine={false} width={30} />
+                                <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '11px' }} formatter={(value) => [`${value}%`]} />
+                                <Line type="monotone" dataKey="studentAttendance" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 2 }} name="Students" />
+                                <Line type="monotone" dataKey="teacherAttendance" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 2 }} name="Teachers" />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="flex items-center justify-center gap-4 mt-1 text-[10px]">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-gray-500">Students</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                              <span className="text-gray-500">Teachers</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                   </CardContent>
                 </Card>
+
+                {/* Punctuality Trends Chart */}
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                          <ClockIcon className="h-4 w-4 text-purple-600" />
+                        </div>
+                        Punctuality Rates
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">{selectedTrendsYear}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    {trendsLoading ? (
+                      <div className="h-44 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                      </div>
+                    ) : trendsData.punctualityTrends?.length === 0 ? (
+                      <div className="h-44 flex items-center justify-center text-gray-400 text-sm">
+                        No punctuality data for {selectedTrendsYear}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="h-40">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendsData.punctualityTrends}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                              <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#9ca3af" fontSize={10} domain={[0, 100]} tickLine={false} axisLine={false} width={30} />
+                              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '11px' }} formatter={(value) => [`${value}%`]} />
+                              <Line type="monotone" dataKey="studentPunctuality" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6', r: 2 }} name="Students" />
+                              <Line type="monotone" dataKey="teacherPunctuality" stroke="#ec4899" strokeWidth={2} dot={{ fill: '#ec4899', r: 2 }} name="Teachers" />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 mt-1 text-[10px]">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <span className="text-gray-500">Students</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                            <span className="text-gray-500">Teachers</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Expenditure Trends Chart */}
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="p-1.5 bg-red-100 rounded-lg">
+                          <BarChart3Icon className="h-4 w-4 text-red-600" />
+                        </div>
+                        Expenditure
+                      </CardTitle>
+                      <span className="text-xs text-gray-500">Monthly</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    {trendsLoading ? (
+                      <div className="h-44 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-red-600" />
+                      </div>
+                    ) : trendsData.expenditureTrends?.length === 0 ? (
+                      <div className="h-44 flex items-center justify-center text-gray-400 text-sm">
+                        No expenditure data for {selectedTrendsYear}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="h-40">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={trendsData.expenditureTrends}>
+                              <defs>
+                                <linearGradient id="expenditureGradientNonNursery" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.4}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                              <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
+                              <YAxis stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} width={40} tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`} />
+                              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '11px' }} formatter={(value) => [`$${value?.toLocaleString()}`]} />
+                              <Bar dataKey="expenditure" fill="url(#expenditureGradientNonNursery)" radius={[3, 3, 0, 0]} name="Expenditure" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex items-center justify-center mt-1 text-[10px]">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span className="text-gray-500">Total Expenditure</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Recent Reports - Compact */}
+                <Card className="bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2 pt-4 px-4">
+                    <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-100 rounded-lg">
+                        <FileTextIcon className="h-4 w-4 text-blue-600" />
+                      </div>
+                      Recent Reports
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4">
+                    {reports.length === 0 ? (
+                      <div className="h-44 flex flex-col items-center justify-center">
+                        <FileTextIcon className="h-8 w-8 text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">No reports submitted yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {reports.slice(0, 4).map((report) => (
+                          <div 
+                            key={report.id} 
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                            onClick={() => handleViewReport(report)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 bg-blue-100 rounded flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-blue-600">{monthNames[report.month - 1]?.substring(0, 3)}</span>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-900">{formatReportMonth(report.month, report.year)}</p>
+                                <p className="text-[10px] text-gray-500">{formatDate(report.updated_at)}</p>
+                              </div>
+                            </div>
+                            <Badge className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5">Submitted</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                </div>
               </div>
             </div>
           )}
@@ -1364,7 +1497,11 @@ function HeadTeacherDashboardContent() {
                         </div>
                       </div>
                     </div>
-                    <MonthlyReportForm onSuccess={handleReportSuccess} />
+                    <MonthlyReportForm 
+                      onSuccess={handleReportSuccess}
+                      cachedReportStatus={cachedReportStatus}
+                      onReportStatusLoaded={handleReportStatusLoaded}
+                    />
                   </div>
                 )}
                 {currentTab === 'previous-report' && (
@@ -1406,7 +1543,11 @@ function HeadTeacherDashboardContent() {
                 </div>
               </div>
               
-              <TeachersList />
+              <TeachersList 
+                initialTeachers={cachedTeachers}
+                initialDeletedTeachers={cachedDeletedTeachers}
+                onDataLoaded={handleTeachersDataLoaded}
+              />
             </div>
           )}
         </div>

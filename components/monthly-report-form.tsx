@@ -25,6 +25,19 @@ interface MonthlyReportFormProps {
     displayName: string
   }
   reportId?: string
+  // Caching props to prevent refetching on tab switch
+  cachedReportStatus?: {
+    reportId: string | null
+    isSubmitted: boolean
+    status: string
+    hasExistingReport: boolean
+  }
+  onReportStatusLoaded?: (status: {
+    reportId: string | null
+    isSubmitted: boolean
+    status: string
+    hasExistingReport: boolean
+  }) => void
 }
 
 interface FormData {
@@ -155,7 +168,14 @@ const SECTIONS = [
   "Physical Education",
 ]
 
-export function MonthlyReportForm({ report, onSuccess, previousReportData, reportId: initialReportId }: MonthlyReportFormProps) {
+export function MonthlyReportForm({ 
+  report, 
+  onSuccess, 
+  previousReportData, 
+  reportId: initialReportId,
+  cachedReportStatus,
+  onReportStatusLoaded
+}: MonthlyReportFormProps) {
   // Calculate previous month for report submission
   const getPreviousMonth = () => {
     const now = new Date()
@@ -547,10 +567,32 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
   useEffect(() => {
     async function checkExistingReport() {
       if (currentUser?.school_id && !previousReportData) {
+        // Use cached status if available to prevent refetching on tab switch
+        if (cachedReportStatus) {
+          if (cachedReportStatus.hasExistingReport) {
+            setReportId(cachedReportStatus.reportId)
+            setIsExistingReport(true)
+            setReportStatus(cachedReportStatus.status)
+            setIsCurrentMonthSubmitted(cachedReportStatus.isSubmitted)
+          }
+          setIsInitialLoading(false)
+          return
+        }
+        
         try {
           setIsInitialLoading(true)
           const result = await getCurrentMonthReport()
           if (result.success && result.hasExistingReport) {
+            // Notify parent to cache this status
+            if (onReportStatusLoaded) {
+              onReportStatusLoaded({
+                reportId: result.report.id,
+                isSubmitted: result.isSubmitted,
+                status: result.isSubmitted ? 'submitted' : result.status,
+                hasExistingReport: true
+              })
+            }
+            
             if (result.isSubmitted) {
               // Report is already submitted - show read-only view
               setReportId(result.report.id)
@@ -586,6 +628,16 @@ export function MonthlyReportForm({ report, onSuccess, previousReportData, repor
                 schoolLevel: result.report.school_level || prev.schoolLevel,
                 schoolGrade: result.report.school_grade || prev.schoolGrade,
               }))
+            }
+          } else {
+            // No existing report - notify parent to cache this
+            if (onReportStatusLoaded) {
+              onReportStatusLoaded({
+                reportId: null,
+                isSubmitted: false,
+                status: 'none',
+                hasExistingReport: false
+              })
             }
           }
         } catch (error) {

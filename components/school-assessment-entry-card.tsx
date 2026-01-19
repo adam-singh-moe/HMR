@@ -55,6 +55,7 @@ import {
 interface HeadTeacherAssessmentCardProps {
   schoolId: string
   className?: string
+  compact?: boolean
 }
 
 interface HeadTeacherMetrics {
@@ -79,7 +80,8 @@ interface HeadTeacherMetrics {
 
 export function HeadTeacherAssessmentCard({ 
   schoolId, 
-  className = "" 
+  className = "",
+  compact = false
 }: HeadTeacherAssessmentCardProps) {
   const router = useRouter()
   const [metrics, setMetrics] = useState<HeadTeacherMetrics | null>(null)
@@ -184,16 +186,16 @@ export function HeadTeacherAssessmentCard({
   }
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-xl bg-white ${className}`}>
-      <CardContent className="p-0">
-        <div className="flex flex-col lg:flex-row">
-          {/* Left Content */}
-          <div className="flex-1 p-6 lg:p-8 flex flex-col justify-center">
-            <div className="space-y-4">
+    <Card className={`overflow-hidden border-0 shadow-xl bg-white h-full ${className}`}>
+      <CardContent className="p-0 h-full">
+        <div className="flex flex-col h-full">
+          {/* Content */}
+          <div className={`flex-1 ${compact ? 'p-4' : 'p-6 lg:p-8'} flex flex-col justify-center`}>
+            <div className={compact ? 'space-y-2' : 'space-y-4'}>
               <div>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <div className={`p-2 rounded-lg bg-gradient-to-br ${config.gradient}`}>
-                    <ClipboardCheck className="h-5 w-5 text-white" />
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <div className={`${compact ? 'p-1.5' : 'p-2'} rounded-lg bg-gradient-to-br ${config.gradient}`}>
+                    <ClipboardCheck className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-white`} />
                   </div>
                   <Badge className={`bg-gradient-to-r ${config.gradient} text-white border-0 text-xs`}>
                     {config.label}
@@ -214,23 +216,23 @@ export function HeadTeacherAssessmentCard({
                     </Badge>
                   )}
                 </div>
-                <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                <h3 className={`${compact ? 'text-lg' : 'text-2xl lg:text-3xl'} font-bold text-gray-900 ${compact ? 'mb-1' : 'mb-2'}`}>
                   School Assessment
                 </h3>
-                <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
+                <p className={`text-gray-600 ${compact ? 'text-xs' : 'text-sm lg:text-base'} leading-relaxed`}>
                   {metrics?.hasSubmittedThisTerm 
-                    ? `Assessment submitted for ${metrics?.termName || 'this term'}. View your detailed performance breakdown.`
+                    ? compact ? `Submitted for ${metrics?.termName || 'this term'}.` : `Assessment submitted for ${metrics?.termName || 'this term'}. View your detailed performance breakdown.`
                     : deadlineUrgency?.urgent
-                      ? `⚠️ Deadline approaching! Complete your assessment for ${metrics?.termName || 'this term'} now.`
-                      : metrics?.currentScore 
+                      ? compact ? `⚠️ Deadline: ${deadlineUrgency.label}` : `⚠️ Deadline approaching! Complete your assessment for ${metrics?.termName || 'this term'} now.`
+                      : compact ? "Complete your termly assessment to benchmark your school's performance." : metrics?.currentScore 
                         ? "Track your school's progress and see detailed category breakdowns."
                         : "Complete your termly assessment to benchmark your school's performance."
                   }
                 </p>
               </div>
 
-              {/* Urgency-Driving Stats Row */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Urgency-Driving Stats Row - Hide in compact mode */}
+              {!compact && <div className="flex flex-wrap items-center gap-2">
                 {/* Regional Rank */}
                 {metrics?.regionalRank && metrics?.totalSchoolsInRegion > 0 && (
                   <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full text-sm">
@@ -269,24 +271,24 @@ export function HeadTeacherAssessmentCard({
                     {metrics.trend === 'improving' ? 'Improving' : 'Declining'}
                   </div>
                 )}
-              </div>
+              </div>}
 
               <Button 
                 onClick={() => router.push('/dashboard/school-assessment')}
-                size="lg"
+                size={compact ? "sm" : "lg"}
                 className={`bg-gradient-to-r ${config.gradient} hover:opacity-90 text-white shadow-lg gap-2 font-semibold ${
                   deadlineUrgency?.urgent && !metrics?.hasSubmittedThisTerm ? 'animate-pulse' : ''
-                }`}
+                } ${compact ? 'text-sm' : ''}`}
               >
-                <ClipboardCheck className="h-4 w-4" />
+                <ClipboardCheck className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
                 {metrics?.hasSubmittedThisTerm ? 'View Assessment' : 'Enter Assessment'}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
               </Button>
             </div>
           </div>
 
-          {/* Right Side - Interactive Radar Chart or Score Display */}
-          <div className={`relative w-full lg:w-80 xl:w-96 bg-gradient-to-br ${config.gradient} flex items-center justify-center p-4 lg:p-6 min-h-[280px]`}>
+          {/* Right Side - Interactive Radar Chart or Score Display - Hide in compact mode */}
+          {!compact && <div className={`relative w-full lg:w-80 xl:w-96 bg-gradient-to-br ${config.gradient} flex items-center justify-center p-4 lg:p-6 min-h-[280px]`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute top-4 right-4 opacity-20">
@@ -347,7 +349,7 @@ export function HeadTeacherAssessmentCard({
                 </div>
               )}
             </div>
-          </div>
+          </div>}
         </div>
       </CardContent>
     </Card>

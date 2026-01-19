@@ -3,7 +3,7 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
 
-export async function getHeadTeacherDashboardTrends() {
+export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
   try {
     const user = await getUser()
 
@@ -13,14 +13,15 @@ export async function getHeadTeacherDashboardTrends() {
         attendanceTrends: [],
         punctualityTrends: [],
         expenditureTrends: [],
+        availableYears: [],
         error: "Only Head Teachers can access this data." 
       }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Get the current year
-    const currentYear = new Date().getFullYear()
+    // Use selected year or default to current year
+    const year = selectedYear || new Date().getFullYear()
     
     // Get school ID from user
     const schoolId = user.school_id
@@ -39,11 +40,29 @@ export async function getHeadTeacherDashboardTrends() {
         attendanceTrends: [],
         punctualityTrends: [],
         expenditureTrends: [],
+        availableYears: [],
         error: "No school associated with this user." 
       }
     }
 
-   // console.log("Fetching trends for school:", schoolId, "year:", currentYear)
+    // Get available years for this school
+    const { data: yearsData } = await supabase
+      .from("hmr_report")
+      .select("year")
+      .eq("school_id", schoolId)
+      .eq("status", "submitted")
+      .is("deleted_on", null)
+    
+    const yearsFromData = Array.from(new Set((yearsData || []).map(r => parseInt(r.year))))
+    const currentYear = new Date().getFullYear()
+    // Always include current year and a few recent years for browsing
+    const allYears = new Set([...yearsFromData, currentYear, currentYear - 1, currentYear - 2])
+    const availableYears = Array.from(allYears).filter(y => !isNaN(y)).sort((a, b) => b - a)
+    
+    // Convert year to string for database query (year column is text type)
+    const yearStr = String(year)
+
+    console.log("Fetching trends for school:", schoolId, "year:", yearStr)
 
     // Simple query exactly like regional officer - get reports with attendance data
     const { data: attendanceData, error: attendanceError } = await supabase
@@ -52,18 +71,24 @@ export async function getHeadTeacherDashboardTrends() {
         month,
         year,
         school_id,
-        hmr_attendance!inner (
+        hmr_attendance (
           role,
           attendance_rate,
           punctuality_rate
         )
       `)
       .eq("school_id", schoolId)
-      .eq("year", currentYear)
+      .eq("year", yearStr)
       .eq("status", "submitted")
       .is("deleted_on", null)
       .order("year", { ascending: true })
       .order("month", { ascending: true })
+
+    console.log("Attendance query result:", { 
+      recordCount: attendanceData?.length, 
+      error: attendanceError,
+      sampleData: attendanceData?.[0]
+    })
 
     // Get enrollment data
     const { data: enrollmentData, error: enrollmentError } = await supabase
@@ -72,16 +97,22 @@ export async function getHeadTeacherDashboardTrends() {
         month,
         year,
         school_id,
-        hmr_student_enrollment!inner (
+        hmr_student_enrollment (
           total_students
         )
       `)
       .eq("school_id", schoolId)
-      .eq("year", currentYear)
+      .eq("year", yearStr)
       .eq("status", "submitted")
       .is("deleted_on", null)
       .order("year", { ascending: true })
       .order("month", { ascending: true })
+
+    console.log("Enrollment query result:", { 
+      recordCount: enrollmentData?.length, 
+      error: enrollmentError,
+      sampleData: enrollmentData?.[0]
+    })
 
     // Get expenditure data
     const { data: expenditureData, error: expenditureError } = await supabase
@@ -90,12 +121,12 @@ export async function getHeadTeacherDashboardTrends() {
         month,
         year,
         school_id,
-        hmr_finance!inner (
+        hmr_finance (
           total_expenditure
         )
       `)
       .eq("school_id", schoolId)
-      .eq("year", currentYear)
+      .eq("year", yearStr)
       .eq("status", "submitted")
       .is("deleted_on", null)
       .order("year", { ascending: true })
@@ -114,6 +145,7 @@ export async function getHeadTeacherDashboardTrends() {
         attendanceTrends: [],
         punctualityTrends: [],
         expenditureTrends: [],
+        availableYears,
         error: "Failed to fetch trends data." 
       }
     }
@@ -136,6 +168,7 @@ export async function getHeadTeacherDashboardTrends() {
       attendanceTrends,
       punctualityTrends,
       expenditureTrends,
+      availableYears,
       error: null 
     }
 
@@ -146,6 +179,7 @@ export async function getHeadTeacherDashboardTrends() {
       attendanceTrends: [],
       punctualityTrends: [],
       expenditureTrends: [],
+      availableYears: [],
       error: "An unexpected error occurred." 
     }
   }
@@ -156,20 +190,26 @@ function processAttendanceTrends(rawData: any[]) {
   const monthlyGroups: { [key: string]: any[] } = {}
   
   rawData.forEach(record => {
-    const monthYear = `${record.month}-${record.year}`
+    // Parse month and year as they are stored as text
+    const month = parseInt(record.month)
+    const year = parseInt(record.year)
+    const monthYear = `${month}-${year}`
     
     if (!monthlyGroups[monthYear]) {
       monthlyGroups[monthYear] = []
     }
     
-    // Flatten the attendance records
-    record.hmr_attendance.forEach((attendanceRecord: any) => {
-      monthlyGroups[monthYear].push({
-        ...attendanceRecord,
-        month: record.month,
-        year: record.year
+    // Flatten the attendance records - handle null/undefined/empty array
+    const attendanceRecords = record.hmr_attendance || []
+    if (Array.isArray(attendanceRecords)) {
+      attendanceRecords.forEach((attendanceRecord: any) => {
+        monthlyGroups[monthYear].push({
+          ...attendanceRecord,
+          month: month,
+          year: year
+        })
       })
-    })
+    }
   })
 
   // Calculate averages for each month
@@ -215,19 +255,26 @@ function processPunctualityTrends(rawData: any[]) {
   const monthlyGroups: { [key: string]: any[] } = {}
   
   rawData.forEach(record => {
-    const monthYear = `${record.month}-${record.year}`
+    // Parse month and year as they are stored as text
+    const month = parseInt(record.month)
+    const year = parseInt(record.year)
+    const monthYear = `${month}-${year}`
     
     if (!monthlyGroups[monthYear]) {
       monthlyGroups[monthYear] = []
     }
     
-    record.hmr_attendance.forEach((attendanceRecord: any) => {
-      monthlyGroups[monthYear].push({
-        ...attendanceRecord,
-        month: record.month,
-        year: record.year
+    // Handle null/undefined/empty array
+    const attendanceRecords = record.hmr_attendance || []
+    if (Array.isArray(attendanceRecords)) {
+      attendanceRecords.forEach((attendanceRecord: any) => {
+        monthlyGroups[monthYear].push({
+          ...attendanceRecord,
+          month: month,
+          year: year
+        })
       })
-    })
+    }
   })
 
   const monthlyTrends = Object.entries(monthlyGroups)
@@ -266,8 +313,9 @@ function processPunctualityTrends(rawData: any[]) {
 
 function processEnrollmentTrends(rawData: any[]) {
   const monthlyData = rawData.map(record => {
-    const month = record.month
-    const year = record.year
+    // Parse month and year as they are stored as text
+    const month = parseInt(record.month)
+    const year = parseInt(record.year)
     const enrollment = record.hmr_student_enrollment?.[0]?.total_students || 0
     
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -285,8 +333,9 @@ function processEnrollmentTrends(rawData: any[]) {
 
 function processExpenditureTrends(rawData: any[]) {
   const monthlyData = rawData.map(record => {
-    const month = record.month
-    const year = record.year
+    // Parse month and year as they are stored as text
+    const month = parseInt(record.month)
+    const year = parseInt(record.year)
     const expenditure = record.hmr_finance?.[0]?.total_expenditure || 0
     
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
