@@ -180,42 +180,44 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
       <div className="px-6 space-y-6">
         {/* Draft Reports Section */}
         {(loadingDraftReports || draftReports.length > 0) && (
-        <Card className="gradient-card border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-primary-700 flex items-center gap-2">
-              <FileTextIcon className="h-5 w-5" />
+        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg rounded-2xl overflow-hidden">
+          <CardHeader className="border-b border-slate-200/50 dark:border-slate-700/50">
+            <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg">
+                <FileTextIcon className="h-5 w-5 text-white" />
+              </div>
               Draft Reports
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
               Continue editing and submit your incomplete reports.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             {loadingDraftReports ? (
               <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
-                <span className="ml-2 text-primary-600 mt-3">Loading draft reports...</span>
+                <Loader2 className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin" />
+                <span className="ml-2 text-blue-600 dark:text-blue-400 mt-3">Loading draft reports...</span>
               </div>
             ) : draftReports.length === 0 ? (
               <div className="text-center py-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
-                  <FileTextIcon className="w-6 h-6 text-gray-600" />
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full mb-3">
+                  <FileTextIcon className="w-6 h-6 text-slate-600 dark:text-slate-300" />
                 </div>
-                <p className="text-gray-600">No draft reports found.</p>
+                <p className="text-slate-600 dark:text-slate-300">No draft reports found.</p>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {draftReports.map((draftReport) => (
-                  <div key={draftReport.id} className="bg-white border border-orange-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={draftReport.id} className="bg-slate-50 dark:bg-slate-900/50 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4 hover:shadow-md transition-all duration-200 hover:border-orange-300 dark:hover:border-orange-700">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h4 className="font-semibold text-gray-900">{draftReport.displayName}</h4>
-                        <div className="flex items-center gap-1 text-xs text-orange-600 mt-1">
+                        <h4 className="font-semibold text-slate-900 dark:text-white">{draftReport.displayName}</h4>
+                        <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 mt-1">
                           <ClockIcon className="h-3 w-3" />
                           <span>Draft</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                         <span>Last modified:</span>
                         <span>{draftReport.lastModified}</span>
                       </div>
@@ -223,8 +225,7 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
                     <Button 
                       size="sm"
                       onClick={() => handleContinueDraft(draftReport)}
-                      className="w-full"
-                      variant="outline"
+                      className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-0"
                     >
                       Continue Editing
                     </Button>
@@ -237,40 +238,45 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
       )}
 
       {/* Missing Reports Section */}
-      <Card className="gradient-card border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-primary-700">Missing Reports</CardTitle>
-          <CardDescription>
+      <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="border-b border-slate-200/50 dark:border-slate-700/50">
+          <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg">
+              <CalendarIcon className="h-5 w-5 text-white" />
+            </div>
+            Missing Reports
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Select a month below to submit a report for a period you may have missed.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {loadingMissingMonths ? (
             <div className="flex flex-col items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
-              <span className="ml-2 text-primary-600 mt-3">Loading missing reports...</span>
+              <Loader2 className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin" />
+              <span className="ml-2 text-blue-600 dark:text-blue-400 mt-3">Loading missing reports...</span>
             </div>
           ) : missingMonths.length === 0 ? (
             <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full mb-4 shadow-lg shadow-emerald-500/25">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">All Reports Submitted</h4>
-              <p className="text-gray-600 max-w-md mx-auto">
+              <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">All Reports Submitted</h4>
+              <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
                 You have submitted reports for all previous months. There are no missing reports to complete.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="missing-month">Select Missing Month/Year *</Label>
+                <Label htmlFor="missing-month" className="text-slate-700 dark:text-slate-300">Select Missing Month/Year *</Label>
                 <Select
                   value={selectedMissingMonth?.displayName || ""}
                   onValueChange={handleMonthSelection}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700">
                     <SelectValue placeholder="Choose a month to submit report for" />
                   </SelectTrigger>
                   <SelectContent>
@@ -281,23 +287,25 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   {missingMonths.length} missing {missingMonths.length === 1 ? 'report' : 'reports'} found
                 </p>
               </div>
 
               {selectedMissingMonth && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
+                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-blue-900">Ready to Continue</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        You have selected <strong>{selectedMissingMonth.displayName}</strong>. 
+                      <h4 className="font-medium text-blue-900 dark:text-blue-300">Ready to Continue</h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                        You have selected <strong className="text-blue-900 dark:text-blue-200">{selectedMissingMonth.displayName}</strong>. 
                         Click "Continue" below to proceed with filling out this report.
                       </p>
                     </div>
@@ -305,7 +313,7 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
                   <div className="mt-4">
                     <Button 
                       onClick={handleContinue}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
                     >
                       Continue with {selectedMissingMonth.displayName} Report
                     </Button>

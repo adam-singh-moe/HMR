@@ -104,6 +104,26 @@ const config: Config = {
           "33%": { transform: "translateY(-20px) translateX(10px)" },
           "66%": { transform: "translateY(10px) translateX(-10px)" },
         },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-15px)" },
+        },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "0.7", transform: "scale(1.05)" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "draw-line": {
+          "0%": { strokeDasharray: "0 1000" },
+          "100%": { strokeDasharray: "1000 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -114,6 +134,12 @@ const config: Config = {
         "shimmer": "shimmer 2s ease-in-out infinite",
         "wave": "wave 1.5s ease-in-out infinite",
         "float-random": "float-random 6s ease-in-out infinite",
+        "float-slow": "float-slow 4s ease-in-out infinite",
+        "pulse-slow": "pulse-slow 4s ease-in-out infinite",
+        "spin-slow": "spin-slow 20s linear infinite",
+        "gradient-shift": "gradient-shift 8s ease infinite",
+        "draw-line": "draw-line 3s ease-out forwards",
+        "draw-line-delayed": "draw-line 3s ease-out 1s forwards",
       },
     },
   },

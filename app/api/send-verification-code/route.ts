@@ -65,7 +65,7 @@ async function sendVerificationEmail(data: {
     personalizations: [
       {
         to: [{ email: data.to, name: data.name }],
-        subject: `Email Verification - School Headteachers' Monthly reporting portal`,
+        subject: `Email Verification - HMR Portal`,
       },
     ],
     from: {
@@ -136,7 +136,7 @@ function generateVerificationEmailTemplate(data: {
             <h2>Email Verification Required</h2>
             <p>Dear ${data.name},</p>
             
-            <p>Thank you for registering as a <strong>${roleDisplay}</strong> with the School Headteachers' Monthly reporting portal.</p>
+            <p>Thank you for registering as a <strong>${roleDisplay}</strong> with the School Headteacher's Reporting Portal (HMR Portal).</p>
             
             <p>To complete your account setup, please verify your email address using the verification code below:</p>
             
@@ -156,7 +156,7 @@ function generateVerificationEmailTemplate(data: {
         </div>
         
         <div class="footer">
-            <p>This is an automated message from the School Headteachers' Monthly reporting portal. Please do not reply to this email.</p>
+            <p>This is an automated message from the HMR Portal. Please do not reply to this email.</p>
             <p>For support, contact your regional office or system administrator.</p>
         </div>
     </div>

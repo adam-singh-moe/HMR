@@ -36,7 +36,7 @@ export function AdminHeader({ pendingCount, onMobileMenuToggle }: AdminHeaderPro
           <Menu className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-lg font-semibold text-primary-700">School Headteachers' Monthly Reporting Portal</h1>
+          <h1 className="text-lg font-semibold text-primary-700">School Headteacher's Reporting Portal</h1>
           <p className="text-xs text-muted-foreground">Admin Panel</p>
         </div>
       </div>

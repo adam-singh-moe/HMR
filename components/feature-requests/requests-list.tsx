@@ -138,23 +138,23 @@ export function FeatureRequestsList({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending": return "bg-yellow-100 text-yellow-800"
-      case "under_review": return "bg-blue-100 text-blue-800"
-      case "approved": return "bg-green-100 text-green-800"
-      case "rejected": return "bg-red-100 text-red-800"
-      case "implemented": return "bg-purple-100 text-purple-800"
-      default: return "bg-gray-100 text-gray-800"
+      case "pending": return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+      case "under_review": return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+      case "approved": return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+      case "rejected": return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+      case "implemented": return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300"
+      default: return "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300"
     }
   }
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case "functionality": return "bg-indigo-100 text-indigo-800"
-      case "improvement": return "bg-teal-100 text-teal-800"
-      case "bug_fix": return "bg-red-100 text-red-800"
-      case "ui_ux": return "bg-pink-100 text-pink-800"
-      case "reporting": return "bg-orange-100 text-orange-800"
-      default: return "bg-gray-100 text-gray-800"
+      case "functionality": return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300"
+      case "improvement": return "bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300"
+      case "bug_fix": return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+      case "ui_ux": return "bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300"
+      case "reporting": return "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"
+      default: return "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300"
     }
   }
 
@@ -163,12 +163,12 @@ export function FeatureRequestsList({
       {/* Filters */}
       <div className="flex gap-4 flex-wrap">
         <div className="w-48">
-          <Label>Status</Label>
+          <Label className="text-slate-700 dark:text-slate-300">Status</Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="under_review">Under Review</SelectItem>
@@ -180,12 +180,12 @@ export function FeatureRequestsList({
         </div>
 
         <div className="w-48">
-          <Label>Sort By</Label>
+          <Label className="text-slate-700 dark:text-slate-300">Sort By</Label>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
               <SelectItem value="recent">Most Recent</SelectItem>
               <SelectItem value="popular">Most Popular</SelectItem>
             </SelectContent>
@@ -196,16 +196,16 @@ export function FeatureRequestsList({
       {/* Requests List */}
       <div className="space-y-4">
         {sortedRequests.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-gray-500">No feature requests found</p>
+          <Card className="p-8 text-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/50 dark:border-slate-700/50">
+            <p className="text-slate-500 dark:text-slate-400">No feature requests found</p>
           </Card>
         ) : (
           sortedRequests.map((request) => (
-            <Card key={request.id} className="p-6 hover:shadow-lg transition-shadow">
+            <Card key={request.id} className="p-6 hover:shadow-lg transition-shadow bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-slate-200/50 dark:border-slate-700/50">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
                   <h3 
-                    className="text-xl font-semibold text-gray-900 hover:text-primary-600 cursor-pointer"
+                    className="text-xl font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
                     onClick={() => handleViewDetails(request)}
                   >
                     {request.title}
@@ -220,22 +220,22 @@ export function FeatureRequestsList({
                   </div>
                 </div>
                 
-                <p className="text-gray-600 mb-4 line-clamp-2">
+                <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">
                   {request.description}
                 </p>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5 text-sm">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-700">{request.creator_name}</span>
-                      <span className="text-gray-400">-</span>
-                      <span className="text-xs text-gray-500">{request.creator_role}</span>
+                      <User className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{request.creator_name}</span>
+                      <span className="text-slate-400 dark:text-slate-500">-</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{request.creator_role}</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                      <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
                         <Calendar className="h-4 w-4" />
                         <span>{formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}</span>
                       </div>
@@ -251,7 +251,7 @@ export function FeatureRequestsList({
                       </Button>
                       <button
                         onClick={() => handleViewDetails(request)}
-                        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 transition-colors"
+                        className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         <MessageSquare className="h-4 w-4" />
                         <span className="font-medium">{request.comment_count}</span>
@@ -266,9 +266,9 @@ export function FeatureRequestsList({
 
       {/* Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle>Feature Request Details</DialogTitle>
+            <DialogTitle className="text-slate-900 dark:text-white">Feature Request Details</DialogTitle>
           </DialogHeader>
 
           {selectedRequest && (
@@ -283,11 +283,11 @@ export function FeatureRequestsList({
                   </Badge>
                 </div>
                 
-                <h3 className="text-2xl font-bold mb-2">{selectedRequest.title}</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedRequest.description}</p>
+                <h3 className="text-2xl font-bold mb-2 text-slate-900 dark:text-white">{selectedRequest.title}</h3>
+                <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{selectedRequest.description}</p>
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   <span>{selectedRequest.creator_name} ({selectedRequest.creator_role})</span>
@@ -304,33 +304,33 @@ export function FeatureRequestsList({
 
               {/* Admin Comment */}
               {selectedRequest.admin_comment && (
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-semibold text-blue-900">Admin Response</span>
+                    <span className="font-semibold text-blue-900 dark:text-blue-300">Admin Response</span>
                     {selectedRequest.reviewer_name && (
-                      <span className="text-sm text-blue-700">by {selectedRequest.reviewer_name}</span>
+                      <span className="text-sm text-blue-700 dark:text-blue-400">by {selectedRequest.reviewer_name}</span>
                     )}
                   </div>
-                  <p className="text-blue-800">{selectedRequest.admin_comment}</p>
+                  <p className="text-blue-800 dark:text-blue-300">{selectedRequest.admin_comment}</p>
                 </div>
               )}
 
               {/* Comments Section */}
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3">Comments ({comments.length})</h4>
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                <h4 className="font-semibold mb-3 text-slate-900 dark:text-white">Comments ({comments.length})</h4>
                 
                 {comments.length > 0 && (
                   <div className="space-y-3 mb-4">
                     {comments.map((comment) => (
-                      <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div key={comment.id} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{comment.user_name}</span>
-                          <span className="text-xs text-gray-500">({comment.user_role})</span>
-                          <span className="text-xs text-gray-400">
+                          <span className="font-medium text-sm text-slate-900 dark:text-white">{comment.user_name}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">({comment.user_role})</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
                             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700">{comment.comment}</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">{comment.comment}</p>
                       </div>
                     ))}
                   </div>
@@ -339,12 +339,13 @@ export function FeatureRequestsList({
                 {/* Add Comment - Only for Regional Officers, Education Officials, and Admins */}
                 {(userRole === "Regional Officer" || userRole === "Education Official" || userRole === "Admin") && (
                   <div className="space-y-2">
-                    <Label>Add a comment</Label>
+                    <Label className="text-slate-700 dark:text-slate-300">Add a comment</Label>
                     <Textarea
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Share your thoughts..."
                       rows={3}
+                      className="bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700"
                     />
                     <Button
                       onClick={handleAddComment}

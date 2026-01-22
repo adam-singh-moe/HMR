@@ -322,32 +322,32 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
       // Basic Information
       return (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">School Name</label>
-              <p className="text-lg font-semibold mt-2 leading-7">{assessment?.schools?.name || 'N/A'}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">School Name</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.schools?.name || 'N/A'}</p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">Region</label>
-              <p className="text-lg font-semibold mt-2 leading-7">{assessment?.schools?.region || 'N/A'}</p>
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Region</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.schools?.region || 'N/A'}</p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">Assessment Period</label>
-              <p className="text-lg font-semibold mt-2 leading-7">
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Assessment Period</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">
                 {assessment ? format(new Date(assessment.created_at), 'MMMM yyyy') : 'N/A'}
               </p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">Assessment Type</label>
-              <p className="text-lg font-semibold mt-2 leading-7">{assessment?.assessment_type || 'N/A'}</p>
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Assessment Type</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.assessment_type || 'N/A'}</p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">Total Enrollment</label>
-              <p className="text-lg font-semibold mt-2 leading-7">{assessment?.enrollment || 0} students</p>
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Total Enrollment</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-blue-600 dark:text-blue-400">{assessment?.enrollment || 0} <span className="text-sm font-normal text-slate-600 dark:text-slate-400">students</span></p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground leading-5">Date Submitted</label>
-              <p className="text-lg font-semibold mt-2 leading-7">
+            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
+              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Date Submitted</label>
+              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">
                 {assessment ? format(new Date(assessment.created_at), 'PPP') : 'N/A'}
               </p>
             </div>
@@ -362,9 +362,11 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
     if (!sectionName || sectionResponses.length === 0) {
       return (
-        <div className="text-center py-8">
-          <ClipboardCheck className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground leading-6">No assessment data available for this section</p>
+        <div className="text-center py-12 px-6 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700">
+          <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-full w-fit mx-auto mb-4">
+            <ClipboardCheck className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 leading-6">No assessment data available for this section</p>
         </div>
       )
     }
@@ -385,7 +387,7 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
     return (
       <div className="space-y-6">
         {Object.entries(questionGroups).map(([questionId, group]) => (
-          <div key={questionId} className="bg-background border rounded-lg p-6">
+          <div key={questionId} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
             <div className="mb-4">
               <label className="text-sm font-medium text-muted-foreground leading-5">Question</label>
               <p className="text-lg font-semibold mt-1 leading-7">{group.question}</p>
@@ -395,14 +397,14 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
               <label className="text-sm font-medium text-muted-foreground leading-5">Student Responses</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {group.responses.map((response) => (
-                  <div key={response.id} className="p-3 bg-white/80 rounded-md border border-gray-200 text-center">
-                    <div className="mb-2">
-                      <label className="text-xs font-medium text-muted-foreground leading-4">Response Type</label>
-                      <p className="text-sm font-semibold mt-1 leading-5 break-words">{response.option_text}</p>
+                  <div key={response.id} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-center transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600">
+                    <div className="mb-3">
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-4">Response Type</label>
+                      <p className="text-sm font-semibold mt-1 leading-5 break-words text-slate-700 dark:text-slate-200">{response.option_text}</p>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground leading-4">Count</label>
-                      <p className="text-2xl font-bold text-primary mt-1 leading-6">{response.answer}</p>
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-4">Count</label>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1 leading-6">{response.answer}</p>
                     </div>
                   </div>
                 ))}
@@ -416,10 +418,10 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading assessment...</p>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="text-center p-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment...</p>
         </div>
       </div>
     )
@@ -427,14 +429,14 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
   if (!assessment) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="p-6 bg-red-50 rounded-full w-fit mx-auto mb-4">
-            <FileText className="h-12 w-12 text-red-600" />
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="text-center p-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <div className="p-6 bg-red-50 dark:bg-red-950/50 rounded-full w-fit mx-auto mb-4">
+            <FileText className="h-12 w-12 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment Not Found</h3>
-          <p className="text-gray-600 mb-4">The requested assessment could not be loaded.</p>
-          <Button onClick={handleBack} variant="outline">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Assessment Not Found</h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">The requested assessment could not be loaded.</p>
+          <Button onClick={handleBack} variant="outline" className="dark:border-slate-600 dark:hover:bg-slate-700">
             Go Back
           </Button>
         </div>
@@ -443,9 +445,9 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-background">
-      <Card className="h-full flex flex-col shadow-lg">
-        <CardHeader className="flex-shrink-0 border-b bg-background/95 backdrop-blur-sm">
+    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
+      <Card className="h-full flex flex-col shadow-lg border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm">
+        <CardHeader className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <Button
@@ -523,14 +525,14 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
             z-50 md:z-auto
             w-64 md:w-72 lg:w-80 
             flex-shrink-0 
-            border-r 
-            bg-background md:bg-gradient-to-b md:from-muted/30 md:to-muted/50 
+            border-r border-slate-200 dark:border-slate-700
+            bg-white dark:bg-slate-800 md:bg-gradient-to-b md:from-slate-50 md:to-slate-100 dark:md:from-slate-800 dark:md:to-slate-850
             flex flex-col 
             overflow-hidden
             transition-transform duration-300 ease-in-out
             md:transition-none
           `}>
-            <div className="p-3 md:p-3.5 lg:p-4 border-b bg-background flex-shrink-0">
+            <div className="p-3 md:p-3.5 lg:p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base lg:text-lg font-semibold text-foreground">Assessment Sections</h3>
@@ -547,7 +549,7 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent bg-background md:bg-transparent" role="navigation" aria-label="Assessment sections navigation">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent bg-white dark:bg-slate-800 md:bg-transparent" role="navigation" aria-label="Assessment sections navigation">
               <div className="space-y-1 p-3 md:p-3.5 lg:p-4">
                 {sections.map((section) => {
                   const Icon = section.icon
@@ -585,7 +587,7 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
           {/* Content Area */}
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="p-3 lg:p-4 border-b bg-background/95 backdrop-blur-sm flex-shrink-0">
+            <div className="p-3 lg:p-4 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm flex-shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <Button
                   variant="ghost"
@@ -607,13 +609,13 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
                     </>
                   )
                 })()}
-                <Badge variant="outline" className="ml-auto flex-shrink-0">
+                <Badge variant="outline" className="ml-auto flex-shrink-0 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
                   {assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
                 </Badge>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" role="main" aria-live="polite" aria-label="Assessment content area">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent bg-slate-50/50 dark:bg-slate-900/50" role="main" aria-live="polite" aria-label="Assessment content area">
               {renderSectionContent()}
             </div>
           </div>

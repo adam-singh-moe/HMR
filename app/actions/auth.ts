@@ -281,7 +281,8 @@ export async function signIn(formData: FormData) {
 export async function signOut() {
   const cookieStore = await cookies()
   cookieStore.delete("user_session")
-  redirect("/auth")
+  // Use redirect at the end of server action
+  return redirect("/auth")
 }
 
 export async function changeDefaultPassword(formData: FormData) {

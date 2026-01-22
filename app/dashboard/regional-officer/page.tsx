@@ -52,6 +52,17 @@ import {
   History,
   Activity,
   Brain,
+  LayoutDashboard,
+  FileText,
+  ClipboardList,
+  Baby,
+  Sparkles,
+  Building2,
+  Users,
+  PieChart as PieChartIcon,
+  Menu,
+  X,
+  Search,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -176,11 +187,11 @@ function RegionalOfficerDashboardContent() {
 
   // Pagination state for historical reports
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [pageSize, setPageSize] = useState<number>(25)
+  const [pageSize, setPageSize] = useState<number>(10)
 
   // Pagination state for current month schools
   const [currentMonthPage, setCurrentMonthPage] = useState<number>(1)
-  const [currentMonthPageSize, setCurrentMonthPageSize] = useState<number>(25)
+  const [currentMonthPageSize, setCurrentMonthPageSize] = useState<number>(10)
 
   // Scroll to top button state
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false)
@@ -194,6 +205,8 @@ function RegionalOfficerDashboardContent() {
   const [nurseryAssessmentTypeFilter, setNurseryAssessmentTypeFilter] = useState<string>("all")
   const [nurseryAssessmentYearFilter, setNurseryAssessmentYearFilter] = useState<string>("all")
   const [nurseryAssessmentsLoaded, setNurseryAssessmentsLoaded] = useState<boolean>(false)
+  const [nurseryAssessmentPage, setNurseryAssessmentPage] = useState<number>(1)
+  const [nurseryAssessmentPageSize, setNurseryAssessmentPageSize] = useState<number>(10)
 
   // Load all dashboard data in parallel when component mounts
   useEffect(() => {
@@ -728,13 +741,13 @@ function RegionalOfficerDashboardContent() {
   // Helper functions for nursery assessments
   const getNurseryAssessmentTypeColor = (assessmentType: string) => {
     if (assessmentType?.includes('assessment-1-year-1')) {
-      return 'bg-green-100 text-green-800 border-green-200'
+      return 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700'
     } else if (assessmentType?.includes('assessment-2-year-2')) {
-      return 'bg-orange-100 text-orange-800 border-orange-200'
+      return 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700'
     } else if (assessmentType?.includes('assessment-3-year-2')) {
-      return 'bg-purple-100 text-purple-800 border-purple-200'
+      return 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700'
     }
-    return 'bg-gray-100 text-gray-800 border-gray-200'
+    return 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600'
   }
 
   const formatNurseryAssessmentType = (assessmentType: string) => {
@@ -762,6 +775,18 @@ function RegionalOfficerDashboardContent() {
     
     return matchesSearch && matchesType && matchesYear
   })
+
+  // Nursery assessment pagination calculations
+  const totalNurseryAssessments = filteredNurseryAssessments.length
+  const totalNurseryAssessmentPages = Math.ceil(totalNurseryAssessments / nurseryAssessmentPageSize)
+  const nurseryAssessmentStartIndex = (nurseryAssessmentPage - 1) * nurseryAssessmentPageSize
+  const nurseryAssessmentEndIndex = nurseryAssessmentStartIndex + nurseryAssessmentPageSize
+  const paginatedNurseryAssessments = filteredNurseryAssessments.slice(nurseryAssessmentStartIndex, nurseryAssessmentEndIndex)
+
+  // Reset to page 1 when filters change for nursery assessments
+  useEffect(() => {
+    setNurseryAssessmentPage(1)
+  }, [nurseryAssessmentSearch, nurseryAssessmentTypeFilter, nurseryAssessmentYearFilter])
 
   // Get unique assessment types and years for filters
   const nurseryAssessmentTypes = [...new Set(nurseryAssessments.map(a => formatNurseryAssessmentType(a.assessment_type)).filter(Boolean))]
@@ -862,13 +887,15 @@ function RegionalOfficerDashboardContent() {
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "submitted":
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Submitted</Badge>
+        return <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 whitespace-nowrap">Submitted</Badge>
       case "not-submitted":
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Not Submitted</Badge>
+        return <Badge className="bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 whitespace-nowrap">Not Submitted</Badge>
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>
+        return <Badge className="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 whitespace-nowrap">Pending</Badge>
+      case "draft":
+        return <Badge className="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 whitespace-nowrap">Draft</Badge>
       default:
-        return <Badge variant="secondary">{status}</Badge>
+        return <Badge variant="secondary" className="whitespace-nowrap">{status}</Badge>
     }
   }
 
@@ -979,169 +1006,201 @@ function RegionalOfficerDashboardContent() {
     return `${monthNames[month]} ${year}`
   }
 
-  return (
-    <div className="space-y-4 lg:space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-blue-600">Regional Officer Dashboard</h1>
-        <p className="text-gray-500 mt-1">Monitor reports and school performance across the system</p>
-      </div>
+  // State for mobile sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-      <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4">
-        <div className="flex justify-center">
-          <TabsList className="w-fit p-1 bg-white rounded-lg shadow-sm border h-auto flex-wrap">
-            <TabsTrigger 
-              value="overview" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Dashboard Overview</span>
-              <span className="sm:hidden">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="reports" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Submitted Reports</span>
-              <span className="sm:hidden">Reports</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="pe-reports" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Regional PE Reports</span>
-              <span className="sm:hidden">PE</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="nursery-assessment" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">Nursery Assessment</span>
-              <span className="sm:hidden">Nursery</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="ai-insights" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 text-xs sm:text-sm py-2 px-2 sm:px-4 font-medium transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="hidden sm:inline">AI Insights</span>
-              <span className="sm:hidden">AI</span>
-            </TabsTrigger>
-          </TabsList>
+  // Navigation items for sidebar
+  const navigationItems = [
+    { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard, description: 'Key metrics & analytics' },
+    { id: 'reports', label: 'Submitted Reports', icon: FileText, description: 'School report submissions' },
+    { id: 'pe-reports', label: 'Regional PE Reports', icon: ClipboardList, description: 'Physical education reports' },
+    { id: 'nursery-assessment', label: 'Nursery Assessment', icon: Baby, description: 'Early childhood evaluations' },
+    { id: 'ai-insights', label: 'AI Insights', icon: Sparkles, description: 'AI-powered analytics' },
+  ]
+
+  return (
+    <div className="min-h-screen">
+      {/* Fixed Sidebar Navigation - starts below main header */}
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-14 sm:top-16 md:top-20 bottom-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl`}>
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Regional Dashboard</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user?.region_name || 'Region'}</p>
         </div>
 
+        {/* Navigation Items - Scrollable */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+          {navigationItems.map((item) => {
+            const Icon = item.icon
+            const isActive = currentTab === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  updateURL(item.id)
+                  setSidebarOpen(false)
+                }}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group ${
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                  isActive
+                    ? 'bg-white/20'
+                    : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
+                }`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.label}</p>
+                  <p className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-500 dark:text-slate-500'}`}>{item.description}</p>
+                </div>
+                {isActive && (
+                  <div className="w-1.5 h-8 bg-white/30 rounded-full" />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* School Readiness Card - Fixed at Bottom */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+          <div 
+            onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
+            className="p-4 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white cursor-pointer hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300 hover:scale-[1.02]"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                <span className="font-semibold">School Readiness</span>
+              </div>
+              <ChevronRight className="w-5 h-5" />
+            </div>
+            <p className="text-3xl font-bold">{schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}</p>
+            <p className="text-xs text-white/80 mt-1">Click to view details</p>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile Header - only shows on small screens */}
+      <div className="lg:hidden fixed top-14 sm:top-16 md:top-20 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+        <div>
+          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Regional Dashboard</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{user?.region_name || 'Region'}</p>
+        </div>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+        >
+          {sidebarOpen ? <X className="h-5 w-5 text-slate-700 dark:text-white" /> : <Menu className="h-5 w-5 text-slate-700 dark:text-white" />}
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0">
+        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+        <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4 lg:space-y-6">
+          {/* Hidden TabsList - using sidebar for navigation but keeping Tabs for content organization */}
+          <TabsList className="hidden">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="pe-reports">PE Reports</TabsTrigger>
+            <TabsTrigger value="nursery-assessment">Nursery</TabsTrigger>
+            <TabsTrigger value="ai-insights">AI</TabsTrigger>
+          </TabsList>
+
         <TabsContent value="overview" className="space-y-4 lg:space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Page Header with Stats */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6" />
+              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
                 System Overview
               </h2>
-              <p className="text-gray-500 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
+              <p className="text-slate-400 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
             </div>
-            <div className="flex items-center gap-3">
-              <div 
-                onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
-                className="cursor-pointer bg-red-500 hover:bg-red-600 transition-all duration-200 rounded-full px-3 sm:px-4 py-2 text-center text-white shadow-lg hover:shadow-xl"
-              >
+            {/* Quick Stats Cards */}
+            <div className="flex gap-3">
+              <div className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
                 <div className="flex items-center gap-2">
-                  <School className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="text-xs sm:text-sm font-medium">School Readiness</span>
+                  <School className="w-5 h-5 text-blue-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-blue-400">{currentMonthSchools.length}</p>
+                    <p className="text-xs text-blue-400/70">Total Schools</p>
+                  </div>
                 </div>
-                <div className="text-sm sm:text-lg font-bold">
-                  {schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}
+              </div>
+              <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-emerald-400">{currentMonthSchools.filter((s) => s.status === "submitted").length}</p>
+                    <p className="text-xs text-emerald-400/70">Submitted</p>
+                  </div>
+                </div>
+              </div>
+              <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-amber-400">{currentMonthSchools.filter((s) => s.status !== "submitted").length}</p>
+                    <p className="text-xs text-amber-400/70">Pending</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* School Assessment Entry Card */}
-          <RegionalOfficerAssessmentCard regionId={user?.region || user?.region_name || ''} />
+          <RegionalOfficerAssessmentCard regionId={user?.region_name || ''} />
           
-          {/* Key Metrics */}
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="gradient-card border-0 shadow-md">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                    <School className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Total Schools</p>
-                    <p className="text-xl sm:text-2xl font-bold text-primary-700">{currentMonthSchools.length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="gradient-card border-0 shadow-md">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Reports Submitted</p>
-                    <p className="text-xl sm:text-2xl font-bold text-green-700">
-                      {currentMonthSchools.filter((s) => s.status === "submitted").length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="gradient-card border-0 shadow-md sm:col-span-2 lg:col-span-1">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg flex-shrink-0">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Not Submitted</p>
-                    <p className="text-xl sm:text-2xl font-bold text-orange-700">
-                      {currentMonthSchools.filter((s) => s.status !== "submitted").length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-          </div>
+          {/* Key Metrics - Removed since they're already in sidebar */}
 
           {/* Charts Section */}
           <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
             {/* Monthly Expenditure Trends */}
-            <Card className="gradient-card border-0 shadow-lg">
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-primary-700">Monthly Expenditure Trends</CardTitle>
-                <CardDescription>School expenditures by month for current year</CardDescription>
+                <CardTitle className="text-slate-900 dark:text-white">Monthly Expenditure Trends</CardTitle>
+                <CardDescription className="dark:text-slate-400">School expenditures by month for current year</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingExpenditure ? (
                   <div className="flex items-center justify-center h-[300px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2 text-primary-600">Loading expenditure data...</span>
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-2 text-blue-600">Loading expenditure data...</span>
                   </div>
                 ) : expenditureError ? (
-                  <div className="flex items-center justify-center h-[300px] text-red-600">
+                  <div className="flex items-center justify-center h-[300px] text-red-600 dark:text-red-400">
                     <AlertCircle className="h-8 w-8 mr-2" />
                     <span>{expenditureError}</span>
                   </div>
                 ) : expenditureData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <span>No expenditure data available for current year</span>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={sortedExpenditureData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
+                      <CartesianGrid strokeDasharray="3 3" className="dark:opacity-30" />
+                      <XAxis dataKey="month" className="dark:text-slate-400" />
+                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} className="dark:text-slate-400" />
                       <Tooltip 
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                                <p className="font-medium text-gray-900">{`Month: ${label}`}</p>
+                              <div className="bg-white dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg">
+                                <p className="font-medium text-slate-900 dark:text-white">{`Month: ${label}`}</p>
                                 {payload.map((entry, index) => (
                                   <p key={index} style={{ color: entry.color }} className="text-sm">
                                     <span className="font-medium">
@@ -1186,19 +1245,19 @@ function RegionalOfficerDashboardContent() {
             </Card>
 
             {/* Report Status Distribution */}
-            <Card className="gradient-card border-0 shadow-lg">
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
               <CardHeader>
-                <CardTitle className="text-primary-700">Report Status Distribution</CardTitle>
-                <CardDescription>Current status of monthly reports</CardDescription>
+                <CardTitle className="text-slate-900 dark:text-white">Report Status Distribution</CardTitle>
+                <CardDescription className="dark:text-slate-400">Current status of monthly reports</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingDashboardData ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2 text-primary-600">Loading report status data...</span>
+                  <div className="flex items-center justify-center h-[300px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-2 text-blue-600">Loading report status data...</span>
                   </div>
                 ) : reportStatusData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <span>No report status data available</span>
                   </div>
                 ) : (
@@ -1229,76 +1288,72 @@ function RegionalOfficerDashboardContent() {
           {/* School Performance and Region Comparison */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Top Expenditure Schools */}
-            <Card className="gradient-card border-0 shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-primary-700">Top Expenditure Schools</CardTitle>
-                    <CardDescription>Schools with highest total expenditure</CardDescription>
-                  </div>
-                  {availableFinancePeriods.length > 0 && (
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="finance-year-filter" className="text-sm font-medium text-muted-foreground">
-                          Year:
-                        </label>
-                        <Select
-                          value={selectedFinanceYear.toString()}
-                          onValueChange={(value) => setSelectedFinanceYear(parseInt(value))}
-                        >
-                          <SelectTrigger id="finance-year-filter" className="w-20">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableFinanceYears.map((year) => (
-                              <SelectItem key={year} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <label htmlFor="finance-month-filter" className="text-sm font-medium text-muted-foreground">
-                          Month:
-                        </label>
-                        <Select
-                          value={selectedFinanceMonth.toString()}
-                          onValueChange={(value) => setSelectedFinanceMonth(parseInt(value))}
-                        >
-                          <SelectTrigger id="finance-month-filter" className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableFinanceMonths.map((month) => (
-                              <SelectItem key={month} value={month.toString()}>
-                                {getMonthName(month)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-slate-900 dark:text-white">Top School Expenditure</CardTitle>
+                <CardDescription className="dark:text-slate-400">Schools with highest total expenditure</CardDescription>
+                {availableFinancePeriods.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 pt-3">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="finance-year-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        Year:
+                      </label>
+                      <Select
+                        value={selectedFinanceYear.toString()}
+                        onValueChange={(value) => setSelectedFinanceYear(parseInt(value))}
+                      >
+                        <SelectTrigger id="finance-year-filter" className="w-20 h-9 dark:bg-slate-800 dark:border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                          {availableFinanceYears.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
-                </div>
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="finance-month-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        Month:
+                      </label>
+                      <Select
+                        value={selectedFinanceMonth.toString()}
+                        onValueChange={(value) => setSelectedFinanceMonth(parseInt(value))}
+                      >
+                        <SelectTrigger id="finance-month-filter" className="w-32 h-9 dark:bg-slate-800 dark:border-slate-700">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                          {availableFinanceMonths.map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {getMonthName(month)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingTopExpenditure ? (
                   <div className="flex items-center justify-center h-[300px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2 text-primary-600">Loading expenditure data...</span>
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                    <span className="ml-2 text-blue-600 dark:text-blue-400">Loading expenditure data...</span>
                   </div>
                 ) : topExpenditureError ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <div className="text-center">
                       <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
                       <p className="text-red-600">{topExpenditureError}</p>
                     </div>
                   </div>
                 ) : topExpenditureSchools.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <div className="text-center">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-500 dark:text-slate-400" />
                       <p>No expenditure data available</p>
                       <p className="text-xs mt-2">for {getMonthName(selectedFinanceMonth)} {selectedFinanceYear}</p>
                     </div>
@@ -1337,26 +1392,24 @@ function RegionalOfficerDashboardContent() {
             </Card>
 
             {/* Regional Attendance & Punctuality Trends */}
-            <Card className="gradient-card border-0 shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-primary-700">Regional Performance Trends</CardTitle>
-                    <CardDescription>Monthly attendance and punctuality rates for teachers and students</CardDescription>
-                  </div>
-                  {availableYears.length > 0 && (
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-slate-900 dark:text-white">Regional Performance Trends</CardTitle>
+                <CardDescription className="dark:text-slate-400">Monthly attendance and punctuality rates for teachers and students</CardDescription>
+                {availableYears.length > 0 && (
+                  <div className="flex items-center gap-3 pt-3">
                     <div className="flex items-center gap-2">
-                      <label htmlFor="year-filter" className="text-sm font-medium text-muted-foreground">
+                      <label htmlFor="year-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
                         Year:
                       </label>
                       <Select
                         value={selectedYear.toString()}
                         onValueChange={(value) => setSelectedYear(parseInt(value))}
                       >
-                        <SelectTrigger id="year-filter" className="w-24">
+                        <SelectTrigger id="year-filter" className="w-24 h-9 dark:bg-slate-800 dark:border-slate-700">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                           {availableYears.map((year) => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
@@ -1365,26 +1418,26 @@ function RegionalOfficerDashboardContent() {
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingAttendanceTrends ? (
                   <div className="flex items-center justify-center h-[300px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2 text-primary-600">Loading attendance trends...</span>
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                    <span className="ml-2 text-blue-600 dark:text-blue-400">Loading attendance trends...</span>
                   </div>
                 ) : attendanceTrendsError ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <div className="text-center">
                       <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
                       <p className="text-red-600">{attendanceTrendsError}</p>
                     </div>
                   </div>
                 ) : filteredAttendanceData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
                     <div className="text-center">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-500 dark:text-slate-400" />
                       <p>No attendance data available for {selectedYear}</p>
                       <p className="text-xs mt-2">Submit some reports to see attendance trends</p>
                     </div>
@@ -1455,7 +1508,7 @@ function RegionalOfficerDashboardContent() {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-primary-700 flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                   {showCurrentMonth ? (
                     <>
                       <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -1468,7 +1521,7 @@ function RegionalOfficerDashboardContent() {
                     </>
                   )}
                 </h2>
-                <p className="text-muted-foreground text-sm sm:text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
                   {showCurrentMonth
                     ? `${getCurrentMonthName()} - Track submission status for all schools in your region`
                     : "Historical reports from previous months in your region"}
@@ -1477,7 +1530,7 @@ function RegionalOfficerDashboardContent() {
             </div>
 
             {/* Filters */}
-            <Card className="gradient-card border-0 shadow-md">
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
               <CardContent className="p-3 sm:p-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 flex-1 w-full lg:w-auto">
@@ -1488,12 +1541,12 @@ function RegionalOfficerDashboardContent() {
                             placeholder="Search schools..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="border-primary-200 focus:border-primary-500 text-sm"
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
                           />
                         </div>
                         <div>
                           <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="border-primary-200 focus:border-primary-500">
+                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                               <SelectValue placeholder="Filter by Status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1505,7 +1558,7 @@ function RegionalOfficerDashboardContent() {
                         </div>
                         <div>
                           <Select value={schoolLevelFilter} onValueChange={setSchoolLevelFilter}>
-                            <SelectTrigger className="border-primary-200 focus:border-primary-500">
+                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                               <SelectValue placeholder="Filter by Level" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1549,12 +1602,12 @@ function RegionalOfficerDashboardContent() {
                             placeholder="Search reports..."
                             value={previousReportsSearch}
                             onChange={(e) => setPreviousReportsSearch(e.target.value)}
-                            className="border-primary-200 focus:border-primary-500 text-sm"
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
                           />
                         </div>
                         <div>
                           <Select value={previousReportsYear} onValueChange={setPreviousReportsYear}>
-                            <SelectTrigger className="border-primary-200 focus:border-primary-500">
+                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                               <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1569,7 +1622,7 @@ function RegionalOfficerDashboardContent() {
                         </div>
                         <div>
                           <Select value={previousReportsMonth} onValueChange={setPreviousReportsMonth}>
-                            <SelectTrigger className="border-primary-200 focus:border-primary-500">
+                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                               <SelectValue placeholder="Select Month" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1659,11 +1712,11 @@ function RegionalOfficerDashboardContent() {
             {/* Conditional Table Rendering */}
             {showCurrentMonth ? (
               /* Current Month Schools Table */
-              <Card className="gradient-card border-0 shadow-lg">
+              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
                 <CardHeader className="pb-3 sm:pb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg sm:text-xl text-primary-700">School Report Status - {getCurrentMonthName()}</CardTitle>
+                      <CardTitle className="text-lg sm:text-xl text-slate-900 dark:text-white">School Report Status - {getCurrentMonthName()}</CardTitle>
                       <CardDescription className="text-sm">
                         {isLoadingCurrentMonth
                           ? "Loading schools..."
@@ -1671,10 +1724,10 @@ function RegionalOfficerDashboardContent() {
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-green-600 border-green-600 bg-green-50 text-xs">
+                      <Badge variant="outline" className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/30 text-xs">
                         {currentMonthSchools.filter((s) => s.status === "submitted").length} Submitted
                       </Badge>
-                      <Badge variant="outline" className="text-red-600 border-red-600 bg-red-50 text-xs">
+                      <Badge variant="outline" className="text-red-600 dark:text-red-400 border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-900/30 text-xs">
                         {
                           currentMonthSchools.filter((s) => s.status === "not-submitted")
                             .length
@@ -1687,18 +1740,18 @@ function RegionalOfficerDashboardContent() {
                 <CardContent className="p-4 sm:p-6">
                   {isLoadingCurrentMonth ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                      <span className="ml-2 text-primary-600 text-sm">Loading current month schools...</span>
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                      <span className="ml-2 text-blue-600 dark:text-blue-400 text-sm">Loading current month schools...</span>
                     </div>
                   ) : filteredCurrentMonthSchools.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                       {currentMonthError ? "Failed to load schools" : "No schools found in your region"}
                     </div>
                   ) : (
                     <>
                       {/* Reminder Button */}
-                      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
+                      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-3">
                           <Checkbox
                             id="select-all"
                             checked={
@@ -1710,11 +1763,12 @@ function RegionalOfficerDashboardContent() {
                               }
                             onCheckedChange={handleSelectAllSchools}
                             disabled={notSubmittedCount === 0}
+                            className="h-5 w-5 border-slate-400 dark:border-slate-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                           />
                           <label
                             htmlFor="select-all"
-                            className={`text-sm font-medium ${
-                              notSubmittedCount === 0 ? "text-gray-400" : "text-primary-700"
+                            className={`text-sm font-medium cursor-pointer ${
+                              notSubmittedCount === 0 ? "text-slate-400 dark:text-slate-500" : "text-slate-700 dark:text-slate-200"
                             }`}
                           >
                             <span className="hidden sm:inline">Select All Non-Submitted ({notSubmittedCount})</span>
@@ -1724,7 +1778,7 @@ function RegionalOfficerDashboardContent() {
                         <Button
                           onClick={handleSendReminders}
                           disabled={selectedSchools.length === 0 || isSendingReminders}
-                          className="bg-primary-600 hover:bg-primary-700 text-white w-full sm:w-auto"
+                          className="bg-slate-800 hover:bg-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 text-white w-full sm:w-auto"
                           size="sm"
                         >
                           {isSendingReminders ? (
@@ -1743,47 +1797,48 @@ function RegionalOfficerDashboardContent() {
                         </Button>
                       </div>
 
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                         <Table>
                           <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[50px]">Select</TableHead>
-                              <TableHead>School Name</TableHead>
-                              <TableHead className="hidden sm:table-cell">Head Teacher</TableHead>
-                              <TableHead className="hidden lg:table-cell">Due Date</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead className="hidden md:table-cell">Submitted Date</TableHead>
-                              <TableHead className="text-right w-[80px]">Actions</TableHead>
+                            <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                              <TableHead className="w-[50px] text-slate-600 dark:text-slate-300 font-semibold">Select</TableHead>
+                              <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">School Name</TableHead>
+                              <TableHead className="hidden sm:table-cell text-slate-600 dark:text-slate-300 font-semibold">Head Teacher</TableHead>
+                              <TableHead className="hidden lg:table-cell text-slate-600 dark:text-slate-300 font-semibold">Due Date</TableHead>
+                              <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Status</TableHead>
+                              <TableHead className="hidden md:table-cell text-slate-600 dark:text-slate-300 font-semibold">Submitted Date</TableHead>
+                              <TableHead className="text-right w-[130px] text-slate-600 dark:text-slate-300 font-semibold">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {paginatedCurrentMonthSchools.map((school) => (
-                              <TableRow key={school.id}>
+                              <TableRow 
+                                key={school.id}
+                                className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                              >
                                 <TableCell>
-                                  {school.status === "not-submitted" ? (
-                                    <Checkbox
-                                      checked={selectedSchools.includes(school.id)}
-                                      onCheckedChange={(checked) => handleSelectSchool(school.id, !!checked)}
-                                    />
-                                  ) : (
-                                    <Checkbox disabled checked={false} />
-                                  )}
+                                  <Checkbox
+                                    checked={selectedSchools.includes(school.id)}
+                                    onCheckedChange={(checked) => handleSelectSchool(school.id, !!checked)}
+                                    disabled={school.status === "submitted"}
+                                    className="border-slate-400 dark:border-slate-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                  />
                                 </TableCell>
                                 <TableCell className="font-medium">
                                   <div>
-                                    <div className="text-sm">{school.schoolName}</div>
-                                    <div className="text-xs text-muted-foreground sm:hidden">
+                                    <div className="text-sm text-slate-900 dark:text-slate-100">{school.schoolName}</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
                                       {school.headTeacher || "No Head Teacher"}
                                     </div>
-                                    <div className="text-xs text-muted-foreground lg:hidden">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 lg:hidden">
                                       Due: {new Date(school.dueDate).toLocaleDateString()}
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="hidden sm:table-cell text-sm">{school.headTeacher || "-"}</TableCell>
-                                <TableCell className="hidden lg:table-cell text-sm">{new Date(school.dueDate).toLocaleDateString()}</TableCell>
+                                <TableCell className="hidden sm:table-cell text-sm text-slate-700 dark:text-slate-300">{school.headTeacher || "-"}</TableCell>
+                                <TableCell className="hidden lg:table-cell text-sm text-slate-700 dark:text-slate-300">{new Date(school.dueDate).toLocaleDateString()}</TableCell>
                                 <TableCell>{getStatusBadge(school.status)}</TableCell>
-                                <TableCell className="hidden md:table-cell text-sm">
+                                <TableCell className="hidden md:table-cell text-sm text-slate-700 dark:text-slate-300">
                                   {school.submittedDate ? new Date(school.submittedDate).toLocaleDateString() : "-"}
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -1791,7 +1846,7 @@ function RegionalOfficerDashboardContent() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="border-primary-200 text-primary-700 hover:bg-primary-50 bg-transparent"
+                                      className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950"
                                       onClick={() => handleViewReport(school.reportId)}
                                     >
                                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -1802,7 +1857,7 @@ function RegionalOfficerDashboardContent() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="border-orange-200 text-orange-700 hover:bg-orange-50 bg-transparent"
+                                      className="border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 bg-transparent"
                                       onClick={() => {
                                         handleSelectSchool(school.id, !selectedSchools.includes(school.id))
                                       }}
@@ -1828,7 +1883,7 @@ function RegionalOfficerDashboardContent() {
                               size="sm"
                               onClick={() => handleCurrentMonthPageChange(currentMonthPage - 1)}
                               disabled={currentMonthPage === 1}
-                              className="border-primary-200 text-primary-700 hover:bg-primary-50"
+                              className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                             >
                               <ChevronLeft className="h-4 w-4 mr-1" />
                               Previous
@@ -1856,7 +1911,7 @@ function RegionalOfficerDashboardContent() {
                                     className={`w-10 ${
                                       currentMonthPage === pageNum 
                                         ? "bg-primary-600 text-white hover:bg-primary-700" 
-                                        : "border-primary-200 text-primary-700 hover:bg-primary-50"
+                                        : "border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                                     }`}
                                   >
                                     {pageNum}
@@ -1870,7 +1925,7 @@ function RegionalOfficerDashboardContent() {
                               size="sm"
                               onClick={() => handleCurrentMonthPageChange(currentMonthPage + 1)}
                               disabled={currentMonthPage === totalCurrentMonthPages}
-                              className="border-primary-200 text-primary-700 hover:bg-primary-50"
+                              className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                             >
                               Next
                               <ChevronRight className="h-4 w-4 ml-1" />
@@ -1878,11 +1933,11 @@ function RegionalOfficerDashboardContent() {
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm text-slate-500 dark:text-slate-400">
                               Page {currentMonthPage} of {totalCurrentMonthPages}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Show:</span>
+                              <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
                               <Select value={currentMonthPageSize.toString()} onValueChange={(value) => setCurrentMonthPageSize(parseInt(value))}>
                                 <SelectTrigger className="w-16 h-8 border-primary-200">
                                   <SelectValue />
@@ -1904,11 +1959,11 @@ function RegionalOfficerDashboardContent() {
               </Card>
             ) : (
               /* Historical Reports Table */
-              <Card className="gradient-card border-0 shadow-lg">
+              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
                 <CardHeader className="pb-3 sm:pb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg sm:text-xl text-primary-700 flex items-center gap-2">
+                      <CardTitle className="text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
                         <History className="h-5 w-5 sm:h-6 sm:w-6" />
                         Historical Monthly Reports
                       </CardTitle>
@@ -1919,7 +1974,7 @@ function RegionalOfficerDashboardContent() {
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-primary-100 text-primary-700 text-xs">
+                      <Badge variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs">
                         {totalReports} Reports
                       </Badge>
                       <Button className="gradient-button text-white text-xs sm:text-sm" size="sm" disabled={isLoadingReports}>
@@ -1933,11 +1988,11 @@ function RegionalOfficerDashboardContent() {
                 <CardContent className="p-4 sm:p-6">
                   {isLoadingReports ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                      <span className="ml-2 text-primary-600 text-sm">Loading historical reports...</span>
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+                      <span className="ml-2 text-blue-600 dark:text-blue-400 text-sm">Loading historical reports...</span>
                     </div>
                   ) : filteredHistoricalReports.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                       {reportsError ? "Failed to load reports" : "No historical reports found for your region"}
                     </div>
                   ) : (
@@ -1972,21 +2027,21 @@ function RegionalOfficerDashboardContent() {
                                 <TableCell className="font-medium">
                                   <div>
                                     <div className="text-sm">{report.schoolName}</div>
-                                    <div className="text-xs text-muted-foreground sm:hidden">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
                                       {report.headTeacherName}
                                     </div>
-                                    <div className="text-xs text-muted-foreground md:hidden">
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 md:hidden">
                                       Submitted: {report.submittedDate}
                                     </div>
                                   </div>
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell text-sm">{report.headTeacherName}</TableCell>
                                 <TableCell>
-                                  <span className="font-medium text-primary-700 text-sm">{report.monthYear}</span>
+                                  <span className="font-medium text-slate-900 dark:text-white text-sm">{report.monthYear}</span>
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell text-sm">{report.submittedDate}</TableCell>
                                 <TableCell className="text-right">
-                                  <Button asChild variant="outline" size="sm" className="border-primary-200 text-primary-700 hover:bg-primary-50 bg-transparent">
+                                  <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950">
                                     <span>
                                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                       <span className="hidden sm:inline">View Report</span>
@@ -2010,7 +2065,7 @@ function RegionalOfficerDashboardContent() {
                             size="sm"
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
-                            className="border-primary-200 text-primary-700 hover:bg-primary-50"
+                            className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                           >
                             <ChevronLeft className="h-4 w-4 mr-1" />
                             Previous
@@ -2038,7 +2093,7 @@ function RegionalOfficerDashboardContent() {
                                   className={`w-10 ${
                                     currentPage === pageNum 
                                       ? "bg-primary-600 text-white hover:bg-primary-700" 
-                                      : "border-primary-200 text-primary-700 hover:bg-primary-50"
+                                      : "border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                                   }`}
                                 >
                                   {pageNum}
@@ -2052,7 +2107,7 @@ function RegionalOfficerDashboardContent() {
                             size="sm"
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
-                            className="border-primary-200 text-primary-700 hover:bg-primary-50"
+                            className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
                           >
                             Next
                             <ChevronRight className="h-4 w-4 ml-1" />
@@ -2060,11 +2115,11 @@ function RegionalOfficerDashboardContent() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-slate-500 dark:text-slate-400">
                             Page {currentPage} of {totalPages}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Show:</span>
+                            <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
                             <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
                               <SelectTrigger className="w-16 h-8 border-primary-200">
                                 <SelectValue />
@@ -2095,7 +2150,7 @@ function RegionalOfficerDashboardContent() {
               <Activity className="h-6 w-6" />
               Regional Physical Education Reports
             </h2>
-            <p className="text-gray-500">Monitor physical education program reports and activities in your region</p>
+            <p className="text-slate-500 dark:text-slate-400">Monitor physical education program reports and activities in your region</p>
           </div>
           
           <RegionalPEReportsContent />
@@ -2105,38 +2160,38 @@ function RegionalOfficerDashboardContent() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                 Nursery Assessments - {user?.region_name || 'Your Region'}
                 {nurseryAssessmentsLoaded && !isLoadingNurseryAssessments && (
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">
                     Loaded
                   </Badge>
                 )}
               </h1>
-              <p className="text-gray-600 text-sm sm:text-base mt-1">
+              <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
                 Monitor and review nursery assessments from schools in your region
               </p>
             </div>
           </div>
 
           {/* Filters */}
-          <Card>
+          <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
             <CardContent className="p-4">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600 flex-shrink-0">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 flex-shrink-0">
                   <Filter className="h-4 w-4" />
                   <span className="font-medium">Filters:</span>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 flex-1">
                   <Input
                     placeholder="Search by school name, head teacher..."
-                    className="sm:max-w-md"
+                    className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     value={nurseryAssessmentSearch}
                     onChange={(e) => setNurseryAssessmentSearch(e.target.value)}
                   />
                   <Select value={nurseryAssessmentTypeFilter} onValueChange={setNurseryAssessmentTypeFilter}>
-                    <SelectTrigger className="sm:w-56">
+                    <SelectTrigger className="sm:w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                       <SelectValue placeholder="All Assessment Types" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2147,7 +2202,7 @@ function RegionalOfficerDashboardContent() {
                     </SelectContent>
                   </Select>
                   <Select value={nurseryAssessmentYearFilter} onValueChange={setNurseryAssessmentYearFilter}>
-                    <SelectTrigger className="sm:w-40">
+                    <SelectTrigger className="sm:w-40 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                       <SelectValue placeholder="All Years" />
                     </SelectTrigger>
                     <SelectContent>
@@ -2160,7 +2215,7 @@ function RegionalOfficerDashboardContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button 
-                    className="flex items-center gap-2 flex-shrink-0"
+                    className="flex items-center gap-2 flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => loadNurseryAssessments(true)}
                     disabled={isLoadingNurseryAssessments}
                   >
@@ -2180,7 +2235,7 @@ function RegionalOfficerDashboardContent() {
                       variant="outline"
                       size="sm"
                       onClick={resetNurseryAssessments}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       Cancel
                     </Button>
@@ -2201,22 +2256,22 @@ function RegionalOfficerDashboardContent() {
 
           {/* Assessments List */}
           {isLoadingNurseryAssessments && !nurseryAssessmentsLoaded ? (
-            <Card>
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <Loader2 className="h-12 w-12 mx-auto text-gray-400 mb-4 animate-spin" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Nursery Assessments</h3>
-                  <p className="text-gray-600">Fetching nursery assessments for {user?.region_name}...</p>
+                  <Loader2 className="h-12 w-12 mx-auto text-blue-500 dark:text-blue-400 mb-4 animate-spin" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Loading Nursery Assessments</h3>
+                  <p className="text-slate-600 dark:text-slate-400">Fetching nursery assessments for {user?.region_name}...</p>
                 </div>
               </CardContent>
             </Card>
           ) : filteredNurseryAssessments.length === 0 ? (
-            <Card>
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Nursery Assessments</h3>
-                  <p className="text-gray-600">
+                  <BookOpen className="h-12 w-12 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Nursery Assessments</h3>
+                  <p className="text-slate-600 dark:text-slate-400">
                     {nurseryAssessments.length === 0 
                       ? `No nursery assessments have been submitted in ${user?.region_name} yet.`
                       : "No assessments match your current filter criteria."
@@ -2226,42 +2281,55 @@ function RegionalOfficerDashboardContent() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
+            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+              <CardContent className="p-4 sm:p-6">
+                {/* Results Summary */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Showing {nurseryAssessmentStartIndex + 1}-{Math.min(nurseryAssessmentEndIndex, totalNurseryAssessments)} of {totalNurseryAssessments} assessments
+                  </p>
+                  <Badge className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 w-fit">
+                    {totalNurseryAssessments} Total
+                  </Badge>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
                   <Table>
                     <TableHeader>
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="min-w-[200px] font-semibold">School</TableHead>
-                        <TableHead className="min-w-[150px] font-semibold">Head Teacher</TableHead>
-                        <TableHead className="min-w-[180px] font-semibold">Assessment Type</TableHead>
-                        <TableHead className="min-w-[100px] font-semibold">Enrollment</TableHead>
-                        <TableHead className="min-w-[140px] font-semibold">Date Submitted</TableHead>
-                        <TableHead className="min-w-[100px] font-semibold">Actions</TableHead>
+                      <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <TableHead className="min-w-[200px] font-semibold text-slate-600 dark:text-slate-300">School</TableHead>
+                        <TableHead className="min-w-[150px] font-semibold text-slate-600 dark:text-slate-300">Head Teacher</TableHead>
+                        <TableHead className="min-w-[180px] font-semibold text-slate-600 dark:text-slate-300">Assessment Type</TableHead>
+                        <TableHead className="min-w-[100px] font-semibold text-slate-600 dark:text-slate-300">Enrollment</TableHead>
+                        <TableHead className="min-w-[140px] font-semibold text-slate-600 dark:text-slate-300">Date Submitted</TableHead>
+                        <TableHead className="min-w-[100px] font-semibold text-slate-600 dark:text-slate-300">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredNurseryAssessments.map((assessment) => (
-                        <TableRow key={assessment.id} className="hover:bg-gray-50">
+                      {paginatedNurseryAssessments.map((assessment) => (
+                        <TableRow 
+                          key={assessment.id} 
+                          className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <School className="h-4 w-4 text-blue-500" />
+                              <School className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                               <div>
-                                <p className="font-medium text-gray-900">
+                                <p className="font-medium text-slate-900 dark:text-white">
                                   {assessment.schools?.name || 'Unknown School'}
                                 </p>
-                                <p className="text-sm text-gray-500">Nursery Level</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Nursery Level</p>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-gray-400" />
+                              <User className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                               <div>
-                                <p className="font-medium text-gray-900">
+                                <p className="font-medium text-slate-900 dark:text-white">
                                   {assessment.headteacher?.name || 'Unknown'}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {assessment.headteacher?.email || ''}
                                 </p>
                               </div>
@@ -2270,19 +2338,19 @@ function RegionalOfficerDashboardContent() {
                           <TableCell>
                             <Badge 
                               variant="outline" 
-                              className={`text-xs font-medium border ${getNurseryAssessmentTypeColor(assessment.assessment_type)}`}
+                              className={`text-xs font-medium border whitespace-nowrap ${getNurseryAssessmentTypeColor(assessment.assessment_type)}`}
                             >
                               {formatNurseryAssessmentType(assessment.assessment_type)}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                               {assessment.enrollment} students
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-gray-400" />
+                            <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                              <Calendar className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                               <span className="text-sm">
                                 {new Date(assessment.created_at).toLocaleDateString('en-US', { 
                                   year: 'numeric', 
@@ -2297,7 +2365,7 @@ function RegionalOfficerDashboardContent() {
                               asChild
                               variant="outline"
                               size="sm"
-                              className="h-8 px-3 text-xs font-medium text-blue-600 border-blue-200 hover:bg-blue-50"
+                              className="h-8 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                             >
                               <Link 
                                 href={`/dashboard/nursery-assessment/view/${assessment.id}?back=${encodeURIComponent('/dashboard/regional-officer?tab=nursery-assessment')}`}
@@ -2313,6 +2381,92 @@ function RegionalOfficerDashboardContent() {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalNurseryAssessmentPages > 1 && (
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNurseryAssessmentPage(p => Math.max(1, p - 1))}
+                        disabled={nurseryAssessmentPage === 1}
+                        className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: Math.min(5, totalNurseryAssessmentPages) }, (_, i) => {
+                          let pageNum: number
+                          if (totalNurseryAssessmentPages <= 5) {
+                            pageNum = i + 1
+                          } else if (nurseryAssessmentPage <= 3) {
+                            pageNum = i + 1
+                          } else if (nurseryAssessmentPage >= totalNurseryAssessmentPages - 2) {
+                            pageNum = totalNurseryAssessmentPages - 4 + i
+                          } else {
+                            pageNum = nurseryAssessmentPage - 2 + i
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={nurseryAssessmentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setNurseryAssessmentPage(pageNum)}
+                              className={`w-10 ${
+                                nurseryAssessmentPage === pageNum 
+                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                  : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          )
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNurseryAssessmentPage(p => Math.min(totalNurseryAssessmentPages, p + 1))}
+                        disabled={nurseryAssessmentPage === totalNurseryAssessmentPages}
+                        className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
+                        Page {nurseryAssessmentPage} of {totalNurseryAssessmentPages}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
+                        <Select 
+                          value={nurseryAssessmentPageSize.toString()} 
+                          onValueChange={(value) => {
+                            setNurseryAssessmentPageSize(parseInt(value))
+                            setNurseryAssessmentPage(1)
+                          }}
+                        >
+                          <SelectTrigger className="w-16 h-8 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -2322,13 +2476,15 @@ function RegionalOfficerDashboardContent() {
           <RegionalAIInsightsContent />
         </TabsContent>
 
-      </Tabs>
+        </Tabs>
+        </div>
+      </main>
 
       {/* Scroll to Top Button */}
       {showScrollTop && (
         <Button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 h-12 w-12 rounded-full bg-primary-600 hover:bg-primary-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+          className="fixed bottom-8 right-8 z-50 h-12 w-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
           size="sm"
         >
           <ArrowUp className="h-5 w-5" />

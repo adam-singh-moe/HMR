@@ -679,60 +679,65 @@ function RegionalAIInsightsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-blue-600 flex items-center gap-2">
-            <Brain className="h-5 w-5 sm:h-6 sm:w-6" />
-            AI Insights - {user?.region_name || 'Your Region'}
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
+              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </div>
+            AI Insights
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base mt-1">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
             Generate intelligent insights and analysis from your region's education data
           </p>
         </div>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 px-3 py-1.5">
+            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+            {user?.region_name || 'Your Region'}
+          </Badge>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Usage:</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{dailyUsage}/{DAILY_LIMIT}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">({getRemainingGenerations()} left)</span>
+          </div>
+        </div>
       </div>
 
-      {/* Development Notice */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <strong>Beta Feature:</strong> AI Insights is currently in development. Feel free to try it out and provide feedback to help us improve this feature.
-        </AlertDescription>
-      </Alert>
+      {/* Beta Notice */}
+      <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
+        <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
+          <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <span className="font-semibold text-amber-800 dark:text-amber-300">Beta Feature: </span>
+          <span className="text-amber-700 dark:text-amber-400">AI Insights is in development. Your feedback helps us improve!</span>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Panel - Controls */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-5">
           {/* Filters Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Zap className="h-5 w-5 text-blue-600" />
-                Analysis Settings
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                All fields are required to generate AI insights. <span className="text-red-500">*</span> indicates required fields.
-              </p>
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-800">
-                    Daily Usage: {dailyUsage} / {DAILY_LIMIT}
-                  </span>
-                  <span className="text-sm text-blue-600">
-                    {getRemainingGenerations()} remaining
-                  </span>
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/80 border-b border-slate-200 dark:border-slate-700 pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                  <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                {!canGenerateInsight() && (
-                  <p className="text-sm text-red-600 mt-2">
-                    Daily limit reached. Resets at midnight.
-                  </p>
-                )}
-              </div>
+                <div>
+                  <span className="text-slate-900 dark:text-white">Analysis Settings</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Configure your data analysis parameters</p>
+                </div>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-5 space-y-5">
               {/* Report Type Selection */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Report Type <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  Report Type <span className="text-red-500">*</span>
+                </label>
                 <Select value={selectedReportType} onValueChange={setSelectedReportType}>
-                  <SelectTrigger className={!selectedReportType ? "border-red-200" : ""}>
-                    <SelectValue placeholder="Select report type" />
+                  <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedReportType ? "border-red-300 dark:border-red-800" : ""}`}>
+                    <SelectValue placeholder="Select report type to analyze" />
                   </SelectTrigger>
                   <SelectContent>
                     {reportTypes.map((type) => {
@@ -740,7 +745,7 @@ function RegionalAIInsightsContent() {
                       return (
                         <SelectItem key={type.value} value={type.value}>
                           <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
+                            <IconComponent className="h-4 w-4 text-slate-500" />
                             {type.label}
                           </div>
                         </SelectItem>
@@ -753,10 +758,12 @@ function RegionalAIInsightsContent() {
               {/* Time Period Filters */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Month <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    Month <span className="text-red-500">*</span>
+                  </label>
                   <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className={!selectedMonth ? "border-red-200" : ""}>
-                      <SelectValue placeholder="Select month" />
+                    <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedMonth ? "border-red-300 dark:border-red-800" : ""}`}>
+                      <SelectValue placeholder="Month" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Months</SelectItem>
@@ -777,10 +784,12 @@ function RegionalAIInsightsContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Year <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    Year <span className="text-red-500">*</span>
+                  </label>
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className={!selectedYear ? "border-red-200" : ""}>
-                      <SelectValue placeholder="Select year" />
+                    <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedYear ? "border-red-300 dark:border-red-800" : ""}`}>
+                      <SelectValue placeholder="Year" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Years</SelectItem>
@@ -800,33 +809,48 @@ function RegionalAIInsightsContent() {
           </Card>
 
           {/* Suggested Prompts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Lightbulb className="h-5 w-5 text-yellow-600" />
-                Suggested Prompts
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
+                  <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <span className="text-slate-900 dark:text-white">Suggested Prompts</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Click to use a ready-made query</p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              {isLoadingPrompts ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span className="text-sm text-muted-foreground">Loading suggestions...</span>
+            <CardContent className="p-4">
+              {!selectedReportType ? (
+                <div className="text-center py-8 px-4">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full w-fit mx-auto mb-3">
+                    <Lightbulb className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Select a report type to see suggested prompts</p>
                 </div>
-              ) : (
+              ) : isLoadingPrompts ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500 mr-2" />
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Loading suggestions...</span>
+                </div>
+              ) : suggestedPrompts.length > 0 ? (
                 <div className="space-y-2">
                   {suggestedPrompts.map((prompt, index) => (
-                    <Button
+                    <button
                       key={index}
-                      variant="outline"
-                      className="text-left h-auto p-3 w-full justify-start text-sm whitespace-normal break-words leading-relaxed"
                       onClick={() => handlePromptSelect(prompt)}
+                      className="text-left w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
                     >
-                      <span className="text-left whitespace-normal break-words">
+                      <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 leading-relaxed">
                         {prompt}
                       </span>
-                    </Button>
+                    </button>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">No prompts available for this report type</p>
                 </div>
               )}
             </CardContent>
@@ -834,46 +858,55 @@ function RegionalAIInsightsContent() {
         </div>
 
         {/* Right Panel - Analysis */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-5">
           {/* Custom Prompt */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                Your Analysis Request
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <span className="text-slate-900 dark:text-white">Your Analysis Request</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Describe what insights you want to generate</p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-5 space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  What would you like to analyze about your region's education data? <span className="text-red-500">*</span>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  What would you like to analyze? <span className="text-red-500">*</span>
                 </label>
                 <Textarea
-                  placeholder="e.g., 'What are the attendance trends in my region?', 'Which schools need the most support?', 'Analyze student enrollment patterns'..."
+                  placeholder="e.g., 'What are the attendance trends in my region?', 'Which schools need the most support?', 'Analyze student enrollment patterns and provide recommendations'..."
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
-                  className="min-h-[120px] resize-none"
+                  className="min-h-[140px] resize-none bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl"
                 />
               </div>
               
               <Button
                 onClick={handleGenerateInsight}
                 disabled={isGenerating || !isFormValid()}
-                className="w-full"
+                className="w-full h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing Data...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Analyzing Your Data...
                   </>
                 ) : !canGenerateInsight() ? (
                   <>
-                    Daily Limit Reached ({DAILY_LIMIT}/{DAILY_LIMIT})
+                    <AlertCircle className="mr-2 h-5 w-5" />
+                    Daily Limit Reached
                   </>
                 ) : (
                   <>
-                    <Brain className="mr-2 h-4 w-4" />
-                    Generate AI Insight ({getRemainingGenerations()} left)
+                    <Brain className="mr-2 h-5 w-5" />
+                    Generate AI Insight
+                    <Badge className="ml-2 bg-white/20 text-white border-0 text-xs">
+                      {getRemainingGenerations()} left
+                    </Badge>
                   </>
                 )}
               </Button>
@@ -882,82 +915,78 @@ function RegionalAIInsightsContent() {
 
           {/* AI Insights Result - Summary View */}
           {aiInsight && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                  AI Analysis Summary
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <span className="text-slate-900 dark:text-white">AI Analysis Results</span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Insights generated for your query</p>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="p-5 space-y-4">
                 {/* Render visualizations if available */}
                 {visualizationData && (
                   <div className="mb-6">
-                    {/* Render tables */}
                     {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
-                    
-                    {/* Render charts */}
                     {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
                   </div>
                 )}
                 
-                <div className="prose prose-sm max-w-none">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
                   <div 
-                    className="text-gray-800 leading-relaxed"
-                    style={{ fontFamily: 'inherit' }}
+                    className="text-slate-700 dark:text-slate-300 leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: formatAIInsight(generateSummary(aiInsight)) }}
                   />
                 </div>
                 
-                <div className="flex gap-2 pt-4 border-t">
+                <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <Dialog open={showFullInsight} onOpenChange={setShowFullInsight}>
                     <DialogTrigger asChild>
-                      <Button variant="default" className="flex items-center gap-2">
-                        <Eye className="h-4 w-4" />
-                        View Details
+                      <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Full Analysis
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh]">
+                    <DialogContent className="max-w-4xl max-h-[85vh] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                       <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          <Brain className="h-5 w-5 text-blue-600" />
+                        <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                          <Brain className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                           Complete AI Analysis Results
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="text-slate-600 dark:text-slate-400">
                           Detailed insights and recommendations for {user?.region_name || 'your region'}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="max-h-[60vh] overflow-y-auto pr-4">
-                        {/* Render visualizations in detailed view */}
+                      <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
                         {visualizationData && (
                           <div className="mb-6">
-                            {/* Render tables */}
                             {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
-                            
-                            {/* Render charts */}
                             {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
                           </div>
                         )}
                         
-                        <div className="prose prose-sm max-w-none">
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
                           <div 
-                            className="text-gray-800 leading-relaxed"
-                            style={{ fontFamily: 'inherit' }}
+                            className="text-slate-700 dark:text-slate-300 leading-relaxed"
                             dangerouslySetInnerHTML={{ __html: formatAIInsight(aiInsight) }}
                           />
                         </div>
                       </div>
-                      <div className="flex gap-2 pt-4 border-t mt-4">
+                      <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 mt-4">
                         <Button 
                           variant="outline" 
                           onClick={handleExportPDF}
                           disabled={isExportingPDF}
-                          className="flex items-center gap-2"
+                          className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           {isExportingPDF ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           ) : (
-                            <Download className="h-4 w-4" />
+                            <Download className="h-4 w-4 mr-2" />
                           )}
                           {isExportingPDF ? "Exporting..." : "Export PDF"}
                         </Button>
@@ -971,10 +1000,24 @@ function RegionalAIInsightsContent() {
                       setAiInsight("")
                       setVisualizationData(null)
                     }}
-                    className="flex items-center gap-2"
+                    className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4 mr-2" />
                     Clear Results
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={handleExportPDF}
+                    disabled={isExportingPDF}
+                    className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  >
+                    {isExportingPDF ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
+                    Export PDF
                   </Button>
                 </div>
               </CardContent>
@@ -982,26 +1025,45 @@ function RegionalAIInsightsContent() {
           )}
 
           {/* Help Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertCircle className="h-5 w-5 text-blue-600" />
-                How to Use AI Insights
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
+              <CardTitle className="flex items-center gap-3 text-lg">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span className="text-slate-900 dark:text-white">How to Use AI Insights</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-sm text-gray-600 space-y-2">
-                <p><strong>1. Select Report Type:</strong> Choose the type of data you want to analyze from your region.</p>
-                <p><strong>2. Filter Data:</strong> Narrow down by time period and specific schools if needed.</p>
-                <p><strong>3. Choose a Prompt:</strong> Use suggested prompts or write your own analysis question.</p>
-                <p><strong>4. Generate Insights:</strong> Let AI analyze patterns, trends, and provide actionable recommendations.</p>
+            <CardContent className="p-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  { step: "1", title: "Select Report Type", desc: "Choose the data category you want to analyze" },
+                  { step: "2", title: "Set Time Period", desc: "Filter by specific month and year" },
+                  { step: "3", title: "Enter Your Query", desc: "Use a suggested prompt or write your own" },
+                  { step: "4", title: "Generate Insights", desc: "Let AI analyze patterns and trends" },
+                ].map((item) => (
+                  <div key={item.step} className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{item.step}</span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-slate-900 dark:text-white text-sm">{item.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
               
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Tip:</strong> Be specific in your questions for better insights. For example, instead of "analyze data", 
-                  try "what trends do you see in student attendance over the last 3 months?"
-                </p>
+              <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="h-5 w-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-indigo-800 dark:text-indigo-300">Pro Tip: </span>
+                    <span className="text-indigo-700 dark:text-indigo-400 text-sm">
+                      Be specific in your questions! Instead of "analyze data", try "what are the top 3 attendance concerns and how can we address them?"
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

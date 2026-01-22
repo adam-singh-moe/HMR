@@ -145,20 +145,20 @@ export function HeadTeacherAssessmentCard({
   // Feature Toggle Check
   if (metrics?.isModuleEnabled === false) {
     return (
-      <Card className={`overflow-hidden border-2 border-dashed border-muted bg-muted/20 ${className}`}>
+      <Card className={`overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-xl ${className}`}>
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <Activity className="h-8 w-8 text-muted-foreground opacity-40" />
+            <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
+              <Activity className="h-8 w-8 text-slate-400 dark:text-slate-500 opacity-40" />
             </div>
             <div className="flex-1 space-y-2">
-              <h3 className="text-xl font-bold text-muted-foreground">School Assessment Restricted</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold text-slate-500 dark:text-slate-400">School Assessment Restricted</h3>
+              <p className="text-slate-500 dark:text-slate-400">
                 The school assessment module is currently not active for your school type. 
                 Reporting windows are managed by the Ministry of Education.
               </p>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-md text-muted-foreground text-sm font-medium">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-md text-slate-500 dark:text-slate-400 text-sm font-medium">
               <Minus className="h-4 w-4" />
               Module Inactive
             </div>
@@ -170,15 +170,15 @@ export function HeadTeacherAssessmentCard({
 
   if (loading) {
     return (
-      <Card className={`overflow-hidden ${className}`}>
+      <Card className={`overflow-hidden bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 ${className}`}>
         <CardContent className="p-0">
           <div className="flex">
             <div className="flex-1 p-6 space-y-4">
-              <Skeleton className="h-8 w-56" />
-              <Skeleton className="h-4 w-80" />
-              <Skeleton className="h-10 w-44" />
+              <Skeleton className="h-8 w-56 dark:bg-slate-700" />
+              <Skeleton className="h-4 w-80 dark:bg-slate-700" />
+              <Skeleton className="h-10 w-44 dark:bg-slate-700" />
             </div>
-            <Skeleton className="w-64 h-48" />
+            <Skeleton className="w-64 h-48 dark:bg-slate-700" />
           </div>
         </CardContent>
       </Card>
@@ -186,7 +186,7 @@ export function HeadTeacherAssessmentCard({
   }
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-xl bg-white h-full ${className}`}>
+    <Card className={`overflow-hidden border-0 shadow-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl h-full border border-slate-200/50 dark:border-slate-700/50 ${className}`}>
       <CardContent className="p-0 h-full">
         <div className="flex flex-col h-full">
           {/* Content */}
@@ -205,10 +205,10 @@ export function HeadTeacherAssessmentCard({
                     <Badge 
                       className={`border-0 text-xs animate-pulse ${
                         deadlineUrgency.color === 'red' 
-                          ? 'bg-red-100 text-red-700' 
+                          ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' 
                           : deadlineUrgency.color === 'amber'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-green-100 text-green-700'
+                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                            : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
                       }`}
                     >
                       <Clock className="h-3 w-3 mr-1" />
@@ -216,10 +216,10 @@ export function HeadTeacherAssessmentCard({
                     </Badge>
                   )}
                 </div>
-                <h3 className={`${compact ? 'text-lg' : 'text-2xl lg:text-3xl'} font-bold text-gray-900 ${compact ? 'mb-1' : 'mb-2'}`}>
+                <h3 className={`${compact ? 'text-lg' : 'text-2xl lg:text-3xl'} font-bold text-slate-900 dark:text-white ${compact ? 'mb-1' : 'mb-2'}`}>
                   School Assessment
                 </h3>
-                <p className={`text-gray-600 ${compact ? 'text-xs' : 'text-sm lg:text-base'} leading-relaxed`}>
+                <p className={`text-slate-600 dark:text-slate-300 ${compact ? 'text-xs' : 'text-sm lg:text-base'} leading-relaxed`}>
                   {metrics?.hasSubmittedThisTerm 
                     ? compact ? `Submitted for ${metrics?.termName || 'this term'}.` : `Assessment submitted for ${metrics?.termName || 'this term'}. View your detailed performance breakdown.`
                     : deadlineUrgency?.urgent
@@ -235,27 +235,27 @@ export function HeadTeacherAssessmentCard({
               {!compact && <div className="flex flex-wrap items-center gap-2">
                 {/* Regional Rank */}
                 {metrics?.regionalRank && metrics?.totalSchoolsInRegion > 0 && (
-                  <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full text-sm">
-                    <Trophy className="h-4 w-4 text-purple-600" />
-                    <span className="font-semibold text-purple-700">
+                  <div className="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/30 px-3 py-1.5 rounded-full text-sm">
+                    <Trophy className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span className="font-semibold text-purple-700 dark:text-purple-300">
                       Rank #{metrics.regionalRank} of {metrics.totalSchoolsInRegion}
                     </span>
                   </div>
                 )}
                 {/* Points to Next Rating */}
                 {metrics?.pointsToNextRating && metrics.pointsToNextRating > 0 && (
-                  <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full text-sm">
-                    <ArrowUp className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold text-blue-700">
+                  <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full text-sm">
+                    <ArrowUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-semibold text-blue-700 dark:text-blue-300">
                       {metrics.pointsToNextRating} pts to {metrics.nextRatingName}
                     </span>
                   </div>
                 )}
                 {/* Lowest Category Alert */}
                 {metrics?.lowestCategory && metrics.lowestCategory.percentage < 50 && (
-                  <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-full text-sm">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <span className="font-semibold text-red-700">
+                  <div className="flex items-center gap-1.5 bg-red-100 dark:bg-red-900/30 px-3 py-1.5 rounded-full text-sm">
+                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    <span className="font-semibold text-red-700 dark:text-red-300">
                       {metrics.lowestCategory.name}: {metrics.lowestCategory.percentage}%
                     </span>
                   </div>
@@ -264,8 +264,8 @@ export function HeadTeacherAssessmentCard({
                 {metrics?.trend && metrics.trend !== 'stable' && (
                   <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
                     metrics.trend === 'improving' 
-                      ? 'bg-emerald-100 text-emerald-700' 
-                      : 'bg-red-100 text-red-700'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' 
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                   }`}>
                     {metrics.trend === 'improving' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                     {metrics.trend === 'improving' ? 'Improving' : 'Declining'}
@@ -432,7 +432,7 @@ export function RegionalOfficerAssessmentCard({
 
   if (loading) {
     return (
-      <Card className={`overflow-hidden ${className}`}>
+      <Card className={`overflow-hidden bg-white dark:bg-slate-800 border-0 shadow-xl ${className}`}>
         <CardContent className="p-0">
           <div className="flex">
             <div className="flex-1 p-6 space-y-4">
@@ -452,171 +452,190 @@ export function RegionalOfficerAssessmentCard({
   }
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-xl bg-white ${className}`}>
+    <Card className={`overflow-hidden border-0 shadow-xl bg-white dark:bg-slate-800 ${className}`}>
       <CardContent className="p-0">
         <div className="flex flex-col xl:flex-row">
           {/* Left Content */}
-          <div className="flex-1 p-6 lg:p-8 flex flex-col justify-center">
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <div className={`p-2 rounded-lg bg-gradient-to-br ${config.gradient}`}>
-                    <School className="h-5 w-5 text-white" />
-                  </div>
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 font-medium">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {metrics?.regionName || regionId}
-                  </Badge>
-                  {/* Urgent Attention Badge */}
-                  {hasUrgentItems && (
-                    <Badge className="bg-red-100 text-red-700 border-0 text-xs animate-pulse">
-                      <Flame className="h-3 w-3 mr-1" />
-                      {urgentTotal} Need Attention
-                    </Badge>
-                  )}
-                  {/* Regional Rank Badge */}
-                  {metrics?.nationalRank && metrics?.totalRegions > 0 && (
-                    <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">
-                      <Trophy className="h-3 w-3 mr-1" />
-                      Region #{metrics.nationalRank}/{metrics.totalRegions}
-                    </Badge>
-                  )}
+          <div className="flex-1 p-5 lg:p-6">
+            {/* Header Row */}
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} shadow-lg`}>
+                  <School className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Regional School Assessment
-                </h3>
-                <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
-                  {hasUrgentItems
-                    ? `⚠️ ${metrics?.overdueCount || 0} schools overdue, ${metrics?.nearDeadlineCount || 0} approaching deadline. Take action now!`
-                    : submissionRate >= 80 
-                      ? "Excellent compliance! Review performance details and identify schools excelling or needing support."
-                      : submissionRate >= 50
-                        ? "Good progress. Follow up with remaining schools to improve regional compliance."
-                        : "Many schools haven't submitted. View details and send reminders to improve compliance."
-                  }
-                </p>
-              </div>
-
-              {/* Urgency-Driving Stats Pills */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Overdue Schools */}
-                {(metrics?.overdueCount ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-full text-sm border border-red-200">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <span className="font-semibold text-red-700">{metrics?.overdueCount} Overdue</span>
-                  </div>
-                )}
-                {/* Near Deadline */}
-                {(metrics?.nearDeadlineCount ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-full text-sm border border-amber-200">
-                    <Clock className="h-4 w-4 text-amber-600" />
-                    <span className="font-semibold text-amber-700">{metrics?.nearDeadlineCount} Near Deadline</span>
-                  </div>
-                )}
-                {/* At-Risk Schools */}
-                {(metrics?.atRiskCount ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-full text-sm border border-orange-200">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <span className="font-semibold text-orange-700">{metrics?.atRiskCount} At-Risk</span>
-                  </div>
-                )}
-                {/* Declining Schools */}
-                {(metrics?.decliningSchools ?? 0) > 0 && (
-                  <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 rounded-full text-sm border border-rose-200">
-                    <TrendingDown className="h-4 w-4 text-rose-600" />
-                    <span className="font-semibold text-rose-700">{metrics?.decliningSchools} Declining</span>
-                  </div>
-                )}
-                {/* Average Score */}
-                <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full text-sm">
-                  <BarChart3 className="h-4 w-4 text-blue-600" />
-                  <span className="font-semibold text-blue-700">Avg: {metrics?.averageScore ?? 0}/1000</span>
-                </div>
-                {/* Weekly Velocity */}
-                {metrics?.weeklyVelocity !== undefined && metrics.weeklyVelocity !== 0 && (
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm ${
-                    metrics.weeklyVelocity > 0 ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'
-                  }`}>
-                    {metrics.weeklyVelocity > 0 ? (
-                      <ArrowUp className="h-4 w-4 text-emerald-600" />
-                    ) : (
-                      <ArrowDown className="h-4 w-4 text-red-600" />
+                <div>
+                  <h3 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">
+                    Regional School Assessment
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <Badge variant="outline" className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium text-xs">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {metrics?.regionName || regionId}
+                    </Badge>
+                    {metrics?.nationalRank && metrics?.totalRegions > 0 && (
+                      <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-0 text-xs">
+                        <Trophy className="h-3 w-3 mr-1" />
+                        #{metrics.nationalRank}/{metrics.totalRegions}
+                      </Badge>
                     )}
-                    <span className={`font-semibold ${metrics.weeklyVelocity > 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                      {Math.abs(metrics.weeklyVelocity)}% this week
-                    </span>
                   </div>
-                )}
+                </div>
               </div>
-
-              <Button 
-                onClick={() => router.push('/dashboard/school-assessment/regional')}
-                size="lg"
-                className={`bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white shadow-lg gap-2 font-semibold ${
-                  hasUrgentItems ? 'animate-pulse' : ''
-                }`}
-              >
-                <School className="h-4 w-4" />
-                {hasUrgentItems ? 'View Schools Needing Attention' : 'View Regional Assessments'}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              {hasUrgentItems && (
+                <Badge className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-0 text-xs animate-pulse shrink-0">
+                  <Flame className="h-3 w-3 mr-1" />
+                  {urgentTotal} Need Attention
+                </Badge>
+              )}
             </div>
+
+            {/* Description */}
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+              {hasUrgentItems
+                ? `⚠️ ${metrics?.overdueCount || 0} schools overdue, ${metrics?.nearDeadlineCount || 0} approaching deadline. Take action now!`
+                : submissionRate >= 80 
+                  ? "Excellent compliance! Review performance details and identify schools excelling or needing support."
+                  : submissionRate >= 50
+                    ? "Good progress. Follow up with remaining schools to improve regional compliance."
+                    : "Many schools haven't submitted. View details and send reminders to improve compliance."
+              }
+            </p>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+              {(metrics?.overdueCount ?? 0) > 0 && (
+                <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg border border-red-200/50 dark:border-red-800/50">
+                  <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-bold text-red-700 dark:text-red-300 leading-none">{metrics?.overdueCount}</p>
+                    <p className="text-[10px] text-red-600 dark:text-red-400 uppercase tracking-wide">Overdue</p>
+                  </div>
+                </div>
+              )}
+              {(metrics?.nearDeadlineCount ?? 0) > 0 && (
+                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
+                  <Clock className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-bold text-amber-700 dark:text-amber-300 leading-none">{metrics?.nearDeadlineCount}</p>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wide">Near Deadline</p>
+                  </div>
+                </div>
+              )}
+              {(metrics?.atRiskCount ?? 0) > 0 && (
+                <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
+                  <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-bold text-orange-700 dark:text-orange-300 leading-none">{metrics?.atRiskCount}</p>
+                    <p className="text-[10px] text-orange-600 dark:text-orange-400 uppercase tracking-wide">At-Risk</p>
+                  </div>
+                </div>
+              )}
+              {(metrics?.decliningSchools ?? 0) > 0 && (
+                <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-900/20 px-3 py-2 rounded-lg border border-rose-200/50 dark:border-rose-800/50">
+                  <TrendingDown className="h-4 w-4 text-rose-500 dark:text-rose-400 shrink-0" />
+                  <div>
+                    <p className="text-lg font-bold text-rose-700 dark:text-rose-300 leading-none">{metrics?.decliningSchools}</p>
+                    <p className="text-[10px] text-rose-600 dark:text-rose-400 uppercase tracking-wide">Declining</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
+                <BarChart3 className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
+                <div>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300 leading-none">{metrics?.averageScore ?? 0}</p>
+                  <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-wide">Avg Score</p>
+                </div>
+              </div>
+              {metrics?.weeklyVelocity !== undefined && metrics.weeklyVelocity !== 0 && (
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                  metrics.weeklyVelocity > 0 
+                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200/50 dark:border-emerald-800/50' 
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200/50 dark:border-red-800/50'
+                }`}>
+                  {metrics.weeklyVelocity > 0 ? (
+                    <ArrowUp className="h-4 w-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0" />
+                  )}
+                  <div>
+                    <p className={`text-lg font-bold leading-none ${metrics.weeklyVelocity > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                      {Math.abs(metrics.weeklyVelocity)}%
+                    </p>
+                    <p className={`text-[10px] uppercase tracking-wide ${metrics.weeklyVelocity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                      This Week
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Button */}
+            <Button 
+              onClick={() => router.push('/dashboard/school-assessment/regional')}
+              className={`w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white shadow-lg gap-2 font-semibold ${
+                hasUrgentItems ? 'animate-pulse' : ''
+              }`}
+            >
+              <School className="h-4 w-4" />
+              {hasUrgentItems ? 'View Schools Needing Attention' : 'View Regional Assessments'}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Right Side - Submission Progress with Mini Chart */}
-          <div className={`relative w-full xl:w-[400px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-6 min-h-[320px]`}>
+          <div className={`relative w-full xl:w-[260px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-4`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-4 left-4 opacity-20">
-                <School className="h-10 w-10 text-white" />
+              <div className="absolute top-3 left-3 opacity-20">
+                <School className="h-8 w-8 text-white" />
               </div>
-              <div className="absolute bottom-4 right-4 opacity-20">
-                <CheckCircle2 className="h-8 w-8 text-white" />
+              <div className="absolute bottom-3 right-3 opacity-20">
+                <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
             </div>
 
             {/* Main Metric Display */}
             <div className="relative z-10 text-center w-full">
               {/* Status Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-4">
-                <div className={`w-2 h-2 rounded-full bg-white ${submissionRate < 40 ? 'animate-pulse' : ''}`} />
-                <span className="text-white font-semibold text-xs uppercase tracking-wider">{config.status} Compliance</span>
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-full mb-3">
+                <div className={`w-1.5 h-1.5 rounded-full bg-white ${submissionRate < 40 ? 'animate-pulse' : ''}`} />
+                <span className="text-white font-semibold text-[10px] uppercase tracking-wider">{config.status} Compliance</span>
               </div>
 
               {/* Submission Counter */}
-              <div className="mb-4">
+              <div className="mb-3">
                 <div className="inline-flex items-baseline">
-                  <span className="text-6xl lg:text-7xl font-bold text-white drop-shadow-md">
+                  <span className="text-5xl font-bold text-white drop-shadow-md">
                     {metrics?.submittedCount ?? 0}
                   </span>
-                  <span className="text-2xl lg:text-3xl text-white/70 font-medium ml-1">
+                  <span className="text-xl text-white/70 font-medium ml-1">
                     /{metrics?.totalSchools ?? 0}
                   </span>
                 </div>
-                <p className="text-white/90 text-sm font-semibold uppercase tracking-wider mt-1">
+                <p className="text-white/90 text-xs font-semibold uppercase tracking-wider mt-0.5">
                   Schools Submitted
                 </p>
               </div>
               
               {/* Progress Bar */}
-              <div className="w-full max-w-[220px] mx-auto mb-4">
-                <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+              <div className="w-full max-w-[180px] mx-auto mb-3">
+                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${submissionRate}%` }}
                   />
                 </div>
-                <p className="text-white font-bold text-lg mt-2">
+                <p className="text-white font-bold text-sm mt-1.5">
                   {Math.round(submissionRate)}% Compliance
                 </p>
               </div>
 
               {/* Mini Submission Velocity Chart */}
               {chartData.length > 0 && (
-                <div className="w-full mt-4 bg-white/10 rounded-xl p-3">
-                  <div className="h-20 w-full">
+                <div className="w-full mt-3 bg-white/10 rounded-lg p-2">
+                  <div className="h-14 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                      <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
                         <defs>
                           <linearGradient id="submissionGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="white" stopOpacity={0.5}/>
@@ -635,7 +654,7 @@ export function RegionalOfficerAssessmentCard({
                             background: 'rgba(255,255,255,0.98)', 
                             border: 'none', 
                             borderRadius: '8px',
-                            fontSize: '12px',
+                            fontSize: '11px',
                             color: '#1f2937',
                             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                           }}
@@ -647,20 +666,18 @@ export function RegionalOfficerAssessmentCard({
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 mt-2">
-                    <Badge className="bg-white/20 text-white border-0 text-[10px] h-5">
-                      Submissions this week
-                    </Badge>
-                  </div>
+                  <Badge className="bg-white/20 text-white border-0 text-[9px] h-4 mt-1">
+                    Submissions this week
+                  </Badge>
                 </div>
               )}
 
               {/* Top School Callout */}
               {metrics?.topSchool && (
-                <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 mt-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <Award className="h-4 w-4 text-yellow-300" />
-                    <span className="text-white/90 text-xs">
+                <div className="bg-white/15 backdrop-blur-sm rounded-lg p-1.5 mt-3">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Award className="h-3.5 w-3.5 text-yellow-300" />
+                    <span className="text-white/90 text-[10px]">
                       <span className="font-bold">{metrics.topSchool.name}</span>: {metrics.topSchool.score}
                     </span>
                   </div>

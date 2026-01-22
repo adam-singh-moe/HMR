@@ -40,7 +40,7 @@ export default async function FeatureRequestsPage() {
           asChild
           variant="ghost"
           size="sm"
-          className="mb-4 text-gray-600 hover:text-gray-900"
+          className="mb-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Link href={dashboardUrl} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
@@ -50,8 +50,8 @@ export default async function FeatureRequestsPage() {
         
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Feature Requests</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Feature Requests</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
               {canCreate 
                 ? "Submit and vote on feature requests for the application"
                 : "View and upvote feature requests from the community"
@@ -63,7 +63,7 @@ export default async function FeatureRequestsPage() {
       </div>
 
       {error ? (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
           {error}
         </div>
       ) : (

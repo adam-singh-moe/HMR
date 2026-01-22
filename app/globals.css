@@ -69,6 +69,16 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Dark mode support for gradient classes */
+.dark .gradient-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.dark .gradient-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
 .gradient-button {
   background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
 }

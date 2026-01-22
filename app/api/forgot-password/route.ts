@@ -104,7 +104,7 @@ async function sendPasswordResetEmail(data: {
     personalizations: [
       {
         to: [{ email: data.to, name: data.name }],
-        subject: `Password Reset Request - School Headteachers' Monthly reporting portal`,
+        subject: `Password Reset Request - HMR Portal`,
       },
     ],
     from: {
@@ -176,7 +176,7 @@ function generatePasswordResetEmailTemplate(data: {
             <h2>🔐 Password Reset Request</h2>
             <p>Dear ${data.name},</p>
             
-            <p>We received a request to reset your password for your <strong>${roleDisplay}</strong> account in the School Headteachers' Monthly reporting portal.</p>
+            <p>We received a request to reset your password for your <strong>${roleDisplay}</strong> account in the School Headteacher's Reporting Portal (HMR Portal).</p>
             
             <p>To proceed with resetting your password, please verify your identity using the verification code below:</p>
             
@@ -200,7 +200,7 @@ function generatePasswordResetEmailTemplate(data: {
         </div>
         
         <div class="footer">
-            <p>This is an automated message from the School Headteachers' Monthly reporting portal. Please do not reply to this email.</p>
+            <p>This is an automated message from the HMR Portal. Please do not reply to this email.</p>
             <p>For support, contact your regional office or system administrator.</p>
         </div>
     </div>

@@ -2372,61 +2372,61 @@ export function MonthlyReportForm({
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Month</Label>
-          <Input value={formData.month} disabled className="bg-gray-50" />
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Month</Label>
+          <Input value={formData.month} disabled className="bg-slate-50 dark:bg-slate-800" />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Date</Label>
-          <Input value={formData.date} disabled className="bg-gray-50" />
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Date</Label>
+          <Input value={formData.date} disabled className="bg-slate-50 dark:bg-slate-800" />
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Education District</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Education District</Label>
           <Input
             value={formData.educationDistrict}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-50 dark:bg-slate-800"
             placeholder="Auto-populated from your profile"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your school's region</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's region</p>
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Level *</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Level *</Label>
           <Input
             value={formData.schoolLevel}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-50 dark:bg-slate-800"
             placeholder="Auto-populated from your school"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your school's level</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's level</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Name</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Name</Label>
           <Input
             value={formData.schoolName}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-50 dark:bg-slate-800"
             placeholder="Auto-populated from your profile"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your assigned school</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your assigned school</p>
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Grade *</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Grade *</Label>
           {userSchool?.grade ? (
             // Auto-populated grade from school data
             <>
               <Input
                 value={`Grade ${formData.schoolGrade}`}
                 disabled
-                className="bg-gray-50"
+                className="bg-slate-50 dark:bg-slate-800"
                 placeholder="Auto-populated from school data"
               />
-              <p className="text-xs text-gray-500">Grade automatically set from your school's profile</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Grade automatically set from your school's profile</p>
             </>
           ) : (
             // Manual grade selection when no grade exists in school data
@@ -2442,15 +2442,15 @@ export function MonthlyReportForm({
                   <SelectItem value="D">Grade D</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">Please select your school's grade from the list</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Please select your school's grade from the list</p>
             </>
           )}
         </div>
       </div>
 
       {!userSchool && currentUser && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Warning:</strong> No school is assigned to your profile. Please contact your administrator to assign a
             school before submitting reports.
           </p>
@@ -2458,13 +2458,13 @@ export function MonthlyReportForm({
       )}
 
       {currentUser && userSchool && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Ready to submit:</strong> You are logged in as <strong>{currentUser.name}</strong> from{" "}
             <strong>{userSchool.name}</strong> in the <strong>{(userSchool.sms_regions as any)?.name}</strong> region.
           </p>
           {reportId && (
-            <p className="text-green-700 text-xs mt-1">
+            <p className="text-green-700 dark:text-green-300 text-xs mt-1">
               ✅ Report started - ID: {reportId}
             </p>
           )}
@@ -2475,7 +2475,7 @@ export function MonthlyReportForm({
 
   const renderStudentEnrolment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700 flex items-center gap-2">
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
         Section 1: Student Enrolment
         {savedSections.has(1) && (
           <span className="text-green-600 text-sm font-normal">✅ Saved</span>
@@ -2486,16 +2486,16 @@ export function MonthlyReportForm({
       </h3>
       
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving student enrollment data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Student enrollment data will be saved to report ID: {reportId}
             {savedSections.has(1) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -2506,7 +2506,7 @@ export function MonthlyReportForm({
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Total number of students enrolled this month
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2520,7 +2520,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Total number of Students transferred in
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2534,7 +2534,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Total number of Students transferred out
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2564,9 +2564,9 @@ export function MonthlyReportForm({
         )
       )}
 
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Summary</h4>
-        <div className="text-sm text-gray-700">
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Summary</h4>
+        <div className="text-sm text-slate-700 dark:text-slate-200">
           <p><strong>Total Enrolled:</strong> {formData.totalStudentsEnrolled || 0}</p>
           <p><strong>Net Transfer:</strong> {(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0))}</p>
         </div>
@@ -2576,19 +2576,19 @@ export function MonthlyReportForm({
 
   const renderAttendance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 2: Attendance</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 2: Attendance</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving attendance data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Attendance data will be saved to report ID: {reportId}
             {savedSections.has(2) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -2598,10 +2598,10 @@ export function MonthlyReportForm({
       )}
 
       <div className="space-y-4">
-        <h4 className="font-medium text-primary-600">Students</h4>
+        <h4 className="font-medium text-blue-600 dark:text-blue-400">Students</h4>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What percentage of students were present this month?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -2616,7 +2616,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What percentage arrived on time?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -2634,10 +2634,10 @@ export function MonthlyReportForm({
       </div>
 
       <div className="space-y-4">
-        <h4 className="font-medium text-primary-600">Teachers</h4>
+        <h4 className="font-medium text-blue-600 dark:text-blue-400">Teachers</h4>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What percentage of teachers were present this month?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -2652,7 +2652,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What percentage arrived on time?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -2685,9 +2685,9 @@ export function MonthlyReportForm({
         )
       )}
 
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Summary</h4>
-        <div className="text-sm text-gray-700 space-y-1">
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Summary</h4>
+        <div className="text-sm text-slate-700 dark:text-slate-200 space-y-1">
           <p><strong>Student Attendance:</strong> {formData.studentAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.studentPunctualityRate || 0}%</p>
           <p><strong>Teacher Attendance:</strong> {formData.teacherAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.teacherPunctualityRate || 0}%</p>
         </div>
@@ -2697,19 +2697,19 @@ export function MonthlyReportForm({
 
   const renderStaffing = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 3: Staffing and Vacancies</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 3: Staffing and Vacancies</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving staffing data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Staffing data will be saved to report ID: {reportId}
             {savedSections.has(3) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -2720,7 +2720,7 @@ export function MonthlyReportForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Total number of staff entitlement
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2733,7 +2733,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Current Number of Teachers
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2746,7 +2746,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Under-staffed by (Number of Teachers)
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2759,7 +2759,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             Over-staffed by (Number of Teachers)
             <span className="text-red-500 ml-1">*</span>
           </Label>
@@ -2774,7 +2774,7 @@ export function MonthlyReportForm({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-primary-700 font-medium">
+        <Label className="text-blue-700 dark:text-blue-400 font-medium">
           Were secondment attendance certificates prepared? *
         </Label>
         <div className="flex items-center space-x-6">
@@ -2786,7 +2786,7 @@ export function MonthlyReportForm({
               onChange={(e) => {
                 updateFormData("secondmentCertificatesPrepared", e.target.checked ? true : null)
               }}
-              className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 rounded focus:ring-primary-500"
             />
             <Label htmlFor="secondment-yes" className="text-sm font-normal cursor-pointer">
               Yes
@@ -2800,7 +2800,7 @@ export function MonthlyReportForm({
               onChange={(e) => {
                 updateFormData("secondmentCertificatesPrepared", e.target.checked ? false : null)
               }}
-              className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 rounded focus:ring-primary-500"
             />
             <Label htmlFor="secondment-no" className="text-sm font-normal cursor-pointer">
               No
@@ -2827,12 +2827,12 @@ export function MonthlyReportForm({
       )}
 
       {/* Teachers who left the school */}
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">
+          <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 border-b border-primary-200 pb-2 mb-4">
             Teacher Status Reports
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Please report any changes in teacher status for the current month
           </p>
         </div>
@@ -2840,7 +2840,7 @@ export function MonthlyReportForm({
         {/* Teachers who left the school */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
               <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>
               Teachers who left the school
             </h4>
@@ -2918,7 +2918,7 @@ export function MonthlyReportForm({
         {/* Special Leave (Disciplinary) – With Pay */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
               <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
               Teachers on Special Leave (Disciplinary) With Pay
             </h4>
@@ -2983,7 +2983,7 @@ export function MonthlyReportForm({
         {/* Teachers Assumed Duty */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
               <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Teachers who Assumed Duty
             </h4>
@@ -3044,7 +3044,7 @@ export function MonthlyReportForm({
         {/* Teachers Not Reported for Duty */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
               <span className="inline-block w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
               Teachers Not Reported for Duty
             </h4>
@@ -3147,7 +3147,7 @@ export function MonthlyReportForm({
         {/* Teachers Without Salary */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
               <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
               Teachers who did not receieve salary for current month
             </h4>
@@ -3217,10 +3217,10 @@ export function MonthlyReportForm({
 
   const renderStaffDevelopment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 4: Staff Development</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 4: Staff Development</h3>
 
       <div className="space-y-4">
-        <Label className="text-primary-700 font-medium">
+        <Label className="text-blue-700 dark:text-blue-400 font-medium">
           Was a whole school PD session held?
           <span className="text-red-500 ml-1">*</span>
         </Label>
@@ -3242,9 +3242,9 @@ export function MonthlyReportForm({
                   updateFormData("pdOutcomes", "");
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <Label htmlFor="pd-yes" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="pd-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
               Yes
             </Label>
           </div>
@@ -3265,9 +3265,9 @@ export function MonthlyReportForm({
                   updateFormData("wholeschoolPDHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <Label htmlFor="pd-no" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="pd-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
               No
             </Label>
           </div>
@@ -3290,7 +3290,7 @@ export function MonthlyReportForm({
       {formData.wholeschoolPDHeld === true && (
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What percentage of teachers attended this session?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3305,7 +3305,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               Topic of PD session
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3317,7 +3317,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               Reason for choosing the topic
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3330,7 +3330,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
+            <Label className="text-blue-700 dark:text-blue-400 font-medium">
               What were the outcomes achieved?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3364,19 +3364,19 @@ export function MonthlyReportForm({
 
   const renderSupervision = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 5: Supervision</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 5: Supervision</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving supervision data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Supervision data will be saved to report ID: {reportId}
             {savedSections.has(5) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -3385,25 +3385,25 @@ export function MonthlyReportForm({
         </div>
       )}
 
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">
+          <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 border-b border-primary-200 pb-2 mb-4">
             Supervision Reports
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Report on lesson observations conducted by different supervisory personnel
           </p>
         </div>
 
         {/* Head Master (HM) */}
         <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
+          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
             <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
             Head Master (HM)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Number of lessons observed
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3416,7 +3416,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Positive findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3429,7 +3429,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Negative findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3442,7 +3442,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Follow-up actions
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3479,13 +3479,13 @@ export function MonthlyReportForm({
 
         {/* Deputy HM (DHM) */}
         <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
+          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
             <span className="inline-block w-2 h-2 bg-green-600 rounded-full mr-2"></span>
             Deputy Head Master (DHM)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Number of lessons observed
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3498,7 +3498,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Positive findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3511,7 +3511,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Negative findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3524,7 +3524,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Follow-up actions
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3561,13 +3561,13 @@ export function MonthlyReportForm({
 
         {/* Year Group Head / SM / Divisional Head */}
         <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
+          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
             <span className="inline-block w-2 h-2 bg-orange-600 rounded-full mr-2"></span>
             Year Group Head / Senior Master / Divisional Head
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Number of lessons observed
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3580,7 +3580,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Positive findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3593,7 +3593,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Negative findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3606,7 +3606,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Follow-up actions
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3643,13 +3643,13 @@ export function MonthlyReportForm({
 
         {/* Head of Department (HOD) */}
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600 flex items-center">
+          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
             <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
             Head of Department (HOD)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Number of lessons observed
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3662,7 +3662,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Positive findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3675,7 +3675,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Negative findings
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3688,7 +3688,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Follow-up actions
                 <span className="text-red-500 ml-1">*</span>
               </Label>
@@ -3725,19 +3725,19 @@ export function MonthlyReportForm({
 
   const renderCurriculum = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 6: Curriculum Monitoring</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 6: Curriculum Monitoring</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving curriculum data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Curriculum data will be saved to report ID: {reportId}
             {savedSections.has(6) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -3748,7 +3748,7 @@ export function MonthlyReportForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Number of teachers who did not submit lesson plans <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of teachers who did not submit lesson plans <span className="text-red-500">*</span></Label>
           <Input
             type="number"
             value={formData.teachersNoLessonPlans}
@@ -3758,7 +3758,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">What actions were taken? <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">What actions were taken? <span className="text-red-500">*</span></Label>
           <Textarea
             value={formData.curriculumActionsTaken}
             onChange={(e) => updateFormData("curriculumActionsTaken", e.target.value)}
@@ -3787,19 +3787,19 @@ export function MonthlyReportForm({
 
   const renderFinance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 7: Finance</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 7: Finance</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving finance data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Finance data will be saved to report ID: {reportId}
             {savedSections.has(7) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -3810,7 +3810,7 @@ export function MonthlyReportForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Opening Balance (GYD) <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Opening Balance (GYD) <span className="text-red-500">*</span></Label>
           <Input
             type="number"
             value={formData.openingBalance}
@@ -3820,7 +3820,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Total Income (GYD) <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Total Income (GYD) <span className="text-red-500">*</span></Label>
           <Input
             type="number"
             value={formData.totalIncome}
@@ -3830,7 +3830,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Total Expenditure (GYD) <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Total Expenditure (GYD) <span className="text-red-500">*</span></Label>
           <Input
             type="number"
             value={formData.totalExpenditure}
@@ -3840,7 +3840,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Closing Balance (GYD) <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Closing Balance (GYD) <span className="text-red-500">*</span></Label>
           <Input
             type="number"
             value={formData.closingBalance}
@@ -3867,9 +3867,9 @@ export function MonthlyReportForm({
         )
       )}
 
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Financial Summary</h4>
-        <div className="text-sm text-gray-700 space-y-1">
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Financial Summary</h4>
+        <div className="text-sm text-slate-700 dark:text-slate-200 space-y-1">
           <p><strong>Opening Balance:</strong> GYD {formData.openingBalance || "0.00"}</p>
           <p><strong>Total Income:</strong> GYD {formData.totalIncome || "0.00"}</p>
           <p><strong>Total Expenditure:</strong> GYD {formData.totalExpenditure || "0.00"}</p>
@@ -3882,19 +3882,19 @@ export function MonthlyReportForm({
 
   const renderIncome = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 8: Income Sources</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 8: Income Sources</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving income data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Income sources data will be saved to report ID: {reportId}
             {savedSections.has(8) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -3905,7 +3905,7 @@ export function MonthlyReportForm({
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-primary-600">Income Sources</h4>
+          <h4 className="font-medium text-blue-600 dark:text-blue-400">Income Sources</h4>
           <Button
             type="button"
             variant="outline"
@@ -3948,19 +3948,19 @@ export function MonthlyReportForm({
 
   const renderSafety = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 9: Accident & Safety</h3>
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 9: Accident & Safety</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving accident & safety data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-green-800 dark:text-green-200 text-sm">
             <strong>Report Started:</strong> Accident & Safety data will be saved to report ID: {reportId}
             {savedSections.has(9) && (
               <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -3971,7 +3971,7 @@ export function MonthlyReportForm({
 
       <div className="space-y-6">
         <div className="space-y-4">
-          <Label className="text-primary-700 font-medium">Was an evacuation drill conducted this month? <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Was an evacuation drill conducted this month? <span className="text-red-500">*</span></Label>
           <div className="flex gap-6">
             <div className="flex items-center space-x-2">
               <input
@@ -3985,10 +3985,10 @@ export function MonthlyReportForm({
                     updateFormData("evacuationDrillHeld", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
                 required
               />
-              <Label htmlFor="evacuation-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="evacuation-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 Yes
               </Label>
             </div>
@@ -4008,9 +4008,9 @@ export function MonthlyReportForm({
                     updateFormData("evacuationDrillHeld", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <Label htmlFor="evacuation-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="evacuation-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 No
               </Label>
             </div>
@@ -4018,7 +4018,7 @@ export function MonthlyReportForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Persons involved
                 {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
               </Label>
@@ -4033,7 +4033,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Time taken (minutes)
                 {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
               </Label>
@@ -4048,7 +4048,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2 md:col-span-2">
-              <Label className="text-primary-700 font-medium">
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">
                 Observations from drill
                 {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
               </Label>
@@ -4066,7 +4066,7 @@ export function MonthlyReportForm({
         </div>
 
         <div className="space-y-4">
-          <Label className="text-primary-700 font-medium">Are fire buckets available in classrooms? <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Are fire buckets available in classrooms? <span className="text-red-500">*</span></Label>
           <div className="flex gap-6">
             <div className="flex items-center space-x-2">
               <input
@@ -4080,10 +4080,10 @@ export function MonthlyReportForm({
                     updateFormData("classroomsHaveFireBuckets", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
                 required
               />
-              <Label htmlFor="firebuckets-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="firebuckets-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 Yes
               </Label>
             </div>
@@ -4099,15 +4099,15 @@ export function MonthlyReportForm({
                     updateFormData("classroomsHaveFireBuckets", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <Label htmlFor="firebuckets-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="firebuckets-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 No
               </Label>
             </div>
           </div>
 
-          <Label className="text-primary-700 font-medium"> Are fire extinguishers in working condition and sufficient? <span className="text-red-500">*</span></Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium"> Are fire extinguishers in working condition and sufficient? <span className="text-red-500">*</span></Label>
           <div className="flex gap-6">
             <div className="flex items-center space-x-2">
               <input
@@ -4121,10 +4121,10 @@ export function MonthlyReportForm({
                     updateFormData("fireExtinguishersFunctional", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
                 required
               />
-              <Label htmlFor="extinguishers-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="extinguishers-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 Yes
               </Label>
             </div>
@@ -4140,9 +4140,9 @@ export function MonthlyReportForm({
                     updateFormData("fireExtinguishersFunctional", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <Label htmlFor="extinguishers-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="extinguishers-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
                 No
               </Label>
             </div>
@@ -4150,10 +4150,10 @@ export function MonthlyReportForm({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600"> Incident Report Summary</h4>
+          <h4 className="font-medium text-blue-600 dark:text-blue-400"> Incident Report Summary</h4>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium"> Total number of reported incidents <span className="text-red-500">*</span></Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium"> Total number of reported incidents <span className="text-red-500">*</span></Label>
               <Input
                 type="number"
                 value={formData.numberOfIncidents}
@@ -4164,7 +4164,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Number of students involved in incidents <span className="text-red-500">*</span></Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of students involved in incidents <span className="text-red-500">*</span></Label>
               <Input
                 type="number"
                 value={formData.studentsInvolved}
@@ -4175,7 +4175,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Number of teachers involved in incidents <span className="text-red-500">*</span></Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of teachers involved in incidents <span className="text-red-500">*</span></Label>
               <Input
                 type="number"
                 value={formData.teachersInvolvedIncidents}
@@ -4186,7 +4186,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Describe actions taken to prevent future incidents <span className="text-red-500">*</span></Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">Describe actions taken to prevent future incidents <span className="text-red-500">*</span></Label>
               <Textarea
                 value={formData.preventionActions}
                 onChange={(e) => updateFormData("preventionActions", e.target.value)}
@@ -4227,7 +4227,7 @@ export function MonthlyReportForm({
 
   const renderMeetings = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
         Section 10: Staff Meetings
         {savedSections.has(10) && (
           <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -4235,7 +4235,7 @@ export function MonthlyReportForm({
       </h3>
 
       <div className="space-y-4">
-        <Label className="text-primary-700 font-medium">Was a general staff meeting held this month? <span className="text-red-500">*</span></Label>
+        <Label className="text-blue-700 dark:text-blue-400 font-medium">Was a general staff meeting held this month? <span className="text-red-500">*</span></Label>
         <div className="flex gap-6">
           <div className="flex items-center space-x-2">
             <input
@@ -4249,10 +4249,10 @@ export function MonthlyReportForm({
                   updateFormData("generalStaffMeetingHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
               required
             />
-            <Label htmlFor="meeting-yes" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="meeting-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
               Yes
             </Label>
           </div>
@@ -4271,9 +4271,9 @@ export function MonthlyReportForm({
                   updateFormData("generalStaffMeetingHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
             />
-            <Label htmlFor="meeting-no" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="meeting-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
               No
             </Label>
           </div>
@@ -4282,7 +4282,7 @@ export function MonthlyReportForm({
 
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             What were the key issues discussed
             {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
           </Label>
@@ -4296,7 +4296,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">
             What Percentage of decisions were implemented
             {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
           </Label>
@@ -4337,7 +4337,7 @@ export function MonthlyReportForm({
 
   const renderFacilities = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
         Section 11: Physical Facilities
         {savedSections.has(11) && (
           <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -4347,7 +4347,7 @@ export function MonthlyReportForm({
       <div className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600">In Need of Repairs</h4>
+            <h4 className="font-medium text-blue-600 dark:text-blue-400">In Need of Repairs</h4>
             <Button
               type="button"
               variant="outline"
@@ -4400,10 +4400,10 @@ export function MonthlyReportForm({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Teachers</h4>
+          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Teachers</h4>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of functional toilets *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of functional toilets *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4415,7 +4415,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working sinks *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working sinks *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4427,7 +4427,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working taps *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working taps *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4442,10 +4442,10 @@ export function MonthlyReportForm({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Students</h4>
+          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Students</h4>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of functional toilets *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of functional toilets *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4457,7 +4457,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working taps *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working taps *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4469,7 +4469,7 @@ export function MonthlyReportForm({
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working sinks *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working sinks *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4484,10 +4484,10 @@ export function MonthlyReportForm({
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Classrooms</h4>
+          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Classrooms</h4>
           <div className="grid gap-4 md:grid-cols-1">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of overcrowded classrooms *</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of overcrowded classrooms *</Label>
               <Input
                 type="number"
                 min="0"
@@ -4524,7 +4524,7 @@ export function MonthlyReportForm({
 
   const renderResources = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
+      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
         Section 12: Resources Needed
         {savedSections.has(12) && (
           <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -4533,7 +4533,7 @@ export function MonthlyReportForm({
 
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Curriculum resources needed</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Curriculum resources needed</Label>
           <Textarea
             value={formData.curriculumResources}
             onChange={(e) => updateFormData("curriculumResources", e.target.value)}
@@ -4542,7 +4542,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Janitorial supplies needed</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Janitorial supplies needed</Label>
           <Textarea
             value={formData.janitorialSupplies}
             onChange={(e) => updateFormData("janitorialSupplies", e.target.value)}
@@ -4551,7 +4551,7 @@ export function MonthlyReportForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Additional Issues Affecting the School</Label>
+          <Label className="text-blue-700 dark:text-blue-400 font-medium">Additional Issues Affecting the School</Label>
           <Textarea
             value={formData.otherIssues}
             onChange={(e) => updateFormData("otherIssues", e.target.value)}
@@ -4622,7 +4622,7 @@ export function MonthlyReportForm({
 
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-semibold text-primary-700">
+        <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
           Section 13: Physical Education
           {savedSections.has(13) && (
             <span className="ml-2 text-green-600">✅ Section saved</span>
@@ -4633,7 +4633,7 @@ export function MonthlyReportForm({
           {/* Physical Education Activities */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-primary-700 font-medium">Physical Education Activities Performed</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">Physical Education Activities Performed</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -4647,7 +4647,7 @@ export function MonthlyReportForm({
             </div>
             
             {activities.length === 0 && (
-              <div className="text-center py-6 text-gray-500 border-2 border-dashed rounded-lg">
+              <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed rounded-lg">
                 <p>No activities added yet. Click "Add Activity" to get started.</p>
               </div>
             )}
@@ -4676,7 +4676,7 @@ export function MonthlyReportForm({
           {/* Physical Education Challenges */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-primary-700 font-medium">Major Challenges in Physical Education</Label>
+              <Label className="text-blue-700 dark:text-blue-400 font-medium">Major Challenges in Physical Education</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -4690,7 +4690,7 @@ export function MonthlyReportForm({
             </div>
             
             {challenges.length === 0 && (
-              <div className="text-center py-6 text-gray-500 border-2 border-dashed rounded-lg">
+              <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed rounded-lg">
                 <p>No challenges added yet. Click "Add Challenge" to get started.</p>
               </div>
             )}
@@ -4758,114 +4758,130 @@ export function MonthlyReportForm({
   // Show loading screen while checking for existing reports to prevent glitches
   if (isInitialLoading) {
     return (
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="gradient-header text-white rounded-t-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <FileTextIcon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-xl">Monthly School Report</CardTitle>
-              <CardDescription className="text-blue-100">
-                Loading report status...
-              </CardDescription>
-            </div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-slate-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 p-8 md:p-12">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
+        <div className="relative z-10 text-center space-y-6">
+          {/* Animated loader */}
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute w-20 h-20 border-4 border-blue-500/20 rounded-full" />
+            <div className="absolute w-20 h-20 border-4 border-transparent border-t-blue-500 rounded-full animate-spin" />
+            <FileTextIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
-              <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Checking Report Status
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                Please wait while we check if you have already submitted a report for this month...
-              </p>
-            </div>
+          
+          <div>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+              Checking Report Status
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+              Please wait while we check if you have already submitted a report for this month...
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   // If the current month report is already submitted AND we're not submitting a previous report, show a simple message
   if (isCurrentMonthSubmitted && !previousReportData) {
     return (
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="gradient-header text-white rounded-t-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <FileTextIcon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-xl">Monthly School Report</CardTitle>
-              <CardDescription className="text-blue-100">
-                Current Month Report Status
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Current Month Report Already Submitted
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                You have already submitted your monthly report for this month. 
-                Only one report can be submitted per month.
-              </p>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-md mx-auto">
-              <div className="flex items-center gap-2 text-green-800">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span className="font-medium text-sm">Report Status: Submitted</span>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-slate-50 to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-2xl" />
+        </div>
+        
+        <div className="relative z-10 p-8 md:p-12">
+          {/* Success Icon with Animation */}
+          <div className="text-center mb-8">
+            <div className="relative inline-flex items-center justify-center mb-6">
+              <div className="absolute w-24 h-24 bg-emerald-500/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+              <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-              <p className="text-green-700 text-sm mt-1">
-                Your report is complete and has been successfully submitted to the system.
-              </p>
             </div>
             
-            {/* View Report Button */}
-            <div className="mt-6 flex justify-center">
-              <Button 
-                onClick={handleViewSubmittedReport}
-                className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                View Report
-              </Button>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-3">
+              Report Successfully Submitted
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-lg mx-auto text-lg">
+              Your monthly report for this period has been received and processed.
+            </p>
+          </div>
+          
+          {/* Status Card */}
+          <div className="max-w-md mx-auto mb-8">
+            <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-xl p-6 shadow-lg shadow-slate-200/50 dark:shadow-none">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                  <FileTextIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Current Period</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {(() => {
+                      const now = new Date();
+                      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                      return prevMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    })()}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400">Status</span>
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-full text-sm font-medium">
+                  <span className="w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-pulse" />
+                  Submitted
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between py-3 border-t border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400">Submissions Allowed</span>
+                <span className="text-slate-900 dark:text-white font-medium">1 per month</span>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          {/* Action Button */}
+          <div className="text-center">
+            <Button 
+              onClick={handleViewSubmittedReport}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 text-base font-medium"
+            >
+              <Eye className="h-5 w-5 mr-2" />
+              View Submitted Report
+            </Button>
+          </div>
+        </div>
+      </div>
     )
   }
 
   return (
     <>
-    {/* Progress Tabs - Clean white design - Hidden on mobile */}
-    <div className="hidden sm:block bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+    {/* Progress Tabs - Clean design - Hidden on mobile */}
+    <div className="hidden sm:block bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl shadow-lg mb-6">
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {previousReportData ? "Previous Report" : "Monthly School Report"}
           </h2>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-600 dark:text-slate-300">
             {Math.round(calculateProgress())}% Complete
           </div>
         </div>
         
         {previousReportData && (
-          <p className="text-gray-600 mb-4">
+          <p className="text-slate-600 dark:text-slate-300 mb-4">
             Submit report for {previousReportData.displayName}
           </p>
         )}
@@ -4887,10 +4903,10 @@ export function MonthlyReportForm({
                       className={`
                         w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
                         ${isCurrent 
-                          ? 'bg-blue-600 text-white ring-4 ring-blue-100' 
+                          ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900' 
                           : isCompleted 
                             ? 'bg-green-500 text-white' 
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
                         }
                         ${reportStatus === 'submitted' ? 'cursor-not-allowed' : 'cursor-pointer'}
                       `}
@@ -4899,10 +4915,10 @@ export function MonthlyReportForm({
                     </button>
                     
                     <div className="text-center">
-                      <div className="text-xs font-medium text-gray-900 mb-1 max-w-[70px] leading-tight">
+                      <div className="text-xs font-medium text-slate-900 dark:text-slate-100 mb-1 max-w-[70px] leading-tight">
                         {section.replace(/\s&\s/, '\n&\n')}
                       </div>
-                      <div className={`text-xs ${isCurrent ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                      <div className={`text-xs ${isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
                         {isCompleted ? '100%' : isCurrent ? '50%' : '0%'}
                       </div>
                     </div>
@@ -4912,7 +4928,7 @@ export function MonthlyReportForm({
                   {index < SECTIONS.length - 1 && (
                     <div className={`
                       w-8 h-0.5 mx-2 mt-[-24px]
-                      ${savedSections.has(index) ? 'bg-green-500' : 'bg-gray-200'}
+                      ${savedSections.has(index) ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}
                     `} />
                   )}
                 </div>
@@ -5027,7 +5043,7 @@ export function MonthlyReportForm({
                   }
                 }}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto border border-primary-600 text-primary-600 hover:bg-primary-50 transition-all duration-200 flex items-center gap-2"
+                className="w-full sm:w-auto border border-primary-600 text-blue-600 dark:text-blue-400 hover:bg-primary-50 transition-all duration-200 flex items-center gap-2"
                 variant="outline"
               >
                 <Save className="h-4 w-4" />
@@ -5297,7 +5313,7 @@ export function MonthlyReportForm({
                     window.location.reload()
                   }}
                   variant="outline"
-                  className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                  className="border-primary-300 text-blue-700 dark:text-blue-400 hover:bg-primary-50"
                 >
                   Create New Report
                 </Button>

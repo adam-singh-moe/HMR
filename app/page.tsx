@@ -2,113 +2,246 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import Image from "next/image"
 
 export default function HomePage() {
   const router = useRouter()
   const [progress, setProgress] = useState(0)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval)
-          // Direct redirect without any morphing animation
-          setTimeout(() => router.replace('/auth'), 300)
+          setTimeout(() => router.replace('/auth'), 400)
           return 100
         }
-        return prev + 8
+        return prev + 4
       })
-    }, 100)
+    }, 80)
 
     return () => clearInterval(interval)
   }, [router])
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Professional Blue Background */}
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950">
+      {/* Animated gradient mesh background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-blue-100" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/50 to-slate-900" />
         
-        {/* Subtle blue overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-blue-400/5 to-blue-600/10" />
+        {/* Animated orbs */}
+        <div 
+          className={`absolute top-1/4 -left-20 w-96 h-96 rounded-full blur-3xl transition-opacity duration-1000 ${mounted ? 'opacity-30' : 'opacity-0'}`}
+          style={{
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 70%)',
+            animation: 'float1 15s ease-in-out infinite'
+          }}
+        />
+        <div 
+          className={`absolute -bottom-20 right-1/4 w-80 h-80 rounded-full blur-3xl transition-opacity duration-1000 ${mounted ? 'opacity-25' : 'opacity-0'}`}
+          style={{
+            background: 'radial-gradient(circle, rgba(147, 51, 234, 0.5) 0%, transparent 70%)',
+            animation: 'float2 18s ease-in-out infinite'
+          }}
+        />
+        <div 
+          className={`absolute top-1/2 right-0 w-64 h-64 rounded-full blur-3xl transition-opacity duration-1000 ${mounted ? 'opacity-20' : 'opacity-0'}`}
+          style={{
+            background: 'radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, transparent 70%)',
+            animation: 'float3 20s ease-in-out infinite'
+          }}
+        />
 
-        {/* Floating elements */}
-        <div className="absolute inset-0 opacity-100 scale-100">
-          <div className="absolute top-1/6 left-1/6 w-2 h-2 bg-blue-300 rounded-full animate-float-random opacity-40" style={{ animationDelay: '0s', animationDuration: '4s' }} />
-          <div className="absolute top-1/4 right-1/5 w-1.5 h-1.5 bg-blue-400 rounded-full animate-float-random opacity-30" style={{ animationDelay: '1s', animationDuration: '5s' }} />
-          <div className="absolute bottom-1/4 left-1/4 w-2.5 h-2.5 bg-blue-200 rounded-full animate-float-random opacity-35" style={{ animationDelay: '2s', animationDuration: '6s' }} />
-          <div className="absolute bottom-1/6 right-1/3 w-1 h-1 bg-blue-500 rounded-full animate-float-random opacity-25" style={{ animationDelay: '0.5s', animationDuration: '4.5s' }} />
-          <div className="absolute top-1/3 left-1/2 w-2 h-2 bg-blue-300 rounded-full animate-float-random opacity-40" style={{ animationDelay: '1.5s', animationDuration: '5.5s' }} />
-          <div className="absolute top-3/4 left-1/5 w-1.5 h-1.5 bg-blue-400 rounded-full animate-float-random opacity-30" style={{ animationDelay: '2.5s', animationDuration: '4.2s' }} />
+        {/* Grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        {/* Floating particles - fixed positions to avoid hydration mismatch */}
+        <div className="absolute inset-0">
+          {mounted && (
+            <>
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-60" style={{ top: '15%', left: '10%', animation: 'particle 5s ease-in-out infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-40" style={{ top: '25%', left: '85%', animation: 'particle 6s ease-in-out 0.5s infinite' }} />
+              <div className="absolute w-1 h-1 bg-cyan-400/40 rounded-full opacity-50" style={{ top: '45%', left: '5%', animation: 'particle 7s ease-in-out 1s infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-30" style={{ top: '65%', left: '90%', animation: 'particle 5.5s ease-in-out 1.5s infinite' }} />
+              <div className="absolute w-1 h-1 bg-purple-400/40 rounded-full opacity-50" style={{ top: '80%', left: '15%', animation: 'particle 6.5s ease-in-out 0.3s infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-40" style={{ top: '10%', left: '50%', animation: 'particle 5s ease-in-out 0.8s infinite' }} />
+              <div className="absolute w-1 h-1 bg-cyan-400/40 rounded-full opacity-60" style={{ top: '35%', left: '70%', animation: 'particle 7s ease-in-out 1.2s infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-30" style={{ top: '55%', left: '25%', animation: 'particle 6s ease-in-out 0.6s infinite' }} />
+              <div className="absolute w-1 h-1 bg-purple-400/40 rounded-full opacity-50" style={{ top: '75%', left: '60%', animation: 'particle 5.5s ease-in-out 1.8s infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-40" style={{ top: '90%', left: '40%', animation: 'particle 6.5s ease-in-out 0.4s infinite' }} />
+              <div className="absolute w-1 h-1 bg-cyan-400/40 rounded-full opacity-30" style={{ top: '20%', left: '35%', animation: 'particle 7s ease-in-out 1.6s infinite' }} />
+              <div className="absolute w-1 h-1 bg-blue-400/40 rounded-full opacity-50" style={{ top: '50%', left: '80%', animation: 'particle 5s ease-in-out 0.9s infinite' }} />
+            </>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen opacity-100 scale-100">
-        <div className="text-center space-y-12 px-8">
+      <div className="relative z-10 flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-10 px-8 max-w-2xl">
           
-          {/* Logo Section with ripple effects */}
-          <div className="relative">
+          {/* Logo Section */}
+          <div className={`relative transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'}`}>
+            {/* Glow effect */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 h-40 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+            </div>
+            
+            {/* Logo container */}
             <div className="relative mx-auto w-32 h-32">
-              {/* Ripple rings */}
-              <div className="absolute inset-0 border-2 border-blue-400 rounded-full animate-ripple opacity-20" style={{ animationDelay: '0s' }} />
-              <div className="absolute inset-0 border-2 border-blue-300 rounded-full animate-ripple opacity-15" style={{ animationDelay: '0.5s' }} />
-              <div className="absolute inset-0 border-2 border-blue-500 rounded-full animate-ripple opacity-25" style={{ animationDelay: '1s' }} />
+              {/* Rotating border */}
+              <div 
+                className="absolute -inset-2 rounded-full border-2 border-transparent"
+                style={{
+                  background: 'linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.3) 50%, transparent 100%)',
+                  animation: 'spin 4s linear infinite'
+                }}
+              />
               
-              {/* Central logo */}
-              <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center shadow-2xl animate-glow">
-                <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-inner">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full animate-pulse" />
+              {/* Outer ring */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-1 shadow-2xl shadow-blue-500/30">
+                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="/images/moe-logo.png"
+                    alt="Ministry of Education Logo"
+                    width={120}
+                    height={120}
+                    className="w-full h-full object-cover scale-110"
+                    priority
+                  />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Text Content */}
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl font-bold text-blue-800 animate-slide-in-up">
-                Ministry of Education
-              </h1>
-              <h2 className="text-xl md:text-2xl text-blue-600 animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-                School Headteachers' Monthly Report
-              </h2>
-              <p className="text-lg text-gray-600 animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
-                Republic of Guyana
-              </p>
-            </div>
+          <div className={`space-y-4 transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent">
+              Ministry of Education
+            </h1>
+            <div className="h-1 w-20 mx-auto bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 rounded-full" />
+            <h2 className="text-xl md:text-2xl text-blue-300/90 font-medium">
+              School Headteacher's Reporting Portal
+            </h2>
+            <p className="text-slate-400">
+              Republic of Guyana
+            </p>
           </div>
 
           {/* Progress Section */}
-          <div className="space-y-6 animate-slide-in-up" style={{ animationDelay: '0.6s' }}>
-            <div className="max-w-md mx-auto">
-              <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className={`space-y-6 transition-all duration-1000 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            {/* Progress container */}
+            <div className="relative max-w-sm mx-auto">
+              {/* Background track */}
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                {/* Animated progress bar */}
                 <div 
-                  className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
+                  className="h-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 rounded-full transition-all duration-300 ease-out relative"
                   style={{ width: `${progress}%` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                  {/* Shimmer effect */}
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    style={{ animation: 'shimmer 1.5s infinite' }}
+                  />
+                  {/* Glow at tip */}
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-cyan-400 rounded-full blur-md" />
                 </div>
               </div>
               
-              <div className="flex justify-between mt-3 text-sm text-gray-600">
-                <span>Loading application...</span>
-                <span className="font-mono font-medium text-blue-600">{Math.round(progress)}%</span>
+              {/* Progress info */}
+              <div className="flex justify-between items-center mt-4">
+                <span className="text-sm text-slate-500">Initializing secure connection...</span>
+                <span className="text-sm font-mono font-semibold text-blue-400">{Math.round(progress)}%</span>
               </div>
             </div>
 
-            {/* Loading dots */}
-            <div className="flex justify-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '0s' }} />
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '0.15s' }} />
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '0.3s' }} />
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '0.45s' }} />
+            {/* Animated dots */}
+            <div className="flex justify-center gap-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div 
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-blue-500"
+                  style={{
+                    animation: 'pulse-dot 1.4s ease-in-out infinite',
+                    animationDelay: `${i * 0.15}s`
+                  }}
+                />
+              ))}
             </div>
+          </div>
+
+          {/* Feature pills */}
+          <div className={`flex flex-wrap justify-center gap-3 transition-all duration-1000 delay-600 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            {['Secure', 'Real-time', 'Analytics'].map((feature) => (
+              <span 
+                key={feature}
+                className="px-4 py-1.5 text-xs font-medium text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full"
+              >
+                {feature}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* NO morphing overlay - direct redirect to login */}
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
+
+      {/* Animations */}
+      <style jsx>{`
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(50px, -30px) scale(1.1); }
+        }
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-40px, 40px) scale(1.1); }
+        }
+        @keyframes float3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-30px, -50px) scale(1.05); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        @keyframes pulse-dot {
+          0%, 80%, 100% { 
+            transform: scale(0.6);
+            opacity: 0.4;
+          }
+          40% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        @keyframes particle {
+          0%, 100% { 
+            transform: translateY(0) translateX(0);
+            opacity: 0.3;
+          }
+          50% { 
+            transform: translateY(-20px) translateX(10px);
+            opacity: 0.6;
+          }
+        }
+      `}</style>
     </div>
   )
 }

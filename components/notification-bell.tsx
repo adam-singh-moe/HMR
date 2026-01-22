@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
@@ -131,37 +130,37 @@ export function NotificationBell() {
       case "urgent":
         return {
           border: "border-l-red-500",
-          bg: "bg-red-50",
-          text: "text-red-700",
-          badge: "bg-red-100 text-red-800"
+          bg: "bg-red-50 dark:bg-red-900/30",
+          text: "text-red-700 dark:text-red-400",
+          badge: "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
         }
       case "high":
         return {
           border: "border-l-orange-500", 
-          bg: "bg-orange-50",
-          text: "text-orange-700",
-          badge: "bg-orange-100 text-orange-800"
+          bg: "bg-orange-50 dark:bg-orange-900/30",
+          text: "text-orange-700 dark:text-orange-400",
+          badge: "bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300"
         }
       case "normal":
         return {
           border: "border-l-blue-500",
-          bg: "bg-blue-50", 
-          text: "text-blue-700",
-          badge: "bg-blue-100 text-blue-800"
+          bg: "bg-blue-50 dark:bg-blue-900/30", 
+          text: "text-blue-700 dark:text-blue-400",
+          badge: "bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300"
         }
       case "low":
         return {
-          border: "border-l-gray-500",
-          bg: "bg-gray-50",
-          text: "text-gray-700", 
-          badge: "bg-gray-100 text-gray-800"
+          border: "border-l-slate-500",
+          bg: "bg-slate-50 dark:bg-slate-800/50",
+          text: "text-slate-700 dark:text-slate-400", 
+          badge: "bg-slate-100 dark:bg-slate-800/50 text-slate-800 dark:text-slate-300"
         }
       default:
         return {
-          border: "border-l-gray-500",
-          bg: "bg-gray-50",
-          text: "text-gray-700",
-          badge: "bg-gray-100 text-gray-800"
+          border: "border-l-slate-500",
+          bg: "bg-slate-50 dark:bg-slate-800/50",
+          text: "text-slate-700 dark:text-slate-400",
+          badge: "bg-slate-100 dark:bg-slate-800/50 text-slate-800 dark:text-slate-300"
         }
     }
   }
@@ -170,12 +169,10 @@ export function NotificationBell() {
     <>
       <DropdownMenu open={isOpen} onOpenChange={handleDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="relative"
+        <button
+          className="relative p-2 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-all duration-300 border border-slate-200 dark:border-slate-600/50 shadow-sm dark:shadow-slate-900/20"
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4 w-4 text-slate-600 dark:text-slate-300" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -184,12 +181,12 @@ export function NotificationBell() {
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end" className="w-80 md:w-96">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold">Notifications</h3>
+      <DropdownMenuContent align="end" className="w-80 md:w-96 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+          <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
           {notifications.length > 0 && (
             <div className="flex gap-2">
               {unreadCount > 0 && (
@@ -197,7 +194,7 @@ export function NotificationBell() {
                   {unreadCount} new
                 </Badge>
               )}
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 {notifications.length} total
               </Badge>
             </div>
@@ -206,23 +203,23 @@ export function NotificationBell() {
 
         <div className="max-h-[400px] overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-muted-foreground">
+            <div className="p-4 text-center text-slate-500 dark:text-slate-400">
               Loading notifications...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
+            <div className="p-4 text-center text-slate-500 dark:text-slate-400">
               <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No notifications yet</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {notifications.map((notification) => {
                 const priorityColors = getPriorityColors(notification.priority)
                 return (
                   <div
                     key={notification.id}
                     onClick={() => openNotificationModal(notification)}
-                    className={`p-3 hover:bg-gray-50 border-l-4 cursor-pointer transition-colors ${priorityColors.border} ${priorityColors.bg}`}
+                    className={`p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 border-l-4 cursor-pointer transition-colors ${priorityColors.border} ${priorityColors.bg}`}
                   >
                     <div className="space-y-2">
                       {/* Type and Priority on same line, better spaced */}
@@ -247,15 +244,15 @@ export function NotificationBell() {
                       </h4>
                       
                       {/* Message body - truncated with click to expand hint */}
-                      <p className="text-xs text-gray-600 line-clamp-2">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-blue-600 italic">
+                      <p className="text-xs text-blue-600 dark:text-blue-400 italic">
                         Click to read full message
                       </p>
                       
                       {/* Footer with time and creator */}
-                      <div className="flex items-center justify-between pt-1 text-xs text-gray-500">
+                      <div className="flex items-center justify-between pt-1 text-xs text-slate-500 dark:text-slate-400">
                         <span>
                           {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                         </span>
@@ -279,7 +276,7 @@ export function NotificationBell() {
 
       {/* Notification Detail Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl p-6 pb-8">
+        <DialogContent className="max-w-2xl p-6 pb-8 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader className="pr-8 space-y-3">
             {selectedNotification && (
               <>
@@ -297,15 +294,15 @@ export function NotificationBell() {
                     {selectedNotification.priority.toUpperCase()}
                   </Badge>
                 </div>
-                <DialogTitle className="text-lg font-semibold pr-4 leading-relaxed">
+                <DialogTitle className="text-lg font-semibold pr-4 leading-relaxed text-slate-900 dark:text-white">
                   {selectedNotification.title}
                 </DialogTitle>
                 <DialogDescription asChild>
                   <div className="space-y-6 mt-4">
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                       {selectedNotification.message}
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t text-xs text-gray-500">
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400">
                       <span>
                         {formatDistanceToNow(new Date(selectedNotification.created_at), { addSuffix: true })}
                       </span>
