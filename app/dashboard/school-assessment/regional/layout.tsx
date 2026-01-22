@@ -58,14 +58,14 @@ export default function RegionalAssessmentLayout({ children }: RegionalAssessmen
       {/* Fixed Sidebar Navigation */}
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-14 sm:top-16 md:top-[72px] bottom-0 left-0 z-40 w-[260px] bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-700/50 transition-transform duration-300 ease-in-out flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50`}>
         {/* Sidebar Header */}
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/50 dark:border-blue-500/20">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/20">
-              <MapPin className="w-5 h-5 text-white" />
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/50 dark:border-blue-500/20">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-600/25">
+              <MapPin className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Regional Officer</p>
-              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{user?.region_name || 'Region'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Regional Officer</p>
+              <p className="text-base font-bold text-slate-800 dark:text-white truncate">{user?.region_name || 'Region'}</p>
             </div>
           </div>
         </div>
