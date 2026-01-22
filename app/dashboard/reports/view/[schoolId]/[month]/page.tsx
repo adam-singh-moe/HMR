@@ -1522,9 +1522,9 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-background px-8 md:px-18 lg:px-56">
-      <Card className="h-full flex flex-col shadow-lg">
-        <CardHeader className="flex-shrink-0 border-b bg-background/95 backdrop-blur-sm">
+    <div className="h-[calc(100vh-72px)] overflow-hidden bg-slate-50 dark:bg-[hsl(222,47%,6%)] p-4 lg:p-6">
+      <Card className="h-full flex flex-col shadow-sm bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50 rounded-xl overflow-hidden max-w-6xl mx-auto">
+        <CardHeader className="flex-shrink-0 border-b border-slate-200/80 dark:border-slate-700/50 bg-white dark:bg-[hsl(222,47%,9%)]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <Button
@@ -1627,25 +1627,25 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
           
           {/* Responsive Sidebar */}
           <div className={`
-            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-            md:translate-x-0 
-            fixed md:static 
-            inset-y-0 left-0 
+            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0
+            fixed md:static
+            inset-y-0 left-0
             z-50 md:z-auto
-            w-64 md:w-72 lg:w-80 
-            flex-shrink-0 
+            w-56 md:w-60 lg:w-64
+            flex-shrink-0
             border-r border-slate-200 dark:border-slate-700/50
-            bg-white dark:bg-slate-900/95
-            flex flex-col 
+            bg-white dark:bg-[hsl(222,47%,9%)]
+            flex flex-col
             overflow-hidden
             transition-transform duration-300 ease-in-out
             md:transition-none
           `}>
-            <div className="p-3 md:p-3.5 lg:p-4 border-b border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/95 flex-shrink-0">
+            <div className="p-3 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base lg:text-lg font-semibold text-slate-900 dark:text-white">Report Sections</h3>
-                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 break-words">Navigate between sections</p>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">Report Sections</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Navigate sections</p>
                 </div>
                 {/* Close button for mobile */}
                 <Button
@@ -1660,17 +1660,17 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent" role="navigation" aria-label="Report sections navigation">
-              <div className="space-y-1 p-3 md:p-3.5 lg:p-4">
+              <div className="space-y-0.5 p-2">
                 {reportSections.map((section) => {
                   const Icon = section.icon
+                  const isActive = activeSection === section.id
                   return (
-                    <Button
+                    <button
                       key={section.id}
-                      variant={activeSection === section.id ? "default" : "ghost"}
-                      className={`w-full justify-start h-auto py-2.5 md:py-3 px-3 md:px-3.5 lg:px-4 text-sm md:text-sm lg:text-base transition-all duration-200 hover:scale-105 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                        activeSection === section.id 
-                          ? "hover:shadow-md" 
-                          : "hover:bg-accent"
+                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 text-left min-h-[36px] focus:ring-2 focus:ring-blue-500/50 focus:outline-none ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                       onClick={() => handleSectionChange(section.id)}
                       onKeyDown={(e) => {
@@ -1681,15 +1681,12 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
                       }}
                       disabled={isLoading}
                       aria-label={`Navigate to ${section.name} section`}
-                      aria-current={activeSection === section.id ? "page" : undefined}
+                      aria-current={isActive ? "page" : undefined}
                       tabIndex={0}
                     >
-                      <Icon className="h-4 w-4 md:h-4.5 md:w-4.5 lg:h-5 lg:w-5 mr-2.5 md:mr-3 flex-shrink-0" aria-hidden="true" />
-                      <span className="text-left text-sm md:text-sm lg:text-base font-medium break-words hyphens-auto">{section.name}</span>
-                      {activeSection === section.id && (
-                        <div className="ml-auto w-2 h-2 bg-current rounded-full flex-shrink-0" aria-hidden="true"></div>
-                      )}
-                    </Button>
+                      <Icon className={`h-[19px] w-[19px] flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} aria-hidden="true" />
+                      <span className="text-[16px] font-medium truncate">{section.name}</span>
+                    </button>
                   )
                 })}
               </div>
@@ -1697,8 +1694,8 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="p-3 lg:p-4 border-b bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)]">
+            <div className="p-3 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 {/* Mobile menu button in content header for easier access */}
                 <Button
@@ -1727,7 +1724,7 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
               </div>
             </div>
             
-            <div ref={contentRef} className="flex-1 overflow-y-auto overflow-x-hidden snap-y snap-mandatory p-4 lg:p-6 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" role="main" aria-live="polite" aria-label="Report content area">
+            <div ref={contentRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent bg-white dark:bg-[hsl(222,47%,9%)]" role="main" aria-live="polite" aria-label="Report content area">
               <SectionContent
                 sectionIndex={activeSection}
                 data={sectionData}

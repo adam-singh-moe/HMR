@@ -900,13 +900,13 @@ function RegionalOfficerDashboardContent() {
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "submitted":
-        return <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 whitespace-nowrap">Submitted</Badge>
+        return <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 dark:border-emerald-500/20 whitespace-nowrap text-xs font-medium">Submitted</Badge>
       case "not-submitted":
-        return <Badge className="bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600 whitespace-nowrap">Not Submitted</Badge>
+        return <Badge className="bg-slate-100 dark:bg-slate-700/30 text-slate-600 dark:text-slate-400 border border-slate-300/50 dark:border-slate-600/30 whitespace-nowrap text-xs font-medium">Not Submitted</Badge>
       case "pending":
-        return <Badge className="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 whitespace-nowrap">Pending</Badge>
+        return <Badge className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 dark:border-amber-500/20 whitespace-nowrap text-xs font-medium">Pending</Badge>
       case "draft":
-        return <Badge className="bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 whitespace-nowrap">Draft</Badge>
+        return <Badge className="bg-slate-100 dark:bg-slate-700/30 text-slate-500 dark:text-slate-400 border border-slate-300/50 dark:border-slate-600/30 whitespace-nowrap text-xs font-medium">Draft</Badge>
       default:
         return <Badge variant="secondary" className="whitespace-nowrap">{status}</Badge>
     }
@@ -1831,12 +1831,12 @@ function RegionalOfficerDashboardContent() {
                           <Button
                             onClick={loadHistoricalReports}
                             disabled={isLoadingReports}
-                            className="bg-primary-600 hover:bg-primary-700 text-white w-full"
+                            className="bg-blue-600 hover:bg-blue-700 text-white w-full h-9 text-sm font-medium rounded-lg"
                             size="sm"
                           >
                             {isLoadingReports ? (
                               <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                 <span className="hidden sm:inline">Loading...</span>
                                 <span className="sm:hidden">Loading</span>
                               </>
@@ -1853,10 +1853,11 @@ function RegionalOfficerDashboardContent() {
                   </div>
 
                   {/* Toggle Button */}
-                  <div className="ml-4">
+                  <div className="flex-shrink-0">
                     <Button
                       onClick={toggleView}
-                      className="gradient-button text-white hover:shadow-lg transition-all duration-200"
+                      variant="outline"
+                      className="border-blue-500/50 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 font-medium transition-all duration-200"
                     >
                       {showCurrentMonth ? "View Historical Reports" : "View Current Month"}
                     </Button>
@@ -1904,22 +1905,22 @@ function RegionalOfficerDashboardContent() {
             {/* Conditional Table Rendering */}
             {showCurrentMonth ? (
               /* Current Month Schools Table */
-              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-                <CardHeader className="pb-3 sm:pb-6">
+              <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="pb-3 sm:pb-4 border-b border-slate-200/50 dark:border-slate-700/30">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg sm:text-xl text-slate-900 dark:text-white">School Report Status - {getCurrentMonthName()}</CardTitle>
-                      <CardDescription className="text-sm">
+                      <CardTitle className="text-lg sm:text-xl text-slate-800 dark:text-white font-semibold">School Report Status - {getCurrentMonthName()}</CardTitle>
+                      <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
                         {isLoadingCurrentMonth
                           ? "Loading schools..."
                           : `Showing ${currentMonthStartIndex + 1}-${Math.min(currentMonthEndIndex, totalCurrentMonthSchools)} of ${totalCurrentMonthSchools} schools in your region`}
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/30 text-xs">
+                      <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-500/50 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-xs font-medium px-2.5 py-1">
                         {currentMonthSchools.filter((s) => s.status === "submitted").length} Submitted
                       </Badge>
-                      <Badge variant="outline" className="text-red-600 dark:text-red-400 border-red-600 dark:border-red-500 bg-red-50 dark:bg-red-900/30 text-xs">
+                      <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/50 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-xs font-medium px-2.5 py-1">
                         {
                           currentMonthSchools.filter((s) => s.status === "not-submitted")
                             .length
@@ -1942,7 +1943,7 @@ function RegionalOfficerDashboardContent() {
                   ) : (
                     <>
                       {/* Reminder Button */}
-                      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50/80 dark:bg-slate-800/30 rounded-lg border border-slate-200/80 dark:border-slate-700/30">
                         <div className="flex items-center gap-3">
                           <Checkbox
                             id="select-all"
@@ -1955,7 +1956,7 @@ function RegionalOfficerDashboardContent() {
                               }
                             onCheckedChange={handleSelectAllSchools}
                             disabled={notSubmittedCount === 0}
-                            className="h-5 w-5 border-slate-400 dark:border-slate-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                            className="h-4.5 w-4.5 border-slate-300 dark:border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 rounded"
                           />
                           <label
                             htmlFor="select-all"
@@ -1970,7 +1971,8 @@ function RegionalOfficerDashboardContent() {
                         <Button
                           onClick={handleSendReminders}
                           disabled={selectedSchools.length === 0 || isSendingReminders}
-                          className="bg-slate-800 hover:bg-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 text-white w-full sm:w-auto"
+                          variant="outline"
+                          className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 w-full sm:w-auto font-medium"
                           size="sm"
                         >
                           {isSendingReminders ? (
@@ -1989,31 +1991,31 @@ function RegionalOfficerDashboardContent() {
                         </Button>
                       </div>
 
-                      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                      <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/30">
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                              <TableHead className="w-[50px] text-slate-600 dark:text-slate-300 font-semibold">Select</TableHead>
-                              <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">School Name</TableHead>
-                              <TableHead className="hidden sm:table-cell text-slate-600 dark:text-slate-300 font-semibold">Head Teacher</TableHead>
-                              <TableHead className="hidden lg:table-cell text-slate-600 dark:text-slate-300 font-semibold">Due Date</TableHead>
-                              <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Status</TableHead>
-                              <TableHead className="hidden md:table-cell text-slate-600 dark:text-slate-300 font-semibold">Submitted Date</TableHead>
-                              <TableHead className="text-right w-[130px] text-slate-600 dark:text-slate-300 font-semibold">Actions</TableHead>
+                            <TableRow className="bg-slate-50/80 dark:bg-slate-800/20 border-b border-slate-200/80 dark:border-slate-700/30">
+                              <TableHead className="w-[50px] text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Select</TableHead>
+                              <TableHead className="text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">School Name</TableHead>
+                              <TableHead className="hidden sm:table-cell text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Head Teacher</TableHead>
+                              <TableHead className="hidden lg:table-cell text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Due Date</TableHead>
+                              <TableHead className="text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Status</TableHead>
+                              <TableHead className="hidden md:table-cell text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Submitted Date</TableHead>
+                              <TableHead className="text-right w-[130px] text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {paginatedCurrentMonthSchools.map((school) => (
-                              <TableRow 
+                              <TableRow
                                 key={school.id}
-                                className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                                className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors"
                               >
                                 <TableCell>
                                   <Checkbox
                                     checked={selectedSchools.includes(school.id)}
                                     onCheckedChange={(checked) => handleSelectSchool(school.id, !!checked)}
                                     disabled={school.status === "submitted"}
-                                    className="border-slate-400 dark:border-slate-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                    className="border-slate-300 dark:border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 rounded"
                                   />
                                 </TableCell>
                                 <TableCell className="font-medium">
@@ -2038,10 +2040,10 @@ function RegionalOfficerDashboardContent() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950"
+                                      className="text-blue-600 dark:text-blue-400 border-blue-500/30 dark:border-blue-500/20 hover:bg-blue-50 dark:hover:bg-blue-500/10 h-8 text-xs font-medium"
                                       onClick={() => handleViewReport(school.reportId)}
                                     >
-                                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                      <Eye className="h-3.5 w-3.5 mr-1.5" />
                                       <span className="hidden sm:inline">View Report</span>
                                       <span className="sm:hidden">View</span>
                                     </Button>
@@ -2049,12 +2051,16 @@ function RegionalOfficerDashboardContent() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 bg-transparent"
+                                      className={`h-8 text-xs font-medium transition-colors ${
+                                        selectedSchools.includes(school.id)
+                                          ? "border-blue-500/50 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
+                                          : "border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"
+                                      }`}
                                       onClick={() => {
                                         handleSelectSchool(school.id, !selectedSchools.includes(school.id))
                                       }}
                                     >
-                                      <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                      <Mail className="h-3.5 w-3.5 mr-1.5" />
                                       <span className="hidden sm:inline">{selectedSchools.includes(school.id) ? "Selected" : "Send Reminder"}</span>
                                       <span className="sm:hidden">{selectedSchools.includes(school.id) ? "✓" : "Send"}</span>
                                     </Button>
@@ -2068,19 +2074,19 @@ function RegionalOfficerDashboardContent() {
                       
                       {/* Current Month Pagination Controls */}
                       {totalCurrentMonthPages > 1 && (
-                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/30">
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleCurrentMonthPageChange(currentMonthPage - 1)}
                               disabled={currentMonthPage === 1}
-                              className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                              className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 h-8 text-xs"
                             >
                               <ChevronLeft className="h-4 w-4 mr-1" />
                               Previous
                             </Button>
-                            
+
                             <div className="flex items-center space-x-1">
                               {Array.from({ length: Math.min(5, totalCurrentMonthPages) }, (_, i) => {
                                 let pageNum: number
@@ -2093,17 +2099,17 @@ function RegionalOfficerDashboardContent() {
                                 } else {
                                   pageNum = currentMonthPage - 2 + i
                                 }
-                                
+
                                 return (
                                   <Button
                                     key={pageNum}
                                     variant={currentMonthPage === pageNum ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => handleCurrentMonthPageChange(pageNum)}
-                                    className={`w-10 ${
-                                      currentMonthPage === pageNum 
-                                        ? "bg-primary-600 text-white hover:bg-primary-700" 
-                                        : "border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                                    className={`w-8 h-8 text-xs ${
+                                      currentMonthPage === pageNum
+                                        ? "bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                        : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                     }`}
                                   >
                                     {pageNum}
@@ -2117,7 +2123,7 @@ function RegionalOfficerDashboardContent() {
                               size="sm"
                               onClick={() => handleCurrentMonthPageChange(currentMonthPage + 1)}
                               disabled={currentMonthPage === totalCurrentMonthPages}
-                              className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                              className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 h-8 text-xs"
                             >
                               Next
                               <ChevronRight className="h-4 w-4 ml-1" />
@@ -2125,16 +2131,16 @@ function RegionalOfficerDashboardContent() {
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="text-sm text-slate-500 dark:text-slate-400">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
                               Page {currentMonthPage} of {totalCurrentMonthPages}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">Show:</span>
                               <Select value={currentMonthPageSize.toString()} onValueChange={(value) => setCurrentMonthPageSize(parseInt(value))}>
-                                <SelectTrigger className="w-16 h-8 border-primary-200">
+                                <SelectTrigger className="w-16 h-8 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                   <SelectItem value="10">10</SelectItem>
                                   <SelectItem value="25">25</SelectItem>
                                   <SelectItem value="50">50</SelectItem>
@@ -2151,26 +2157,31 @@ function RegionalOfficerDashboardContent() {
               </Card>
             ) : (
               /* Historical Reports Table */
-              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-                <CardHeader className="pb-3 sm:pb-6">
+              <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+                <CardHeader className="pb-3 sm:pb-4 border-b border-slate-200/50 dark:border-slate-700/30">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-lg sm:text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                        <History className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <CardTitle className="text-lg sm:text-xl text-slate-800 dark:text-white font-semibold flex items-center gap-2">
+                        <History className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         Historical Monthly Reports
                       </CardTitle>
-                      <CardDescription className="text-sm">
+                      <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
                         {isLoadingReports
                           ? "Loading reports..."
                           : `Showing ${startIndex + 1}-${Math.min(endIndex, totalReports)} of ${totalReports} reports from your region`}
                       </CardDescription>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 dark:border-blue-500/20 text-xs font-medium px-2.5 py-1">
                         {totalReports} Reports
                       </Badge>
-                      <Button className="gradient-button text-white text-xs sm:text-sm" size="sm" disabled={isLoadingReports}>
-                        <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <Button
+                        variant="outline"
+                        className="border-emerald-500/30 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-xs sm:text-sm font-medium"
+                        size="sm"
+                        disabled={isLoadingReports}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" />
                         <span className="hidden sm:inline">Export All</span>
                         <span className="sm:hidden">Export</span>
                       </Button>
@@ -2189,15 +2200,15 @@ function RegionalOfficerDashboardContent() {
                     </div>
                   ) : (
                     <>
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/30">
                         <Table>
                           <TableHeader>
-                            <TableRow>
-                              <TableHead>School Name</TableHead>
-                              <TableHead className="hidden sm:table-cell">Head Teacher</TableHead>
-                              <TableHead>Month & Year</TableHead>
-                              <TableHead className="hidden md:table-cell">Date Submitted</TableHead>
-                              <TableHead className="text-right w-[80px]">Actions</TableHead>
+                            <TableRow className="bg-slate-50/80 dark:bg-slate-800/20 border-b border-slate-200/80 dark:border-slate-700/30">
+                              <TableHead className="text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">School Name</TableHead>
+                              <TableHead className="hidden sm:table-cell text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Head Teacher</TableHead>
+                              <TableHead className="text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Month & Year</TableHead>
+                              <TableHead className="hidden md:table-cell text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Date Submitted</TableHead>
+                              <TableHead className="text-right w-[100px] text-slate-500 dark:text-slate-400 font-medium text-xs uppercase tracking-wider">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -2213,12 +2224,12 @@ function RegionalOfficerDashboardContent() {
                               },
                               school_id: report.schoolId
                             }
-                            
+
                             return (
                               <ClickableReportRow key={report.id} report={mockReport}>
                                 <TableCell className="font-medium">
                                   <div>
-                                    <div className="text-sm">{report.schoolName}</div>
+                                    <div className="text-sm text-slate-800 dark:text-slate-100">{report.schoolName}</div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400 sm:hidden">
                                       {report.headTeacherName}
                                     </div>
@@ -2227,15 +2238,15 @@ function RegionalOfficerDashboardContent() {
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell className="hidden sm:table-cell text-sm">{report.headTeacherName}</TableCell>
+                                <TableCell className="hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">{report.headTeacherName}</TableCell>
                                 <TableCell>
-                                  <span className="font-medium text-slate-900 dark:text-white text-sm">{report.monthYear}</span>
+                                  <span className="font-medium text-slate-800 dark:text-slate-100 text-sm">{report.monthYear}</span>
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell text-sm">{report.submittedDate}</TableCell>
+                                <TableCell className="hidden md:table-cell text-sm text-slate-600 dark:text-slate-300">{report.submittedDate}</TableCell>
                                 <TableCell className="text-right">
-                                  <Button asChild variant="outline" size="sm" className="text-blue-600 border-blue-300 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950">
+                                  <Button asChild variant="outline" size="sm" className="text-blue-600 dark:text-blue-400 border-blue-500/30 dark:border-blue-500/20 hover:bg-blue-50 dark:hover:bg-blue-500/10 h-8 text-xs font-medium">
                                     <span>
-                                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                      <Eye className="h-3.5 w-3.5 mr-1.5" />
                                       <span className="hidden sm:inline">View Report</span>
                                       <span className="sm:hidden">View</span>
                                     </span>
@@ -2250,19 +2261,19 @@ function RegionalOfficerDashboardContent() {
                     
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/50 dark:border-slate-700/30">
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
-                            className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                            className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 h-8 text-xs"
                           >
                             <ChevronLeft className="h-4 w-4 mr-1" />
                             Previous
                           </Button>
-                          
+
                           <div className="flex items-center space-x-1">
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                               let pageNum: number
@@ -2275,17 +2286,17 @@ function RegionalOfficerDashboardContent() {
                               } else {
                                 pageNum = currentPage - 2 + i
                               }
-                              
+
                               return (
                                 <Button
                                   key={pageNum}
                                   variant={currentPage === pageNum ? "default" : "outline"}
                                   size="sm"
                                   onClick={() => handlePageChange(pageNum)}
-                                  className={`w-10 ${
-                                    currentPage === pageNum 
-                                      ? "bg-primary-600 text-white hover:bg-primary-700" 
-                                      : "border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                                  className={`w-8 h-8 text-xs ${
+                                    currentPage === pageNum
+                                      ? "bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                      : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                   }`}
                                 >
                                   {pageNum}
@@ -2299,7 +2310,7 @@ function RegionalOfficerDashboardContent() {
                             size="sm"
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
-                            className="border-primary-200 text-slate-900 dark:text-white hover:bg-primary-50"
+                            className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 h-8 text-xs"
                           >
                             Next
                             <ChevronRight className="h-4 w-4 ml-1" />
@@ -2307,16 +2318,16 @@ function RegionalOfficerDashboardContent() {
                         </div>
 
                         <div className="flex items-center gap-4">
-                          <div className="text-sm text-slate-500 dark:text-slate-400">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             Page {currentPage} of {totalPages}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">Show:</span>
                             <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
-                              <SelectTrigger className="w-16 h-8 border-primary-200">
+                              <SelectTrigger className="w-16 h-8 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                 <SelectItem value="10">10</SelectItem>
                                 <SelectItem value="25">25</SelectItem>
                                 <SelectItem value="50">50</SelectItem>
