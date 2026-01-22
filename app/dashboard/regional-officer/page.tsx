@@ -2359,94 +2359,76 @@ function RegionalOfficerDashboardContent() {
           <RegionalPEReportsContent />
         </TabsContent>
 
-        <TabsContent value="nursery-assessment" className="space-y-6">
+        <TabsContent value="nursery-assessment" className="space-y-4 lg:space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
-                Nursery Assessments - {user?.region_name || 'Your Region'}
-                {nurseryAssessmentsLoaded && !isLoadingNurseryAssessments && (
-                  <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">
-                    Loaded
-                  </Badge>
-                )}
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
-                Monitor and review nursery assessments from schools in your region
-              </p>
-            </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              Nursery Assessments - {user?.region_name || 'Your Region'}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Monitor and review nursery assessments from schools in your region
+            </p>
           </div>
 
           {/* Filters */}
-          <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-            <CardContent className="p-4">
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 flex-shrink-0">
-                  <Filter className="h-4 w-4" />
-                  <span className="font-medium">Filters:</span>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                  <Input
-                    placeholder="Search by school name, head teacher..."
-                    className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                    value={nurseryAssessmentSearch}
-                    onChange={(e) => setNurseryAssessmentSearch(e.target.value)}
-                  />
-                  <Select value={nurseryAssessmentTypeFilter} onValueChange={setNurseryAssessmentTypeFilter}>
-                    <SelectTrigger className="sm:w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-                      <SelectValue placeholder="All Assessment Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Assessment Types</SelectItem>
-                      {nurseryAssessmentTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={nurseryAssessmentYearFilter} onValueChange={setNurseryAssessmentYearFilter}>
-                    <SelectTrigger className="sm:w-40 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-                      <SelectValue placeholder="All Years" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Years</SelectItem>
-                      {nurseryAssessmentYears.map(year => (
-                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    className="flex items-center gap-2 flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => loadNurseryAssessments(true)}
-                    disabled={isLoadingNurseryAssessments}
-                  >
-                    {isLoadingNurseryAssessments ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Refreshing...
-                      </>
-                    ) : (
-                      <>
-                        Refresh Data
-                      </>
-                    )}
-                  </Button>
-                  {isLoadingNurseryAssessments && (
-                    <Button 
-                      variant="outline"
-                      size="sm"
-                      onClick={resetNurseryAssessments}
-                      className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/50 bg-white dark:bg-[hsl(222,47%,9%)]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+              <Input
+                placeholder="Search schools..."
+                className="sm:w-56 bg-slate-100 dark:bg-slate-800/80 border-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg"
+                value={nurseryAssessmentSearch}
+                onChange={(e) => setNurseryAssessmentSearch(e.target.value)}
+              />
+              <Select value={nurseryAssessmentTypeFilter} onValueChange={setNurseryAssessmentTypeFilter}>
+                <SelectTrigger className="sm:w-48 bg-slate-100 dark:bg-slate-800/80 border-0 text-slate-900 dark:text-slate-100 rounded-lg">
+                  <SelectValue placeholder="All Assessment Types" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                  <SelectItem value="all">All Assessment Types</SelectItem>
+                  {nurseryAssessmentTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={nurseryAssessmentYearFilter} onValueChange={setNurseryAssessmentYearFilter}>
+                <SelectTrigger className="sm:w-32 bg-slate-100 dark:bg-slate-800/80 border-0 text-slate-900 dark:text-slate-100 rounded-lg">
+                  <SelectValue placeholder="All Years" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                  <SelectItem value="all">All Years</SelectItem>
+                  {nurseryAssessmentYears.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                size="sm"
+                onClick={() => loadNurseryAssessments(true)}
+                disabled={isLoadingNurseryAssessments}
+              >
+                {isLoadingNurseryAssessments ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  'Refresh Data'
+                )}
+              </Button>
+              {isLoadingNurseryAssessments && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetNurseryAssessments}
+                  className="text-red-600 dark:text-red-400 border-slate-200 dark:border-slate-700/50 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </div>
 
           {/* Error Alert */}
           {nurseryAssessmentsError && (
@@ -2459,23 +2441,22 @@ function RegionalOfficerDashboardContent() {
 
           {/* Assessments List */}
           {isLoadingNurseryAssessments && !nurseryAssessmentsLoaded ? (
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <Loader2 className="h-12 w-12 mx-auto text-blue-500 dark:text-blue-400 mb-4 animate-spin" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Loading Nursery Assessments</h3>
-                  <p className="text-slate-600 dark:text-slate-400">Fetching nursery assessments for {user?.region_name}...</p>
+                  <Loader2 className="h-8 w-8 mx-auto text-blue-600 dark:text-blue-400 mb-4 animate-spin" />
+                  <p className="text-slate-600 dark:text-slate-400">Loading nursery assessments...</p>
                 </div>
               </CardContent>
             </Card>
           ) : filteredNurseryAssessments.length === 0 ? (
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <BookOpen className="h-12 w-12 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Nursery Assessments</h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {nurseryAssessments.length === 0 
+                  <BookOpen className="h-10 w-10 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">No Nursery Assessments</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {nurseryAssessments.length === 0
                       ? `No nursery assessments have been submitted in ${user?.region_name} yet.`
                       : "No assessments match your current filter criteria."
                     }
@@ -2484,52 +2465,44 @@ function RegionalOfficerDashboardContent() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-              <CardContent className="p-4 sm:p-6">
-                {/* Results Summary */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Showing {nurseryAssessmentStartIndex + 1}-{Math.min(nurseryAssessmentEndIndex, totalNurseryAssessments)} of {totalNurseryAssessments} assessments
-                  </p>
-                  <Badge className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 w-fit">
-                    {totalNurseryAssessments} Total
-                  </Badge>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <TableHead className="min-w-[200px] font-semibold text-slate-600 dark:text-slate-300">School</TableHead>
-                        <TableHead className="min-w-[150px] font-semibold text-slate-600 dark:text-slate-300">Head Teacher</TableHead>
-                        <TableHead className="min-w-[180px] font-semibold text-slate-600 dark:text-slate-300">Assessment Type</TableHead>
-                        <TableHead className="min-w-[100px] font-semibold text-slate-600 dark:text-slate-300">Enrollment</TableHead>
-                        <TableHead className="min-w-[140px] font-semibold text-slate-600 dark:text-slate-300">Date Submitted</TableHead>
-                        <TableHead className="min-w-[100px] font-semibold text-slate-600 dark:text-slate-300">Actions</TableHead>
+                      <TableRow className="bg-slate-50/80 dark:bg-[hsl(222,47%,11%)] border-b border-slate-200/80 dark:border-slate-700/50">
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4">School</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4">Head Teacher</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4">Assessment Type</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4 text-center">Enrollment</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4">Date Submitted</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold py-3 px-4">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedNurseryAssessments.map((assessment) => (
-                        <TableRow 
-                          key={assessment.id} 
-                          className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                        <TableRow
+                          key={assessment.id}
+                          className="border-b border-slate-200/50 dark:border-slate-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
                         >
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <School className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/15">
+                                <School className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                              </div>
                               <div>
-                                <p className="font-medium text-slate-900 dark:text-white">
+                                <p className="font-semibold text-sm text-slate-900 dark:text-white">
                                   {assessment.schools?.name || 'Unknown School'}
                                 </p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Nursery Level</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Nursery Level</p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-3.5 px-4">
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                               <div>
-                                <p className="font-medium text-slate-900 dark:text-white">
+                                <p className="font-medium text-sm text-slate-900 dark:text-white">
                                   {assessment.headteacher?.name || 'Unknown'}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -2538,43 +2511,43 @@ function RegionalOfficerDashboardContent() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs font-medium border whitespace-nowrap ${getNurseryAssessmentTypeColor(assessment.assessment_type)}`}
+                          <TableCell className="py-3.5 px-4">
+                            <Badge
+                              className={`text-xs font-medium border-0 whitespace-nowrap rounded-full px-2.5 py-0.5 ${getNurseryAssessmentTypeColor(assessment.assessment_type)}`}
                             >
                               {formatNurseryAssessmentType(assessment.assessment_type)}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {assessment.enrollment} students
+                          <TableCell className="py-3.5 px-4 text-center">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                              {assessment.enrollment}
                             </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">students</span>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
-                              <Calendar className="h-3 w-3 text-slate-400 dark:text-slate-500" />
+                          <TableCell className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                              <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                               <span className="text-sm">
-                                {new Date(assessment.created_at).toLocaleDateString('en-US', { 
-                                  year: 'numeric', 
-                                  month: 'short', 
-                                  day: 'numeric' 
+                                {new Date(assessment.created_at).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
                                 })}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="py-3.5 px-4">
                             <Button
                               asChild
                               variant="outline"
                               size="sm"
-                              className="h-8 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                              className="h-8 px-3 text-xs font-medium text-blue-600 dark:text-blue-400 border-slate-200 dark:border-slate-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                             >
-                              <Link 
+                              <Link
                                 href={`/dashboard/nursery-assessment/view/${assessment.id}?back=${encodeURIComponent('/dashboard/regional-officer?tab=nursery-assessment')}`}
                                 className="flex items-center gap-1.5"
                               >
-                                <Eye className="h-3 w-3" />
+                                <Eye className="h-3.5 w-3.5" />
                                 View
                               </Link>
                             </Button>
@@ -2585,81 +2558,27 @@ function RegionalOfficerDashboardContent() {
                   </Table>
                 </div>
 
-                {/* Pagination Controls */}
-                {totalNurseryAssessmentPages > 1 && (
-                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNurseryAssessmentPage(p => Math.max(1, p - 1))}
-                        disabled={nurseryAssessmentPage === 1}
-                        className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Previous
-                      </Button>
-                      
-                      <div className="flex items-center space-x-1">
-                        {Array.from({ length: Math.min(5, totalNurseryAssessmentPages) }, (_, i) => {
-                          let pageNum: number
-                          if (totalNurseryAssessmentPages <= 5) {
-                            pageNum = i + 1
-                          } else if (nurseryAssessmentPage <= 3) {
-                            pageNum = i + 1
-                          } else if (nurseryAssessmentPage >= totalNurseryAssessmentPages - 2) {
-                            pageNum = totalNurseryAssessmentPages - 4 + i
-                          } else {
-                            pageNum = nurseryAssessmentPage - 2 + i
-                          }
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={nurseryAssessmentPage === pageNum ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setNurseryAssessmentPage(pageNum)}
-                              className={`w-10 ${
-                                nurseryAssessmentPage === pageNum 
-                                  ? "bg-blue-600 text-white hover:bg-blue-700" 
-                                  : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                              }`}
-                            >
-                              {pageNum}
-                            </Button>
-                          )
-                        })}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setNurseryAssessmentPage(p => Math.min(totalNurseryAssessmentPages, p + 1))}
-                        disabled={nurseryAssessmentPage === totalNurseryAssessmentPages}
-                        className="border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-
+                {/* Pagination Footer */}
+                <div className="px-4 py-4 border-t border-slate-200/80 dark:border-slate-700/50 bg-slate-50/50 dark:bg-[hsl(222,47%,8%)]">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Results info and page size */}
                     <div className="flex items-center gap-4">
-                      <div className="text-sm text-slate-500 dark:text-slate-400">
-                        Page {nurseryAssessmentPage} of {totalNurseryAssessmentPages}
-                      </div>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">
+                        Showing {nurseryAssessmentStartIndex + 1}-{Math.min(nurseryAssessmentEndIndex, totalNurseryAssessments)} of {totalNurseryAssessments} assessments
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-slate-500 dark:text-slate-400">Show:</span>
-                        <Select 
-                          value={nurseryAssessmentPageSize.toString()} 
+                        <Select
+                          value={nurseryAssessmentPageSize.toString()}
                           onValueChange={(value) => {
                             setNurseryAssessmentPageSize(parseInt(value))
                             setNurseryAssessmentPage(1)
                           }}
                         >
-                          <SelectTrigger className="w-16 h-8 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+                          <SelectTrigger className="w-16 h-8 text-xs bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 rounded-lg">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                             <SelectItem value="5">5</SelectItem>
                             <SelectItem value="10">10</SelectItem>
                             <SelectItem value="25">25</SelectItem>
@@ -2668,8 +2587,64 @@ function RegionalOfficerDashboardContent() {
                         </Select>
                       </div>
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalNurseryAssessmentPages > 1 && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setNurseryAssessmentPage(p => Math.max(1, p - 1))}
+                          disabled={nurseryAssessmentPage === 1}
+                          className="h-8 px-3 text-xs border-slate-200/80 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          Previous
+                        </Button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalNurseryAssessmentPages) }, (_, i) => {
+                            let pageNum: number
+                            if (totalNurseryAssessmentPages <= 5) {
+                              pageNum = i + 1
+                            } else if (nurseryAssessmentPage <= 3) {
+                              pageNum = i + 1
+                            } else if (nurseryAssessmentPage >= totalNurseryAssessmentPages - 2) {
+                              pageNum = totalNurseryAssessmentPages - 4 + i
+                            } else {
+                              pageNum = nurseryAssessmentPage - 2 + i
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={nurseryAssessmentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setNurseryAssessmentPage(pageNum)}
+                                className={`h-8 w-8 p-0 text-xs ${
+                                  nurseryAssessmentPage === pageNum
+                                    ? "bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                    : "border-slate-200/80 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                }`}
+                              >
+                                {pageNum}
+                              </Button>
+                            )
+                          })}
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setNurseryAssessmentPage(p => Math.min(totalNurseryAssessmentPages, p + 1))}
+                          disabled={nurseryAssessmentPage === totalNurseryAssessmentPages}
+                          className="h-8 px-3 text-xs border-slate-200/80 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           )}

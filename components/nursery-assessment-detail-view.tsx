@@ -323,31 +323,31 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
       return (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">School Name</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.schools?.name || 'N/A'}</p>
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">School Name</label>
+              <p className="text-base font-semibold mt-1.5 text-slate-900 dark:text-white">{assessment?.schools?.name || 'N/A'}</p>
             </div>
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Region</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.schools?.region || 'N/A'}</p>
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Region</label>
+              <p className="text-base font-semibold mt-1.5 text-slate-900 dark:text-white">{assessment?.schools?.region || 'N/A'}</p>
             </div>
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Assessment Period</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assessment Period</label>
+              <p className="text-base font-semibold mt-1.5 text-slate-900 dark:text-white">
                 {assessment ? format(new Date(assessment.created_at), 'MMMM yyyy') : 'N/A'}
               </p>
             </div>
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Assessment Type</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">{assessment?.assessment_type || 'N/A'}</p>
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assessment Type</label>
+              <p className="text-base font-semibold mt-1.5 text-slate-900 dark:text-white">{assessment?.assessment_type || 'N/A'}</p>
             </div>
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Total Enrollment</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-blue-600 dark:text-blue-400">{assessment?.enrollment || 0} <span className="text-sm font-normal text-slate-600 dark:text-slate-400">students</span></p>
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Enrollment</label>
+              <p className="text-base font-semibold mt-1.5 text-blue-600 dark:text-blue-400">{assessment?.enrollment || 0} <span className="text-sm font-normal text-slate-600 dark:text-slate-400">students</span></p>
             </div>
-            <div className="p-4 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700">
-              <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Date Submitted</label>
-              <p className="text-lg font-semibold mt-2 leading-7 text-slate-800 dark:text-slate-100">
+            <div className="p-4 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date Submitted</label>
+              <p className="text-base font-semibold mt-1.5 text-slate-900 dark:text-white">
                 {assessment ? format(new Date(assessment.created_at), 'PPP') : 'N/A'}
               </p>
             </div>
@@ -362,11 +362,11 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
     if (!sectionName || sectionResponses.length === 0) {
       return (
-        <div className="text-center py-12 px-6 bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700">
-          <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-full w-fit mx-auto mb-4">
-            <ClipboardCheck className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+        <div className="text-center py-12 px-6 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50">
+          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit mx-auto mb-4">
+            <ClipboardCheck className="h-10 w-10 text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="text-slate-600 dark:text-slate-400 leading-6">No assessment data available for this section</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No assessment data available for this section</p>
         </div>
       )
     }
@@ -385,26 +385,26 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
     }, {} as Record<string, { question: string, responses: AssessmentResponse[] }>)
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         {Object.entries(questionGroups).map(([questionId, group]) => (
-          <div key={questionId} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
+          <div key={questionId} className="bg-slate-50 dark:bg-[hsl(222,47%,11%)] border border-slate-200/80 dark:border-slate-700/50 rounded-xl p-5">
             <div className="mb-4">
-              <label className="text-sm font-medium text-muted-foreground leading-5">Question</label>
-              <p className="text-lg font-semibold mt-1 leading-7">{group.question}</p>
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Question</label>
+              <p className="text-sm font-semibold mt-1.5 text-slate-900 dark:text-white">{group.question}</p>
             </div>
-            
+
             <div className="space-y-3">
-              <label className="text-sm font-medium text-muted-foreground leading-5">Student Responses</label>
+              <label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student Responses</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {group.responses.map((response) => (
-                  <div key={response.id} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-center transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600">
-                    <div className="mb-3">
-                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-4">Response Type</label>
-                      <p className="text-sm font-semibold mt-1 leading-5 break-words text-slate-700 dark:text-slate-200">{response.option_text}</p>
+                  <div key={response.id} className="p-3 bg-white dark:bg-[hsl(222,47%,9%)] rounded-lg border border-slate-200/80 dark:border-slate-700/50 text-center transition-all hover:border-blue-300 dark:hover:border-blue-600">
+                    <div className="mb-2">
+                      <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">Response</label>
+                      <p className="text-xs font-medium mt-0.5 text-slate-700 dark:text-slate-300">{response.option_text}</p>
                     </div>
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-4">Count</label>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1 leading-6">{response.answer}</p>
+                    <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/50">
+                      <label className="text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">Count</label>
+                      <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-0.5">{response.answer}</p>
                     </div>
                   </div>
                 ))}
@@ -418,8 +418,8 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="text-center p-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700">
+      <div className="flex items-center justify-center h-[calc(100vh-72px)] bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
+        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50 shadow-sm">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
           <p className="text-slate-600 dark:text-slate-400">Loading assessment...</p>
         </div>
@@ -429,14 +429,14 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
 
   if (!assessment) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="text-center p-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
-          <div className="p-6 bg-red-50 dark:bg-red-950/50 rounded-full w-fit mx-auto mb-4">
-            <FileText className="h-12 w-12 text-red-600 dark:text-red-400" />
+      <div className="flex items-center justify-center h-[calc(100vh-72px)] bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
+        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50 shadow-sm">
+          <div className="p-4 bg-red-50 dark:bg-red-500/10 rounded-xl w-fit mx-auto mb-4">
+            <FileText className="h-10 w-10 text-red-600 dark:text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Assessment Not Found</h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">The requested assessment could not be loaded.</p>
-          <Button onClick={handleBack} variant="outline" className="dark:border-slate-600 dark:hover:bg-slate-700">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Assessment Not Found</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">The requested assessment could not be loaded.</p>
+          <Button onClick={handleBack} variant="outline" className="border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800">
             Go Back
           </Button>
         </div>
@@ -445,9 +445,9 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
-      <Card className="h-full flex flex-col shadow-lg border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm">
-        <CardHeader className="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
+    <div className="h-[calc(100vh-72px)] overflow-hidden bg-slate-50 dark:bg-[hsl(222,47%,6%)] p-4 lg:p-6">
+      <Card className="h-full flex flex-col shadow-sm bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50 rounded-xl overflow-hidden max-w-6xl mx-auto">
+        <CardHeader className="flex-shrink-0 border-b border-slate-200/80 dark:border-slate-700/50 bg-white dark:bg-[hsl(222,47%,9%)]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <Button
@@ -518,49 +518,49 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
           
           {/* Responsive Sidebar */}
           <div className={`
-            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-            md:translate-x-0 
-            fixed md:static 
-            inset-y-0 left-0 
+            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0
+            fixed md:static
+            inset-y-0 left-0
             z-50 md:z-auto
-            w-64 md:w-72 lg:w-80 
-            flex-shrink-0 
-            border-r border-slate-200 dark:border-slate-700
-            bg-white dark:bg-slate-800 md:bg-gradient-to-b md:from-slate-50 md:to-slate-100 dark:md:from-slate-800 dark:md:to-slate-850
-            flex flex-col 
+            w-56 md:w-60 lg:w-64
+            flex-shrink-0
+            border-r border-slate-200 dark:border-slate-700/50
+            bg-white dark:bg-[hsl(222,47%,9%)]
+            flex flex-col
             overflow-hidden
             transition-transform duration-300 ease-in-out
             md:transition-none
           `}>
-            <div className="p-3 md:p-3.5 lg:p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0">
+            <div className="p-3 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base lg:text-lg font-semibold text-foreground">Assessment Sections</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 break-words">Navigate between sections</p>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">Assessment Sections</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Navigate sections</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={closeMobileSidebar}
-                  className="md:hidden flex items-center justify-center min-h-[32px] min-w-[32px] p-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="md:hidden flex items-center justify-center h-8 w-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   aria-label="Close navigation menu"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent bg-white dark:bg-slate-800 md:bg-transparent" role="navigation" aria-label="Assessment sections navigation">
-              <div className="space-y-1 p-3 md:p-3.5 lg:p-4">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent" role="navigation" aria-label="Assessment sections navigation">
+              <div className="space-y-0.5 p-2">
                 {sections.map((section) => {
                   const Icon = section.icon
+                  const isActive = activeSection === section.id
                   return (
-                    <Button
+                    <button
                       key={section.id}
-                      variant={activeSection === section.id ? "default" : "ghost"}
-                      className={`w-full justify-start h-auto py-3 md:py-3.5 px-3 md:px-3.5 lg:px-4 text-sm md:text-sm lg:text-base transition-all duration-200 hover:scale-105 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                        activeSection === section.id 
-                          ? "hover:shadow-md" 
-                          : "hover:bg-accent"
+                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 text-left min-h-[36px] focus:ring-2 focus:ring-blue-500/50 focus:outline-none ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                       onClick={() => handleSectionChange(section.id)}
                       onKeyDown={(e) => {
@@ -570,15 +570,12 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
                         }
                       }}
                       aria-label={`Navigate to ${section.name} section`}
-                      aria-current={activeSection === section.id ? "page" : undefined}
+                      aria-current={isActive ? "page" : undefined}
                       tabIndex={0}
                     >
-                      <Icon className="h-4 w-4 md:h-4.5 md:w-4.5 lg:h-5 lg:w-5 mr-2.5 md:mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                      <span className="text-left text-sm md:text-sm lg:text-base font-medium break-words hyphens-auto leading-tight whitespace-normal flex-1 text-wrap">{section.name}</span>
-                      {activeSection === section.id && (
-                        <div className="ml-auto w-2 h-2 bg-current rounded-full flex-shrink-0 mt-1" aria-hidden="true"></div>
-                      )}
-                    </Button>
+                      <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} aria-hidden="true" />
+                      <span className="text-sm font-medium leading-tight">{section.name}</span>
+                    </button>
                   )
                 })}
               </div>
@@ -586,36 +583,36 @@ export function NurseryAssessmentDetailView({ assessmentId }: NurseryAssessmentD
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="p-3 lg:p-4 border-b border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)]">
+            <div className="p-3 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleMobileSidebar}
-                  className="md:hidden flex items-center justify-center min-h-[36px] min-w-[36px] p-1 mr-1 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="md:hidden flex items-center justify-center h-8 w-8 p-0 mr-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                
+
                 {(() => {
                   const section = sections.find(s => s.id === activeSection)
                   const Icon = section?.icon || FileText
                   return (
                     <>
-                      <Icon className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
-                      <h2 className="text-lg lg:text-xl font-semibold truncate min-w-0 flex-1">{section?.name}</h2>
+                      <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" aria-hidden="true" />
+                      <h2 className="text-base lg:text-lg font-semibold text-slate-900 dark:text-white truncate min-w-0 flex-1">{section?.name}</h2>
                     </>
                   )
                 })()}
-                <Badge variant="outline" className="ml-auto flex-shrink-0 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300">
+                <Badge className="ml-auto flex-shrink-0 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 dark:border-emerald-500/20 text-xs font-medium">
                   {assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1)}
                 </Badge>
               </div>
             </div>
-            
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent bg-slate-50/50 dark:bg-slate-900/50" role="main" aria-live="polite" aria-label="Assessment content area">
+
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent bg-white dark:bg-[hsl(222,47%,9%)]" role="main" aria-live="polite" aria-label="Assessment content area">
               {renderSectionContent()}
             </div>
           </div>
