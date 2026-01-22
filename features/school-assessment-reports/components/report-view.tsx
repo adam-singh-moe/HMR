@@ -605,15 +605,15 @@ export function ReportView({
   return (
     <div className="space-y-6 pb-20">
       {/* Sticky Header for Mobile */}
-      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b md:hidden">
+      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-white/95 dark:bg-[hsl(222,47%,8%)]/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-[hsl(222,47%,8%)]/60 border-b border-slate-200/80 dark:border-slate-700/50 md:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${gradeTone.bgClass}`}>
               <span className="text-xs font-bold">{resolvedGrade}</span>
             </div>
             <div>
-              <div className="text-sm font-bold truncate max-w-[150px]">{report.schoolName}</div>
-              <div className="text-[10px] text-muted-foreground">{report.totalScore} pts</div>
+              <div className="text-sm font-bold truncate max-w-[150px] text-slate-900 dark:text-white">{report.schoolName}</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">{report.totalScore} pts</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -622,7 +622,7 @@ export function ReportView({
                 {percentageDiff! >= 0 ? '+' : ''}{percentageDiff}%
               </Badge>
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <ChevronUp className="h-4 w-4" />
             </Button>
           </div>
@@ -630,34 +630,33 @@ export function ReportView({
       </div>
 
       {/* Main Header & Controls */}
-      <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-primary/5 via-background to-background">
+      <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-700/50 shadow-md bg-white dark:bg-[hsl(222,47%,9%)]">
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
-              <div className={`relative overflow-hidden border-2 ${gradeTone.ringClass} h-24 w-24 rounded-3xl flex flex-col items-center justify-center shadow-inner bg-white/50 backdrop-blur-sm`}>
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-                <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60 mb-1">Grade</span>
+              <div className={`relative overflow-hidden border-2 ${gradeTone.ringClass} h-24 w-24 rounded-3xl flex flex-col items-center justify-center shadow-inner bg-slate-100 dark:bg-[hsl(222,47%,11%)]`}>
+                <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-1">Grade</span>
                 <span className={`text-5xl font-black leading-none ${gradeTone.textClass}`}>{resolvedGrade}</span>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <LayoutDashboard className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-2xl font-bold tracking-tight">{report.schoolName}</CardTitle>
+                  <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{report.schoolName}</CardTitle>
                 </div>
-                <CardDescription className="text-base flex items-center gap-2">
-                  {report.regionName} 
-                  <Separator orientation="vertical" className="h-4" />
-                  <span className="font-medium text-foreground">{report.academicYear}</span>
-                  <Separator orientation="vertical" className="h-4" />
-                  <span className="font-medium text-foreground">{report.termName}</span>
+                <CardDescription className="text-base flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  {report.regionName}
+                  <Separator orientation="vertical" className="h-4 bg-slate-300 dark:bg-slate-600" />
+                  <span className="font-medium text-slate-700 dark:text-slate-300">{report.academicYear}</span>
+                  <Separator orientation="vertical" className="h-4 bg-slate-300 dark:bg-slate-600" />
+                  <span className="font-medium text-slate-700 dark:text-slate-300">{report.termName}</span>
                 </CardDescription>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-[hsl(222,47%,11%)] p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/50">
                 <div className="flex items-center gap-2 px-2">
-                  <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+                  <ArrowLeftRight className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                   <Label htmlFor="comparison-mode" className="text-xs font-medium cursor-pointer">Compare</Label>
                   <Switch 
                     id="comparison-mode" 
@@ -682,19 +681,19 @@ export function ReportView({
 
               {showExportButtons && (
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-9 shadow-sm gap-2" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shadow-sm gap-2 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,13%)]"
                     onClick={handleExportCSV}
                   >
                     <FileSpreadsheet className="h-4 w-4" />
                     Export CSV
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-9 shadow-sm gap-2" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shadow-sm gap-2 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,13%)]"
                     onClick={handleExportPDF}
                     disabled={isExporting}
                   >
@@ -705,7 +704,7 @@ export function ReportView({
                     )}
                     Export PDF
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => {/* Open settings modal */}}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => {/* Open settings modal */}}>
                     <Settings2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -718,17 +717,17 @@ export function ReportView({
       {/* Hero Section: Overall Score & Comparison */}
       <div className={`grid gap-6 ${isComparisonMode ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
         {/* Primary School Score */}
-        <Card className={`relative overflow-hidden border-2 ${gradeTone.ringClass}`}>
+        <Card className={`relative overflow-hidden border-2 ${gradeTone.ringClass} bg-white dark:bg-[hsl(222,47%,9%)]`}>
           <div className={`absolute top-0 right-0 p-4 opacity-10`}>
             {getTAPSGradeIcon(resolvedGrade)}
           </div>
           <CardContent className="pt-8">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Overall Score</div>
+                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Overall Score</div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tighter">{report.totalScore}</span>
-                  <span className="text-xl text-muted-foreground font-medium">/ {maxScore}</span>
+                  <span className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{report.totalScore}</span>
+                  <span className="text-xl text-slate-500 dark:text-slate-400 font-medium">/ {maxScore}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -738,9 +737,9 @@ export function ReportView({
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <div className="flex justify-between text-sm font-bold">
+              <div className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300">
                 <span>Performance Index</span>
                 <span>{overallPercentage}%</span>
               </div>
@@ -751,10 +750,10 @@ export function ReportView({
 
         {/* Comparison School Score */}
         {isComparisonMode && (
-          <Card className={`relative overflow-hidden border-2 border-dashed ${isLoadingComparison ? 'animate-pulse' : ''} ${comparisonGradeTone?.ringClass || ''}`}>
+          <Card className={`relative overflow-hidden border-2 border-dashed ${isLoadingComparison ? 'animate-pulse' : ''} ${comparisonGradeTone?.ringClass || ''} bg-white dark:bg-[hsl(222,47%,9%)]`}>
             {isLoadingComparison ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-[hsl(222,47%,9%)]/50 z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
               </div>
             ) : comparisonReport ? (
               <>
@@ -764,12 +763,12 @@ export function ReportView({
                 <CardContent className="pt-8">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                      <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         {comparisonSchoolId === 'top-performer' ? 'Regional Top Performer' : comparisonReport.schoolName}
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black tracking-tighter text-muted-foreground">{comparisonReport.totalScore}</span>
-                        <span className="text-xl text-muted-foreground font-medium">/ {maxScore}</span>
+                        <span className="text-5xl font-black tracking-tighter text-slate-500 dark:text-slate-400">{comparisonReport.totalScore}</span>
+                        <span className="text-xl text-slate-500 dark:text-slate-400 font-medium">/ {maxScore}</span>
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-3">
@@ -787,24 +786,24 @@ export function ReportView({
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-medium text-muted-foreground">
+                    <div className="flex justify-between text-sm font-medium text-slate-500 dark:text-slate-400">
                       <span>Comparison Index</span>
                       <span>{comparisonPercentage}%</span>
                     </div>
-                    <Progress value={comparisonPercentage!} className={`h-4 rounded-full ${comparisonGradeTone?.barClass || 'bg-muted'}`} />
+                    <Progress value={comparisonPercentage!} className={`h-4 rounded-full ${comparisonGradeTone?.barClass || 'bg-slate-200 dark:bg-slate-700'}`} />
                   </div>
                 </CardContent>
               </>
             ) : (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                  <ArrowLeftRight className="h-6 w-6 text-muted-foreground" />
+                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-[hsl(222,47%,11%)] flex items-center justify-center">
+                  <ArrowLeftRight className="h-6 w-6 text-slate-500 dark:text-slate-400" />
                 </div>
                 <div>
-                  <div className="font-bold">No comparison data</div>
-                  <div className="text-sm text-muted-foreground">Select a school to see comparative analytics</div>
+                  <div className="font-bold text-slate-900 dark:text-white">No comparison data</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Select a school to see comparative analytics</div>
                 </div>
               </div>
             )}
@@ -822,10 +821,10 @@ export function ReportView({
       {/* Category Breakdown - Summary First Approach */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold tracking-tight">Category Breakdown</h3>
+          <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Category Breakdown</h3>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setExpandedCategories({})}>Collapse All</Button>
-            <Button variant="ghost" size="sm" onClick={() => {
+            <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => setExpandedCategories({})}>Collapse All</Button>
+            <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => {
               const all: any = {}
               const configs = isTAPS ? TAPS_CATEGORY_CONFIG : CATEGORY_CONFIG
               Object.keys(configs).forEach(k => all[k] = true)
@@ -848,11 +847,11 @@ export function ReportView({
             const catDiff = compPercentage !== null ? percentage - compPercentage : null
 
             return (
-              <Collapsible 
-                key={category} 
-                open={isExpanded} 
+              <Collapsible
+                key={category}
+                open={isExpanded}
                 onOpenChange={() => toggleCategory(category)}
-                className={`rounded-xl border-2 transition-all duration-200 ${isExpanded ? 'bg-card shadow-md' : 'bg-muted/30 hover:bg-muted/50'} ${tone.borderClass}`}
+                className={`rounded-xl border-2 transition-all duration-200 ${isExpanded ? 'bg-white dark:bg-[hsl(222,47%,9%)] shadow-md' : 'bg-slate-50 dark:bg-[hsl(222,47%,8%)] hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,11%)]'} ${tone.borderClass}`}
               >
                 <CollapsibleTrigger asChild>
                   <div className="p-4 cursor-pointer flex items-center justify-between gap-4">
@@ -862,18 +861,18 @@ export function ReportView({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold truncate">{config.label}</span>
+                          <span className="font-bold truncate text-slate-900 dark:text-white">{config.label}</span>
                           <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${tone.badgeClass}`}>{tone.label}</Badge>
                         </div>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black">{score}</span>
-                            <span className="text-xs text-muted-foreground">/ {config.maxScore}</span>
+                            <span className="text-lg font-black text-slate-900 dark:text-white">{score}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">/ {config.maxScore}</span>
                           </div>
                           <div className="flex-1 max-w-[100px] md:max-w-[200px]">
                             <Progress value={percentage} className={`h-1.5 ${tone.barClass}`} />
                           </div>
-                          <span className="text-xs font-bold">{percentage}%</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{percentage}%</span>
                         </div>
                       </div>
                     </div>
@@ -895,25 +894,25 @@ export function ReportView({
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      {isExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+                      {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-500 dark:text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
                     </div>
                   </div>
                 </CollapsibleTrigger>
                 
-                <CollapsibleContent className="px-4 pb-4 border-t border-dashed mt-2 pt-4">
+                <CollapsibleContent className="px-4 pb-4 border-t border-dashed border-slate-200/80 dark:border-slate-700/50 mt-2 pt-4">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Metric Breakdown</h4>
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Metric Breakdown</h4>
                       {/* Detailed metrics would go here */}
-                      <div className="p-4 rounded-lg bg-muted/50 border border-dashed text-center text-sm text-muted-foreground">
+                      <div className="p-4 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-dashed border-slate-200 dark:border-slate-700/50 text-center text-sm text-slate-500 dark:text-slate-400">
                         Detailed metric visualization for {config.label}
                       </div>
                     </div>
                     <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">AI Insights</h4>
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                        <p className="text-sm leading-relaxed italic">
-                          "The school shows {tone.label.toLowerCase()} performance in {config.label.toLowerCase()}. 
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">AI Insights</h4>
+                      <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+                        <p className="text-sm leading-relaxed italic text-slate-700 dark:text-slate-300">
+                          "The school shows {tone.label.toLowerCase()} performance in {config.label.toLowerCase()}.
                           {percentage < 60 ? ' Immediate focus is required to address underlying gaps.' : ' Maintaining this trajectory will lead to sustained excellence.'}"
                         </p>
                       </div>
@@ -929,41 +928,41 @@ export function ReportView({
       {/* Recommendations Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold tracking-tight flex items-center gap-2">
+          <h3 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
             <Lightbulb className="h-6 w-6 text-amber-500" />
             Actionable Roadmap
           </h3>
-          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
+          <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30">
             {recommendations.length} Suggestions
           </Badge>
         </div>
 
         {isGeneratingRecommendations && recommendations.length === 0 ? (
-          <Card className="border-dashed bg-muted/30">
+          <Card className="border-dashed border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
             <CardContent className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <div className="font-bold">Analyzing performance data...</div>
-                <div className="text-sm text-muted-foreground">Generating tailored recommendations for improvement</div>
+                <div className="font-bold text-slate-900 dark:text-white">Analyzing performance data...</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Generating tailored recommendations for improvement</div>
               </div>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {recommendations.map((rec) => (
-              <Card key={rec.id} className={`overflow-hidden border-l-4 ${rec.priority === 'high' ? 'border-l-red-500' : rec.priority === 'medium' ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
+              <Card key={rec.id} className={`overflow-hidden border-l-4 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50 ${rec.priority === 'high' ? 'border-l-red-500' : rec.priority === 'medium' ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                        {isTAPS 
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] flex items-center justify-center text-slate-600 dark:text-slate-400">
+                        {isTAPS
                           ? TAPS_CATEGORY_ICONS[rec.category as TAPSCategoryName | 'general'] || <Lightbulb className="h-4 w-4" />
                           : CATEGORY_ICONS[rec.category as CategoryName | 'general'] || <Lightbulb className="h-4 w-4" />
                         }
                       </div>
-                      <span className="font-bold text-sm">
+                      <span className="font-bold text-sm text-slate-900 dark:text-white">
                         {isTAPS
                           ? TAPS_CATEGORY_CONFIG[rec.category as TAPSCategoryName | 'general']?.label || rec.category
                           : CATEGORY_CONFIG[rec.category as CategoryName | 'general']?.label || rec.category
@@ -974,11 +973,11 @@ export function ReportView({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm leading-relaxed mb-4">{rec.recommendationText}</p>
+                  <p className="text-sm leading-relaxed mb-4 text-slate-700 dark:text-slate-300">{rec.recommendationText}</p>
                   {rec.focusAreas && rec.focusAreas.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {rec.focusAreas.map((area, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-[10px] font-medium">
+                        <Badge key={idx} variant="secondary" className="text-[10px] font-medium bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-slate-600 dark:text-slate-400">
                           {area}
                         </Badge>
                       ))}
@@ -992,9 +991,9 @@ export function ReportView({
       </div>
 
       {/* Rating Scale Reference */}
-      <Collapsible className="rounded-xl border bg-muted/20">
+      <Collapsible className="rounded-xl border border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full flex justify-between p-4 h-auto">
+          <Button variant="ghost" className="w-full flex justify-between p-4 h-auto text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,11%)]">
             <span className="text-sm font-bold">Rating Scale Reference</span>
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -1003,13 +1002,13 @@ export function ReportView({
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {isTAPS ? (
               (Object.entries(TAPS_RATING_THRESHOLDS) as [TAPSRatingGrade, any][]).map(([grade, config]) => (
-                <div key={grade} className={`p-3 rounded-xl border-2 ${getTAPSGradeTone(grade).bgClass} ${getTAPSGradeTone(grade).borderClass}`}>
+                <div key={grade} className={`p-3 rounded-xl border-2 bg-white dark:bg-[hsl(222,47%,9%)] ${getTAPSGradeTone(grade).borderClass}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xl font-black">{grade}</span>
+                    <span className={`text-xl font-black ${getTAPSGradeTone(grade).textClass}`}>{grade}</span>
                     <div className={`h-2 w-2 rounded-full ${TAPS_GRADE_COLORS[grade]}`} />
                   </div>
-                  <div className="text-[10px] font-bold uppercase opacity-70">{config.label}</div>
-                  <div className="text-[10px] font-medium">{config.min}-{config.max} pts</div>
+                  <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{config.label}</div>
+                  <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">{config.min}-{config.max} pts</div>
                 </div>
               ))
             ) : (
@@ -1017,13 +1016,13 @@ export function ReportView({
                 const grade = config.grade as TAPSRatingGrade
                 const tone = getTAPSGradeTone(grade)
                 return (
-                  <div key={key} className={`p-3 rounded-xl border-2 ${tone.bgClass} ${tone.borderClass}`}>
+                  <div key={key} className={`p-3 rounded-xl border-2 bg-white dark:bg-[hsl(222,47%,9%)] ${tone.borderClass}`}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xl font-black">{grade}</span>
+                      <span className={`text-xl font-black ${tone.textClass}`}>{grade}</span>
                       <div className={`h-2 w-2 rounded-full ${TAPS_GRADE_COLORS[grade]}`} />
                     </div>
-                    <div className="text-[10px] font-bold uppercase opacity-70">{config.label}</div>
-                    <div className="text-[10px] font-medium">{config.min}-{config.max} pts</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{config.label}</div>
+                    <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">{config.min}-{config.max} pts</div>
                   </div>
                 )
               })

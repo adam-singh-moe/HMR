@@ -577,23 +577,32 @@ export function CategoryRadarChart({
   }, [scores, comparisonScores])
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px] w-full">
+      <CardContent className="pt-2">
+        <div className="h-[420px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-              <PolarGrid stroke="#e2e8f0" />
-              <PolarAngleAxisAny 
-                dataKey="category" 
-                tick={{ fontSize: 10, fontWeight: 500, fill: '#64748b' }} 
+            <RadarChart cx="50%" cy="48%" outerRadius="80%" data={data} margin={{ top: 30, right: 40, bottom: 30, left: 40 }}>
+              <defs>
+                <linearGradient id="radarFillGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.6} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
+              <PolarGrid stroke="#475569" strokeOpacity={0.3} />
+              <PolarAngleAxisAny
+                dataKey="category"
+                tick={{ fontSize: 12, fontWeight: 500, fill: '#94a3b8' }}
               />
-              <PolarRadiusAxis 
-                angle={90} 
-                domain={showPercentage ? [0, 100] : [0, 'auto']} 
+              <PolarRadiusAxis
+                angle={90}
+                domain={showPercentage ? [0, 100] : [0, 'auto']}
                 tick={false}
                 axisLine={false}
               />
@@ -601,8 +610,7 @@ export function CategoryRadarChart({
                 name="Current School"
                 dataKey={showPercentage ? "percentage" : "score"}
                 stroke="#3b82f6"
-                fill="#3b82f6"
-                fillOpacity={0.5}
+                fill="url(#radarFillGradient)"
                 strokeWidth={2}
               />
               {comparisonScores && (
@@ -616,8 +624,14 @@ export function CategoryRadarChart({
                   strokeDasharray="4 4"
                 />
               )}
-              <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              <Tooltip
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: '1px solid hsl(222, 47%, 20%)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  backgroundColor: 'hsl(222, 47%, 11%)',
+                  color: '#fff'
+                }}
                 formatter={((value: any, name: string, entry: any) => {
                   const isComparison = name === comparisonLabel;
                   const payload = entry?.payload;
@@ -625,7 +639,7 @@ export function CategoryRadarChart({
 
                   const score = isComparison ? payload.comparisonScore : payload.score;
                   return [
-                    showPercentage 
+                    showPercentage
                       ? `${value}% (${score}/${payload.maxScore})`
                       : `${value}/${payload.maxScore}`,
                     name
@@ -673,19 +687,28 @@ export function TAPSCategoryRadarChart({
   }, [scores, comparisonScores])
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <div className="h-[300px] w-full">
+      <CardContent className="pt-2">
+        <div className="h-[420px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-              <PolarGrid stroke="#e2e8f0" />
-              <PolarAngleAxisAny 
-                dataKey="category" 
-                tick={{ fontSize: 10, fontWeight: 500, fill: '#64748b' }} 
+            <RadarChart cx="50%" cy="48%" outerRadius="80%" data={data} margin={{ top: 30, right: 40, bottom: 30, left: 40 }}>
+              <defs>
+                <linearGradient id="tapsRadarFillGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.6} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
+              <PolarGrid stroke="#475569" strokeOpacity={0.3} />
+              <PolarAngleAxisAny
+                dataKey="category"
+                tick={{ fontSize: 12, fontWeight: 500, fill: '#94a3b8' }}
               />
               <PolarRadiusAxis
                 angle={90}
@@ -697,8 +720,7 @@ export function TAPSCategoryRadarChart({
                 name="Current School"
                 dataKey={showPercentage ? "percentage" : "score"}
                 stroke="#3b82f6"
-                fill="#3b82f6"
-                fillOpacity={0.5}
+                fill="url(#tapsRadarFillGradient)"
                 strokeWidth={2}
               />
               {comparisonScores && (
@@ -713,7 +735,13 @@ export function TAPSCategoryRadarChart({
                 />
               )}
               <Tooltip
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{
+                  borderRadius: '12px',
+                  border: '1px solid hsl(222, 47%, 20%)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  backgroundColor: 'hsl(222, 47%, 11%)',
+                  color: '#fff'
+                }}
                 formatter={((value: number, name: string, entry: any) => {
                   const isComparison = name === comparisonLabel;
                   const payload = entry?.payload;
@@ -973,16 +1001,16 @@ export function EnhancedTrendChart({
 
   if (!data || data.length === 0) {
     return (
-      <Card>
+      <Card className="overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+            <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             {title}
           </CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-64 text-slate-500 dark:text-slate-400">
             <Calendar className="h-12 w-12 mb-4 opacity-50" />
             <p className="text-center">No performance data yet</p>
             <p className="text-sm text-center mt-1">Submit your first report to see your progress</p>
@@ -1016,20 +1044,20 @@ export function EnhancedTrendChart({
   })
 
   return (
-    <Card>
+    <Card className="overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+              <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               {title}
             </CardTitle>
-            {description && <CardDescription>{description}</CardDescription>}
+            {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
           </div>
           {trendInfo && (
-            <Badge 
+            <Badge
               variant={trendInfo.isPositive ? "default" : "destructive"}
-              className={`flex items-center gap-1 ${trendInfo.isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+              className={`flex items-center gap-1 ${trendInfo.isPositive ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}
             >
               {trendInfo.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {trendInfo.isPositive ? '+' : ''}{trendInfo.change} pts ({trendInfo.percentChange}%)
@@ -1040,22 +1068,22 @@ export function EnhancedTrendChart({
       <CardContent>
         {/* Stats Summary */}
         {stats && (
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground">Latest</p>
-              <p className="text-xl font-bold">{stats.latest}</p>
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="text-center p-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+              <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">Latest</p>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.latest}</p>
             </div>
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground">Average</p>
-              <p className="text-xl font-bold">{stats.average}</p>
+            <div className="text-center p-3 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-slate-200/50 dark:border-slate-700/50">
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Average</p>
+              <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.average}</p>
             </div>
-            <div className="text-center p-3 bg-emerald-50 rounded-lg">
-              <p className="text-xs text-emerald-600">Highest</p>
-              <p className="text-xl font-bold text-emerald-700">{stats.highest}</p>
+            <div className="text-center p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20">
+              <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Highest</p>
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.highest}</p>
             </div>
-            <div className="text-center p-3 bg-amber-50 rounded-lg">
-              <p className="text-xs text-amber-600">Lowest</p>
-              <p className="text-xl font-bold text-amber-700">{stats.lowest}</p>
+            <div className="text-center p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
+              <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Lowest</p>
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.lowest}</p>
             </div>
           </div>
         )}
@@ -1068,42 +1096,44 @@ export function EnhancedTrendChart({
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-            <XAxis 
-              dataKey="period" 
-              tick={{ fontSize: 11 }}
+            <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-slate-200 dark:text-slate-700" opacity={0.5} />
+            <XAxis
+              dataKey="period"
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               angle={-45}
               textAnchor="end"
               height={60}
+              stroke="#64748b"
             />
-            <YAxis 
-              domain={[0, maxScore]} 
-              tick={{ fontSize: 11 }}
+            <YAxis
+              domain={[0, maxScore]}
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               tickLine={false}
+              stroke="#64748b"
             />
-            <Tooltip 
+            <Tooltip
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
                   const score = payload[0].value as number
                   let rating = variant === 'taps' ? 'Critical Support' : 'Needs Improvement'
-                  let ratingColor = 'text-red-600'
+                  let ratingColor = 'text-red-400'
 
                   if (variant === 'taps') {
-                    if (score >= TAPS_RATING_THRESHOLDS.A.min) { rating = TAPS_RATING_THRESHOLDS.A.label; ratingColor = 'text-emerald-600' }
-                    else if (score >= TAPS_RATING_THRESHOLDS.B.min) { rating = TAPS_RATING_THRESHOLDS.B.label; ratingColor = 'text-blue-600' }
-                    else if (score >= TAPS_RATING_THRESHOLDS.C.min) { rating = TAPS_RATING_THRESHOLDS.C.label; ratingColor = 'text-amber-600' }
-                    else if (score >= TAPS_RATING_THRESHOLDS.D.min) { rating = TAPS_RATING_THRESHOLDS.D.label; ratingColor = 'text-orange-600' }
+                    if (score >= TAPS_RATING_THRESHOLDS.A.min) { rating = TAPS_RATING_THRESHOLDS.A.label; ratingColor = 'text-emerald-400' }
+                    else if (score >= TAPS_RATING_THRESHOLDS.B.min) { rating = TAPS_RATING_THRESHOLDS.B.label; ratingColor = 'text-blue-400' }
+                    else if (score >= TAPS_RATING_THRESHOLDS.C.min) { rating = TAPS_RATING_THRESHOLDS.C.label; ratingColor = 'text-amber-400' }
+                    else if (score >= TAPS_RATING_THRESHOLDS.D.min) { rating = TAPS_RATING_THRESHOLDS.D.label; ratingColor = 'text-orange-400' }
                   } else {
-                    if (score >= 850) { rating = 'Outstanding'; ratingColor = 'text-emerald-600' }
-                    else if (score >= 700) { rating = 'Very Good'; ratingColor = 'text-blue-600' }
-                    else if (score >= 550) { rating = 'Good'; ratingColor = 'text-amber-600' }
-                    else if (score >= 400) { rating = 'Satisfactory'; ratingColor = 'text-orange-600' }
+                    if (score >= 850) { rating = 'Outstanding'; ratingColor = 'text-emerald-400' }
+                    else if (score >= 700) { rating = 'Very Good'; ratingColor = 'text-blue-400' }
+                    else if (score >= 550) { rating = 'Good'; ratingColor = 'text-amber-400' }
+                    else if (score >= 400) { rating = 'Satisfactory'; ratingColor = 'text-orange-400' }
                   }
-                  
+
                   return (
-                    <div className="bg-white p-3 border rounded-lg shadow-lg">
-                      <p className="font-semibold text-sm">{label}</p>
-                      <p className="text-2xl font-bold">{score}<span className="text-sm text-muted-foreground">/{maxScore}</span></p>
+                    <div className="bg-[hsl(222,47%,11%)] p-3 border border-slate-700/50 rounded-xl shadow-lg">
+                      <p className="font-semibold text-sm text-white">{label}</p>
+                      <p className="text-2xl font-bold text-white">{score}<span className="text-sm text-slate-400">/{maxScore}</span></p>
                       <p className={`text-sm font-medium ${ratingColor}`}>{rating}</p>
                     </div>
                   )
@@ -1133,7 +1163,7 @@ export function EnhancedTrendChart({
 
         {/* Rating Legend */}
         {variant === 'taps' ? (
-          <div className="flex flex-wrap justify-center gap-3 mt-4 text-xs">
+          <div className="flex flex-wrap justify-center gap-3 mt-4 text-xs text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <span>A: Outstanding ({TAPS_RATING_THRESHOLDS.A.min}+)</span>
@@ -1156,7 +1186,7 @@ export function EnhancedTrendChart({
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap justify-center gap-3 mt-4 text-xs">
+          <div className="flex flex-wrap justify-center gap-3 mt-4 text-xs text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-emerald-500" />
               <span>Outstanding (850+)</span>

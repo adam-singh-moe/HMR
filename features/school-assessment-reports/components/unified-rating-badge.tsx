@@ -21,19 +21,19 @@ export const RATING_DISPLAY_LABELS: Record<RatingLevel, string> = {
 }
 
 export const RATING_BADGE_COLORS: Record<RatingLevel, string> = {
-  'outstanding': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  'very_good': 'bg-blue-100 text-blue-800 border-blue-200',
-  'good': 'bg-amber-100 text-amber-800 border-amber-200',
-  'satisfactory': 'bg-orange-100 text-orange-800 border-orange-200',
-  'needs_improvement': 'bg-red-100 text-red-800 border-red-200',
+  'outstanding': 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
+  'very_good': 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+  'good': 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+  'satisfactory': 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+  'needs_improvement': 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
 }
 
 export const TAPS_GRADE_BADGE_COLORS: Record<TAPSRatingGrade, string> = {
-  'A': 'bg-green-100 text-green-800 border-green-200',
-  'B': 'bg-blue-100 text-blue-800 border-blue-200',
-  'C': 'bg-amber-100 text-amber-800 border-amber-200',
-  'D': 'bg-orange-100 text-orange-800 border-orange-200',
-  'E': 'bg-red-100 text-red-800 border-red-200',
+  'A': 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
+  'B': 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+  'C': 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+  'D': 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+  'E': 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
 }
 
 export const TAPS_GRADE_DISPLAY_LABELS: Record<TAPSRatingGrade, string> = {
@@ -116,21 +116,18 @@ export function UnifiedRatingBadge({
   }
 
   if (!grade) {
-    return <span className="text-muted-foreground">-</span>;
+    return <span className="text-slate-400 dark:text-slate-500">-</span>;
   }
-
-  const bgClass = colorClass.split(' ')[0] || '';
-  const textClass = colorClass.split(' ')[1] || '';
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className={`h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 ${bgClass} ${textClass}`}>
+      <div className={`h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${colorClass}`}>
         {grade}
       </div>
       {showLabel && (
-        <Badge 
-          variant="outline" 
-          className={`${bgClass} ${textClass} border-0 font-medium whitespace-nowrap`}
+        <Badge
+          variant="outline"
+          className={`${colorClass} border font-medium whitespace-nowrap text-xs`}
         >
           {label}
         </Badge>

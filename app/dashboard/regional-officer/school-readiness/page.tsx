@@ -105,11 +105,9 @@ export default function SchoolReadinessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-2xl border border-slate-200/80 dark:border-slate-700/50 shadow-lg">
-          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading school readiness data...</p>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        <span className="ml-2 text-blue-600 dark:text-blue-400 text-sm">Loading school readiness data...</span>
       </div>
     )
   }
