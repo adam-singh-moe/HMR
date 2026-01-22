@@ -1,18 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Sparkles, Brain, TrendingUp, AlertCircle, Lightbulb, FileText, Zap, Eye, X, Download, Info } from "lucide-react"
+import { Loader2, Sparkles, Brain, TrendingUp, AlertCircle, Lightbulb, FileText, Download, Send, RotateCcw, Clock, Copy, Check } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { generateAIInsight, getAISuggestedPrompts, getAvailableSchools } from "@/app/actions/ai-insights"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface School {
@@ -29,62 +27,59 @@ export default function RegionalAIInsightsPage() {
   )
 }
 
-// Export the content component for use in tabs
 export { RegionalAIInsightsContent }
 
 function RegionalAIInsightsContent() {
   const { user } = useAuth()
   const [selectedReportType, setSelectedReportType] = useState("")
   const [selectedMonth, setSelectedMonth] = useState("")
-  const [selectedYear, setSelectedYear] = useState("") 
+  const [selectedYear, setSelectedYear] = useState("")
   const [customPrompt, setCustomPrompt] = useState("")
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
   const [aiInsight, setAiInsight] = useState<string>("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [schools, setSchools] = useState<School[]>([])
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false)
-  const [showFullInsight, setShowFullInsight] = useState(false)
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [dailyUsage, setDailyUsage] = useState(0)
   const [lastUsageDate, setLastUsageDate] = useState<string>('')
   const [visualizationData, setVisualizationData] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
 
   const DAILY_LIMIT = 5
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+  const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
   const reportTypes = [
-    { value: "student-enrollment", label: "Student Enrollment", icon: FileText },
-    { value: "attendance", label: "Attendance Reports", icon: TrendingUp },
-    { value: "staffing", label: "Staffing & Vacancies", icon: FileText },
-    { value: "staff-development", label: "Staff Development", icon: FileText },
-    { value: "supervision", label: "Supervision Reports", icon: FileText },
-    { value: "curriculum", label: "Curriculum Monitoring", icon: FileText },
-    { value: "finance", label: "Finance Reports", icon: FileText },
-    { value: "income-sources", label: "Income Sources", icon: FileText },
-    { value: "safety", label: "Safety Reports", icon: AlertCircle },
-    { value: "staff-meetings", label: "Staff Meetings", icon: FileText },
-    { value: "physical-facilities", label: "Physical Facilities", icon: FileText },
-    { value: "resources", label: "Resources Needed", icon: FileText },
-    { value: "physical-education", label: "Physical Education", icon: TrendingUp },
-    { value: "all-reports", label: "All Reports Combined", icon: Brain }
+    { value: "student-enrollment", label: "Student Enrollment" },
+    { value: "attendance", label: "Attendance Reports" },
+    { value: "staffing", label: "Staffing & Vacancies" },
+    { value: "staff-development", label: "Staff Development" },
+    { value: "supervision", label: "Supervision Reports" },
+    { value: "curriculum", label: "Curriculum Monitoring" },
+    { value: "finance", label: "Finance Reports" },
+    { value: "income-sources", label: "Income Sources" },
+    { value: "safety", label: "Safety Reports" },
+    { value: "staff-meetings", label: "Staff Meetings" },
+    { value: "physical-facilities", label: "Physical Facilities" },
+    { value: "resources", label: "Resources Needed" },
+    { value: "physical-education", label: "Physical Education" },
+    { value: "all-reports", label: "All Reports Combined" }
   ]
 
-  const promptCategories = [
-    { value: "student-enrollment", label: "Student Enrollment Analysis" },
-    { value: "attendance", label: "Attendance Analysis" },
-    { value: "staffing", label: "Staffing Analysis" },
-    { value: "staff-development", label: "Staff Development Analysis" },
-    { value: "supervision", label: "Supervision Analysis" },
-    { value: "curriculum", label: "Curriculum Analysis" },
-    { value: "finance", label: "Financial Analysis" },
-    { value: "income-sources", label: "Income Analysis" },
-    { value: "safety", label: "Safety Analysis" },
-    { value: "staff-meetings", label: "Staff Meetings Analysis" },
-    { value: "physical-facilities", label: "Facilities Analysis" },
-    { value: "resources", label: "Resources Analysis" },
-    { value: "physical-education", label: "Physical Education Analysis" },
-    { value: "trends", label: "Trend Analysis" },
-    { value: "recommendations", label: "Recommendations & Action Items" }
+  const months = [
+    { value: "all", label: "All Months" },
+    { value: "1", label: "January" },
+    { value: "2", label: "February" },
+    { value: "3", label: "March" },
+    { value: "4", label: "April" },
+    { value: "5", label: "May" },
+    { value: "6", label: "June" },
+    { value: "7", label: "July" },
+    { value: "8", label: "August" },
+    { value: "9", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" }
   ]
 
   useEffect(() => {
@@ -108,19 +103,17 @@ function RegionalAIInsightsContent() {
       const today = new Date().toDateString()
       const storedUsage = localStorage.getItem(`ai-insights-usage-${user?.id}`)
       const storedDate = localStorage.getItem(`ai-insights-date-${user?.id}`)
-      
+
       if (storedDate === today && storedUsage) {
         setDailyUsage(parseInt(storedUsage, 10))
         setLastUsageDate(today)
       } else {
-        // Reset usage for new day
         setDailyUsage(0)
         setLastUsageDate(today)
         localStorage.setItem(`ai-insights-usage-${user?.id}`, '0')
         localStorage.setItem(`ai-insights-date-${user?.id}`, today)
       }
     } catch (error) {
-      // Silent fail - usage tracking is not critical
       setDailyUsage(0)
     }
   }
@@ -129,37 +122,19 @@ function RegionalAIInsightsContent() {
     try {
       const today = new Date().toDateString()
       const newUsage = dailyUsage + 1
-      
       setDailyUsage(newUsage)
       setLastUsageDate(today)
-      
       localStorage.setItem(`ai-insights-usage-${user?.id}`, newUsage.toString())
       localStorage.setItem(`ai-insights-date-${user?.id}`, today)
-    } catch (error) {
-      // Silent fail - usage tracking is not critical
-    }
+    } catch (error) {}
   }
 
-  const getRemainingGenerations = () => {
-    return Math.max(0, DAILY_LIMIT - dailyUsage)
-  }
+  const getRemainingGenerations = () => Math.max(0, DAILY_LIMIT - dailyUsage)
+  const canGenerateInsight = () => dailyUsage < DAILY_LIMIT
 
-  const canGenerateInsight = () => {
-    return dailyUsage < DAILY_LIMIT
-  }
-
-  // Extract visualization data from AI insight text
   const extractVisualizationData = (insightText: string) => {
-    const data = {
-      charts: [] as any[],
-      tables: [] as any[]
-    }
-
+    const data = { charts: [] as any[], tables: [] as any[] }
     try {
-      // Look for data patterns in the text that could be visualized
-      // This is a simplified implementation - you can expand based on your AI response format
-      
-      // Extract tables from markdown-style tables
       const tableRegex = /\|(.*?)\|\s*\n\|([-\s:|]+)\|\s*\n((\|.*?\|\s*\n)*)/gm
       let tableMatch
       while ((tableMatch = tableRegex.exec(insightText)) !== null) {
@@ -167,907 +142,408 @@ function RegionalAIInsightsContent() {
         const rows = tableMatch[3].split('\n').filter(row => row.trim() && row.includes('|'))
           .map(row => row.split('|').map(cell => cell.trim()).filter(cell => cell))
           .filter(row => row.length > 0)
-        
         if (headers.length > 0 && rows.length > 0) {
-          data.tables.push({
-            headers,
-            rows
-          })
+          data.tables.push({ headers, rows })
         }
       }
-
-      // Extract data that could be charted (numbers with labels)
-      const numberPatterns = [
-        // Pattern: "School A: 85%, School B: 92%" etc.
-        /([^:,\n]+):\s*(\d+(?:\.\d+)?%?)/g,
-        // Pattern: "January: 150, February: 200" etc.
-        /([A-Za-z]+):\s*(\d+(?:\.\d+)?)/g
-      ]
-
+      const numberPatterns = [/([^:,\n]+):\s*(\d+(?:\.\d+)?%?)/g]
       for (const pattern of numberPatterns) {
         const matches = [...insightText.matchAll(pattern)]
         if (matches.length >= 2) {
           const chartData = matches.map(match => ({
-            name: match[1].trim(),
+            name: match[1].trim().substring(0, 15),
             value: parseFloat(match[2].replace('%', ''))
           }))
-          
-          // Determine chart type based on data
-          const chartType = matches.length <= 5 ? 'pie' : 'bar'
-          
-          data.charts.push({
-            type: chartType,
-            title: 'Data Visualization',
-            data: chartData
-          })
-          break // Only take the first good match to avoid duplicates
+          data.charts.push({ type: matches.length <= 5 ? 'pie' : 'bar', data: chartData })
+          break
         }
       }
-    } catch (error) {
-      console.warn('Error extracting visualization data:', error)
-    }
-
+    } catch (error) {}
     return data.charts.length > 0 || data.tables.length > 0 ? data : null
   }
 
   const loadSchools = async () => {
     try {
       const result = await getAvailableSchools()
-      if (result.error) {
-        console.error("Error loading schools:", result.error)
-        toast({
-          title: "Error",
-          description: "Failed to load available schools.",
-          variant: "destructive",
-        })
-      } else {
-        // For regional officers, filter schools by their region
-        const regionSchools = result.schools.filter(school => 
-          school.region === user?.region_name
-        )
-        setSchools(regionSchools)
+      if (!result.error) {
+        setSchools(result.schools.filter(school => school.region === user?.region_name))
       }
-    } catch (error) {
-      console.error("Error loading schools:", error)
-    }
+    } catch (error) {}
   }
 
   const loadSuggestedPrompts = async (category: string) => {
     setIsLoadingPrompts(true)
     try {
       const result = await getAISuggestedPrompts(category)
-      if (result.error) {
-        console.error("Error loading prompts:", result.error)
-      } else {
-        setSuggestedPrompts(result.prompts)
-      }
-    } catch (error) {
-      console.error("Error loading suggested prompts:", error)
-    } finally {
-      setIsLoadingPrompts(false)
-    }
+      if (!result.error) setSuggestedPrompts(result.prompts)
+    } catch (error) {}
+    finally { setIsLoadingPrompts(false) }
   }
 
-  const isFormValid = () => {
-    return selectedReportType && selectedMonth && selectedYear && customPrompt.trim() && canGenerateInsight()
-  }
+  const isFormValid = () => selectedReportType && selectedMonth && selectedYear && customPrompt.trim() && canGenerateInsight()
 
   const handleGenerateInsight = async () => {
     if (!canGenerateInsight()) {
-      toast({
-        title: "Daily Limit Reached",
-        description: `You've reached your daily limit of ${DAILY_LIMIT} AI insight generations. Please try again tomorrow.`,
-        variant: "destructive",
-      })
+      toast({ title: "Daily Limit Reached", description: `You've used all ${DAILY_LIMIT} generations today.`, variant: "destructive" })
       return
     }
-
-    if (!selectedReportType) {
-      toast({
-        title: "Error",
-        description: "Please select a report type.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!selectedMonth) {
-      toast({
-        title: "Error",
-        description: "Please select a month.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!selectedYear) {
-      toast({
-        title: "Error",
-        description: "Please select a year.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!customPrompt.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a prompt for AI analysis.",
-        variant: "destructive",
-      })
+    if (!selectedReportType || !selectedMonth || !selectedYear || !customPrompt.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in all fields.", variant: "destructive" })
       return
     }
 
     setIsGenerating(true)
     setAiInsight("")
+    setVisualizationData(null)
 
     try {
       const filters = {
         month: selectedMonth !== "all" ? selectedMonth : undefined,
         year: selectedYear !== "all" ? selectedYear : undefined,
-        region: user?.region_name, // Always filter by regional officer's region
-        // School filter removed - analyze all schools in the region
+        region: user?.region_name,
       }
-
       const result = await generateAIInsight(customPrompt, selectedReportType, filters)
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        })
+        toast({ title: "Error", description: result.error, variant: "destructive" })
       } else if (result.insight) {
         setAiInsight(result.insight)
-        const vizData = extractVisualizationData(result.insight)
-        setVisualizationData(vizData)
-        incrementDailyUsage() // Track successful generation
-        toast({
-          title: "Success",
-          description: `AI insight generated successfully! ${getRemainingGenerations()} generations remaining today.`,
-        })
+        setVisualizationData(extractVisualizationData(result.insight))
+        incrementDailyUsage()
+        toast({ title: "Analysis Complete", description: `${getRemainingGenerations() - 1} generations remaining.` })
       } else {
-        toast({
-          title: "No Results",
-          description: "No insights could be generated for the selected criteria.",
-          variant: "destructive",
-        })
+        toast({ title: "No Results", description: "No insights could be generated.", variant: "destructive" })
       }
     } catch (error) {
-      console.error("Error generating AI insight:", error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while generating insights.",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" })
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const handlePromptSelect = (prompt: string) => {
-    setCustomPrompt(prompt)
-  }
-
-  // Simple markdown-to-HTML converter for AI insights
   const formatAIInsight = (text: string) => {
     if (!text) return text
-
-    let formattedText = text
-      // Convert **bold** to <strong>
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      // Convert *italic* to <em>
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-white">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // Convert ## Headers to <h3> with proper spacing
-      .replace(/^## (.*?)$/gm, '<h3 class="text-lg font-bold text-gray-900 mt-6 mb-3 first:mt-0">$1</h3>')
-      // Convert ### Headers to <h4> with proper spacing
-      .replace(/^### (.*?)$/gm, '<h4 class="text-base font-semibold text-gray-800 mt-5 mb-2">$1</h4>')
-      // Convert bullet points with proper spacing
-      .replace(/^\* (.*?)$/gm, '<li class="ml-4 mb-1">$1</li>')
-      // Convert numbered lists with proper spacing
-      .replace(/^(\d+)\. (.*?)$/gm, '<li class="ml-4 mb-1 list-decimal">$2</li>')
-      // Wrap consecutive <li> elements in <ul> with proper spacing
-      .replace(/(<li.*?>.*?<\/li>\s*)+/gs, '<ul class="list-disc space-y-1 my-3 pl-4">$&</ul>')
-      // Handle paragraphs - convert double line breaks to paragraph breaks
-      .replace(/\n\n/g, '</p><p class="mb-3">')
-      // Convert remaining single line breaks to spaces (within paragraphs)
+      .replace(/^## (.*?)$/gm, '<h3 class="text-base font-bold text-slate-900 dark:text-white mt-5 mb-2">$1</h3>')
+      .replace(/^### (.*?)$/gm, '<h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-1.5">$1</h4>')
+      .replace(/^\* (.*?)$/gm, '<li class="ml-4 mb-1 text-slate-700 dark:text-slate-300 text-sm">$1</li>')
+      .replace(/^(\d+)\. (.*?)$/gm, '<li class="ml-4 mb-1 list-decimal text-slate-700 dark:text-slate-300 text-sm">$2</li>')
+      .replace(/(<li.*?>.*?<\/li>\s*)+/gs, '<ul class="list-disc space-y-0.5 my-2 pl-4">$&</ul>')
+      .replace(/\n\n/g, '</p><p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">')
       .replace(/\n/g, ' ')
-      // Wrap everything in paragraph tags and clean up
-      .replace(/^/, '<p class="mb-3">')
+      .replace(/^/, '<p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">')
       .replace(/$/, '</p>')
-      // Clean up empty paragraphs and fix paragraph breaks around headers
-      .replace(/<p class="mb-3"><\/p>/g, '')
-      .replace(/<\/p><p class="mb-3">(<h[3-4])/g, '$1')
-      .replace(/(<\/h[3-4]>)<p class="mb-3">/g, '$1')
-      // Fix spacing around lists
-      .replace(/<\/p><p class="mb-3">(<ul)/g, '$1')
-      .replace(/(<\/ul>)<p class="mb-3">/g, '$1<p class="mb-3 mt-3">')
-
-    return formattedText
+      .replace(/<p class="mb-2 text-slate-700 dark:text-slate-300 text-sm"><\/p>/g, '')
   }
 
   const renderChart = (chart: any, index: number) => {
-    switch (chart.type) {
-      case 'bar':
-        return (
-          <div key={index} className="mb-6">
-            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chart.data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip 
-                  formatter={(value, name) => [value, name]}
-                  labelFormatter={(label) => `${label}`}
-                />
-                <Bar dataKey="value" fill="#0088FE" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      
-      case 'line':
-        return (
-          <div key={index} className="mb-6">
-            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chart.data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                <YAxis fontSize={12} />
-                <Tooltip 
-                  formatter={(value, name) => [value, name]}
-                  labelFormatter={(label) => `${label}`}
-                />
-                <Line type="monotone" dataKey="value" stroke="#00C49F" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      
-      case 'pie':
-        return (
-          <div key={index} className="mb-6">
-            <h4 className="text-md font-semibold mb-3 text-gray-800">{chart.title}</h4>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chart.data}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {chart.data.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      
-      default:
-        return null
-    }
-  }
-
-  const renderTable = (table: any, index: number) => {
-    return (
-      <div key={index} className="mb-6">
-        <h4 className="text-md font-semibold mb-3 text-gray-800">Data Summary</h4>
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {table.headers.map((header: string, i: number) => (
-                  <TableHead key={i} className="font-medium">{header}</TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {table.rows.map((row: string[], i: number) => (
-                <TableRow key={i}>
-                  {row.map((cell: string, j: number) => (
-                    <TableCell key={j}>{cell}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+    if (chart.type === 'pie') {
+      return (
+        <div key={index} className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={chart.data} cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({name, percent}) => `${(percent * 100).toFixed(0)}%`} fontSize={10}>
+                {chart.data.map((entry: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Pie>
+              <Tooltip contentStyle={{ backgroundColor: 'hsl(222, 47%, 11%)', border: '1px solid hsl(222, 47%, 20%)', borderRadius: '6px', fontSize: '11px' }} />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
+      )
+    }
+    return (
+      <div key={index} className="h-48">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chart.data}>
+            <CartesianGrid strokeDasharray="3 3" className="text-slate-700" />
+            <XAxis dataKey="name" fontSize={10} />
+            <YAxis fontSize={10} />
+            <Tooltip contentStyle={{ backgroundColor: 'hsl(222, 47%, 11%)', border: '1px solid hsl(222, 47%, 20%)', borderRadius: '6px', fontSize: '11px' }} />
+            <Bar dataKey="value" fill="#6366f1" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     )
   }
 
-  // Generate a brief summary of the AI insight
-  const generateSummary = (text: string) => {
-    if (!text) return ""
-
-    // Count basic elements in the report to generate a descriptive summary
-    const lines = text.split('\n').filter(line => line.trim())
-    const sections = text.split('##').length - 1
-    const hasCharts = text.toLowerCase().includes('chart') || text.toLowerCase().includes('graph')
-    const hasTables = text.includes('|') && text.includes('---')
-    const hasRecommendations = text.toLowerCase().includes('recommendation')
-    const hasData = /\d+/.test(text)
-
-    // Determine report type based on content
-    let reportType = selectedReportType || "analysis"
-    const reportTypeLabels: Record<string, string> = {
-      "student-enrollment": "Student Enrollment Analysis",
-      "nursery-assessment": "Nursery Assessment Analysis", 
-      "regional-pe": "Physical Education Analysis",
-      "trends": "Trend Analysis",
-      "recommendations": "Recommendations & Action Items"
-    }
-    
-    const reportLabel = reportTypeLabels[reportType] || "Educational Data Analysis"
-    
-    // Build summary components
-    const summaryParts = []
-    
-    // Basic description
-    summaryParts.push(`This ${reportLabel.toLowerCase()} has been generated for ${selectedMonth} ${selectedYear}.`)
-    
-    // Content description
-    const contentFeatures = []
-    if (sections > 0) contentFeatures.push(`${sections} main sections`)
-    if (hasData) contentFeatures.push("statistical data")
-    if (hasCharts) contentFeatures.push("visualizations")
-    if (hasTables) contentFeatures.push("data tables")
-    if (hasRecommendations) contentFeatures.push("actionable recommendations")
-    
-    if (contentFeatures.length > 0) {
-      summaryParts.push(`The report includes ${contentFeatures.join(', ')}.`)
-    }
-    
-    // Call to action
-    summaryParts.push("Click 'View Details' to see the complete analysis.")
-    
-    return summaryParts.join(' ')
-  }
-
-  // Export AI insights as PDF
   const handleExportPDF = async () => {
     if (!aiInsight.trim()) return
-
     setIsExportingPDF(true)
-
     try {
-      // Dynamically import jsPDF
       const { default: jsPDF } = await import('jspdf')
-      
-      // Create a new PDF instance
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      })
-      
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       let currentY = 20
-      const leftMargin = 20
-      const rightMargin = 20
-      const lineHeight = 6
-      const maxWidth = pageWidth - leftMargin - rightMargin
-      
-      // Helper function to add text with word wrapping
-      const addText = (text: string, fontSize: number = 12, isBold: boolean = false) => {
-        pdf.setFontSize(fontSize)
-        pdf.setFont(undefined, isBold ? 'bold' : 'normal')
-        
-        // Split text into lines that fit the page width
-        const lines = pdf.splitTextToSize(text, maxWidth)
-        
-        for (const line of lines) {
-          // Check if we need a new page
-          if (currentY + lineHeight > pageHeight - 20) {
-            pdf.addPage()
-            currentY = 20
-          }
-          
-          pdf.text(line, leftMargin, currentY)
-          currentY += lineHeight
-        }
-        currentY += 2 // Extra spacing after paragraphs
-      }
-      
-      // Add header
-      pdf.setFontSize(20)
+      const margin = 20
+      const maxWidth = pageWidth - margin * 2
+
+      pdf.setFontSize(18)
       pdf.setFont(undefined, 'bold')
-      pdf.setTextColor(40, 40, 40)
       pdf.text('AI Insights Report', pageWidth / 2, currentY, { align: 'center' })
-      currentY += 15
-      
-      // Add region and date information
-      pdf.setFontSize(12)
+      currentY += 12
+
+      pdf.setFontSize(10)
       pdf.setFont(undefined, 'normal')
-      pdf.setTextColor(80, 80, 80)
-      const dateStr = new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
-      pdf.text(`Region: ${user?.region_name || 'N/A'}`, leftMargin, currentY)
-      currentY += 8
-      pdf.text(`Report Type: ${reportTypes.find(rt => rt.value === selectedReportType)?.label || 'N/A'}`, leftMargin, currentY)
-      currentY += 8
-      pdf.text(`Generated: ${dateStr}`, leftMargin, currentY)
+      pdf.setTextColor(100)
+      pdf.text(`Region: ${user?.region_name || 'N/A'} | ${reportTypes.find(r => r.value === selectedReportType)?.label} | ${new Date().toLocaleDateString()}`, pageWidth / 2, currentY, { align: 'center' })
       currentY += 15
-      
-      // Add content
-      pdf.setTextColor(40, 40, 40)
-      
-      // Convert markdown-style formatting to plain text for PDF
-      let pdfContent = aiInsight
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markers
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic markers  
-        .replace(/#{1,6}\s*/g, '') // Remove header markers
-        .replace(/^\s*[-*]\s+/gm, '• ') // Convert list items to bullets
-        .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered list numbers
-      
-      // Split content into paragraphs and sections
-      const sections = pdfContent.split(/\n\s*\n/)
-      
-      for (let i = 0; i < sections.length; i++) {
-        const section = sections[i].trim()
-        if (!section) continue
-        
-        // Check if this looks like a heading (short line, often in caps or title case)
-        const isHeading = section.length < 60 && 
-          (section === section.toUpperCase() || 
-           section.split(' ').every(word => word.charAt(0) === word.charAt(0).toUpperCase()))
-        
-        if (isHeading) {
-          currentY += 5 // Extra space before headings
-          addText(section, 14, true)
-          currentY += 3 // Space after headings
-        } else {
-          addText(section, 12, false)
-          currentY += 3 // Space between paragraphs
+
+      pdf.setTextColor(40)
+      pdf.setFontSize(11)
+
+      const content = aiInsight.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#{1,6}\s*/g, '').replace(/^\s*[-*]\s+/gm, '• ')
+      const lines = pdf.splitTextToSize(content, maxWidth)
+
+      for (const line of lines) {
+        if (currentY > pageHeight - 20) {
+          pdf.addPage()
+          currentY = 20
         }
+        pdf.text(line, margin, currentY)
+        currentY += 5
       }
-      
-      // Add footer
-      const totalPages = pdf.getNumberOfPages()
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i)
-        pdf.setFontSize(8)
-        pdf.setTextColor(120, 120, 120)
-        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 30, pageHeight - 10)
-        pdf.text('Generated by MOEGY HMR System', leftMargin, pageHeight - 10)
-      }
-      
-      // Save the PDF
-      const filename = `ai-insights-${user?.region_name?.toLowerCase().replace(/\s+/g, '-') || 'report'}-${new Date().toISOString().split('T')[0]}.pdf`
-      pdf.save(filename)
-      
-      toast({
-        title: "PDF Export Successful",
-        description: "Your AI insights report has been downloaded.",
-      })
-      
+
+      pdf.save(`ai-insights-${new Date().toISOString().split('T')[0]}.pdf`)
+      toast({ title: "PDF Exported", description: "Report downloaded successfully." })
     } catch (error) {
-      console.error('Error exporting PDF:', error)
-      toast({
-        title: "Export Error",
-        description: "Failed to export PDF. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Export Error", description: "Failed to export PDF.", variant: "destructive" })
     } finally {
       setIsExportingPDF(false)
     }
   }
 
-  const getCurrentDateFilters = () => {
-    const now = new Date()
-    const currentYear = now.getFullYear().toString()
-    const currentMonth = (now.getMonth() + 1).toString()
-    return { currentYear, currentMonth }
+  const handleCopy = async () => {
+    if (!aiInsight) return
+    await navigator.clipboard.writeText(aiInsight.replace(/\*\*/g, '').replace(/\*/g, '').replace(/#{1,6}\s*/g, ''))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const { currentYear, currentMonth } = getCurrentDateFilters()
+  const allFiltersSelected = selectedReportType && selectedMonth && selectedYear
 
   return (
-    <div className="space-y-6">
+    <div className="h-[calc(100vh-120px)] flex flex-col">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl">
-              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl">
+              <Brain className="h-5 w-5 text-white" />
             </div>
             AI Insights
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
-            Generate intelligent insights and analysis from your region's education data
-          </p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Analyze your region's education data</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 px-3 py-1.5">
-            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-            {user?.region_name || 'Your Region'}
+        <div className="flex items-center gap-2">
+          <Badge className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50">
+            <Sparkles className="h-3 w-3 mr-1" />Beta
           </Badge>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Usage:</span>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{dailyUsage}/{DAILY_LIMIT}</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">({getRemainingGenerations()} left)</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-[hsl(222,47%,11%)] rounded-lg border border-slate-200 dark:border-slate-700/50">
+            <div className={`w-1.5 h-1.5 rounded-full ${getRemainingGenerations() > 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{getRemainingGenerations()}/{DAILY_LIMIT}</span>
           </div>
         </div>
       </div>
 
-      {/* Beta Notice */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
-        <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
-          <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-        </div>
-        <div>
-          <span className="font-semibold text-amber-800 dark:text-amber-300">Beta Feature: </span>
-          <span className="text-amber-700 dark:text-amber-400">AI Insights is in development. Your feedback helps us improve!</span>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left Panel - Controls */}
-        <div className="lg:col-span-5 space-y-5">
-          {/* Filters Card */}
-          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-800/80 border-b border-slate-200 dark:border-slate-700 pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                  <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <span className="text-slate-900 dark:text-white">Analysis Settings</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Configure your data analysis parameters</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-5">
-              {/* Report Type Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                  Report Type <span className="text-red-500">*</span>
-                </label>
+      {/* Main Layout - Side by Side */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
+        {/* Left Panel - Input */}
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 rounded-xl overflow-hidden flex flex-col">
+          {/* Filters */}
+          <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">Report Type</label>
                 <Select value={selectedReportType} onValueChange={setSelectedReportType}>
-                  <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedReportType ? "border-red-300 dark:border-red-800" : ""}`}>
-                    <SelectValue placeholder="Select report type to analyze" />
+                  <SelectTrigger className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700/50 h-9 text-sm rounded-lg">
+                    <SelectValue placeholder="Select..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    {reportTypes.map((type) => {
-                      const IconComponent = type.icon
-                      return (
-                        <SelectItem key={type.value} value={type.value}>
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4 text-slate-500" />
-                            {type.label}
-                          </div>
-                        </SelectItem>
-                      )
-                    })}
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                    {reportTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value} className="text-sm">{type.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Time Period Filters */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    Month <span className="text-red-500">*</span>
-                  </label>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedMonth ? "border-red-300 dark:border-red-800" : ""}`}>
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Months</SelectItem>
-                      <SelectItem value="1">January</SelectItem>
-                      <SelectItem value="2">February</SelectItem>
-                      <SelectItem value="3">March</SelectItem>
-                      <SelectItem value="4">April</SelectItem>
-                      <SelectItem value="5">May</SelectItem>
-                      <SelectItem value="6">June</SelectItem>
-                      <SelectItem value="7">July</SelectItem>
-                      <SelectItem value="8">August</SelectItem>
-                      <SelectItem value="9">September</SelectItem>
-                      <SelectItem value="10">October</SelectItem>
-                      <SelectItem value="11">November</SelectItem>
-                      <SelectItem value="12">December</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    Year <span className="text-red-500">*</span>
-                  </label>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger className={`bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-11 ${!selectedYear ? "border-red-300 dark:border-red-800" : ""}`}>
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Years</SelectItem>
-                      {Array.from({ length: 5 }, (_, i) => {
-                        const year = new Date().getFullYear() - i
-                        return (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">Month</label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700/50 h-9 text-sm rounded-lg">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                    {months.map((m) => <SelectItem key={m.value} value={m.value} className="text-sm">{m.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5 block">Year</label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700/50 h-9 text-sm rounded-lg">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                    <SelectItem value="all" className="text-sm">All Years</SelectItem>
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                      <SelectItem key={year} value={year.toString()} className="text-sm">{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
-          {/* Suggested Prompts */}
-          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <span className="text-slate-900 dark:text-white">Suggested Prompts</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Click to use a ready-made query</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {!selectedReportType ? (
-                <div className="text-center py-8 px-4">
-                  <div className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-full w-fit mx-auto mb-3">
-                    <Lightbulb className="h-6 w-6 text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Select a report type to see suggested prompts</p>
-                </div>
-              ) : isLoadingPrompts ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-blue-500 mr-2" />
-                  <span className="text-sm text-slate-500 dark:text-slate-400">Loading suggestions...</span>
-                </div>
-              ) : suggestedPrompts.length > 0 ? (
-                <div className="space-y-2">
-                  {suggestedPrompts.map((prompt, index) => (
+          {/* Prompt Input */}
+          <div className="flex-1 p-4 flex flex-col min-h-0">
+            <Textarea
+              placeholder="What would you like to know about your data?"
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              className="flex-1 min-h-[100px] resize-none bg-slate-50 dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg text-sm"
+            />
+
+            {/* Suggested Prompts */}
+            {selectedReportType && suggestedPrompts.length > 0 && (
+              <div className="mt-3">
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <Lightbulb className="h-3 w-3" />
+                  Try these
+                </p>
+                <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+                  {suggestedPrompts.slice(0, 5).map((prompt, index) => (
                     <button
                       key={index}
-                      onClick={() => handlePromptSelect(prompt)}
-                      className="text-left w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+                      onClick={() => setCustomPrompt(prompt)}
+                      className="w-full text-left text-xs p-2.5 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] hover:bg-violet-100 dark:hover:bg-violet-900/20 border border-slate-200/80 dark:border-slate-700/50 hover:border-violet-300 dark:hover:border-violet-700/50 text-slate-600 dark:text-slate-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors line-clamp-2"
                     >
-                      <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 leading-relaxed">
-                        {prompt}
-                      </span>
+                      {prompt}
                     </button>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">No prompts available for this report type</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Panel - Analysis */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Custom Prompt */}
-          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <span className="text-slate-900 dark:text-white">Your Analysis Request</span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Describe what insights you want to generate</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  What would you like to analyze? <span className="text-red-500">*</span>
-                </label>
-                <Textarea
-                  placeholder="e.g., 'What are the attendance trends in my region?', 'Which schools need the most support?', 'Analyze student enrollment patterns and provide recommendations'..."
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  className="min-h-[140px] resize-none bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl"
-                />
               </div>
-              
+            )}
+
+            {/* Generate Button */}
+            <div className="mt-4 flex gap-2">
               <Button
                 onClick={handleGenerateInsight}
                 disabled={isGenerating || !isFormValid()}
-                className="w-full h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 h-10 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium rounded-lg disabled:opacity-50"
               >
                 {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Analyzing Your Data...
-                  </>
-                ) : !canGenerateInsight() ? (
-                  <>
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    Daily Limit Reached
-                  </>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analyzing...</>
                 ) : (
-                  <>
-                    <Brain className="mr-2 h-5 w-5" />
-                    Generate AI Insight
-                    <Badge className="ml-2 bg-white/20 text-white border-0 text-xs">
-                      {getRemainingGenerations()} left
-                    </Badge>
-                  </>
+                  <><Send className="h-4 w-4 mr-2" />Generate</>
                 )}
               </Button>
-            </CardContent>
-          </Card>
+              {customPrompt && (
+                <Button variant="outline" onClick={() => setCustomPrompt("")} className="h-10 px-3 border-slate-200 dark:border-slate-700 rounded-lg">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
 
-          {/* AI Insights Result - Summary View */}
-          {aiInsight && (
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <span className="text-slate-900 dark:text-white">AI Analysis Results</span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-normal mt-0.5">Insights generated for your query</p>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 space-y-4">
-                {/* Render visualizations if available */}
-                {visualizationData && (
-                  <div className="mb-6">
-                    {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
-                    {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
-                  </div>
-                )}
-                
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <div 
-                    className="text-slate-700 dark:text-slate-300 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: formatAIInsight(generateSummary(aiInsight)) }}
-                  />
-                </div>
-                
-                <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <Dialog open={showFullInsight} onOpenChange={setShowFullInsight}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Full Analysis
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[85vh] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-                          <Brain className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                          Complete AI Analysis Results
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-600 dark:text-slate-400">
-                          Detailed insights and recommendations for {user?.region_name || 'your region'}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-                        {visualizationData && (
-                          <div className="mb-6">
-                            {visualizationData.tables?.map((table: any, index: number) => renderTable(table, index))}
-                            {visualizationData.charts?.map((chart: any, index: number) => renderChart(chart, index))}
-                          </div>
-                        )}
-                        
-                        <div className="prose prose-sm max-w-none dark:prose-invert">
-                          <div 
-                            className="text-slate-700 dark:text-slate-300 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: formatAIInsight(aiInsight) }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700 mt-4">
-                        <Button 
-                          variant="outline" 
-                          onClick={handleExportPDF}
-                          disabled={isExportingPDF}
-                          className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        >
-                          {isExportingPDF ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <Download className="h-4 w-4 mr-2" />
-                          )}
-                          {isExportingPDF ? "Exporting..." : "Export PDF"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setAiInsight("")
-                      setVisualizationData(null)
-                    }}
-                    className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Clear Results
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={handleExportPDF}
-                    disabled={isExportingPDF}
-                    className="border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                  >
-                    {isExportingPDF ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Download className="h-4 w-4 mr-2" />
-                    )}
-                    Export PDF
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {!allFiltersSelected && (
+              <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Select all filters to enable generation
+              </p>
+            )}
+          </div>
+        </Card>
 
-          {/* Help Card */}
-          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border-b border-slate-200 dark:border-slate-700 pb-4">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        {/* Right Panel - Results */}
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 rounded-xl overflow-hidden flex flex-col">
+          {/* Results Header */}
+          <div className="p-3 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Results</span>
+            </div>
+            {aiInsight && (
+              <div className="flex items-center gap-1.5">
+                <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 px-2 text-xs">
+                  {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
+                  {copied ? 'Copied' : 'Copy'}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleExportPDF}
+                  disabled={isExportingPDF}
+                  className="h-7 px-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {isExportingPDF ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Download className="h-3 w-3 mr-1" />}
+                  PDF
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => { setAiInsight(""); setVisualizationData(null) }} className="h-7 px-2 text-xs text-slate-500 hover:text-red-500">
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Results Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {isGenerating ? (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-900/30 dark:to-indigo-900/30 flex items-center justify-center mb-3">
+                  <Loader2 className="h-6 w-6 text-violet-600 dark:text-violet-400 animate-spin" />
                 </div>
-                <span className="text-slate-900 dark:text-white">How to Use AI Insights</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                {[
-                  { step: "1", title: "Select Report Type", desc: "Choose the data category you want to analyze" },
-                  { step: "2", title: "Set Time Period", desc: "Filter by specific month and year" },
-                  { step: "3", title: "Enter Your Query", desc: "Use a suggested prompt or write your own" },
-                  { step: "4", title: "Generate Insights", desc: "Let AI analyze patterns and trends" },
-                ].map((item) => (
-                  <div key={item.step} className="flex gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/30">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{item.step}</span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-slate-900 dark:text-white text-sm">{item.title}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</div>
-                    </div>
+                <p className="font-medium text-slate-700 dark:text-slate-300 text-sm">Analyzing your data...</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">This may take a moment</p>
+              </div>
+            ) : aiInsight ? (
+              <div>
+                {/* Charts */}
+                {visualizationData?.charts?.map((chart: any, i: number) => (
+                  <div key={i} className="mb-4 p-3 bg-slate-50 dark:bg-[hsl(222,47%,11%)] rounded-lg border border-slate-200/80 dark:border-slate-700/50">
+                    {renderChart(chart, i)}
                   </div>
                 ))}
-              </div>
-              
-              <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 rounded-xl border border-indigo-100 dark:border-indigo-900/50">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="h-5 w-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-indigo-800 dark:text-indigo-300">Pro Tip: </span>
-                    <span className="text-indigo-700 dark:text-indigo-400 text-sm">
-                      Be specific in your questions! Instead of "analyze data", try "what are the top 3 attendance concerns and how can we address them?"
-                    </span>
+
+                {/* Tables */}
+                {visualizationData?.tables?.map((table: any, i: number) => (
+                  <div key={i} className="mb-4 overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/50">
+                    <Table>
+                      <TableHeader className="bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
+                        <TableRow>
+                          {table.headers.map((h: string, j: number) => (
+                            <TableHead key={j} className="text-[11px] uppercase tracking-wider font-semibold">{h}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {table.rows.map((row: string[], j: number) => (
+                          <TableRow key={j}>
+                            {row.map((cell: string, k: number) => (
+                              <TableCell key={k} className="text-xs">{cell}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                </div>
+                ))}
+
+                {/* Text Content */}
+                <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: formatAIInsight(aiInsight) }} />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                  <Brain className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                </div>
+                <p className="font-medium text-slate-600 dark:text-slate-400 text-sm">No results yet</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 max-w-[200px]">
+                  Configure filters and ask a question to generate insights
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   )

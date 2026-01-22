@@ -59,7 +59,7 @@ export class AIService {
               messages: [
                 {
                   role: "system",
-                  content: "You are an educational data analyst for the Ministry of Education in Guyana. Provide professional, actionable insights based on school report data."
+                  content: "You are an educational data analyst for the Ministry of Education in Guyana. Provide professional, actionable insights based on school report data. IMPORTANT: Do NOT use memorandum format. Do NOT include TO, FROM, DATE, or SUBJECT fields. Start directly with the analysis content."
                 },
                 {
                   role: "user",
@@ -67,7 +67,7 @@ export class AIService {
                 }
               ],
               temperature: 0.5,
-              max_tokens: 900,
+              max_tokens: 2000,
             })
           }
         )
@@ -159,14 +159,17 @@ Report Data:
 ${dataContext}
 
 Instructions:
+- Start directly with your analysis - do NOT use memorandum format
+- Do NOT include TO, FROM, DATE, or SUBJECT fields
 - Provide professional, actionable insights
 - Focus on educational outcomes and trends
 - Suggest concrete recommendations where appropriate
 - Use clear, accessible language for educational officials
 - Highlight key patterns, challenges, and opportunities
-- Format your response with clear sections and bullet points where helpful
+- Format your response with clear sections using ## headers and bullet points
+- Always include a final section with actionable recommendations
 
-Analysis:
+Begin your analysis:
 `
   }
 
