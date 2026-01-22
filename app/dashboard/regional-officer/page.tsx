@@ -2349,8 +2349,8 @@ function RegionalOfficerDashboardContent() {
         <TabsContent value="pe-reports" className="space-y-4 lg:space-y-6">
           {/* Page Header */}
           <div>
-            <h2 className="text-2xl font-bold text-blue-600 flex items-center gap-2">
-              <Activity className="h-6 w-6" />
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               Regional Physical Education Reports
             </h2>
             <p className="text-slate-500 dark:text-slate-400">Monitor physical education program reports and activities in your region</p>
@@ -2363,8 +2363,8 @@ function RegionalOfficerDashboardContent() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                 Nursery Assessments - {user?.region_name || 'Your Region'}
                 {nurseryAssessmentsLoaded && !isLoadingNurseryAssessments && (
                   <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">
