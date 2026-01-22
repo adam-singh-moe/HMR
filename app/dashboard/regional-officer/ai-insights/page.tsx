@@ -329,10 +329,8 @@ function RegionalAIInsightsContent() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-            <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl">
-              <Brain className="h-5 w-5 text-white" />
-            </div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Brain className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             AI Insights
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Analyze your region's education data</p>
