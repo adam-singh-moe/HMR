@@ -55,133 +55,142 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 relative overflow-hidden">
-      {/* Background animated elements */}
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)] transition-colors duration-300 relative overflow-hidden">
+      {/* Background - Subtle, non-distracting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Animated gradient orbs */}
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-blue-400/20 via-cyan-400/15 to-purple-400/20 dark:from-blue-500/10 dark:via-cyan-500/10 dark:to-purple-500/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-purple-400/15 via-blue-400/20 to-cyan-400/15 dark:from-purple-500/10 dark:via-blue-500/10 dark:to-cyan-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-300/10 to-purple-300/10 dark:from-blue-600/5 dark:to-purple-600/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '4s' }} />
-        
-        {/* Floating particles */}
-        {mounted && (
-          <>
-            <div className="absolute top-[10%] left-[15%] w-2 h-2 rounded-full bg-blue-400/40 dark:bg-blue-400/30 animate-float-slow" style={{ animationDelay: '0s' }} />
-            <div className="absolute top-[20%] right-[20%] w-3 h-3 rounded-full bg-cyan-400/30 dark:bg-cyan-400/25 animate-float-slow" style={{ animationDelay: '1s' }} />
-            <div className="absolute top-[60%] left-[10%] w-2 h-2 rounded-full bg-purple-400/40 dark:bg-purple-400/30 animate-float-slow" style={{ animationDelay: '2s' }} />
-            <div className="absolute top-[40%] right-[10%] w-4 h-4 rounded-full bg-blue-300/30 dark:bg-blue-400/20 animate-float-slow" style={{ animationDelay: '3s' }} />
-            <div className="absolute bottom-[20%] left-[30%] w-2 h-2 rounded-full bg-cyan-300/40 dark:bg-cyan-400/30 animate-float-slow" style={{ animationDelay: '0.5s' }} />
-            <div className="absolute bottom-[30%] right-[25%] w-3 h-3 rounded-full bg-purple-300/30 dark:bg-purple-400/25 animate-float-slow" style={{ animationDelay: '1.5s' }} />
-          </>
-        )}
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 dark:from-blue-950/20 dark:via-transparent dark:to-indigo-950/10" />
 
-        {/* Subtle grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]"
+        {/* Subtle grid pattern - less prominent */}
+        <div
+          className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(59, 130, 246, 0.5) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(59, 130, 246, 0.5) 1px, transparent 1px)
+              linear-gradient(rgba(99, 102, 241, 0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(99, 102, 241, 0.4) 1px, transparent 1px)
             `,
-            backgroundSize: '60px 60px'
+            backgroundSize: '48px 48px'
           }}
         />
       </div>
 
-      {/* Header */}
-      <header className="admin-hide-on-mobile fixed top-0 left-0 right-0 z-50 w-full border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm transition-colors duration-300">
-        <div className="container mx-auto">
-          <div className="flex h-14 sm:h-16 md:h-20 items-center justify-between px-3 sm:px-4 py-2 sm:py-4">
-            <Link href={dashboardUrl} className="flex items-center gap-2 sm:gap-3 font-semibold min-w-0 flex-1">
-              {/* Logo with glow effect */}
-              <div className="relative h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 flex-shrink-0">
-                <div className="absolute inset-0 blur-lg bg-blue-500/20 dark:bg-blue-400/30 rounded-full scale-150 animate-pulse-slow" />
-                <div className="relative w-full h-full rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
-                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
-                    <Image 
-                      src="/images/moe-logo.png" 
-                      alt="Ministry of Education Guyana" 
-                      fill 
-                      className="object-contain p-1 rounded-full" 
+      {/* Header - Clean, aligned with main content */}
+      <header className="admin-hide-on-mobile fixed top-0 left-0 right-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-700/50 bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl shadow-sm shadow-slate-200/50 dark:shadow-slate-900/50 transition-all duration-300">
+        <div className="flex h-14 sm:h-16 md:h-[72px] items-center">
+          {/* Mobile Logo - Shows only on smaller screens */}
+          <Link href={dashboardUrl} className="flex lg:hidden items-center gap-3 font-semibold min-w-0 flex-1 px-4">
+            <div className="relative h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0">
+              <div className="w-full h-full rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 p-[2px] shadow-lg shadow-blue-500/25 dark:shadow-blue-500/20">
+                <div className="w-full h-full rounded-[10px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="/images/moe-logo.png"
+                    alt="Ministry of Education Guyana"
+                    fill
+                    className="object-contain p-1.5"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-white truncate tracking-tight">
+                HMR Portal
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block font-medium">Ministry of Education</span>
+            </div>
+          </Link>
+
+          {/* Desktop: Content aligned with main content area (after sidebar) */}
+          <div className="hidden lg:flex flex-1 items-center justify-between h-full ml-[260px] px-6">
+            {/* Left side - Logo and title */}
+            <Link href={dashboardUrl} className="flex items-center gap-3 font-semibold">
+              <div className="relative h-10 w-10 flex-shrink-0">
+                <div className="w-full h-full rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 p-[2px] shadow-lg shadow-blue-500/25 dark:shadow-blue-500/20">
+                  <div className="w-full h-full rounded-[10px] bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
+                    <Image
+                      src="/images/moe-logo.png"
+                      alt="Ministry of Education Guyana"
+                      fill
+                      className="object-contain p-1.5"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm sm:text-base md:text-xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 dark:from-blue-400 dark:via-cyan-400 dark:to-blue-300 bg-clip-text text-transparent truncate">
+              <div className="flex flex-col">
+                <span className="text-base font-bold text-slate-800 dark:text-white tracking-tight">
                   School Headteacher's Reporting Portal
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Ministry of Education</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ministry of Education</span>
               </div>
             </Link>
 
-            <nav className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {/* Theme Toggle */}
+            {/* Right side - Nav items */}
+            <nav className="flex items-center gap-2.5">
+              {/* Theme Toggle - Refined */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-all duration-300 border border-slate-200 dark:border-slate-600/50 shadow-sm dark:shadow-slate-900/20"
+                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 border border-slate-200/80 dark:border-slate-700/50"
                 aria-label="Toggle theme"
               >
                 {mounted && (
                   theme === "dark" ? (
                     <Sun className="h-4 w-4 text-amber-400" />
                   ) : (
-                    <Moon className="h-4 w-4 text-slate-600" />
+                    <Moon className="h-4 w-4 text-slate-500" />
                   )
                 )}
               </button>
 
               {/* Notification Bell */}
               <NotificationBell />
-              
+
               {/* Feature Request Button */}
               {(role === "Regional Officer" || role === "Education Official" || role === "Head Teacher") && (
                 <FeatureRequestButton />
               )}
-              
-              {/* User info */}
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-32 lg:max-w-none">
+
+              {/* User info - Cleaner layout */}
+              <div className="text-right hidden md:block pl-2 border-l border-slate-200 dark:border-slate-700/50 ml-1">
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-100 truncate max-w-32 lg:max-w-none">
                   Welcome, {capitalizedName}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{formattedRole}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize font-medium">{formattedRole}</p>
               </div>
 
-              {/* User Dropdown Menu */}
+              {/* User Dropdown Menu - Refined */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-blue-200 dark:border-slate-700 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 h-9 sm:h-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm"
+                    className="border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 sm:h-10 bg-white dark:bg-slate-800/80 rounded-xl font-medium"
                   >
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline ml-2">Account</span>
-                    <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
+                    <ChevronDown className="h-3.5 w-3.5 ml-1.5 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-slate-200 dark:border-slate-700">
+                <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50">
                   {/* Show user info in dropdown on mobile */}
-                  <div className="px-2 py-1.5 md:hidden border-b border-slate-200 dark:border-slate-700">
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{capitalizedName}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{formattedRole}</p>
+                  <div className="px-3 py-2 md:hidden border-b border-slate-200 dark:border-slate-700/50">
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{capitalizedName}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{formattedRole}</p>
                   </div>
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings" className="flex items-center text-slate-700 dark:text-slate-200">
-                      <Settings className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem asChild className="rounded-lg mx-1 my-0.5">
+                    <Link href="/dashboard/settings" className="flex items-center text-slate-700 dark:text-slate-200 cursor-pointer">
+                      <Settings className="h-4 w-4 mr-2.5 opacity-70" />
                       Account Settings
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700" />
-                  <DropdownMenuItem 
+                  <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700/50" />
+                  <DropdownMenuItem
                     onClick={handleSignOut}
                     disabled={isPending}
-                    className="flex items-center text-slate-700 dark:text-slate-200 cursor-pointer"
+                    className="flex items-center text-slate-700 dark:text-slate-200 cursor-pointer rounded-lg mx-1 my-0.5"
                   >
                     {isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-2.5 animate-spin opacity-70" />
                     ) : (
-                      <LogOut className="h-4 w-4 mr-2" />
+                      <LogOut className="h-4 w-4 mr-2.5 opacity-70" />
                     )}
                     {isPending ? "Signing out..." : "Sign Out"}
                   </DropdownMenuItem>
@@ -189,11 +198,66 @@ export function DashboardShell({
               </DropdownMenu>
             </nav>
           </div>
+
+          {/* Mobile nav - Shows on smaller screens */}
+          <nav className="flex lg:hidden items-center gap-2 px-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 border border-slate-200/80 dark:border-slate-700/50"
+              aria-label="Toggle theme"
+            >
+              {mounted && (
+                theme === "dark" ? (
+                  <Sun className="h-4 w-4 text-amber-400" />
+                ) : (
+                  <Moon className="h-4 w-4 text-slate-500" />
+                )
+              )}
+            </button>
+            <NotificationBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 h-9 bg-white dark:bg-slate-800/80 rounded-xl font-medium"
+                >
+                  <User className="h-4 w-4" />
+                  <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700/50 rounded-xl shadow-xl">
+                <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700/50">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{capitalizedName}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">{formattedRole}</p>
+                </div>
+                <DropdownMenuItem asChild className="rounded-lg mx-1 my-0.5">
+                  <Link href="/dashboard/settings" className="flex items-center text-slate-700 dark:text-slate-200 cursor-pointer">
+                    <Settings className="h-4 w-4 mr-2.5 opacity-70" />
+                    Account Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-700/50" />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  disabled={isPending}
+                  className="flex items-center text-slate-700 dark:text-slate-200 cursor-pointer rounded-lg mx-1 my-0.5"
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2.5 animate-spin opacity-70" />
+                  ) : (
+                    <LogOut className="h-4 w-4 mr-2.5 opacity-70" />
+                  )}
+                  {isPending ? "Signing out..." : "Sign Out"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
         </div>
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-14 sm:h-16 md:h-20 flex-shrink-0" />
+      <div className="h-14 sm:h-16 md:h-[72px] flex-shrink-0" />
       
       {/* Main Content */}
       <main className="flex-1">

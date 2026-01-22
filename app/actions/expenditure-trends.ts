@@ -3,24 +3,33 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
 
-export async function getExpenditureTrends() {
+export async function getExpenditureTrends(year?: number) {
   try {
     const user = await getUser()
 
     if (!user || user.role !== "Regional Officer") {
-      return { expenditures: [], error: "Only Regional Officers can access expenditure trends." }
+      return { expenditures: [], availableYears: [], error: "Only Regional Officers can access expenditure trends." }
     }
 
     if (!user.region) {
-      return { expenditures: [], error: "Regional Officer has no region assigned." }
+      return { expenditures: [], availableYears: [], error: "Regional Officer has no region assigned." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Get the current year
-    const currentYear = new Date().getFullYear()
+    // Get the selected year or current year
+    const selectedYear = year || new Date().getFullYear()
 
-   // console.log("Debug: Fetching expenditure trends for year:", currentYear, "region:", user.region)
+    // First, get available years for the dropdown
+    const { data: yearsData } = await supabase
+      .from("hmr_report")
+      .select("year")
+      .eq("region_id", user.region)
+      .eq("status", "submitted")
+      .is("deleted_on", null)
+      .not("year", "is", null)
+
+    const availableYears = [...new Set(yearsData?.map(r => r.year) || [])].sort((a, b) => b - a)
 
     // Use a simpler approach that matches your working SQL query
     const { data: expenditureData, error } = await supabase
@@ -41,7 +50,7 @@ export async function getExpenditureTrends() {
         )
       `)
       .eq("hmr_report.region_id", user.region)
-      .eq("hmr_report.year", currentYear)
+      .eq("hmr_report.year", selectedYear)
       .eq("hmr_report.status", "submitted")
       .is("hmr_report.deleted_on", null)
       .not("total_expenditure", "is", null)
@@ -50,15 +59,15 @@ export async function getExpenditureTrends() {
 
     if (error) {
       console.error("Error fetching expenditure data:", error)
-      return { expenditures: [], error: "Failed to fetch expenditure data." }
+      return { expenditures: [], availableYears, error: "Failed to fetch expenditure data." }
     }
 
     if (!expenditureData || expenditureData.length === 0) {
-     // console.log("Debug: No expenditure data found for", currentYear)
-      return { 
-        expenditures: [], 
+      return {
+        expenditures: [],
         topSchools: [],
-        error: null 
+        availableYears,
+        error: null
       }
     }
 
@@ -140,13 +149,14 @@ export async function getExpenditureTrends() {
    // console.log("Debug: Chart data processed:", chartData.length, "months")
     // console.log("Debug: Top schools:", topSchools)
 
-    return { 
-      expenditures: chartData, 
+    return {
+      expenditures: chartData,
       topSchools,
-      error: null 
+      availableYears,
+      error: null
     }
   } catch (error) {
     console.error("Error in getExpenditureTrends:", error)
-    return { expenditures: [], error: "An unexpected error occurred." }
+    return { expenditures: [], availableYears: [], error: "An unexpected error occurred." }
   }
 }

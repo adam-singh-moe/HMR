@@ -151,7 +151,9 @@ function RegionalOfficerDashboardContent() {
   const [expenditureSchools, setExpenditureSchools] = useState<string[]>([])
   const [isLoadingExpenditure, setIsLoadingExpenditure] = useState<boolean>(false)
   const [expenditureError, setExpenditureError] = useState<string | null>(null)
-  
+  const [selectedExpenditureYear, setSelectedExpenditureYear] = useState<number>(new Date().getFullYear())
+  const [availableExpenditureYears, setAvailableExpenditureYears] = useState<number[]>([])
+
   // Top expenditure schools state
   const [topExpenditureSchools, setTopExpenditureSchools] = useState<any[]>([])
   const [availableFinancePeriods, setAvailableFinancePeriods] = useState<{year: number, month: number}[]>([])
@@ -331,6 +333,11 @@ function RegionalOfficerDashboardContent() {
     }
   }, [selectedFinanceYear, selectedFinanceMonth, availableFinancePeriods])
 
+  // Load expenditure trends when year changes
+  useEffect(() => {
+    loadExpenditureTrends(selectedExpenditureYear)
+  }, [selectedExpenditureYear])
+
   // Parallel loading function for all dashboard data
   const loadAllDashboardData = async () => {
     // Set all loading states to true
@@ -377,6 +384,9 @@ function RegionalOfficerDashboardContent() {
       } else {
         setExpenditureData(expenditureResult.expenditures)
         setExpenditureSchools(expenditureResult.topSchools || [])
+        if (expenditureResult.availableYears && expenditureResult.availableYears.length > 0) {
+          setAvailableExpenditureYears(expenditureResult.availableYears)
+        }
       }
 
       // Process attendance trends
@@ -491,12 +501,12 @@ function RegionalOfficerDashboardContent() {
     }
   }
 
-  const loadExpenditureTrends = async () => {
+  const loadExpenditureTrends = async (year?: number) => {
     setIsLoadingExpenditure(true)
     setExpenditureError(null)
 
     try {
-      const result = await getExpenditureTrends()
+      const result = await getExpenditureTrends(year || selectedExpenditureYear)
 
       if (result.error) {
         setExpenditureError(result.error)
@@ -505,6 +515,9 @@ function RegionalOfficerDashboardContent() {
       } else {
         setExpenditureData(result.expenditures)
         setExpenditureSchools(result.topSchools || [])
+        if (result.availableYears && result.availableYears.length > 0) {
+          setAvailableExpenditureYears(result.availableYears)
+        }
       }
     } catch (error) {
       console.error("Error loading expenditure trends:", error)
@@ -612,10 +625,10 @@ function RegionalOfficerDashboardContent() {
       const generateReportStatusData = () => {
         const submitted = schools.filter(s => s.status === "submitted").length
         const notSubmitted = schools.filter(s => s.status === "not-submitted").length
-        
+
         return [
-          { name: "Submitted", value: submitted, color: "#22c55e" },
-          { name: "Not Submitted", value: notSubmitted, color: "#f59e0b" },
+          { name: "Submitted", value: submitted, color: "#22d3ee" },
+          { name: "Not Submitted", value: notSubmitted, color: "#6366f1" },
         ]
       }
 
@@ -1021,15 +1034,22 @@ function RegionalOfficerDashboardContent() {
   return (
     <div className="min-h-screen">
       {/* Fixed Sidebar Navigation - starts below main header */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-14 sm:top-16 md:top-20 bottom-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out flex flex-col shadow-2xl`}>
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Regional Dashboard</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user?.region_name || 'Region'}</p>
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-14 sm:top-16 md:top-[72px] bottom-0 left-0 z-40 w-[260px] bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-700/50 transition-transform duration-300 ease-in-out flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50`}>
+        {/* Sidebar Header - Modern Design */}
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/50 dark:border-blue-500/20">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/20">
+              <MapPin className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Regional Officer</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{user?.region_name || 'Region'}</p>
+            </div>
+          </div>
         </div>
 
         {/* Navigation Items - Scrollable */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
+        <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon
             const isActive = currentTab === item.id
@@ -1040,25 +1060,25 @@ function RegionalOfficerDashboardContent() {
                   updateURL(item.id)
                   setSidebarOpen(false)
                 }}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-blue-600 dark:bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-600 dark:text-slate-300'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                   isActive
                     ? 'bg-white/20'
                     : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
                 }`}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`} />
+                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
                 </div>
-                <div className="flex-1 text-left">
-                  <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.label}</p>
-                  <p className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-500 dark:text-slate-500'}`}>{item.description}</p>
+                <div className="flex-1 text-left min-w-0">
+                  <p className={`text-[13px] font-semibold truncate ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.label}</p>
+                  <p className={`text-[11px] truncate ${isActive ? 'text-white/70' : 'text-slate-500 dark:text-slate-500'}`}>{item.description}</p>
                 </div>
                 {isActive && (
-                  <div className="w-1.5 h-8 bg-white/30 rounded-full" />
+                  <div className="w-1 h-6 bg-white/40 rounded-full flex-shrink-0" />
                 )}
               </button>
             )
@@ -1066,48 +1086,48 @@ function RegionalOfficerDashboardContent() {
         </nav>
 
         {/* School Readiness Card - Fixed at Bottom */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-          <div 
+        <div className="p-3 border-t border-slate-200/80 dark:border-slate-700/50">
+          <div
             onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
-            className="p-4 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white cursor-pointer hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300 hover:scale-[1.02]"
+            className="p-4 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-600 dark:to-indigo-600 text-white cursor-pointer hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-300 hover:scale-[1.02]"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                <span className="font-semibold">School Readiness</span>
+                <Activity className="w-4 h-4" />
+                <span className="text-sm font-semibold">School Readiness</span>
               </div>
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 opacity-70" />
             </div>
-            <p className="text-3xl font-bold">{schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}</p>
-            <p className="text-xs text-white/80 mt-1">Click to view details</p>
+            <p className="text-2xl font-bold">{schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}</p>
+            <p className="text-[11px] text-white/70 mt-1">Click to view details</p>
           </div>
         </div>
       </aside>
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
+        <div
+          className="lg:hidden fixed inset-0 bg-slate-900/60 z-30 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile Header - only shows on small screens */}
-      <div className="lg:hidden fixed top-14 sm:top-16 md:top-20 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+      <div className="lg:hidden fixed top-14 sm:top-16 md:top-[72px] left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-700/50">
         <div>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Regional Dashboard</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{user?.region_name || 'Region'}</p>
+          <h1 className="text-base font-bold text-slate-800 dark:text-white">Regional Dashboard</h1>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{user?.region_name || 'Region'}</p>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
         >
-          {sidebarOpen ? <X className="h-5 w-5 text-slate-700 dark:text-white" /> : <Menu className="h-5 w-5 text-slate-700 dark:text-white" />}
+          {sidebarOpen ? <X className="h-5 w-5 text-slate-600 dark:text-white" /> : <Menu className="h-5 w-5 text-slate-600 dark:text-white" />}
         </button>
       </div>
 
       {/* Main Content Area */}
-      <main className="lg:ml-72 min-h-screen pt-14 lg:pt-0">
+      <main className="lg:ml-[260px] min-h-screen pt-14 lg:pt-0">
         <div className="p-4 lg:p-6 max-w-7xl mx-auto">
         <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4 lg:space-y-6">
           {/* Hidden TabsList - using sidebar for navigation but keeping Tabs for content organization */}
@@ -1119,42 +1139,42 @@ function RegionalOfficerDashboardContent() {
             <TabsTrigger value="ai-insights">AI</TabsTrigger>
           </TabsList>
 
-        <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+        <TabsContent value="overview" className="space-y-5 lg:space-y-6">
           {/* Page Header with Stats */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5 tracking-tight">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                 System Overview
               </h2>
-              <p className="text-slate-400 text-sm sm:text-base">Monitor key metrics and performance indicators</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Monitor key metrics and performance indicators</p>
             </div>
-            {/* Quick Stats Cards */}
-            <div className="flex gap-3">
-              <div className="px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/30">
-                <div className="flex items-center gap-2">
-                  <School className="w-5 h-5 text-blue-400" />
+            {/* Quick Stats Cards - Unified styling */}
+            <div className="flex gap-2.5 flex-wrap">
+              <div className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20">
+                <div className="flex items-center gap-2.5">
+                  <School className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <div>
-                    <p className="text-2xl font-bold text-blue-400">{currentMonthSchools.length}</p>
-                    <p className="text-xs text-blue-400/70">Total Schools</p>
+                    <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{currentMonthSchools.length}</p>
+                    <p className="text-[11px] text-blue-600/70 dark:text-blue-400/70 font-medium">Total Schools</p>
                   </div>
                 </div>
               </div>
-              <div className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+              <div className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <p className="text-2xl font-bold text-emerald-400">{currentMonthSchools.filter((s) => s.status === "submitted").length}</p>
-                    <p className="text-xs text-emerald-400/70">Submitted</p>
+                    <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{currentMonthSchools.filter((s) => s.status === "submitted").length}</p>
+                    <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">Submitted</p>
                   </div>
                 </div>
               </div>
-              <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-amber-400" />
+              <div className="px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   <div>
-                    <p className="text-2xl font-bold text-amber-400">{currentMonthSchools.filter((s) => s.status !== "submitted").length}</p>
-                    <p className="text-xs text-amber-400/70">Pending</p>
+                    <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{currentMonthSchools.filter((s) => s.status !== "submitted").length}</p>
+                    <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70 font-medium">Pending</p>
                   </div>
                 </div>
               </div>
@@ -1167,12 +1187,36 @@ function RegionalOfficerDashboardContent() {
           {/* Key Metrics - Removed since they're already in sidebar */}
 
           {/* Charts Section */}
-          <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-5 lg:gap-6 grid-cols-1 lg:grid-cols-2">
             {/* Monthly Expenditure Trends */}
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-white">Monthly Expenditure Trends</CardTitle>
-                <CardDescription className="dark:text-slate-400">School expenditures by month for current year</CardDescription>
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-base font-semibold text-slate-800 dark:text-white">Monthly Expenditure Trends</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">School expenditures by month</CardDescription>
+                  </div>
+                  {availableExpenditureYears.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Year:</label>
+                      <Select
+                        value={selectedExpenditureYear.toString()}
+                        onValueChange={(value) => setSelectedExpenditureYear(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-20 h-8 text-sm bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
+                          {availableExpenditureYears.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoadingExpenditure ? (
@@ -1186,27 +1230,53 @@ function RegionalOfficerDashboardContent() {
                     <span>{expenditureError}</span>
                   </div>
                 ) : expenditureData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
-                    <span>No expenditure data available for current year</span>
+                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                      <TrendingUp className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="text-sm font-medium">No expenditure data available</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">for {selectedExpenditureYear}</p>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={sortedExpenditureData}>
-                      <CartesianGrid strokeDasharray="3 3" className="dark:opacity-30" />
-                      <XAxis dataKey="month" className="dark:text-slate-400" />
-                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`} className="dark:text-slate-400" />
-                      <Tooltip 
+                    <LineChart data={sortedExpenditureData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                      <defs>
+                        <linearGradient id="totalExpGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(148, 163, 184, 0.15)"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        axisLine={{ stroke: 'rgba(148, 163, 184, 0.2)' }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={50}
+                      />
+                      <Tooltip
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className="bg-white dark:bg-slate-800 p-3 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg">
-                                <p className="font-medium text-slate-900 dark:text-white">{`Month: ${label}`}</p>
+                              <div className="bg-slate-900/95 backdrop-blur-sm p-3 border border-slate-700/50 rounded-xl shadow-xl">
+                                <p className="font-semibold text-white text-sm mb-2">{label}</p>
                                 {payload.map((entry, index) => (
-                                  <p key={index} style={{ color: entry.color }} className="text-sm">
-                                    <span className="font-medium">
-                                      {entry.dataKey === 'total' ? 'Total Expenditure' : entry.dataKey}:
+                                  <p key={index} className="text-xs flex items-center gap-2 py-0.5">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                    <span className="text-slate-400">
+                                      {entry.dataKey === 'total' ? 'Total' : entry.dataKey}:
                                     </span>
-                                    {' '}${entry.value?.toLocaleString()}
+                                    <span className="font-medium text-white">${entry.value?.toLocaleString()}</span>
                                   </p>
                                 ))}
                               </div>
@@ -1215,16 +1285,17 @@ function RegionalOfficerDashboardContent() {
                           return null
                         }}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="total" 
-                        stroke="#dc2626" 
-                        strokeWidth={3} 
+                      <Line
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#6366f1"
+                        strokeWidth={3}
                         name="Total Expenditure"
-                        dot={{ fill: "#dc2626", strokeWidth: 2, r: 4 }}
+                        dot={{ fill: "#6366f1", strokeWidth: 0, r: 4 }}
+                        activeDot={{ r: 6, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
                       />
                       {expenditureSchools.slice(0, 3).map((school, index) => {
-                        const colors = ["#3b82f6", "#10b981", "#f59e0b"]
+                        const colors = ["#22d3ee", "#34d399", "#a78bfa"]
                         return (
                           <Line
                             key={school}
@@ -1233,8 +1304,9 @@ function RegionalOfficerDashboardContent() {
                             stroke={colors[index]}
                             strokeWidth={2}
                             name={school}
-                            strokeDasharray={index > 0 ? "5 5" : undefined}
-                            dot={{ fill: colors[index], strokeWidth: 1, r: 3 }}
+                            strokeDasharray={index > 0 ? "6 4" : undefined}
+                            dot={{ fill: colors[index], strokeWidth: 0, r: 3 }}
+                            activeDot={{ r: 5, fill: colors[index], stroke: "#fff", strokeWidth: 2 }}
                           />
                         )
                       })}
@@ -1245,10 +1317,10 @@ function RegionalOfficerDashboardContent() {
             </Card>
 
             {/* Report Status Distribution */}
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-white">Report Status Distribution</CardTitle>
-                <CardDescription className="dark:text-slate-400">Current status of monthly reports</CardDescription>
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold text-slate-800 dark:text-white">Report Status Distribution</CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">Current status of monthly reports</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingDashboardData ? (
@@ -1257,55 +1329,98 @@ function RegionalOfficerDashboardContent() {
                     <span className="ml-2 text-blue-600">Loading report status data...</span>
                   </div>
                 ) : reportStatusData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
-                    <span>No report status data available</span>
+                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                      <FileText className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+                    </div>
+                    <p className="text-sm font-medium">No report data available</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Submit reports to see status</p>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={reportStatusData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, value }) => `${name}: ${value}`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {reportStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="flex flex-col items-center justify-center h-[300px]">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <defs>
+                          <linearGradient id="pieGradient1" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#22d3ee" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#06b6d4" stopOpacity={1}/>
+                          </linearGradient>
+                          <linearGradient id="pieGradient2" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#818cf8" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#6366f1" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
+                        <Pie
+                          data={reportStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={4}
+                          dataKey="value"
+                          strokeWidth={0}
+                        >
+                          {reportStatusData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={index === 0 ? "url(#pieGradient1)" : "url(#pieGradient2)"}
+                              style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            border: '1px solid rgba(51, 65, 85, 0.5)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+                          }}
+                          itemStyle={{ color: '#e2e8f0', fontSize: '13px' }}
+                          labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Custom Legend */}
+                    <div className="flex items-center justify-center gap-6 mt-2">
+                      {reportStatusData.map((entry, index) => (
+                        <div key={entry.name} className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ background: index === 0 ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'linear-gradient(135deg, #818cf8, #6366f1)' }}
+                          />
+                          <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">{entry.name}</span>
+                          <span className="text-sm font-bold text-slate-800 dark:text-white">{entry.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
           {/* School Performance and Region Comparison */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-5 lg:gap-6 md:grid-cols-2">
             {/* Top Expenditure Schools */}
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
               <CardHeader className="pb-2">
-                <CardTitle className="text-slate-900 dark:text-white">Top School Expenditure</CardTitle>
-                <CardDescription className="dark:text-slate-400">Schools with highest total expenditure</CardDescription>
+                <CardTitle className="text-base font-semibold text-slate-800 dark:text-white">Top School Expenditure</CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">Schools with highest total expenditure</CardDescription>
                 {availableFinancePeriods.length > 0 && (
                   <div className="flex flex-wrap items-center gap-3 pt-3">
                     <div className="flex items-center gap-2">
-                      <label htmlFor="finance-year-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      <label htmlFor="finance-year-filter" className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Year:
                       </label>
                       <Select
                         value={selectedFinanceYear.toString()}
                         onValueChange={(value) => setSelectedFinanceYear(parseInt(value))}
                       >
-                        <SelectTrigger id="finance-year-filter" className="w-20 h-9 dark:bg-slate-800 dark:border-slate-700">
+                        <SelectTrigger id="finance-year-filter" className="w-20 h-8 text-sm bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                        <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           {availableFinanceYears.map((year) => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
@@ -1315,17 +1430,17 @@ function RegionalOfficerDashboardContent() {
                       </Select>
                     </div>
                     <div className="flex items-center gap-2">
-                      <label htmlFor="finance-month-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      <label htmlFor="finance-month-filter" className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Month:
                       </label>
                       <Select
                         value={selectedFinanceMonth.toString()}
                         onValueChange={(value) => setSelectedFinanceMonth(parseInt(value))}
                       >
-                        <SelectTrigger id="finance-month-filter" className="w-32 h-9 dark:bg-slate-800 dark:border-slate-700">
+                        <SelectTrigger id="finance-month-filter" className="w-28 h-8 text-sm bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                        <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           {availableFinanceMonths.map((month) => (
                             <SelectItem key={month} value={month.toString()}>
                               {getMonthName(month)}
@@ -1351,38 +1466,62 @@ function RegionalOfficerDashboardContent() {
                     </div>
                   </div>
                 ) : topExpenditureSchools.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
-                    <div className="text-center">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-500 dark:text-slate-400" />
-                      <p>No expenditure data available</p>
-                      <p className="text-xs mt-2">for {getMonthName(selectedFinanceMonth)} {selectedFinanceYear}</p>
+                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                      <BarChart3 className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                     </div>
+                    <p className="text-sm font-medium">No expenditure data available</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">for {getMonthName(selectedFinanceMonth)} {selectedFinanceYear}</p>
                   </div>
                 ) : (
                   <>
                     <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={topExpenditureSchools}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="schoolName" 
-                          tick={{ fontSize: 10 }}
+                      <BarChart data={topExpenditureSchools} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
+                        <defs>
+                          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#1d4ed8" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="rgba(148, 163, 184, 0.15)"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="schoolName"
+                          tick={{ fontSize: 10, fill: '#94a3b8' }}
                           angle={-45}
                           textAnchor="end"
-                          height={80}
+                          height={70}
+                          axisLine={{ stroke: 'rgba(148, 163, 184, 0.2)' }}
+                          tickLine={false}
                         />
-                        <YAxis 
-                          tick={{ fontSize: 12 }}
+                        <YAxis
+                          tick={{ fontSize: 11, fill: '#94a3b8' }}
                           tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                          label={{ value: 'Total Expenditure', angle: -90, position: 'insideLeft' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={55}
                         />
-                        <Tooltip 
-                          formatter={(value: any) => [`$${(value || 0).toLocaleString()}`, 'Total Expenditure']}
-                          labelStyle={{ fontSize: '12px' }}
+                        <Tooltip
+                          formatter={(value: any) => [`$${(value || 0).toLocaleString()}`, 'Expenditure']}
+                          contentStyle={{
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            border: '1px solid rgba(51, 65, 85, 0.5)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+                          }}
+                          itemStyle={{ color: '#e2e8f0', fontSize: '13px' }}
+                          labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
+                          cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
                         />
-                        <Bar 
-                          dataKey="totalExpenditure" 
-                          fill="#dc2626"
-                          radius={[4, 4, 0, 0]}
+                        <Bar
+                          dataKey="totalExpenditure"
+                          fill="url(#barGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={50}
                         />
                       </BarChart>
                     </ResponsiveContainer>
@@ -1392,24 +1531,24 @@ function RegionalOfficerDashboardContent() {
             </Card>
 
             {/* Regional Attendance & Punctuality Trends */}
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
               <CardHeader className="pb-2">
-                <CardTitle className="text-slate-900 dark:text-white">Regional Performance Trends</CardTitle>
-                <CardDescription className="dark:text-slate-400">Monthly attendance and punctuality rates for teachers and students</CardDescription>
+                <CardTitle className="text-base font-semibold text-slate-800 dark:text-white">Regional Performance Trends</CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">Monthly attendance and punctuality rates for teachers and students</CardDescription>
                 {availableYears.length > 0 && (
                   <div className="flex items-center gap-3 pt-3">
                     <div className="flex items-center gap-2">
-                      <label htmlFor="year-filter" className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      <label htmlFor="year-filter" className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Year:
                       </label>
                       <Select
                         value={selectedYear.toString()}
                         onValueChange={(value) => setSelectedYear(parseInt(value))}
                       >
-                        <SelectTrigger id="year-filter" className="w-24 h-9 dark:bg-slate-800 dark:border-slate-700">
+                        <SelectTrigger id="year-filter" className="w-24 h-8 text-sm bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                        <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                           {availableYears.map((year) => (
                             <SelectItem key={year} value={year.toString()}>
                               {year}
@@ -1435,93 +1574,146 @@ function RegionalOfficerDashboardContent() {
                     </div>
                   </div>
                 ) : filteredAttendanceData.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
-                    <div className="text-center">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-500 dark:text-slate-400" />
-                      <p>No attendance data available for {selectedYear}</p>
-                      <p className="text-xs mt-2">Submit some reports to see attendance trends</p>
+                  <div className="flex flex-col items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
+                    <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                      <Users className="w-7 h-7 text-slate-400 dark:text-slate-500" />
                     </div>
+                    <p className="text-sm font-medium">No attendance data for {selectedYear}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Submit reports to see attendance trends</p>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={filteredAttendanceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="monthOnly" 
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis 
-                        domain={[0, 100]}
-                        tick={{ fontSize: 12 }}
-                        label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft' }}
-                      />
-                      <Tooltip 
-                        labelFormatter={(label) => label}
-                        formatter={(value, name) => [`${value}%`, name]}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="studentAttendance" 
-                        stroke="#3b82f6" 
-                        strokeWidth={2}
-                        name="Student Attendance"
-                        dot={{ fill: "#3b82f6", r: 4 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="teacherAttendance" 
-                        stroke="#10b981" 
-                        strokeWidth={2}
-                        name="Teacher Attendance"
-                        dot={{ fill: "#10b981", r: 4 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="studentPunctuality" 
-                        stroke="#f59e0b" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        name="Student Punctuality"
-                        dot={{ fill: "#f59e0b", r: 4 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="teacherPunctuality" 
-                        stroke="#ef4444" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        name="Teacher Punctuality"
-                        dot={{ fill: "#ef4444", r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <div className="flex flex-col h-[340px]">
+                    <ResponsiveContainer width="100%" height={280}>
+                      <LineChart data={filteredAttendanceData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="studentAttGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="teacherAttGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="rgba(148, 163, 184, 0.15)"
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="monthOnly"
+                          tick={{ fontSize: 11, fill: '#94a3b8' }}
+                          axisLine={{ stroke: 'rgba(148, 163, 184, 0.2)' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 100]}
+                          tick={{ fontSize: 11, fill: '#94a3b8' }}
+                          axisLine={false}
+                          tickLine={false}
+                          width={35}
+                          tickFormatter={(value) => `${value}%`}
+                        />
+                        <Tooltip
+                          labelFormatter={(label) => label}
+                          formatter={(value, name) => [`${value}%`, name]}
+                          contentStyle={{
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            border: '1px solid rgba(51, 65, 85, 0.5)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+                          }}
+                          itemStyle={{ color: '#e2e8f0', fontSize: '12px', padding: '2px 0' }}
+                          labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '6px', fontWeight: 600 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="studentAttendance"
+                          stroke="#3b82f6"
+                          strokeWidth={2.5}
+                          name="Student Attendance"
+                          dot={{ fill: "#3b82f6", r: 3, strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="teacherAttendance"
+                          stroke="#06b6d4"
+                          strokeWidth={2.5}
+                          name="Teacher Attendance"
+                          dot={{ fill: "#06b6d4", r: 3, strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#06b6d4", stroke: "#fff", strokeWidth: 2 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="studentPunctuality"
+                          stroke="#a78bfa"
+                          strokeWidth={2}
+                          strokeDasharray="6 4"
+                          name="Student Punctuality"
+                          dot={{ fill: "#a78bfa", r: 3, strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#a78bfa", stroke: "#fff", strokeWidth: 2 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="teacherPunctuality"
+                          stroke="#f472b6"
+                          strokeWidth={2}
+                          strokeDasharray="6 4"
+                          name="Teacher Punctuality"
+                          dot={{ fill: "#f472b6", r: 3, strokeWidth: 0 }}
+                          activeDot={{ r: 5, fill: "#f472b6", stroke: "#fff", strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                    {/* Custom Legend */}
+                    <div className="flex flex-wrap items-center justify-center gap-4 mt-2 px-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-0.5 bg-blue-500 rounded-full" />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Student Att.</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-0.5 bg-cyan-500 rounded-full" />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Teacher Att.</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-0.5 bg-violet-400 rounded-full" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #a78bfa 0, #a78bfa 4px, transparent 4px, transparent 8px)' }} />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Student Punct.</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-0.5 bg-pink-400 rounded-full" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #f472b6 0, #f472b6 4px, transparent 4px, transparent 8px)' }} />
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">Teacher Punct.</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="reports" className="space-y-4 lg:space-y-6">
+        <TabsContent value="reports" className="space-y-5 lg:space-y-6">
           {/* Page Header */}
-          
+
           {/* Toggle Section */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-800 dark:text-white flex items-center gap-2.5">
                   {showCurrentMonth ? (
                     <>
-                      <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                       Current Month Report Status
                     </>
                   ) : (
                     <>
-                      <History className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <History className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                       Historical Monthly Reports
                     </>
                   )}
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
                   {showCurrentMonth
                     ? `${getCurrentMonthName()} - Track submission status for all schools in your region`
                     : "Historical reports from previous months in your region"}
@@ -1530,10 +1722,10 @@ function RegionalOfficerDashboardContent() {
             </div>
 
             {/* Filters */}
-            <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-2xl">
-              <CardContent className="p-3 sm:p-4">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 shadow-sm rounded-xl overflow-hidden">
+              <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 flex-1 w-full lg:w-auto">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 flex-1 w-full lg:w-auto">
                     {showCurrentMonth ? (
                       <>
                         <div>
@@ -1541,15 +1733,15 @@ function RegionalOfficerDashboardContent() {
                             placeholder="Search schools..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
+                            className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm rounded-lg"
                           />
                         </div>
                         <div>
                           <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                            <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 text-sm rounded-lg">
                               <SelectValue placeholder="Filter by Status" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                               <SelectItem value="all">All Status</SelectItem>
                               <SelectItem value="submitted">Submitted</SelectItem>
                               <SelectItem value="not-submitted">Not Submitted</SelectItem>
@@ -1558,10 +1750,10 @@ function RegionalOfficerDashboardContent() {
                         </div>
                         <div>
                           <Select value={schoolLevelFilter} onValueChange={setSchoolLevelFilter}>
-                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                            <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 text-sm rounded-lg">
                               <SelectValue placeholder="Filter by Level" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                               <SelectItem value="all">All Levels</SelectItem>
                               <SelectItem value="Primary">Primary</SelectItem>
                               <SelectItem value="Secondary">Secondary</SelectItem>
@@ -1577,12 +1769,12 @@ function RegionalOfficerDashboardContent() {
                           <Button
                             onClick={loadCurrentMonthSchools}
                             disabled={isLoadingCurrentMonth}
-                            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-1 text-sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 h-9 text-sm font-medium rounded-lg"
                             size="sm"
                           >
                             {isLoadingCurrentMonth ? (
                               <>
-                                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                 <span className="hidden sm:inline">Loading...</span>
                                 <span className="sm:hidden">Loading</span>
                               </>
@@ -1602,15 +1794,15 @@ function RegionalOfficerDashboardContent() {
                             placeholder="Search reports..."
                             value={previousReportsSearch}
                             onChange={(e) => setPreviousReportsSearch(e.target.value)}
-                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm"
+                            className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm rounded-lg"
                           />
                         </div>
                         <div>
                           <Select value={previousReportsYear} onValueChange={setPreviousReportsYear}>
-                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                            <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 text-sm rounded-lg">
                               <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                               <SelectItem value="all">All Years</SelectItem>
                               {availableReportYears.map((year) => (
                                 <SelectItem key={year} value={year.toString()}>
@@ -1622,10 +1814,10 @@ function RegionalOfficerDashboardContent() {
                         </div>
                         <div>
                           <Select value={previousReportsMonth} onValueChange={setPreviousReportsMonth}>
-                            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                            <SelectTrigger className="h-9 bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 text-sm rounded-lg">
                               <SelectValue placeholder="Select Month" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/50 rounded-lg">
                               <SelectItem value="all">All Months</SelectItem>
                               {availableReportMonths.map((month) => (
                                 <SelectItem key={month} value={month.toString()}>

@@ -452,29 +452,29 @@ export function RegionalOfficerAssessmentCard({
   }
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-xl bg-white dark:bg-slate-800 ${className}`}>
+    <Card className={`overflow-hidden border border-slate-200/80 dark:border-slate-700/50 shadow-sm bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl ${className}`}>
       <CardContent className="p-0">
-        <div className="flex flex-col xl:flex-row">
-          {/* Left Content */}
-          <div className="flex-1 p-5 lg:p-6">
-            {/* Header Row */}
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} shadow-lg`}>
-                  <School className="h-6 w-6 text-white" />
+        <div className="flex flex-col lg:flex-row min-h-[200px]">
+          {/* Left Content - Compact Layout */}
+          <div className="flex-1 p-4 lg:p-5 flex flex-col">
+            {/* Header Row - Compact */}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md">
+                  <School className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white leading-tight">
                     Regional School Assessment
                   </h3>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge variant="outline" className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium text-xs">
-                      <MapPin className="h-3 w-3 mr-1" />
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Badge variant="outline" className="h-5 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200/80 dark:border-slate-700/50 font-medium text-[10px] px-1.5">
+                      <MapPin className="h-2.5 w-2.5 mr-0.5" />
                       {metrics?.regionName || regionId}
                     </Badge>
                     {metrics?.nationalRank && metrics?.totalRegions > 0 && (
-                      <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-0 text-xs">
-                        <Trophy className="h-3 w-3 mr-1" />
+                      <Badge className="h-5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-0 text-[10px] px-1.5">
+                        <Trophy className="h-2.5 w-2.5 mr-0.5" />
                         #{metrics.nationalRank}/{metrics.totalRegions}
                       </Badge>
                     )}
@@ -482,203 +482,148 @@ export function RegionalOfficerAssessmentCard({
                 </div>
               </div>
               {hasUrgentItems && (
-                <Badge className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-0 text-xs animate-pulse shrink-0">
-                  <Flame className="h-3 w-3 mr-1" />
-                  {urgentTotal} Need Attention
+                <Badge className="h-5 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border-0 text-[10px] px-1.5 shrink-0">
+                  <Flame className="h-2.5 w-2.5 mr-0.5" />
+                  {urgentTotal} Urgent
                 </Badge>
               )}
             </div>
 
-            {/* Description */}
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+            {/* Description - Shorter */}
+            <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-3">
               {hasUrgentItems
-                ? `⚠️ ${metrics?.overdueCount || 0} schools overdue, ${metrics?.nearDeadlineCount || 0} approaching deadline. Take action now!`
-                : submissionRate >= 80 
-                  ? "Excellent compliance! Review performance details and identify schools excelling or needing support."
+                ? `${metrics?.overdueCount || 0} overdue, ${metrics?.nearDeadlineCount || 0} near deadline.`
+                : submissionRate >= 80
+                  ? "Excellent compliance! Review performance details."
                   : submissionRate >= 50
-                    ? "Good progress. Follow up with remaining schools to improve regional compliance."
-                    : "Many schools haven't submitted. View details and send reminders to improve compliance."
+                    ? "Good progress. Follow up with remaining schools."
+                    : "Many schools haven't submitted. Send reminders."
               }
             </p>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
-              {(metrics?.overdueCount ?? 0) > 0 && (
-                <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg border border-red-200/50 dark:border-red-800/50">
-                  <AlertCircle className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0" />
-                  <div>
-                    <p className="text-lg font-bold text-red-700 dark:text-red-300 leading-none">{metrics?.overdueCount}</p>
-                    <p className="text-[10px] text-red-600 dark:text-red-400 uppercase tracking-wide">Overdue</p>
-                  </div>
-                </div>
-              )}
-              {(metrics?.nearDeadlineCount ?? 0) > 0 && (
-                <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg border border-amber-200/50 dark:border-amber-800/50">
-                  <Clock className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
-                  <div>
-                    <p className="text-lg font-bold text-amber-700 dark:text-amber-300 leading-none">{metrics?.nearDeadlineCount}</p>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase tracking-wide">Near Deadline</p>
-                  </div>
-                </div>
-              )}
-              {(metrics?.atRiskCount ?? 0) > 0 && (
-                <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg border border-orange-200/50 dark:border-orange-800/50">
-                  <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-400 shrink-0" />
-                  <div>
-                    <p className="text-lg font-bold text-orange-700 dark:text-orange-300 leading-none">{metrics?.atRiskCount}</p>
-                    <p className="text-[10px] text-orange-600 dark:text-orange-400 uppercase tracking-wide">At-Risk</p>
-                  </div>
-                </div>
-              )}
-              {(metrics?.decliningSchools ?? 0) > 0 && (
-                <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-900/20 px-3 py-2 rounded-lg border border-rose-200/50 dark:border-rose-800/50">
-                  <TrendingDown className="h-4 w-4 text-rose-500 dark:text-rose-400 shrink-0" />
-                  <div>
-                    <p className="text-lg font-bold text-rose-700 dark:text-rose-300 leading-none">{metrics?.decliningSchools}</p>
-                    <p className="text-[10px] text-rose-600 dark:text-rose-400 uppercase tracking-wide">Declining</p>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
-                <BarChart3 className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
-                <div>
-                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300 leading-none">{metrics?.averageScore ?? 0}</p>
-                  <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-wide">Avg Score</p>
-                </div>
+            {/* Compact Stats Row - Always show key stats */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {/* At-Risk - Always show */}
+              <div className="text-center p-2 rounded-lg bg-orange-50 dark:bg-orange-500/10 border border-orange-200/50 dark:border-orange-500/20">
+                <AlertTriangle className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 mx-auto mb-0.5" />
+                <p className="text-base font-bold text-orange-600 dark:text-orange-400 leading-none">{metrics?.atRiskCount ?? 0}</p>
+                <p className="text-[9px] text-orange-500/70 dark:text-orange-400/70 uppercase font-medium mt-0.5">At-Risk</p>
               </div>
-              {metrics?.weeklyVelocity !== undefined && metrics.weeklyVelocity !== 0 && (
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                  metrics.weeklyVelocity > 0 
-                    ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200/50 dark:border-emerald-800/50' 
-                    : 'bg-red-50 dark:bg-red-900/20 border-red-200/50 dark:border-red-800/50'
-                }`}>
-                  {metrics.weeklyVelocity > 0 ? (
-                    <ArrowUp className="h-4 w-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                  ) : (
-                    <ArrowDown className="h-4 w-4 text-red-500 dark:text-red-400 shrink-0" />
-                  )}
-                  <div>
-                    <p className={`text-lg font-bold leading-none ${metrics.weeklyVelocity > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                      {Math.abs(metrics.weeklyVelocity)}%
-                    </p>
-                    <p className={`text-[10px] uppercase tracking-wide ${metrics.weeklyVelocity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                      This Week
-                    </p>
-                  </div>
-                </div>
-              )}
+
+              {/* Avg Score - Always show */}
+              <div className="text-center p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+                <BarChart3 className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400 mx-auto mb-0.5" />
+                <p className="text-base font-bold text-blue-600 dark:text-blue-400 leading-none">{metrics?.averageScore ?? 0}</p>
+                <p className="text-[9px] text-blue-500/70 dark:text-blue-400/70 uppercase font-medium mt-0.5">Avg Score</p>
+              </div>
+
+              {/* Submitted - Always show */}
+              <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/50 dark:border-emerald-500/20">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400 mx-auto mb-0.5" />
+                <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 leading-none">{metrics?.submittedCount ?? 0}</p>
+                <p className="text-[9px] text-emerald-500/70 dark:text-emerald-400/70 uppercase font-medium mt-0.5">Submitted</p>
+              </div>
+
+              {/* Pending - Always show */}
+              <div className="text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-500/10 border border-slate-200/50 dark:border-slate-500/20">
+                <Clock className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 mx-auto mb-0.5" />
+                <p className="text-base font-bold text-slate-600 dark:text-slate-400 leading-none">{(metrics?.totalSchools ?? 0) - (metrics?.submittedCount ?? 0)}</p>
+                <p className="text-[9px] text-slate-500/70 dark:text-slate-400/70 uppercase font-medium mt-0.5">Pending</p>
+              </div>
             </div>
 
-            {/* Action Button */}
-            <Button 
+            {/* Action Button - Full width on left side */}
+            <Button
               onClick={() => router.push('/dashboard/school-assessment/regional')}
-              className={`w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white shadow-lg gap-2 font-semibold ${
-                hasUrgentItems ? 'animate-pulse' : ''
-              }`}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md gap-2 font-medium h-9 text-sm mt-auto"
             >
-              <School className="h-4 w-4" />
-              {hasUrgentItems ? 'View Schools Needing Attention' : 'View Regional Assessments'}
-              <ArrowRight className="h-4 w-4" />
+              <School className="h-3.5 w-3.5" />
+              View Regional Assessments
+              <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {/* Right Side - Submission Progress with Mini Chart */}
-          <div className={`relative w-full xl:w-[260px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-4`}>
+          {/* Right Side - Submission Progress */}
+          <div className="relative w-full lg:w-[280px] bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 flex flex-col items-center justify-center p-5">
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-3 left-3 opacity-20">
-                <School className="h-8 w-8 text-white" />
+              <div className="absolute top-2 left-2 opacity-10">
+                <School className="h-6 w-6 text-white" />
               </div>
-              <div className="absolute bottom-3 right-3 opacity-20">
-                <CheckCircle2 className="h-6 w-6 text-white" />
+              <div className="absolute bottom-2 right-2 opacity-10">
+                <CheckCircle2 className="h-5 w-5 text-white" />
               </div>
             </div>
 
             {/* Main Metric Display */}
             <div className="relative z-10 text-center w-full">
               {/* Status Badge */}
-              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded-full mb-3">
+              <div className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-2 py-0.5 rounded-full mb-2">
                 <div className={`w-1.5 h-1.5 rounded-full bg-white ${submissionRate < 40 ? 'animate-pulse' : ''}`} />
-                <span className="text-white font-semibold text-[10px] uppercase tracking-wider">{config.status} Compliance</span>
+                <span className="text-white/90 font-semibold text-[9px] uppercase tracking-wider">{config.status} Compliance</span>
               </div>
 
               {/* Submission Counter */}
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="inline-flex items-baseline">
-                  <span className="text-5xl font-bold text-white drop-shadow-md">
+                  <span className="text-3xl font-bold text-white">
                     {metrics?.submittedCount ?? 0}
                   </span>
-                  <span className="text-xl text-white/70 font-medium ml-1">
+                  <span className="text-base text-white/60 font-medium ml-0.5">
                     /{metrics?.totalSchools ?? 0}
                   </span>
                 </div>
-                <p className="text-white/90 text-xs font-semibold uppercase tracking-wider mt-0.5">
+                <p className="text-white/70 text-[10px] font-semibold uppercase tracking-wider mt-0.5">
                   Schools Submitted
                 </p>
               </div>
-              
+
               {/* Progress Bar */}
-              <div className="w-full max-w-[180px] mx-auto mb-3">
-                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div 
+              <div className="w-full max-w-[200px] mx-auto mb-2">
+                <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div
                     className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${submissionRate}%` }}
                   />
                 </div>
-                <p className="text-white font-bold text-sm mt-1.5">
+                <p className="text-white font-semibold text-xs mt-1">
                   {Math.round(submissionRate)}% Compliance
                 </p>
               </div>
 
               {/* Mini Submission Velocity Chart */}
               {chartData.length > 0 && (
-                <div className="w-full mt-3 bg-white/10 rounded-lg p-2">
-                  <div className="h-14 w-full">
+                <div className="w-full mt-2 bg-white/10 rounded-lg p-1.5">
+                  <div className="h-10 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+                      <AreaChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="submissionGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="white" stopOpacity={0.5}/>
-                            <stop offset="95%" stopColor="white" stopOpacity={0.1}/>
+                            <stop offset="5%" stopColor="white" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="white" stopOpacity={0.05}/>
                           </linearGradient>
                         </defs>
-                        <Area 
-                          type="monotone" 
-                          dataKey="count" 
-                          stroke="white" 
-                          strokeWidth={2}
+                        <Area
+                          type="monotone"
+                          dataKey="count"
+                          stroke="white"
+                          strokeWidth={1.5}
                           fill="url(#submissionGradient)"
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            background: 'rgba(255,255,255,0.98)', 
-                            border: 'none', 
-                            borderRadius: '8px',
-                            fontSize: '11px',
-                            color: '#1f2937',
-                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                          }}
-                          itemStyle={{ color: '#1f2937', padding: '2px 0' }}
-                          labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
-                          labelFormatter={(label) => `Day: ${label}`}
-                          formatter={((value: number) => [`${value} submissions`, 'Count']) as any}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                  <Badge className="bg-white/20 text-white border-0 text-[9px] h-4 mt-1">
-                    Submissions this week
-                  </Badge>
+                  <p className="text-white/60 text-[8px] text-center mt-0.5 uppercase tracking-wide">This Week</p>
                 </div>
               )}
 
               {/* Top School Callout */}
               {metrics?.topSchool && (
-                <div className="bg-white/15 backdrop-blur-sm rounded-lg p-1.5 mt-3">
+                <div className="bg-white/10 rounded-md px-3 py-1.5 mt-2">
                   <div className="flex items-center justify-center gap-1.5">
                     <Award className="h-3.5 w-3.5 text-yellow-300" />
-                    <span className="text-white/90 text-[10px]">
-                      <span className="font-bold">{metrics.topSchool.name}</span>: {metrics.topSchool.score}
+                    <span className="text-white/80 text-[10px] truncate max-w-[200px]">
+                      <span className="font-semibold">{metrics.topSchool.name}</span>: {metrics.topSchool.score}
                     </span>
                   </div>
                 </div>
