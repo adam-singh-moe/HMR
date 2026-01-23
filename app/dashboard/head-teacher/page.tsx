@@ -466,109 +466,125 @@ function HeadTeacherDashboardContent() {
 
   // Render function for view reports content
   const renderViewReportsContent = () => (
-    <div className="grid gap-4 px-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          View Previous Reports
-        </h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Submitted Reports
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Browse and review your previously submitted monthly reports
+            </p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => fetchReports(true)}
             disabled={loading}
-            className="text-xs sm:text-sm dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            className="h-9 px-3 rounded-lg border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             {loading ? (
-              <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              <RefreshCw className="h-4 w-4 mr-2" />
             )}
             Refresh
           </Button>
-          <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs sm:text-sm">
-            {reports.length} Reports
-          </Badge>
+          <div className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50">
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{reports.length} Reports</span>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <Card className="gradient-card border-0 shadow-md backdrop-blur-xl">
-          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 p-4 sm:p-6">
-            <Loader2 className="h-8 w-8 sm:h-12 sm:w-12 text-blue-500 dark:text-blue-400 mb-3 sm:mb-4 animate-spin" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-900 dark:text-white">Loading Reports</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-center text-sm sm:text-base">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="h-10 w-10 text-blue-500 dark:text-blue-400 mb-4 animate-spin" />
+            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">Loading Reports</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm">
               Please wait while we fetch your reports...
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : error ? (
-        <Card className="gradient-card border-0 shadow-md backdrop-blur-xl">
-          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 p-4 sm:p-6">
-            <FileTextIcon className="h-8 w-8 sm:h-12 sm:w-12 text-red-400 dark:text-red-500 mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2 text-red-700 dark:text-red-400">Error Loading Reports</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-center text-sm sm:text-base">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
+              <FileTextIcon className="h-8 w-8 text-red-500 dark:text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-red-700 dark:text-red-400">Error Loading Reports</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm">{error}</p>
+          </div>
+        </div>
       ) : reports.length === 0 ? (
-        <Card className="gradient-card border-0 shadow-md backdrop-blur-xl">
-          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 p-4 sm:p-6">
-            <CalendarIcon className="h-8 w-8 sm:h-12 sm:w-12 text-blue-500 dark:text-blue-400 mb-3 sm:mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-900 dark:text-white">No Reports Yet</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-center text-sm sm:text-base">
-              You haven't submitted any monthly reports yet. Use the "Submit report for current period" tab to create your first report.
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+              <CalendarIcon className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">No Reports Yet</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm max-w-md">
+              You haven't submitted any monthly reports yet. Use the "Current Report" tab to create your first report.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {reports.map((report) => (
-            <Card
+            <div
               key={report.id}
-              className="gradient-card border-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer backdrop-blur-xl"
+              className="group relative bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer"
               onClick={() => handleViewReport(report)}
             >
-              <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-white leading-tight">
-                    {formatReportMonth(report.month, report.year)}
-                  </CardTitle>
-                  <Badge
-                    variant="outline"
-                    className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/30 text-xs flex-shrink-0"
-                  >
-                    Submitted
-                  </Badge>
+              {/* Left accent border */}
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+              <div className="p-5 pl-6">
+                {/* Header with icon and badge */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center flex-shrink-0 border border-blue-100 dark:border-blue-800/50">
+                    <FileTextIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {formatReportMonth(report.month, report.year)}
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Submitted
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      {report.sms_schools?.name || "Unknown School"}
+                    </p>
+                  </div>
                 </div>
-                <CardDescription className="flex items-center gap-1 text-xs sm:text-sm dark:text-slate-400">
-                  <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-                  <span className="truncate">Submitted: {formatDate(report.updated_at)}</span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 p-3 sm:p-4 pt-0">
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                    <strong className="text-slate-900 dark:text-white">School:</strong>{" "}
-                    <span className="break-words">{report.sms_schools?.name || "Unknown School"}</span>
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
-                    <strong className="text-slate-900 dark:text-white">Created:</strong> {formatDate(report.created_at)}
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleViewReport(report)
-                    }}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Report
-                  </Button>
+
+                {/* Details */}
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <span>{formatDate(report.updated_at)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>View</span>
+                    <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -928,10 +944,11 @@ function HeadTeacherDashboardContent() {
           {currentMainTab === 'monthly-reports' && (
             <div className="space-y-6">
               {/* Simple Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <FileTextIcon className="h-7 w-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Monthly School Reports</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Submit and manage monthly school reports and submissions</p>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Submit and manage monthly school reports and submissions</p>
                 </div>
               </div>
 
@@ -987,18 +1004,6 @@ function HeadTeacherDashboardContent() {
                 )}
                 {currentTab === 'view-reports' && (
                   <div>
-                    {/* Header Band */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mb-6 shadow-lg shadow-blue-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                          <FileTextIcon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-semibold mb-1">View Submitted Reports</h2>
-                          <p className="text-blue-100">Browse and review your previously submitted monthly reports.</p>
-                        </div>
-                      </div>
-                    </div>
                     {renderViewReportsContent()}
                   </div>
                 )}
@@ -1010,10 +1015,11 @@ function HeadTeacherDashboardContent() {
           {currentMainTab === 'nursery-assessment' && (
             <div className="space-y-6">
               {/* Simple Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <GraduationCapIcon className="h-7 w-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Nursery Assessment Reports</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Specialized assessment and development tracking for nursery students</p>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Specialized assessment and development tracking for nursery students</p>
                 </div>
               </div>
 
@@ -1050,19 +1056,6 @@ function HeadTeacherDashboardContent() {
                 )}
                 {currentTab === 'view-assessments' && (
                   <div>
-                    {/* Header Band */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mb-6 shadow-lg shadow-blue-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                          <EyeIcon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-semibold mb-1">View Previous Assessments</h2>
-                          <p className="text-blue-100">Browse and review previously submitted nursery assessments and student progress reports.</p>
-                        </div>
-                      </div>
-                    </div>
-                    
                     <NurseryAssessmentsList />
                   </div>
                 )}
@@ -1462,10 +1455,11 @@ function HeadTeacherDashboardContent() {
           {currentMainTab === 'monthly-reports' && (
             <div className="space-y-6">
               {/* Simple Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <FileTextIcon className="h-7 w-7 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Monthly School Reports</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Submit and manage monthly school reports and submissions</p>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Submit and manage monthly school reports and submissions</p>
                 </div>
               </div>
 
@@ -1537,18 +1531,6 @@ function HeadTeacherDashboardContent() {
                 )}
                 {currentTab === 'view-reports' && (
                   <div>
-                    {/* Header Band */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mb-6 shadow-lg shadow-blue-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                          <FileTextIcon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-semibold mb-1">View Submitted Reports</h2>
-                          <p className="text-blue-100">Browse and review your previously submitted monthly reports.</p>
-                        </div>
-                      </div>
-                    </div>
                     {renderViewReportsContent()}
                   </div>
                 )}

@@ -2598,120 +2598,127 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   const renderBasicInformation = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* School Name */}
-        <div className="space-y-2">
-          <Label htmlFor="schoolName" className="text-sm font-medium text-gray-700">
-            School Name
-          </Label>
-          <Input
-            id="schoolName"
-            value={formData.schoolName}
-            readOnly
-            className="bg-gray-50 cursor-not-allowed"
-          />
-        </div>
+      {/* School Details Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">School Details</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* School Name */}
+          <div className="space-y-2">
+            <Label htmlFor="schoolName" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              School Name
+            </Label>
+            <Input
+              id="schoolName"
+              value={formData.schoolName}
+              readOnly
+              className="h-11 bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white cursor-not-allowed"
+            />
+          </div>
 
-        {/* Region */}
-        <div className="space-y-2">
-          <Label htmlFor="region" className="text-sm font-medium text-gray-700">
-            Region
-          </Label>
-          <Input
-            id="region"
-            value={formData.region}
-            readOnly
-            className="bg-gray-50 cursor-not-allowed"
-          />
-        </div>
+          {/* Region */}
+          <div className="space-y-2">
+            <Label htmlFor="region" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Region
+            </Label>
+            <Input
+              id="region"
+              value={formData.region}
+              readOnly
+              className="h-11 bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white cursor-not-allowed"
+            />
+          </div>
 
-        {/* Date */}
-        <div className="space-y-2">
-          <Label htmlFor="date" className="text-sm font-medium text-gray-700">
-            Assessment Date
-          </Label>
-          <Input
-            id="date"
-            type="date"
-            value={formData.date}
-            onChange={(e) => handleInputChange('date', e.target.value)}
-            className="w-full"
-          />
-        </div>
+          {/* Date */}
+          <div className="space-y-2">
+            <Label htmlFor="date" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Assessment Date
+            </Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) => handleInputChange('date', e.target.value)}
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white"
+            />
+          </div>
 
-        {/* School Grade */}
-        <div className="space-y-2">
-          <Label htmlFor="schoolGrade" className="text-sm font-medium text-gray-700">
-            School Level
-          </Label>
-          <Input
-            id="schoolGrade"
-            value={formData.schoolGrade}
-            readOnly
-            className="bg-gray-50 cursor-not-allowed"
-          />
-        </div>
+          {/* School Grade */}
+          <div className="space-y-2">
+            <Label htmlFor="schoolGrade" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              School Level
+            </Label>
+            <Input
+              id="schoolGrade"
+              value={formData.schoolGrade}
+              readOnly
+              className="h-11 bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white cursor-not-allowed"
+            />
+          </div>
 
-        {/* Head Teacher Name */}
-        <div className="space-y-2">
-          <Label htmlFor="headTeacherName" className="text-sm font-medium text-gray-700">
-            Head Teacher Name
-          </Label>
-          <Input
-            id="headTeacherName"
-            value={formData.headTeacherName}
-            readOnly
-            className="bg-gray-50 cursor-not-allowed"
-          />
-        </div>
+          {/* Head Teacher Name */}
+          <div className="space-y-2">
+            <Label htmlFor="headTeacherName" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Head Teacher Name
+            </Label>
+            <Input
+              id="headTeacherName"
+              value={formData.headTeacherName}
+              readOnly
+              className="h-11 bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white cursor-not-allowed"
+            />
+          </div>
 
-        {/* Enrollment */}
-        <div className="space-y-2">
-          <Label htmlFor="enrollment" className="text-sm font-medium text-gray-700">
-            Enrollment <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="enrollment"
-            type="number"
-            min="0"
-            placeholder="Enter number of students enrolled"
-            value={formData.enrollment}
-            onChange={(e) => handleInputChange('enrollment', e.target.value)}
-            className="w-full"
-          />
+          {/* Enrollment */}
+          <div className="space-y-2">
+            <Label htmlFor="enrollment" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Enrollment <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              id="enrollment"
+              type="number"
+              min="0"
+              placeholder="Enter number of students enrolled"
+              value={formData.enrollment}
+              onChange={(e) => handleInputChange('enrollment', e.target.value)}
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
         </div>
+      </div>
 
-        {/* Assessment Type */}
-        <div className="space-y-2 md:col-span-1">
-          <Label htmlFor="assessmentType" className="text-sm font-medium text-gray-700">
-            Assessment Type <span className="text-red-500">*</span>
+      {/* Assessment Type Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Assessment Configuration</h4>
+        <div className="space-y-2">
+          <Label htmlFor="assessmentType" className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            Assessment Type <span className="text-rose-500">*</span>
           </Label>
           {yearlyLimits.allThreeSubmitted ? (
-            <div className="p-3 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-600">
+            <div className="h-11 flex items-center px-3 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-600 dark:text-slate-400">
               All assessments completed for this academic year
             </div>
           ) : (
-            <Select 
-              value={formData.assessmentType} 
+            <Select
+              value={formData.assessmentType}
               onValueChange={(value) => handleInputChange('assessmentType', value)}
               disabled={yearlyLimits.allThreeSubmitted}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-lg text-slate-900 dark:text-white">
                 <SelectValue placeholder="Select assessment type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 {ASSESSMENT_TYPES.filter(type => yearlyLimits.availableTypes.includes(type.value)).map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
+                  <SelectItem key={type.value} value={type.value} className="text-slate-900 dark:text-white focus:bg-slate-100 dark:focus:bg-slate-700">
                     {type.label}
                   </SelectItem>
                 ))}
                 {yearlyLimits.submittedTypes.length > 0 && (
                   <>
-                    <div className="px-2 py-1 text-xs text-gray-500 border-t border-gray-200 mt-1">
+                    <div className="px-2 py-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 mt-1">
                       Already Submitted:
                     </div>
                     {ASSESSMENT_TYPES.filter(type => yearlyLimits.submittedTypes.includes(type.value)).map((type) => (
-                      <SelectItem key={`submitted-${type.value}`} value={type.value} disabled>
+                      <SelectItem key={`submitted-${type.value}`} value={type.value} disabled className="text-slate-500 dark:text-slate-400">
                         {type.label} ✓
                       </SelectItem>
                     ))}
@@ -2723,17 +2730,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         </div>
       </div>
 
-      {/* Additional Information */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">Assessment Information</h4>
-            <p className="text-sm text-blue-700">
-              This nursery assessment will track developmental milestones and learning progress for students in your nursery school. 
-              Please ensure all information is accurate before proceeding.
-            </p>
-          </div>
+      {/* Information Notice */}
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Assessment Information</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            This nursery assessment will track developmental milestones and learning progress for students in your nursery school.
+            Please ensure all information is accurate before proceeding.
+          </p>
         </div>
       </div>
     </div>
@@ -2742,45 +2749,45 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const renderAutobiographicalKnowledge = () => (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">Instructions</h4>
-            <p className="text-sm text-blue-700">
-              Record based on the responses made by the students, the total number for each category.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record based on the responses made by the students, the total number for each category.
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-blue-600">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
                   
                   {/* Response Categories Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Full Sentence Response */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         Full Sentence Response
                       </Label>
                       <Input
@@ -2789,13 +2796,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.fullSentenceResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'fullSentenceResponse', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* Single Word or Phrase Response */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         Single Word or Phrase Response
                       </Label>
                       <Input
@@ -2804,13 +2811,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'singleWordOrPhraseResponse', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* Incorrect Response */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         Incorrect Response
                       </Label>
                       <Input
@@ -2819,13 +2826,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.incorrectResponse || ""}
                         onChange={(e) => handleResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* No Response Given */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         No Response Given
                       </Label>
                       <Input
@@ -2834,16 +2841,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.autobiographicalResponses[question.id]?.noResponseGiven || ""}
                         onChange={(e) => handleResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {(formData.autobiographicalResponses[question.id]?.fullSentenceResponse || 0) +
                          (formData.autobiographicalResponses[question.id]?.singleWordOrPhraseResponse || 0) +
                          (formData.autobiographicalResponses[question.id]?.incorrectResponse || 0) +
@@ -2869,45 +2876,45 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     return (
       <div className="space-y-6">
         {/* Instructions */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <BookOpenIcon className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="font-medium text-green-900 mb-1">Instructions</h4>
-              <p className="text-sm text-green-700">
-                Record the total number of students based on how many they got correct for each question.
-              </p>
-            </div>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+              Record the total number of students based on how many they got correct for each question.
+            </p>
           </div>
         </div>
 
         {questionsLoading ? (
           <div className="text-center py-8">
-            <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-            <p className="text-gray-600">Loading assessment questions...</p>
+            <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+            <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
           </div>
         ) : filteredQuestions.length === 0 ? (
           <div className="text-center py-8">
-            <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-            <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+            <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+            <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredQuestions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-green-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
                   
                   {/* Response Categories Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* 1-6 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         1 - 6 Correct
                       </Label>
                       <Input
@@ -2916,13 +2923,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.range1to6Correct || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'range1to6Correct', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* 7-12 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         7 - 12 Correct
                       </Label>
                       <Input
@@ -2931,13 +2938,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.range7to12Correct || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'range7to12Correct', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* 13-18 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         13 - 18 Correct
                       </Label>
                       <Input
@@ -2946,13 +2953,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.range13to18Correct || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'range13to18Correct', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* 19-26 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         19 - 26 Correct
                       </Label>
                       <Input
@@ -2961,13 +2968,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.range19to26Correct || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'range19to26Correct', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* No Response Given */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         No Response Given
                       </Label>
                       <Input
@@ -2976,13 +2983,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.noResponseGiven || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* Incorrect Response */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         Incorrect Response
                       </Label>
                       <Input
@@ -2991,16 +2998,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.alphabetResponses[question.id]?.incorrectResponse || ""}
                         onChange={(e) => handleAlphabetResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {(formData.alphabetResponses[question.id]?.range1to6Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range7to12Correct || 0) +
                          (formData.alphabetResponses[question.id]?.range13to18Correct || 0) +
@@ -3023,45 +3030,45 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const renderColourIdentification = () => (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-purple-900 mb-1">Instructions</h4>
-            <p className="text-sm text-purple-700">
-              Record the total number of students based on how many colors they got correct for each question.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record the total number of students based on how many colors they got correct for each question.
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-purple-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
-                  
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
+
                   {/* Response Categories Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* 1 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         1 Correct
                       </Label>
                       <Input
@@ -3070,13 +3077,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.colourResponses[question.id]?.oneCorrect || ""}
                         onChange={(e) => handleColourResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* 2 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         2 Correct
                       </Label>
                       <Input
@@ -3085,13 +3092,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.colourResponses[question.id]?.twoCorrect || ""}
                         onChange={(e) => handleColourResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* 3 Correct */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         3 Correct
                       </Label>
                       <Input
@@ -3100,13 +3107,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.colourResponses[question.id]?.threeCorrect || ""}
                         onChange={(e) => handleColourResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* No Response Given */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         No Response Given
                       </Label>
                       <Input
@@ -3115,13 +3122,13 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.colourResponses[question.id]?.noResponseGiven || ""}
                         onChange={(e) => handleColourResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    
+
                     {/* Incorrect Response */}
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                         Incorrect Response
                       </Label>
                       <Input
@@ -3130,16 +3137,16 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                         placeholder="0"
                         value={formData.colourResponses[question.id]?.incorrectResponse || ""}
                         onChange={(e) => handleColourResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                        className="w-16"
+                        className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {(formData.colourResponses[question.id]?.oneCorrect || 0) +
                          (formData.colourResponses[question.id]?.twoCorrect || 0) +
                          (formData.colourResponses[question.id]?.threeCorrect || 0) +
@@ -3160,46 +3167,46 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const renderQuantityAndCounting = () => (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-orange-900 mb-1">Instructions</h4>
-            <p className="text-sm text-orange-700">
-              Record the total number of students based on their performance for each question. For Quantity Differentiation, record correct/incorrect responses. For Counting Fluency, record based on the counting range achieved.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record the total number of students based on their performance for each question. For Quantity Differentiation, record correct/incorrect responses. For Counting Fluency, record based on the counting range achieved.
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-orange-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
-                  
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
+
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('quantity') ? (
                     // Quantity Differentiation options
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 Correct
                         </Label>
                         <Input
@@ -3208,11 +3215,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.oneCorrect || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           2 Correct
                         </Label>
                         <Input
@@ -3221,11 +3228,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.twoCorrect || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           3 Correct
                         </Label>
                         <Input
@@ -3234,11 +3241,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.threeCorrect || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           All 4 Correct
                         </Label>
                         <Input
@@ -3247,11 +3254,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.allFourCorrect || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'allFourCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3260,11 +3267,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Incorrect Response
                         </Label>
                         <Input
@@ -3273,15 +3280,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.incorrectResponse || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (
                     // Counting Fluency options
-                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 - 10 Correct
                         </Label>
                         <Input
@@ -3290,11 +3297,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.range1to10Correct || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range1to10Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           11 - 20 Correct
                         </Label>
                         <Input
@@ -3303,11 +3310,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.range11to20Correct || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range11to20Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           20 + Correct
                         </Label>
                         <Input
@@ -3316,11 +3323,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.range20PlusCorrect || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'range20PlusCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3329,11 +3336,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Incorrect Response
                         </Label>
                         <Input
@@ -3342,17 +3349,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.quantityCountingResponses[question.id]?.incorrectResponse || ""}
                           onChange={(e) => handleQuantityCountingResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   )}
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {question.questions.toLowerCase().includes('quantity') ? (
                           (formData.quantityCountingResponses[question.id]?.oneCorrect || 0) +
                           (formData.quantityCountingResponses[question.id]?.twoCorrect || 0) +
@@ -3382,46 +3389,46 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const renderShapeRecognition = () => (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-indigo-900 mb-1">Instructions</h4>
-            <p className="text-sm text-indigo-700">
-              Record the total number of students based on their correct and incorrect responses for each shape recognition and one-to-one correspondence question.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record the total number of students based on their correct and incorrect responses for each shape recognition and one-to-one correspondence question.
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-indigo-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
-                  
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
+
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('shape') ? (
                     // Shape Recognition options (1, 2, 3 correct)
-                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 Correct
                         </Label>
                         <Input
@@ -3430,11 +3437,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.oneCorrect || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'oneCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           2 Correct
                         </Label>
                         <Input
@@ -3443,11 +3450,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.twoCorrect || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'twoCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           3 Correct
                         </Label>
                         <Input
@@ -3456,11 +3463,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.threeCorrect || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'threeCorrect', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3469,11 +3476,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Incorrect Response
                         </Label>
                         <Input
@@ -3482,15 +3489,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.incorrectResponse || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (
                     // Other questions options (1-5 correct, 6-10 correct)
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 - 5 Correct
                         </Label>
                         <Input
@@ -3499,11 +3506,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.range1to5Correct || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'range1to5Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           6 - 10 Correct
                         </Label>
                         <Input
@@ -3512,11 +3519,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.range6to10Correct || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'range6to10Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3525,11 +3532,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Incorrect Response
                         </Label>
                         <Input
@@ -3538,17 +3545,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.shapeRecognitionResponses[question.id]?.incorrectResponse || ""}
                           onChange={(e) => handleShapeRecognitionResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   )}
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {question.questions.toLowerCase().includes('shape') ? (
                           (formData.shapeRecognitionResponses[question.id]?.oneCorrect || 0) +
                           (formData.shapeRecognitionResponses[question.id]?.twoCorrect || 0) +
@@ -3576,46 +3583,46 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   const renderMotorSkills = () => (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-teal-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-teal-900 mb-1">Instructions</h4>
-            <p className="text-sm text-teal-700">
-              Record the total number of students based on their correct and incorrect responses for each motor skills assessment question.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record the total number of students based on their correct and incorrect responses for each motor skills assessment question.
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : questions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-teal-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
-                  
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
+
                   {/* Conditional Response Categories based on question type */}
                   {question.questions.toLowerCase().includes('picture') ? (
                     // Picture of Yourself options (1-4 correct, 5-8 correct, No Response, Incorrect)
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 - 4 Correct
                         </Label>
                         <Input
@@ -3624,11 +3631,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.range1to4Correct || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'range1to4Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           5 - 8 Correct
                         </Label>
                         <Input
@@ -3637,11 +3644,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.range5to8Correct || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'range5to8Correct', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3650,11 +3657,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Incorrect Response
                         </Label>
                         <Input
@@ -3663,15 +3670,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.incorrectResponse || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'incorrectResponse', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : question.questions.toLowerCase().includes('pencil') || question.questions.toLowerCase().includes('grip') ? (
                     // Pencil Grip options
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Cylindrical Grasp
                         </Label>
                         <Input
@@ -3680,11 +3687,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.cylindricalGrasp || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'cylindricalGrasp', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Digital
                         </Label>
                         <Input
@@ -3693,11 +3700,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.digital || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'digital', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Modified Tripod Grasp
                         </Label>
                         <Input
@@ -3706,11 +3713,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.modifiedTripodGrasp || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'modifiedTripodGrasp', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Tripod
                         </Label>
                         <Input
@@ -3719,11 +3726,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.tripod || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'tripod', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3732,15 +3739,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : question.questions.toLowerCase().includes('letter') || question.questions.toLowerCase().includes('formation') ? (
-                    // Letter Formation options (only No Response Given added)
+                    // Letter Formation options
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Scribble (UR)
                         </Label>
                         <Input
@@ -3749,11 +3756,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.scribbleUR || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'scribbleUR', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Scribble (R)
                         </Label>
                         <Input
@@ -3762,11 +3769,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.scribbleR || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'scribbleR', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Approximation
                         </Label>
                         <Input
@@ -3775,11 +3782,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.approximation || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'approximation', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Name
                         </Label>
                         <Input
@@ -3788,11 +3795,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.name || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'name', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           No Response Given
                         </Label>
                         <Input
@@ -3801,22 +3808,22 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.motorSkillsResponses[question.id]?.noResponseGiven || ""}
                           onChange={(e) => handleMotorSkillsResponseChange(question.id, 'noResponseGiven', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (
                     // Default fallback (should not be reached)
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="text-gray-500">No options available for this question type</div>
+                      <div className="text-slate-500 dark:text-slate-400">No options available for this question type</div>
                     </div>
                   )}
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {question.questions.toLowerCase().includes('picture') ? (
                           (formData.motorSkillsResponses[question.id]?.range1to4Correct || 0) +
                           (formData.motorSkillsResponses[question.id]?.range5to8Correct || 0) +
@@ -3854,46 +3861,46 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     return (
     <div className="space-y-6">
       {/* Instructions */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <BookOpenIcon className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium text-emerald-900 mb-1">Instructions</h4>
-            <p className="text-sm text-emerald-700">
-              Record the total number of students based on their performance for each gross motor skills assessment question. Scoring varies by activity: Throw/Catch (1-5 times), Hop activities (1-3 times), Stand on One Leg (Left/Right/Both).
-            </p>
-          </div>
+      <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+        <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+          <BookOpenIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Instructions</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            Record the total number of students based on their performance for each gross motor skills assessment question. Scoring varies by activity: Throw/Catch (1-5 times), Hop activities (1-3 times), Stand on One Leg (Left/Right/Both).
+          </p>
         </div>
       </div>
 
       {questionsLoading ? (
         <div className="text-center py-8">
-          <Loader2 className="h-8 w-8 text-gray-400 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading assessment questions...</p>
+          <Loader2 className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4 animate-spin" />
+          <p className="text-slate-600 dark:text-slate-400">Loading assessment questions...</p>
         </div>
       ) : grossMotorQuestions.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpenIcon className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Available</h3>
-          <p className="text-gray-600">Unable to load assessment questions for this section.</p>
+          <BookOpenIcon className="h-8 w-8 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Questions Available</h3>
+          <p className="text-slate-600 dark:text-slate-400">Unable to load assessment questions for this section.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {grossMotorQuestions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div key={question.id} className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-emerald-600">{index + 1}</span>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{index + 1}</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-4">{question.questions}</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white mb-4">{question.questions}</h4>
                   
                   {/* Conditional Response Categories based on question type */}
                   {(question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) ? (
-                    // Throw and Catch: 1-5 Times + No Response Given
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    // Throw and Catch: 1-5 Times + Unable to
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 Time
                         </Label>
                         <Input
@@ -3902,11 +3909,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.oneTime || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneTime', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           2 Times
                         </Label>
                         <Input
@@ -3915,11 +3922,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.twoTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'twoTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           3 Times
                         </Label>
                         <Input
@@ -3928,11 +3935,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.threeTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'threeTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           4 Times
                         </Label>
                         <Input
@@ -3941,11 +3948,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.fourTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'fourTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           5 Times
                         </Label>
                         <Input
@@ -3954,11 +3961,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.fiveTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'fiveTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Unable to
                         </Label>
                         <Input
@@ -3967,15 +3974,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (question.questions.toLowerCase().includes('hop')) ? (
-                    // One/Two Leg Hop: 1-3 Times + No Response Given
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    // One/Two Leg Hop: 1-3 Times + Unable to
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           1 Time
                         </Label>
                         <Input
@@ -3984,11 +3991,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.oneLegOneTime || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegOneTime', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           2 Times
                         </Label>
                         <Input
@@ -3997,11 +4004,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.oneLegTwoTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegTwoTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           3 Times
                         </Label>
                         <Input
@@ -4010,11 +4017,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.oneLegThreeTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneLegThreeTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Unable to
                         </Label>
                         <Input
@@ -4023,15 +4030,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (question.questions.toLowerCase().includes('stand')) ? (
-                    // Stand on One Leg: Left/Right/Both + No Response Given
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    // Stand on One Leg: Left/Right/Both + Unable to
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Left Only
                         </Label>
                         <Input
@@ -4040,11 +4047,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.left || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'left', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Right Only
                         </Label>
                         <Input
@@ -4053,11 +4060,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.right || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'right', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Both
                         </Label>
                         <Input
@@ -4066,11 +4073,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.both || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'both', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Unable to
                         </Label>
                         <Input
@@ -4079,15 +4086,15 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   ) : (
-                    // Default: Number Correct/Incorrect + No Response Given (fallback)
+                    // Default: Number Correct/Incorrect + Unable to (fallback)
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Number Correct
                         </Label>
                         <Input
@@ -4096,11 +4103,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.oneTime || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'oneTime', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Number Incorrect
                         </Label>
                         <Input
@@ -4109,11 +4116,11 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.twoTimes || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'twoTimes', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium text-slate-600 dark:text-slate-400">
                           Unable to
                         </Label>
                         <Input
@@ -4122,17 +4129,17 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
                           placeholder="0"
                           value={formData.grossMotorSkillsResponses[question.id]?.unableToRespond || ""}
                           onChange={(e) => handleGrossMotorSkillsResponseChange(question.id, 'unableToRespond', parseInt(e.target.value) || 0)}
-                          className="w-16"
+                          className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                     </div>
                   )}
                   
                   {/* Total Count Display */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50">
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">Total Students:</span>
-                      <span className="font-medium text-gray-900">
+                      <span className="text-slate-600 dark:text-slate-400">Total Students:</span>
+                      <span className="font-medium text-slate-900 dark:text-white">
                         {(() => {
                           const responses = formData.grossMotorSkillsResponses[question.id] || {}
                           if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
@@ -4189,213 +4196,215 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     <>
       {/* All Assessments Submitted Message */}
       {yearlyLimits.allThreeSubmitted && (
-        <Card className="mb-6 border-l-4 border-l-blue-500 bg-blue-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-blue-900 flex items-center gap-2">
-              <FileTextIcon className="h-5 w-5" />
-              All Nursery Assessments Completed
-            </CardTitle>
-            <CardDescription className="text-blue-700">
-              You have successfully submitted all three nursery assessments for this academic year. 
-              New assessment forms will be available at the start of the next academic year.
-              <div className="mt-2 text-sm">
-                <strong>Submitted assessments:</strong>
-                <ul className="list-disc list-inside mt-1">
-                  {yearlyLimits.submittedTypes.map(type => {
-                    const typeInfo = ASSESSMENT_TYPES.find(t => t.value === type)
-                    return (
-                      <li key={type}>{typeInfo?.label || type}</li>
-                    )
-                  })}
-                </ul>
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl">
+          <div className="flex items-start gap-3">
+            <FileTextIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-blue-900 dark:text-blue-300">All Nursery Assessments Completed</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                You have successfully submitted all three nursery assessments for this academic year.
+              </p>
+              <div className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+                <strong>Submitted:</strong> {yearlyLimits.submittedTypes.map(type => {
+                  const typeInfo = ASSESSMENT_TYPES.find(t => t.value === type)
+                  return typeInfo?.label || type
+                }).join(', ')}
               </div>
-            </CardDescription>
-          </CardHeader>
-        </Card>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Form Container with Disabled State */}
       <div className={yearlyLimits.allThreeSubmitted ? "opacity-60 pointer-events-none" : ""}>
-        
-      {/* Progress Tabs - Hidden on mobile */}
-      <div className="hidden sm:block bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Nursery Assessment Report
-              </h2>
+
+      {/* Main Layout - Sidebar + Content */}
+      <div className="flex gap-6 min-h-[600px]">
+        {/* Sidebar Navigation - Hidden on mobile */}
+        <div className="hidden lg:block w-[280px] flex-shrink-0">
+          <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl p-4 sticky top-4">
+            {/* Header */}
+            <div className="mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-slate-900 dark:text-white">Nursery Assessment</h3>
               {currentAssessmentId && (
                 <div className="flex items-center gap-2 mt-1">
-                  <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
-                  <span className="text-sm text-orange-600">Continuing draft assessment</span>
+                  <div className="h-2 w-2 bg-orange-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-orange-600 dark:text-orange-400">Draft in progress</span>
                 </div>
               )}
             </div>
-            <div className="text-sm text-gray-600">
-              {Math.round(calculateProgress())}% Complete
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-slate-500 dark:text-slate-400">Progress</span>
+                <span className="font-medium text-blue-600 dark:text-blue-400">{Math.round(calculateProgress())}%</span>
+              </div>
+              <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${calculateProgress()}%` }}
+                />
+              </div>
             </div>
-          </div>
-          
-          {/* Progress Steps */}
-          <div className="overflow-x-auto">
-            <div className="flex items-center justify-between min-w-max px-2">
+
+            {/* Section List */}
+            <nav className="space-y-1">
               {availableSections.map((section, index) => {
                 const isCompleted = savedSections.has(index)
                 const isCurrent = index === currentSection
-                
+
                 return (
-                  <div key={index} className="flex items-center">
-                    {/* Circle and Content */}
-                    <div className="flex flex-col items-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (canNavigateToSection(index)) {
-                            setCurrentSection(index)
-                          } else {
-                            toast({
-                              title: "Complete Basic Information",
-                              description: "Please complete Section 1 first.",
-                              variant: "destructive",
-                            })
-                          }
-                        }}
-                        disabled={!canNavigateToSection(index)}
-                        className={`
-                          w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
-                          ${!canNavigateToSection(index) 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : isCurrent 
-                              ? 'bg-blue-600 text-white ring-4 ring-blue-100 cursor-pointer' 
-                              : isCompleted 
-                                ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600' 
-                                : currentAssessmentId 
-                                  ? 'bg-blue-100 text-blue-600 cursor-pointer hover:bg-blue-200'
-                                  : 'bg-gray-200 text-gray-600 cursor-pointer hover:bg-gray-300'
-                          }
-                        `}
-                      >
-                        {isCompleted ? '✓' : index + 1}
-                      </button>
-                      
-                      <div className="text-center">
-                        <div className="text-xs font-medium text-gray-900 mb-1 max-w-[80px] leading-tight">
-                          {section}
-                        </div>
-                        <div className={`text-xs ${isCurrent ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
-                          {isCompleted ? '100%' : isCurrent ? '50%' : '0%'}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Connecting Line */}
-                    {index < availableSections.length - 1 && (
-                      <div className={`
-                        w-8 h-0.5 mx-2 mt-[-24px]
-                        ${savedSections.has(index) ? 'bg-green-500' : 'bg-gray-200'}
-                      `} />
-                    )}
+                  <div
+                    key={index}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200
+                      ${isCurrent
+                        ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
+                        : ''
+                      }
+                    `}
+                  >
+                    <span className={`
+                      w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                      ${isCurrent
+                        ? 'bg-blue-600 text-white'
+                        : isCompleted
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      }
+                    `}>
+                      {isCompleted ? '✓' : index + 1}
+                    </span>
+                    <span className={`text-sm truncate ${
+                      isCurrent
+                        ? 'font-medium text-blue-700 dark:text-blue-300'
+                        : isCompleted
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-slate-600 dark:text-slate-400'
+                    }`}>
+                      {section}
+                    </span>
                   </div>
                 )
               })}
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
+          <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl overflow-hidden">
+            {/* Section Header */}
+            <div className="p-4 sm:p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/25">
+                  {currentSection + 1}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    {availableSections[currentSection]}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Complete all required fields
+                  </p>
+                </div>
+              </div>
+
+              {/* Mobile Progress */}
+              <div className="lg:hidden mt-4 flex items-center gap-3">
+                <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                    style={{ width: `${calculateProgress()}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {Math.round(calculateProgress())}%
+                </span>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <div className="p-4 sm:p-6 max-h-[calc(100vh-350px)] overflow-y-auto">
+              <div className="min-h-[300px]">
+                {renderCurrentSection()}
+              </div>
+            </div>
+
+            {/* Navigation Footer */}
+            <div className="p-4 sm:p-6 border-t border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-900/30">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={previousSection}
+                  disabled={currentSection === 0}
+                  className="w-full sm:w-auto h-11 rounded-lg border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    onClick={saveCurrentSection}
+                    disabled={loading ||
+                      (currentSection === 0 && (!formData.assessmentType || !formData.enrollment)) ||
+                      (currentSection === 1 && !isSection2Valid()) ||
+                      (currentSection === 2 && !isSection3Valid()) ||
+                      (currentSection === 3 && !isSection4Valid()) ||
+                      (currentSection === 4 && !isSection5Valid()) ||
+                      (currentSection === 5 && !isSection6Valid()) ||
+                      (currentSection === 6 && !isSection7Valid()) ||
+                      (currentSection === 7 && !isSection8Valid())
+                    }
+                    variant="outline"
+                    className="w-full sm:w-auto h-11 rounded-lg border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Section
+                  </Button>
+
+                  {currentSection === availableSections.length - 1 ? (
+                    <Button
+                      type="button"
+                      onClick={submitAssessment}
+                      disabled={loading || yearlyLimits.allThreeSubmitted || !areAllSectionsComplete()}
+                      className="w-full sm:w-auto h-11 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/25 border-0"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Assessment"
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={nextSection}
+                      disabled={currentSection === availableSections.length - 1 || !isCurrentSectionComplete()}
+                      className={`w-full sm:w-auto h-11 rounded-lg border-0 ${
+                        !isCurrentSectionComplete()
+                          ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25'
+                      }`}
+                    >
+                      {!isCurrentSectionComplete() ? 'Save Section First' : 'Next'}
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="gradient-header text-white rounded-t-lg p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
-              <BookOpenIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg sm:text-xl">
-                Section {currentSection + 1} of {availableSections.length}: {availableSections[currentSection]}
-              </CardTitle>
-              <CardDescription className="text-blue-100 text-sm sm:text-base">
-                Complete this section to continue with your assessment
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 sm:p-6">
-          <div className="min-h-[400px] sm:min-h-[500px]">
-            {renderCurrentSection()}
-          </div>
-
-          {/* Navigation */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={previousSection}
-              disabled={currentSection === 0}
-              className="order-2 sm:order-1 w-full sm:w-auto flex items-center gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-
-            <div className="order-1 sm:order-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <Button
-                type="button"
-                onClick={saveCurrentSection}
-                disabled={loading || 
-                  (currentSection === 0 && (!formData.assessmentType || !formData.enrollment)) ||
-                  (currentSection === 1 && !isSection2Valid()) ||
-                  (currentSection === 2 && !isSection3Valid()) ||
-                  (currentSection === 3 && !isSection4Valid()) ||
-                  (currentSection === 4 && !isSection5Valid()) ||
-                  (currentSection === 5 && !isSection6Valid()) ||
-                  (currentSection === 6 && !isSection7Valid()) ||
-                  (currentSection === 7 && !isSection8Valid())
-                }
-                variant="outline"
-                className="w-full sm:w-auto border border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200"
-              >
-                <Save className="h-4 w-4" />
-                Save Section
-              </Button>
-
-              {currentSection === availableSections.length - 1 ? (
-                <Button
-                  type="button"
-                  onClick={submitAssessment}
-                  disabled={loading || yearlyLimits.allThreeSubmitted || !areAllSectionsComplete()}
-                  className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Submit Assessment"
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={nextSection}
-                  disabled={currentSection === availableSections.length - 1 || !isCurrentSectionComplete()}
-                  className={`w-full sm:w-auto transition-all duration-200 flex items-center gap-2 ${
-                    !isCurrentSectionComplete()
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                      : 'gradient-button text-white hover:shadow-lg'
-                  }`}
-                >
-                  {!isCurrentSectionComplete() ? 'Save Section First' : 'Next'}
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
       </div> {/* End of disabled form container */}
     </>
   )

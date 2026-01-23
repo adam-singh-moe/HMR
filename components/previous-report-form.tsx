@@ -161,31 +161,12 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="gradient-header rounded-lg sm:rounded-xl p-4 sm:p-6 text-white shadow-lg">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 bg-white/20 rounded-lg flex-shrink-0">
-            <CalendarIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Submit Previous Report</h1>
-            <p className="text-blue-100 text-sm sm:text-base">
-              Submit reports for months you may have missed or continue editing draft reports
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content with padding */}
-      <div className="px-6 space-y-6">
         {/* Draft Reports Section */}
         {(loadingDraftReports || draftReports.length > 0) && (
         <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg rounded-2xl overflow-hidden">
           <CardHeader className="border-b border-slate-200/50 dark:border-slate-700/50">
             <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg">
-                <FileTextIcon className="h-5 w-5 text-white" />
-              </div>
+              <FileTextIcon className="h-5 w-5 text-orange-500 dark:text-orange-400" />
               Draft Reports
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-slate-400">
@@ -241,9 +222,7 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
       <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg rounded-2xl overflow-hidden">
         <CardHeader className="border-b border-slate-200/50 dark:border-slate-700/50">
           <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg">
-              <CalendarIcon className="h-5 w-5 text-white" />
-            </div>
+            <CalendarIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             Missing Reports
           </CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">
@@ -324,7 +303,6 @@ export function PreviousReportForm({ onSuccess }: PreviousReportFormProps) {
           )}
         </CardContent>
       </Card>
-      </div>
     </div>
   )
 }

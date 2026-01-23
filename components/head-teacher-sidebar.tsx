@@ -172,7 +172,10 @@ export function HeadTeacherSidebar({ onNavigate }: HeadTeacherSidebarProps) {
 
       {/* User Profile Card */}
       <div className="px-4 py-4">
-        <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800/80 dark:to-slate-800/40 border border-blue-100 dark:border-slate-700/50">
+        <button
+          onClick={() => handleNavigation('/dashboard/settings')}
+          className="w-full p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800/80 dark:to-slate-800/40 border border-blue-100 dark:border-slate-700/50 hover:shadow-lg hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
+        >
           <div className="flex flex-col items-center text-center">
             {/* Avatar */}
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3 shadow-lg shadow-blue-500/25">
@@ -199,8 +202,14 @@ export function HeadTeacherSidebar({ onNavigate }: HeadTeacherSidebarProps) {
                 <span className="truncate max-w-[180px]">{schoolInfo.name}</span>
               </div>
             )}
+
+            {/* Edit Profile Indicator */}
+            <div className="flex items-center gap-1 mt-3 text-xs text-blue-600 dark:text-blue-400">
+              <span className="font-medium">Edit User Profile</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </div>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Navigation Items */}

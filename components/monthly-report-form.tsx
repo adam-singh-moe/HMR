@@ -3344,77 +3344,84 @@ export function MonthlyReportForm({
         )}
       </div>
 
-      {/* Show additional fields only when Yes is selected */}
+      {/* PD Session Details Card - Show only when Yes is selected */}
       {formData.wholeschoolPDHeld === true && (
-        <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              What percentage of teachers attended this session?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.teachersAttendedPD}
-              onChange={(e) => updateFormData("teachersAttendedPD", e.target.value)}
-              placeholder="85"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              Topic of PD session
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              value={formData.pdTopic}
-              onChange={(e) => updateFormData("pdTopic", e.target.value)}
-              placeholder="Enter PD topic"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              Reason for choosing the topic
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Textarea
-              value={formData.pdTopicReason}
-              onChange={(e) => updateFormData("pdTopicReason", e.target.value)}
-              placeholder="Explain why this topic was chosen"
-              rows={3}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              What were the outcomes achieved?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Textarea
-              value={formData.pdOutcomes}
-              onChange={(e) => updateFormData("pdOutcomes", e.target.value)}
-              placeholder="Describe the outcomes and impact"
-              rows={3}
-              required
-            />
-          </div>
-          
-          {/* Show validation message for required fields when Yes is selected */}
-          {(!formData.teachersAttendedPD.trim() || 
-            !formData.pdTopic.trim() || 
-            !formData.pdTopicReason.trim() || 
-            !formData.pdOutcomes.trim()) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <p className="text-red-700 text-sm">
-                  <strong>Required:</strong> All PD session fields must be filled to continue.
-                </p>
-              </div>
+        <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">PD Session Details</h4>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                What percentage of teachers attended this session?
+                <span className="text-rose-500 ml-1">*</span>
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.teachersAttendedPD}
+                onChange={(e) => updateFormData("teachersAttendedPD", e.target.value)}
+                placeholder="85"
+                required
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
             </div>
-          )}
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Topic of PD session
+                <span className="text-rose-500 ml-1">*</span>
+              </Label>
+              <Input
+                value={formData.pdTopic}
+                onChange={(e) => updateFormData("pdTopic", e.target.value)}
+                placeholder="Enter PD topic"
+                required
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Reason for choosing the topic
+                <span className="text-rose-500 ml-1">*</span>
+              </Label>
+              <Textarea
+                value={formData.pdTopicReason}
+                onChange={(e) => updateFormData("pdTopicReason", e.target.value)}
+                placeholder="Explain why this topic was chosen"
+                rows={3}
+                required
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                What were the outcomes achieved?
+                <span className="text-rose-500 ml-1">*</span>
+              </Label>
+              <Textarea
+                value={formData.pdOutcomes}
+                onChange={(e) => updateFormData("pdOutcomes", e.target.value)}
+                placeholder="Describe the outcomes and impact"
+                rows={3}
+                required
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+
+            {/* Inline validation hint */}
+            {currentSection === 4 && (!formData.teachersAttendedPD.trim() ||
+              !formData.pdTopic.trim() ||
+              !formData.pdTopicReason.trim() ||
+              !formData.pdOutcomes.trim()) && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 pt-2">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span className="text-sm">All PD session fields must be filled to continue</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
