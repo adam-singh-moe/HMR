@@ -1445,8 +1445,8 @@ function RegionalOfficerDashboardContent() {
                       <BarChart data={topExpenditureSchools} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
                         <defs>
                           <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
-                            <stop offset="100%" stopColor="#1d4ed8" stopOpacity={1}/>
+                            <stop offset="0%" stopColor="#06b6d4" stopOpacity={1}/>
+                            <stop offset="100%" stopColor="#0891b2" stopOpacity={1}/>
                           </linearGradient>
                         </defs>
                         <CartesianGrid

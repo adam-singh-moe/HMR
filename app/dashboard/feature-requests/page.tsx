@@ -5,7 +5,7 @@ import { CreateFeatureRequestButton } from "@/components/feature-requests/create
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Lightbulb } from "lucide-react"
 
 // Helper function to get the correct dashboard URL based on user role
 function getDashboardUrl(role: string): string {
@@ -23,7 +23,7 @@ function getDashboardUrl(role: string): string {
 
 export default async function FeatureRequestsPage() {
   const user = await getUser()
-  
+
   if (!user) {
     redirect("/auth/signin")
   }
@@ -32,38 +32,45 @@ export default async function FeatureRequestsPage() {
 
   const canCreate = user.role === "Regional Officer" || user.role === "Education Official"
   const dashboardUrl = getDashboardUrl(user.role)
+  const isRegionalOfficer = user.role === "Regional Officer"
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className={`${isRegionalOfficer ? 'p-4 lg:p-6 mx-auto max-w-6xl' : 'container mx-auto py-8 px-4 max-w-7xl'}`}>
       <div className="mb-8">
-        <Button
-          asChild
-          variant="ghost"
-          size="sm"
-          className="mb-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-        >
-          <Link href={dashboardUrl} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </Button>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Feature Requests</h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
-              {canCreate 
-                ? "Submit and vote on feature requests for the application"
-                : "View and upvote feature requests from the community"
-              }
-            </p>
+        {/* Only show back button for non-Regional Officers (they have sidebar) */}
+        {!isRegionalOfficer && (
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="mb-4 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <Link href={dashboardUrl} className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Lightbulb className="h-8 w-8 text-blue-500" />
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">Feature Requests</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                {canCreate
+                  ? "Submit and vote on feature requests"
+                  : "View and upvote feature requests"
+                }
+              </p>
+            </div>
           </div>
           {canCreate && <CreateFeatureRequestButton />}
         </div>
       </div>
 
       {error ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
           {error}
         </div>
       ) : (

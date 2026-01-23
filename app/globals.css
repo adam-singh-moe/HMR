@@ -236,6 +236,17 @@
   }
 }
 
+/* Floating bubble animation */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-15px) translateX(8px); }
+  66% { transform: translateY(8px) translateX(-8px); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
 /* Flashing animation for important notices */
 @keyframes flash {
   0%, 100% {

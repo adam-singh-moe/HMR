@@ -1,23 +1,25 @@
 "use client"
 
 import { ReactNode, useState } from "react"
-import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-wrapper"
 import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
 import { HelpDeskButton } from "@/components/help-desk-button"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface RegionalOfficerLayoutProps {
+interface FeatureRequestsLayoutProps {
   children: ReactNode
 }
 
-export default function RegionalOfficerLayout({ children }: RegionalOfficerLayoutProps) {
+export default function FeatureRequestsLayout({ children }: FeatureRequestsLayoutProps) {
   const { user, isLoading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Show loading state
-  if (isLoading) {
+  // Only Regional Officers get the sidebar layout
+  const isRegionalOfficer = user?.role === "Regional Officer"
+
+  // Show loading state for Regional Officers
+  if (isLoading && isRegionalOfficer) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
         <div className="text-center">
@@ -28,14 +30,17 @@ export default function RegionalOfficerLayout({ children }: RegionalOfficerLayou
     )
   }
 
+  // For non-Regional Officers, just render children without sidebar
+  if (!isRegionalOfficer) {
+    return <>{children}</>
+  }
+
+  // Regional Officer layout with sidebar
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
       {/* Background - Subtle, non-distracting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 dark:from-blue-950/20 dark:via-transparent dark:to-indigo-950/10" />
-
-        {/* Subtle grid pattern - less prominent */}
         <div
           className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
           style={{
@@ -101,7 +106,7 @@ export default function RegionalOfficerLayout({ children }: RegionalOfficerLayou
         <RegionalOfficerSidebar onNavigate={() => setSidebarOpen(false)} />
       </aside>
 
-      {/* Mobile Menu Button - Fixed in top-left */}
+      {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-4 left-4 z-40">
         <Button
           variant="outline"
