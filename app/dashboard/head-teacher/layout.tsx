@@ -2,27 +2,21 @@
 
 import { ReactNode, useState } from "react"
 import { useAuth } from "@/components/auth-wrapper"
-import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
 import { HeadTeacherSidebar } from "@/components/head-teacher-sidebar"
 import { HelpDeskButton } from "@/components/help-desk-button"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-interface FeatureRequestsLayoutProps {
+interface HeadTeacherLayoutProps {
   children: ReactNode
 }
 
-export default function FeatureRequestsLayout({ children }: FeatureRequestsLayoutProps) {
+export default function HeadTeacherLayout({ children }: HeadTeacherLayoutProps) {
   const { user, isLoading } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Check if user has a sidebar layout
-  const isRegionalOfficer = user?.role === "Regional Officer"
-  const isHeadTeacher = user?.role === "Head Teacher"
-  const hasSidebarLayout = isRegionalOfficer || isHeadTeacher
-
-  // Show loading state for users with sidebar
-  if (isLoading && hasSidebarLayout) {
+  // Show loading state
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
         <div className="text-center">
@@ -33,17 +27,14 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
     )
   }
 
-  // For users without sidebar layout, just render children
-  if (!hasSidebarLayout) {
-    return <>{children}</>
-  }
-
-  // Layout with sidebar for Regional Officers and Head Teachers
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
       {/* Background - Subtle, non-distracting */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-indigo-50/30 dark:from-blue-950/20 dark:via-transparent dark:to-indigo-950/10" />
+
+        {/* Subtle grid pattern - less prominent */}
         <div
           className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
           style={{
@@ -106,14 +97,10 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
           <X className="h-4 w-4" />
         </Button>
 
-        {isRegionalOfficer ? (
-          <RegionalOfficerSidebar onNavigate={() => setSidebarOpen(false)} />
-        ) : (
-          <HeadTeacherSidebar onNavigate={() => setSidebarOpen(false)} />
-        )}
+        <HeadTeacherSidebar onNavigate={() => setSidebarOpen(false)} />
       </aside>
 
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Fixed in top-left */}
       <div className="lg:hidden fixed top-4 left-4 z-40">
         <Button
           variant="outline"
@@ -131,7 +118,7 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
       </main>
 
       {/* Help Desk Button */}
-      <HelpDeskButton userRole={isRegionalOfficer ? "Regional Officer" : "Head Teacher"} />
+      <HelpDeskButton userRole="Head Teacher" />
     </div>
   )
 }

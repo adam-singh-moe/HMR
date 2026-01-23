@@ -2370,102 +2370,125 @@ export function MonthlyReportForm({
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Month</Label>
-          <Input value={formData.month} disabled className="bg-slate-50 dark:bg-slate-800" />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Date</Label>
-          <Input value={formData.date} disabled className="bg-slate-50 dark:bg-slate-800" />
+
+      {/* Report Period Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Report Period</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Month</Label>
+            <Input
+              value={formData.month}
+              disabled
+              className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Date</Label>
+            <Input
+              value={formData.date}
+              disabled
+              className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Education District</Label>
-          <Input
-            value={formData.educationDistrict}
-            disabled
-            className="bg-slate-50 dark:bg-slate-800"
-            placeholder="Auto-populated from your profile"
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's region</p>
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Level *</Label>
-          <Input
-            value={formData.schoolLevel}
-            disabled
-            className="bg-slate-50 dark:bg-slate-800"
-            placeholder="Auto-populated from your school"
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's level</p>
+      {/* School Information Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">School Information</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Education District</Label>
+            <Input
+              value={formData.educationDistrict}
+              disabled
+              className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+              placeholder="Auto-populated"
+            />
+            <p className="text-xs text-slate-400">Based on your school's region</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">School Level</Label>
+            <Input
+              value={formData.schoolLevel}
+              disabled
+              className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+              placeholder="Auto-populated"
+            />
+            <p className="text-xs text-slate-400">Based on your school's level</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">School Name</Label>
+            <Input
+              value={formData.schoolName}
+              disabled
+              className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+              placeholder="Auto-populated"
+            />
+            <p className="text-xs text-slate-400">Based on your assigned school</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              School Grade {!userSchool?.grade && <span className="text-rose-500">*</span>}
+            </Label>
+            {userSchool?.grade ? (
+              <>
+                <Input
+                  value={`Grade ${formData.schoolGrade}`}
+                  disabled
+                  className="h-11 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg cursor-not-allowed"
+                />
+                <p className="text-xs text-slate-400">From your school's profile</p>
+              </>
+            ) : (
+              <>
+                <Select value={formData.schoolGrade} onValueChange={(value) => updateFormData("schoolGrade", value)}>
+                  <SelectTrigger className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg">
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Grade A</SelectItem>
+                    <SelectItem value="B">Grade B</SelectItem>
+                    <SelectItem value="C">Grade C</SelectItem>
+                    <SelectItem value="D">Grade D</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-400">Please select your school's grade</p>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Name</Label>
-          <Input
-            value={formData.schoolName}
-            disabled
-            className="bg-slate-50 dark:bg-slate-800"
-            placeholder="Auto-populated from your profile"
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your assigned school</p>
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">School Grade *</Label>
-          {userSchool?.grade ? (
-            // Auto-populated grade from school data
-            <>
-              <Input
-                value={`Grade ${formData.schoolGrade}`}
-                disabled
-                className="bg-slate-50 dark:bg-slate-800"
-                placeholder="Auto-populated from school data"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400">Grade automatically set from your school's profile</p>
-            </>
-          ) : (
-            // Manual grade selection when no grade exists in school data
-            <>
-              <Select value={formData.schoolGrade} onValueChange={(value) => updateFormData("schoolGrade", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">Grade A</SelectItem>
-                  <SelectItem value="B">Grade B</SelectItem>
-                  <SelectItem value="C">Grade C</SelectItem>
-                  <SelectItem value="D">Grade D</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Please select your school's grade from the list</p>
-            </>
-          )}
-        </div>
-      </div>
-
+      {/* Warning Notice */}
       {!userSchool && currentUser && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Warning:</strong> No school is assigned to your profile. Please contact your administrator to assign a
-            school before submitting reports.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">No School Assigned</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please contact your administrator to assign a school before submitting reports.</p>
+          </div>
         </div>
       )}
 
+      {/* User Info Card */}
       {currentUser && userSchool && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Ready to submit:</strong> You are logged in as <strong>{currentUser.name}</strong> from{" "}
-            <strong>{userSchool.name}</strong> in the <strong>{(userSchool.sms_regions as any)?.name}</strong> region.
+        <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+          <p className="text-slate-700 dark:text-slate-300 text-sm">
+            <span className="text-slate-500 dark:text-slate-400">Logged in as</span>{" "}
+            <strong className="text-slate-900 dark:text-white">{currentUser.name}</strong>{" "}
+            <span className="text-slate-500 dark:text-slate-400">from</span>{" "}
+            <strong className="text-slate-900 dark:text-white">{userSchool.name}</strong>{" "}
+            <span className="text-slate-500 dark:text-slate-400">in</span>{" "}
+            <strong className="text-slate-900 dark:text-white">{(userSchool.sms_regions as any)?.name}</strong>
           </p>
           {reportId && (
-            <p className="text-green-700 dark:text-green-300 text-xs mt-1">
-              ✅ Report started - ID: {reportId}
+            <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-2 flex items-center gap-1">
+              <Save className="h-3 w-3" />
+              Report in progress - ID: {reportId}
             </p>
           )}
         </div>
@@ -2475,100 +2498,99 @@ export function MonthlyReportForm({
 
   const renderStudentEnrolment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-2">
-        Section 1: Student Enrolment
-        {savedSections.has(1) && (
-          <span className="text-green-600 text-sm font-normal">✅ Saved</span>
-        )}
-        {hasUnsavedChanges && (
-          <span className="text-amber-600 text-sm font-normal">📝 Unsaved Changes</span>
-        )}
-      </h3>
-      
+
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving student enrollment data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving enrollment data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Student enrollment data will be saved to report ID: {reportId}
-            {savedSections.has(1) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
+      {/* Form Fields Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Enrollment Numbers</h4>
+        <div className="grid gap-5 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Students Enrolled <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalStudentsEnrolled}
+              onChange={(e) => updateFormData("totalStudentsEnrolled", e.target.value)}
+              placeholder="0"
+              min="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-lg"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Transferred In <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsTransferredIn}
+              onChange={(e) => updateFormData("studentsTransferredIn", e.target.value)}
+              placeholder="0"
+              min="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-lg"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Transferred Out <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsTransferredOut}
+              onChange={(e) => updateFormData("studentsTransferredOut", e.target.value)}
+              placeholder="0"
+              min="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 rounded-lg"
+              required
+            />
+          </div>
         </div>
-      )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Total number of students enrolled this month
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.totalStudentsEnrolled}
-            onChange={(e) => updateFormData("totalStudentsEnrolled", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Total number of Students transferred in
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.studentsTransferredIn}
-            onChange={(e) => updateFormData("studentsTransferredIn", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Total number of Students transferred out
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.studentsTransferredOut}
-            onChange={(e) => updateFormData("studentsTransferredOut", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
+        {/* Inline Validation */}
+        {currentSection === 1 && (
+          (!formData.totalStudentsEnrolled.trim() ||
+           !formData.studentsTransferredIn.trim() ||
+           !formData.studentsTransferredOut.trim()) && (
+            <div className="mt-4 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">Please fill in all enrollment fields to continue</span>
+            </div>
+          )
+        )}
       </div>
 
-      {currentSection === 1 && (
-        (!formData.totalStudentsEnrolled.trim() || 
-         !formData.studentsTransferredIn.trim() || 
-         !formData.studentsTransferredOut.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All three enrollment fields must be filled to continue.
-              </p>
-            </div>
+      {/* Summary Card */}
+      <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+            <FileTextIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
           </div>
-        )
-      )}
-
-      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
-        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Summary</h4>
-        <div className="text-sm text-slate-700 dark:text-slate-200">
-          <p><strong>Total Enrolled:</strong> {formData.totalStudentsEnrolled || 0}</p>
-          <p><strong>Net Transfer:</strong> {(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0))}</p>
+          <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Summary</h4>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Total Enrolled</p>
+            <p className="text-xl font-bold text-slate-900 dark:text-white">{formData.totalStudentsEnrolled || 0}</p>
+          </div>
+          <div className="p-3 bg-white/60 dark:bg-slate-900/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Net Transfer</p>
+            <p className={`text-xl font-bold ${(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0)) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0)) >= 0 ? '+' : ''}{(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0))}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -2576,120 +2598,148 @@ export function MonthlyReportForm({
 
   const renderAttendance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 2: Attendance</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving attendance data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving attendance data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Attendance data will be saved to report ID: {reportId}
-            {savedSections.has(2) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <h4 className="font-medium text-blue-600 dark:text-blue-400">Students</h4>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
-              What percentage of students were present this month?
-              <span className="text-red-500 ml-1">*</span>
+      {/* Student Attendance Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          Student Attendance
+        </h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Attendance Rate <span className="text-rose-500">*</span>
             </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.studentAttendanceRate}
-              onChange={(e) => updateFormData("studentAttendanceRate", e.target.value)}
-              placeholder="85"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
-              What percentage arrived on time?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.studentPunctualityRate}
-              onChange={(e) => updateFormData("studentPunctualityRate", e.target.value)}
-              placeholder="90"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h4 className="font-medium text-blue-600 dark:text-blue-400">Teachers</h4>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
-              What percentage of teachers were present this month?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.teacherAttendanceRate}
-              onChange={(e) => updateFormData("teacherAttendanceRate", e.target.value)}
-              placeholder="95"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
-              What percentage arrived on time?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.teacherPunctualityRate}
-              onChange={(e) => updateFormData("teacherPunctualityRate", e.target.value)}
-              placeholder="98"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      {currentSection === 2 && (
-        (!formData.studentAttendanceRate.trim() || 
-         !formData.studentPunctualityRate.trim() || 
-         !formData.teacherAttendanceRate.trim() || 
-         !formData.teacherPunctualityRate.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All four attendance fields must be filled to continue.
-              </p>
+            <div className="relative">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.studentAttendanceRate}
+                onChange={(e) => updateFormData("studentAttendanceRate", e.target.value)}
+                placeholder="85"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg pr-8"
+                required
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
+            <p className="text-xs text-slate-400">Percentage of students present this month</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Punctuality Rate <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.studentPunctualityRate}
+                onChange={(e) => updateFormData("studentPunctualityRate", e.target.value)}
+                placeholder="90"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg pr-8"
+                required
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+            </div>
+            <p className="text-xs text-slate-400">Percentage who arrived on time</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Teacher Attendance Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          Teacher Attendance
+        </h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Attendance Rate <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.teacherAttendanceRate}
+                onChange={(e) => updateFormData("teacherAttendanceRate", e.target.value)}
+                placeholder="95"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg pr-8"
+                required
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+            </div>
+            <p className="text-xs text-slate-400">Percentage of teachers present this month</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Punctuality Rate <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.teacherPunctualityRate}
+                onChange={(e) => updateFormData("teacherPunctualityRate", e.target.value)}
+                placeholder="98"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg pr-8"
+                required
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+            </div>
+            <p className="text-xs text-slate-400">Percentage who arrived on time</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Validation */}
+      {currentSection === 2 && (
+        (!formData.studentAttendanceRate.trim() ||
+         !formData.studentPunctualityRate.trim() ||
+         !formData.teacherAttendanceRate.trim() ||
+         !formData.teacherPunctualityRate.trim()) && (
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">All four attendance fields are required to continue</span>
           </div>
         )
       )}
 
-      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
-        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Summary</h4>
-        <div className="text-sm text-slate-700 dark:text-slate-200 space-y-1">
-          <p><strong>Student Attendance:</strong> {formData.studentAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.studentPunctualityRate || 0}%</p>
-          <p><strong>Teacher Attendance:</strong> {formData.teacherAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.teacherPunctualityRate || 0}%</p>
+      {/* Summary Card */}
+      <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Attendance Summary</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Students</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formData.studentAttendanceRate || 0}%</span>
+              <span className="text-xs text-slate-400">attendance</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{formData.studentPunctualityRate || 0}% punctuality</p>
+          </div>
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Teachers</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formData.teacherAttendanceRate || 0}%</span>
+              <span className="text-xs text-slate-400">attendance</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{formData.teacherPunctualityRate || 0}% punctuality</p>
+          </div>
         </div>
       </div>
     </div>
@@ -2697,151 +2747,166 @@ export function MonthlyReportForm({
 
   const renderStaffing = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 3: Staffing and Vacancies</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving staffing data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving staffing data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Staffing data will be saved to report ID: {reportId}
-            {savedSections.has(3) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Total number of staff entitlement
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.totalStaffEntitlement}
-            onChange={(e) => updateFormData("totalStaffEntitlement", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Current Number of Teachers
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.currentTeachersOnStaff}
-            onChange={(e) => updateFormData("currentTeachersOnStaff", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Under-staffed by (Number of Teachers)
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.underStaffedBy}
-            onChange={(e) => updateFormData("underStaffedBy", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            Over-staffed by (Number of Teachers)
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.overStaffedBy}
-            onChange={(e) => updateFormData("overStaffedBy", e.target.value)}
-            placeholder="0"
-            required
-          />
+      {/* Staffing Numbers Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Staffing Numbers</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Staff Entitlement <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalStaffEntitlement}
+              onChange={(e) => updateFormData("totalStaffEntitlement", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+              required
+            />
+            <p className="text-xs text-slate-400">Total number of staff positions</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Current Teachers <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.currentTeachersOnStaff}
+              onChange={(e) => updateFormData("currentTeachersOnStaff", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+              required
+            />
+            <p className="text-xs text-slate-400">Number of teachers currently on staff</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Under-Staffed By <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.underStaffedBy}
+              onChange={(e) => updateFormData("underStaffedBy", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+              required
+            />
+            <p className="text-xs text-slate-400">Number of teachers needed</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Over-Staffed By <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.overStaffedBy}
+              onChange={(e) => updateFormData("overStaffedBy", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg"
+              required
+            />
+            <p className="text-xs text-slate-400">Excess number of teachers</p>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-blue-700 dark:text-blue-400 font-medium">
-          Were secondment attendance certificates prepared? *
+      {/* Secondment Certificates Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <Label className="text-slate-700 dark:text-slate-200 text-base font-medium block mb-4">
+          Were secondment attendance certificates prepared?
+          <span className="text-rose-500 ml-1">*</span>
         </Label>
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="secondment-yes"
-              checked={formData.secondmentCertificatesPrepared === true}
-              onChange={(e) => {
-                updateFormData("secondmentCertificatesPrepared", e.target.checked ? true : null)
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 rounded focus:ring-primary-500"
-            />
-            <Label htmlFor="secondment-yes" className="text-sm font-normal cursor-pointer">
-              Yes
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="secondment-no"
-              checked={formData.secondmentCertificatesPrepared === false}
-              onChange={(e) => {
-                updateFormData("secondmentCertificatesPrepared", e.target.checked ? false : null)
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 rounded focus:ring-primary-500"
-            />
-            <Label htmlFor="secondment-no" className="text-sm font-normal cursor-pointer">
-              No
-            </Label>
-          </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => updateFormData("secondmentCertificatesPrepared", true)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+              formData.secondmentCertificatesPrepared === true
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.secondmentCertificatesPrepared === true
+                ? 'border-emerald-500 bg-emerald-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.secondmentCertificatesPrepared === true && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">Yes</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => updateFormData("secondmentCertificatesPrepared", false)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+              formData.secondmentCertificatesPrepared === false
+                ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.secondmentCertificatesPrepared === false
+                ? 'border-slate-500 bg-slate-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.secondmentCertificatesPrepared === false && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">No</span>
+          </button>
         </div>
       </div>
 
+      {/* Inline Validation */}
       {currentSection === 3 && (
-        (!formData.totalStaffEntitlement.trim() || 
-         !formData.currentTeachersOnStaff.trim() || 
-         !formData.underStaffedBy.trim() || 
-         !formData.overStaffedBy.trim() || 
+        (!formData.totalStaffEntitlement.trim() ||
+         !formData.currentTeachersOnStaff.trim() ||
+         !formData.underStaffedBy.trim() ||
+         !formData.overStaffedBy.trim() ||
          formData.secondmentCertificatesPrepared === null) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All five staffing fields must be filled to continue.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">All staffing fields are required to continue</span>
           </div>
         )
       )}
 
-      {/* Teachers who left the school */}
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+      {/* Teacher Status Reports Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 border-b border-primary-200 pb-2 mb-4">
+          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Teacher Status Reports
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Please report any changes in teacher status for the current month
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Report any changes in teacher status for the current month
           </p>
         </div>
 
         {/* Teachers who left the school */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-              <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
               Teachers who left the school
             </h4>
             <Button
@@ -2849,77 +2914,76 @@ export function MonthlyReportForm({
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersWhoLeft", { name: "", status: "", reason: "" })}
+              className="h-8 text-xs rounded-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           </div>
           {formData.teachersWhoLeft.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
-            <Input
-              placeholder="Name"
-              value={teacher.name}
-              onChange={(e) => {
-                const updated = [...formData.teachersWhoLeft]
-                updated[index].name = e.target.value
-                updateFormData("teachersWhoLeft", updated)
-              }}
-            />
-            <Select
-              value={teacher.status}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersWhoLeft]
-                updated[index].status = value
-                updateFormData("teachersWhoLeft", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={teacher.reason}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersWhoLeft]
-                updated[index].reason = value
-                updateFormData("teachersWhoLeft", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Reason" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="retirement">Retirement</SelectItem>
-                <SelectItem value="resignation">Resignation</SelectItem>
-                <SelectItem value="dismissal">Dismissal</SelectItem>
-                <SelectItem value="death">Death</SelectItem>
-                <SelectItem value="secondment">Secondment</SelectItem>
-                <SelectItem value="promotion">Promotion</SelectItem>
-                <SelectItem value="transfer">Transfer</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("teachersWhoLeft", index)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+            <div key={index} className="grid gap-3 md:grid-cols-4 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Input
+                placeholder="Name"
+                value={teacher.name}
+                onChange={(e) => {
+                  const updated = [...formData.teachersWhoLeft]
+                  updated[index].name = e.target.value
+                  updateFormData("teachersWhoLeft", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Select
+                value={teacher.status}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersWhoLeft]
+                  updated[index].status = value
+                  updateFormData("teachersWhoLeft", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={teacher.reason}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersWhoLeft]
+                  updated[index].reason = value
+                  updateFormData("teachersWhoLeft", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retirement">Retirement</SelectItem>
+                  <SelectItem value="resignation">Resignation</SelectItem>
+                  <SelectItem value="dismissal">Dismissal</SelectItem>
+                  <SelectItem value="death">Death</SelectItem>
+                  <SelectItem value="secondment">Secondment</SelectItem>
+                  <SelectItem value="promotion">Promotion</SelectItem>
+                  <SelectItem value="transfer">Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("teachersWhoLeft", index)} className="h-10 text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Special Leave (Disciplinary) – With Pay */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-              <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
               Teachers on Special Leave (Disciplinary) With Pay
             </h4>
             <Button
@@ -2927,64 +2991,65 @@ export function MonthlyReportForm({
               variant="outline"
               size="sm"
               onClick={() => addToArray("specialLeave", { name: "", status: "", offence: "" })}
+              className="h-8 text-xs rounded-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           </div>
-        {formData.specialLeave.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
-            <Input
-              placeholder="Name"
-              value={teacher.name}
-              onChange={(e) => {
-                const updated = [...formData.specialLeave]
-                updated[index].name = e.target.value
-                updateFormData("specialLeave", updated)
-              }}
-            />
-            <Select
-              value={teacher.status}
-              onValueChange={(value) => {
-                const updated = [...formData.specialLeave]
-                updated[index].status = value
-                updateFormData("specialLeave", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Offence"
-              value={teacher.offence}
-              onChange={(e) => {
-                const updated = [...formData.specialLeave]
-                updated[index].offence = e.target.value
-                updateFormData("specialLeave", updated)
-              }}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("specialLeave", index)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>          ))}
+          {formData.specialLeave.map((teacher, index) => (
+            <div key={index} className="grid gap-3 md:grid-cols-4 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Input
+                placeholder="Name"
+                value={teacher.name}
+                onChange={(e) => {
+                  const updated = [...formData.specialLeave]
+                  updated[index].name = e.target.value
+                  updateFormData("specialLeave", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Select
+                value={teacher.status}
+                onValueChange={(value) => {
+                  const updated = [...formData.specialLeave]
+                  updated[index].status = value
+                  updateFormData("specialLeave", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Offence"
+                value={teacher.offence}
+                onChange={(e) => {
+                  const updated = [...formData.specialLeave]
+                  updated[index].offence = e.target.value
+                  updateFormData("specialLeave", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("specialLeave", index)} className="h-10 text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Teachers Assumed Duty */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-              <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
               Teachers who Assumed Duty
             </h4>
             <Button
@@ -2992,224 +3057,210 @@ export function MonthlyReportForm({
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersAssumedDuty", { name: "", status: "" })}
+              className="h-8 text-xs rounded-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           </div>
-        {formData.teachersAssumedDuty.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
-            <Input
-              placeholder="Name"
-              value={teacher.name}
-              onChange={(e) => {
-                const updated = [...formData.teachersAssumedDuty]
-                updated[index].name = e.target.value
-                updateFormData("teachersAssumedDuty", updated)
-              }}
-            />
-            <Select
-              value={teacher.status}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersAssumedDuty]
-                updated[index].status = value
-                updateFormData("teachersAssumedDuty", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => removeFromArray("teachersAssumedDuty", index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>          ))}
+          {formData.teachersAssumedDuty.map((teacher, index) => (
+            <div key={index} className="grid gap-3 md:grid-cols-3 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Input
+                placeholder="Name"
+                value={teacher.name}
+                onChange={(e) => {
+                  const updated = [...formData.teachersAssumedDuty]
+                  updated[index].name = e.target.value
+                  updateFormData("teachersAssumedDuty", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Select
+                value={teacher.status}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersAssumedDuty]
+                  updated[index].status = value
+                  updateFormData("teachersAssumedDuty", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("teachersAssumedDuty", index)} className="h-10 text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Teachers Not Reported for Duty */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-              <span className="inline-block w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
               Teachers Not Reported for Duty
             </h4>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() =>
-                addToArray("teachersNotReported", { name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" })
-              }
+              onClick={() => addToArray("teachersNotReported", { name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" })}
+              className="h-8 text-xs rounded-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           </div>
-        {formData.teachersNotReported.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
-            <Input
-              placeholder="Name"
-              value={teacher.name}
-              onChange={(e) => {
-                const updated = [...formData.teachersNotReported]
-                updated[index].name = e.target.value
-                updateFormData("teachersNotReported", updated)
-              }}
-            />
-            <Select
-              value={teacher.status}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersNotReported]
-                updated[index].status = value
-                updateFormData("teachersNotReported", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={teacher.reason}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersNotReported]
-                updated[index].reason = value
-                updateFormData("teachersNotReported", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Reason" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ncr">NCR</SelectItem>
-                <SelectItem value="maternity-leave">Maternity Leave</SelectItem>
-                <SelectItem value="medical-leave">Medical Leave</SelectItem>
-                <SelectItem value="study-leave">Study Leave</SelectItem>
-                <SelectItem value="personal-leave">Personal Leave</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Days Absent"
-              type="number"
-              value={teacher.daysAbsent}
-              onChange={(e) => {
-                const updated = [...formData.teachersNotReported]
-                updated[index].daysAbsent = e.target.value
-                updateFormData("teachersNotReported", updated)
-              }}
-            />
-            <Textarea
-              placeholder="Action Taken"
-              value={teacher.actionTaken}
-              onChange={(e) => {
-                const updated = [...formData.teachersNotReported]
-                updated[index].actionTaken = e.target.value
-                updateFormData("teachersNotReported", updated)
-              }}
-              rows={2}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => removeFromArray("teachersNotReported", index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>          ))}
+          {formData.teachersNotReported.map((teacher, index) => (
+            <div key={index} className="grid gap-3 md:grid-cols-3 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Input
+                placeholder="Name"
+                value={teacher.name}
+                onChange={(e) => {
+                  const updated = [...formData.teachersNotReported]
+                  updated[index].name = e.target.value
+                  updateFormData("teachersNotReported", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Select
+                value={teacher.status}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersNotReported]
+                  updated[index].status = value
+                  updateFormData("teachersNotReported", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={teacher.reason}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersNotReported]
+                  updated[index].reason = value
+                  updateFormData("teachersNotReported", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ncr">NCR</SelectItem>
+                  <SelectItem value="maternity-leave">Maternity Leave</SelectItem>
+                  <SelectItem value="medical-leave">Medical Leave</SelectItem>
+                  <SelectItem value="study-leave">Study Leave</SelectItem>
+                  <SelectItem value="personal-leave">Personal Leave</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Days Absent"
+                type="number"
+                value={teacher.daysAbsent}
+                onChange={(e) => {
+                  const updated = [...formData.teachersNotReported]
+                  updated[index].daysAbsent = e.target.value
+                  updateFormData("teachersNotReported", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Textarea
+                placeholder="Action Taken"
+                value={teacher.actionTaken}
+                onChange={(e) => {
+                  const updated = [...formData.teachersNotReported]
+                  updated[index].actionTaken = e.target.value
+                  updateFormData("teachersNotReported", updated)
+                }}
+                rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("teachersNotReported", index)} className="h-10 text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Teachers Without Salary */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-              <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-              Teachers who did not receieve salary for current month
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+              Teachers who did not receive salary
             </h4>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersWithoutSalary", { name: "", status: "", reason: "" })}
+              className="h-8 text-xs rounded-lg"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add
             </Button>
           </div>
-        {formData.teachersWithoutSalary.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
-            <Input
-              placeholder="Name"
-              value={teacher.name}
-              onChange={(e) => {
-                const updated = [...formData.teachersWithoutSalary]
-                updated[index].name = e.target.value
-                updateFormData("teachersWithoutSalary", updated)
-              }}
-            />
-            <Select
-              value={teacher.status}
-              onValueChange={(value) => {
-                const updated = [...formData.teachersWithoutSalary]
-                updated[index].status = value
-                updateFormData("teachersWithoutSalary", updated)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Reason"
-              value={teacher.reason}
-              onChange={(e) => {
-                const updated = [...formData.teachersWithoutSalary]
-                updated[index].reason = e.target.value
-                updateFormData("teachersWithoutSalary", updated)
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => removeFromArray("teachersWithoutSalary", index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+          {formData.teachersWithoutSalary.map((teacher, index) => (
+            <div key={index} className="grid gap-3 md:grid-cols-4 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Input
+                placeholder="Name"
+                value={teacher.name}
+                onChange={(e) => {
+                  const updated = [...formData.teachersWithoutSalary]
+                  updated[index].name = e.target.value
+                  updateFormData("teachersWithoutSalary", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Select
+                value={teacher.status}
+                onValueChange={(value) => {
+                  const updated = [...formData.teachersWithoutSalary]
+                  updated[index].status = value
+                  updateFormData("teachersWithoutSalary", updated)
+                }}
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Reason"
+                value={teacher.reason}
+                onChange={(e) => {
+                  const updated = [...formData.teachersWithoutSalary]
+                  updated[index].reason = e.target.value
+                  updateFormData("teachersWithoutSalary", updated)
+                }}
+                className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("teachersWithoutSalary", index)} className="h-10 text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -3217,80 +3268,87 @@ export function MonthlyReportForm({
 
   const renderStaffDevelopment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 4: Staff Development</h3>
-
-      <div className="space-y-4">
-        <Label className="text-blue-700 dark:text-blue-400 font-medium">
+      {/* Question Card */}
+      <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+        <Label className="text-slate-700 dark:text-slate-200 text-base font-medium block mb-4">
           Was a whole school PD session held?
-          <span className="text-red-500 ml-1">*</span>
+          <span className="text-rose-500 ml-1">*</span>
         </Label>
-        <div className="flex gap-6">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="pd-yes"
-              checked={formData.wholeschoolPDHeld === true}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  updateFormData("wholeschoolPDHeld", true);
-                } else {
-                  updateFormData("wholeschoolPDHeld", null);
-                  // Clear other fields when unchecked
-                  updateFormData("teachersAttendedPD", "");
-                  updateFormData("pdTopic", "");
-                  updateFormData("pdTopicReason", "");
-                  updateFormData("pdOutcomes", "");
-                }
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <Label htmlFor="pd-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-              Yes
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="pd-no"
-              checked={formData.wholeschoolPDHeld === false}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  updateFormData("wholeschoolPDHeld", false);
-                  // Clear other fields when No is selected
-                  updateFormData("teachersAttendedPD", "");
-                  updateFormData("pdTopic", "");
-                  updateFormData("pdTopicReason", "");
-                  updateFormData("pdOutcomes", "");
-                } else {
-                  updateFormData("wholeschoolPDHeld", null);
-                }
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <Label htmlFor="pd-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-              No
-            </Label>
-          </div>
-        </div>
-      </div>
 
-      {/* Show validation message if first question not answered */}
-      {currentSection === 4 && formData.wholeschoolPDHeld === null && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <p className="text-red-700 text-sm">
-              <strong>Required:</strong> Please answer whether a whole school PD session was held.
-            </p>
-          </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              updateFormData("wholeschoolPDHeld", true);
+            }}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200
+              ${formData.wholeschoolPDHeld === true
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+              }
+            `}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.wholeschoolPDHeld === true
+                ? 'border-emerald-500 bg-emerald-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.wholeschoolPDHeld === true && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">Yes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              updateFormData("wholeschoolPDHeld", false);
+              updateFormData("teachersAttendedPD", "");
+              updateFormData("pdTopic", "");
+              updateFormData("pdTopicReason", "");
+              updateFormData("pdOutcomes", "");
+            }}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200
+              ${formData.wholeschoolPDHeld === false
+                ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+              }
+            `}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.wholeschoolPDHeld === false
+                ? 'border-slate-500 bg-slate-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.wholeschoolPDHeld === false && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">No</span>
+          </button>
         </div>
-      )}
+
+        {/* Inline validation hint */}
+        {currentSection === 4 && formData.wholeschoolPDHeld === null && (
+          <div className="mt-3 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">Please select an option to continue</span>
+          </div>
+        )}
+      </div>
 
       {/* Show additional fields only when Yes is selected */}
       {formData.wholeschoolPDHeld === true && (
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
+            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
               What percentage of teachers attended this session?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3305,7 +3363,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
+            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
               Topic of PD session
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3317,7 +3375,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
+            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
               Reason for choosing the topic
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3330,7 +3388,7 @@ export function MonthlyReportForm({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-blue-700 dark:text-blue-400 font-medium">
+            <Label className="text-slate-500 dark:text-slate-400 text-sm font-medium">
               What were the outcomes achieved?
               <span className="text-red-500 ml-1">*</span>
             </Label>
@@ -3364,357 +3422,311 @@ export function MonthlyReportForm({
 
   const renderSupervision = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 5: Supervision</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving supervision data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving supervision data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Supervision data will be saved to report ID: {reportId}
-            {savedSections.has(5) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
+      {/* Supervision Reports Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400 border-b border-primary-200 pb-2 mb-4">
+          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
             Supervision Reports
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Report on lesson observations conducted by different supervisory personnel
           </p>
         </div>
 
         {/* Head Master (HM) */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-            <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+        <div className="space-y-4 mb-6">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             Head Master (HM)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Lessons Observed <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.hmLessonsObserved}
                 onChange={(e) => updateFormData("hmLessonsObserved", e.target.value)}
                 placeholder="0"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Positive Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmPositiveFindings}
                 onChange={(e) => updateFormData("hmPositiveFindings", e.target.value)}
                 placeholder="Describe positive observations"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Negative Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmNegativeFindings}
                 onChange={(e) => updateFormData("hmNegativeFindings", e.target.value)}
                 placeholder="Describe areas for improvement"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Follow-up Actions <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmFollowUpActions}
                 onChange={(e) => updateFormData("hmFollowUpActions", e.target.value)}
                 placeholder="Describe follow-up actions taken"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
           </div>
-          
-          {/* Validation message for HM fields */}
           {currentSection === 5 && (
-            (!formData.hmLessonsObserved.trim() || 
-             !formData.hmPositiveFindings.trim() || 
-             !formData.hmNegativeFindings.trim() || 
-             !formData.hmFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Head Master supervision fields must be filled to continue.
-                  </p>
-                </div>
+            (!formData.hmLessonsObserved.trim() || !formData.hmPositiveFindings.trim() || !formData.hmNegativeFindings.trim() || !formData.hmFollowUpActions.trim()) && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">All Head Master fields are required</span>
               </div>
             )
           )}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Deputy HM (DHM) */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-            <span className="inline-block w-2 h-2 bg-green-600 rounded-full mr-2"></span>
+        <div className="space-y-4 mb-6">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
             Deputy Head Master (DHM)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Lessons Observed <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.dhmLessonsObserved}
                 onChange={(e) => updateFormData("dhmLessonsObserved", e.target.value)}
                 placeholder="0"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Positive Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmPositiveFindings}
                 onChange={(e) => updateFormData("dhmPositiveFindings", e.target.value)}
                 placeholder="Describe positive observations"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Negative Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmNegativeFindings}
                 onChange={(e) => updateFormData("dhmNegativeFindings", e.target.value)}
                 placeholder="Describe areas for improvement"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Follow-up Actions <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmFollowUpActions}
                 onChange={(e) => updateFormData("dhmFollowUpActions", e.target.value)}
                 placeholder="Describe follow-up actions taken"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
           </div>
-          
-          {/* Validation message for DHM fields */}
           {currentSection === 5 && (
-            (!formData.dhmLessonsObserved.trim() || 
-             !formData.dhmPositiveFindings.trim() || 
-             !formData.dhmNegativeFindings.trim() || 
-             !formData.dhmFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Deputy Head Master supervision fields must be filled to continue.
-                  </p>
-                </div>
+            (!formData.dhmLessonsObserved.trim() || !formData.dhmPositiveFindings.trim() || !formData.dhmNegativeFindings.trim() || !formData.dhmFollowUpActions.trim()) && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">All Deputy Head Master fields are required</span>
               </div>
             )
           )}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Year Group Head / SM / Divisional Head */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-            <span className="inline-block w-2 h-2 bg-orange-600 rounded-full mr-2"></span>
+        <div className="space-y-4 mb-6">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-orange-500"></div>
             Year Group Head / Senior Master / Divisional Head
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Lessons Observed <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.groupHeadLessonsObserved}
                 onChange={(e) => updateFormData("groupHeadLessonsObserved", e.target.value)}
                 placeholder="0"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Positive Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadPositiveFindings}
                 onChange={(e) => updateFormData("groupHeadPositiveFindings", e.target.value)}
                 placeholder="Describe positive observations"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Negative Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadNegativeFindings}
                 onChange={(e) => updateFormData("groupHeadNegativeFindings", e.target.value)}
                 placeholder="Describe areas for improvement"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Follow-up Actions <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadFollowUpActions}
                 onChange={(e) => updateFormData("groupHeadFollowUpActions", e.target.value)}
                 placeholder="Describe follow-up actions taken"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
           </div>
-          
-          {/* Validation message for Group Head fields */}
           {currentSection === 5 && (
-            (!formData.groupHeadLessonsObserved.trim() || 
-             !formData.groupHeadPositiveFindings.trim() || 
-             !formData.groupHeadNegativeFindings.trim() || 
-             !formData.groupHeadFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Year Group Head supervision fields must be filled to continue.
-                  </p>
-                </div>
+            (!formData.groupHeadLessonsObserved.trim() || !formData.groupHeadPositiveFindings.trim() || !formData.groupHeadNegativeFindings.trim() || !formData.groupHeadFollowUpActions.trim()) && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">All Year Group Head fields are required</span>
               </div>
             )
           )}
         </div>
 
-        {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-5"></div>
 
         {/* Head of Department (HOD) */}
         <div className="space-y-4">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400 flex items-center">
-            <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
             Head of Department (HOD)
           </h4>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Lessons Observed <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.hodLessonsObserved}
                 onChange={(e) => updateFormData("hodLessonsObserved", e.target.value)}
                 placeholder="0"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Positive Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodPositiveFindings}
                 onChange={(e) => updateFormData("hodPositiveFindings", e.target.value)}
                 placeholder="Describe positive observations"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Negative Findings <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodNegativeFindings}
                 onChange={(e) => updateFormData("hodNegativeFindings", e.target.value)}
                 placeholder="Describe areas for improvement"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Follow-up Actions <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodFollowUpActions}
                 onChange={(e) => updateFormData("hodFollowUpActions", e.target.value)}
                 placeholder="Describe follow-up actions taken"
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
                 required
               />
             </div>
           </div>
-          
-          {/* Validation message for HOD fields */}
           {currentSection === 5 && (
-            (!formData.hodLessonsObserved.trim() || 
-             !formData.hodPositiveFindings.trim() || 
-             !formData.hodNegativeFindings.trim() || 
-             !formData.hodFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Head of Department supervision fields must be filled to continue.
-                  </p>
-                </div>
+            (!formData.hodLessonsObserved.trim() || !formData.hodPositiveFindings.trim() || !formData.hodNegativeFindings.trim() || !formData.hodFollowUpActions.trim()) && (
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mt-2">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">All Head of Department fields are required</span>
               </div>
             )
           )}
@@ -3725,60 +3737,59 @@ export function MonthlyReportForm({
 
   const renderCurriculum = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 6: Curriculum Monitoring</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving curriculum data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving curriculum data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Curriculum data will be saved to report ID: {reportId}
-            {savedSections.has(6) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of teachers who did not submit lesson plans <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.teachersNoLessonPlans}
-            onChange={(e) => updateFormData("teachersNoLessonPlans", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">What actions were taken? <span className="text-red-500">*</span></Label>
-          <Textarea
-            value={formData.curriculumActionsTaken}
-            onChange={(e) => updateFormData("curriculumActionsTaken", e.target.value)}
-            placeholder="Describe actions taken"
-            rows={3}
-            required
-          />
+      {/* Curriculum Monitoring Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Lesson Plan Monitoring</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Teachers Without Lesson Plans <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.teachersNoLessonPlans}
+              onChange={(e) => updateFormData("teachersNoLessonPlans", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+              required
+            />
+            <p className="text-xs text-slate-400">Number of teachers who did not submit</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Actions Taken <span className="text-rose-500">*</span>
+            </Label>
+            <Textarea
+              value={formData.curriculumActionsTaken}
+              onChange={(e) => updateFormData("curriculumActionsTaken", e.target.value)}
+              placeholder="Describe actions taken"
+              rows={3}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+              required
+            />
+          </div>
         </div>
       </div>
 
+      {/* Inline Validation */}
       {currentSection === 6 && (
-        (!formData.teachersNoLessonPlans.trim() || 
-         !formData.curriculumActionsTaken.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All curriculum monitoring fields must be filled to continue.
-              </p>
-            </div>
+        (!formData.teachersNoLessonPlans.trim() || !formData.curriculumActionsTaken.trim()) && (
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">All curriculum monitoring fields are required to continue</span>
           </div>
         )
       )}
@@ -3787,94 +3798,120 @@ export function MonthlyReportForm({
 
   const renderFinance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 7: Finance</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving finance data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving finance data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Finance data will be saved to report ID: {reportId}
-            {savedSections.has(7) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Opening Balance (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.openingBalance}
-            onChange={(e) => updateFormData("openingBalance", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Total Income (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.totalIncome}
-            onChange={(e) => updateFormData("totalIncome", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Total Expenditure (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.totalExpenditure}
-            onChange={(e) => updateFormData("totalExpenditure", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Closing Balance (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.closingBalance}
-            onChange={(e) => updateFormData("closingBalance", e.target.value)}
-            placeholder="0.00"
-            required
-          />
+      {/* Finance Fields Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Financial Details</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Opening Balance <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">GYD</span>
+              <Input
+                type="number"
+                value={formData.openingBalance}
+                onChange={(e) => updateFormData("openingBalance", e.target.value)}
+                placeholder="0.00"
+                className="h-11 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Total Income <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">GYD</span>
+              <Input
+                type="number"
+                value={formData.totalIncome}
+                onChange={(e) => updateFormData("totalIncome", e.target.value)}
+                placeholder="0.00"
+                className="h-11 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Total Expenditure <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">GYD</span>
+              <Input
+                type="number"
+                value={formData.totalExpenditure}
+                onChange={(e) => updateFormData("totalExpenditure", e.target.value)}
+                placeholder="0.00"
+                className="h-11 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Closing Balance <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">GYD</span>
+              <Input
+                type="number"
+                value={formData.closingBalance}
+                onChange={(e) => updateFormData("closingBalance", e.target.value)}
+                placeholder="0.00"
+                className="h-11 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+                required
+              />
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Inline Validation */}
       {currentSection === 7 && (
-        (!formData.openingBalance.trim() || 
-         !formData.totalIncome.trim() || 
-         !formData.totalExpenditure.trim() || 
-         !formData.closingBalance.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All finance fields must be filled to continue.
-              </p>
-            </div>
+        (!formData.openingBalance.trim() || !formData.totalIncome.trim() || !formData.totalExpenditure.trim() || !formData.closingBalance.trim()) && (
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">All finance fields are required to continue</span>
           </div>
         )
       )}
 
-      <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
-        <h4 className="font-medium text-blue-600 dark:text-blue-400 mb-2">Financial Summary</h4>
-        <div className="text-sm text-slate-700 dark:text-slate-200 space-y-1">
-          <p><strong>Opening Balance:</strong> GYD {formData.openingBalance || "0.00"}</p>
-          <p><strong>Total Income:</strong> GYD {formData.totalIncome || "0.00"}</p>
-          <p><strong>Total Expenditure:</strong> GYD {formData.totalExpenditure || "0.00"}</p>
-          <p><strong>Closing Balance:</strong> GYD {formData.closingBalance || "0.00"}</p>
-          <p className="border-t pt-1 mt-2"><strong>Net Change:</strong> GYD {((Number(formData.openingBalance || 0) + Number(formData.totalIncome || 0)) - Number(formData.totalExpenditure || 0) - Number(formData.closingBalance || 0)) || "0.00"}</p>
+      {/* Financial Summary Card */}
+      <div className="p-5 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Financial Summary</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Opening</p>
+            <p className="text-lg font-bold text-slate-700 dark:text-slate-200">GYD {Number(formData.openingBalance || 0).toLocaleString()}</p>
+          </div>
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Income</p>
+            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+GYD {Number(formData.totalIncome || 0).toLocaleString()}</p>
+          </div>
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Expenditure</p>
+            <p className="text-lg font-bold text-red-600 dark:text-red-400">-GYD {Number(formData.totalExpenditure || 0).toLocaleString()}</p>
+          </div>
+          <div className="p-3 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Closing</p>
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">GYD {Number(formData.closingBalance || 0).toLocaleString()}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -3882,484 +3919,495 @@ export function MonthlyReportForm({
 
   const renderIncome = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 8: Income Sources</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving income data.
-          </p>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving income data.</p>
+          </div>
         </div>
       )}
 
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Income sources data will be saved to report ID: {reportId}
-            {savedSections.has(8) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400">Income Sources</h4>
+      {/* Income Sources Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Income Sources</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Add all income sources for this month</p>
+          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => addToArray("incomeSources", { source: "", amount: "" })}
+            className="h-8 text-xs rounded-lg"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add More
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Add Source
           </Button>
         </div>
-        {formData.incomeSources.map((income, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
-            <Input
-              placeholder="Source"
-              value={income.source}
-              onChange={(e) => {
-                const updated = [...formData.incomeSources]
-                updated[index].source = e.target.value
-                updateFormData("incomeSources", updated)
-              }}
-            />
-            <Input
-              placeholder="Amount (GYD)"
-              type="number"
-              value={income.amount}
-              onChange={(e) => {
-                const updated = [...formData.incomeSources]
-                updated[index].amount = e.target.value
-                updateFormData("incomeSources", updated)
-              }}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("incomeSources", index)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+        <div className="space-y-3">
+          {formData.incomeSources.map((income, index) => (
+            <div key={index} className="grid gap-3 md:grid-cols-3 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Source</Label>
+                <Input
+                  placeholder="e.g., Government Grant"
+                  value={income.source}
+                  onChange={(e) => {
+                    const updated = [...formData.incomeSources]
+                    updated[index].source = e.target.value
+                    updateFormData("incomeSources", updated)
+                  }}
+                  className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">Amount (GYD)</Label>
+                <Input
+                  placeholder="0.00"
+                  type="number"
+                  value={income.amount}
+                  onChange={(e) => {
+                    const updated = [...formData.incomeSources]
+                    updated[index].amount = e.target.value
+                    updateFormData("incomeSources", updated)
+                  }}
+                  className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("incomeSources", index)} className="h-10 text-slate-400 hover:text-red-500">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Total Income Display */}
+        {formData.incomeSources.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <div className="text-right">
+              <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total Income</p>
+              <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                GYD {formData.incomeSources.reduce((sum, item) => sum + Number(item.amount || 0), 0).toLocaleString()}
+              </p>
+            </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
 
   const renderSafety = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">Section 9: Accident & Safety</h3>
 
       {!reportId && (
-        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving accident & safety data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">
-            <strong>Report Started:</strong> Accident & Safety data will be saved to report ID: {reportId}
-            {savedSections.has(9) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Was an evacuation drill conducted this month? <span className="text-red-500">*</span></Label>
-          <div className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="evacuation-yes"
-                checked={formData.evacuationDrillHeld === true}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("evacuationDrillHeld", true);
-                  } else {
-                    updateFormData("evacuationDrillHeld", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-                required
-              />
-              <Label htmlFor="evacuation-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                Yes
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="evacuation-no"
-                checked={formData.evacuationDrillHeld === false}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("evacuationDrillHeld", false);
-                    // Clear the other fields when "No" is selected
-                    updateFormData("personsInvolved", "");
-                    updateFormData("timeTaken", "");
-                    updateFormData("drillObservations", "");
-                  } else {
-                    updateFormData("evacuationDrillHeld", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <Label htmlFor="evacuation-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                No
-              </Label>
-            </div>
+        <div className="flex items-start gap-3 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-700/30 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </div>
+          <div>
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Complete Basic Information First</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Please complete the Basic Information section to enable saving safety data.</p>
+          </div>
+        </div>
+      )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Persons involved
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
+      {/* Evacuation Drill Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <Label className="text-slate-700 dark:text-slate-200 text-base font-medium block mb-4">
+          Was an evacuation drill conducted this month?
+          <span className="text-rose-500 ml-1">*</span>
+        </Label>
+        <div className="flex gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => updateFormData("evacuationDrillHeld", true)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+              formData.evacuationDrillHeld === true
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.evacuationDrillHeld === true ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.evacuationDrillHeld === true && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">Yes</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              updateFormData("evacuationDrillHeld", false);
+              updateFormData("personsInvolved", "");
+              updateFormData("timeTaken", "");
+              updateFormData("drillObservations", "");
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+              formData.evacuationDrillHeld === false
+                ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.evacuationDrillHeld === false ? 'border-slate-500 bg-slate-500' : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.evacuationDrillHeld === false && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">No</span>
+          </button>
+        </div>
+
+        {formData.evacuationDrillHeld === true && (
+          <div className="grid gap-4 md:grid-cols-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Persons Involved <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.personsInvolved}
                 onChange={(e) => updateFormData("personsInvolved", e.target.value)}
-                placeholder="Enter number of persons"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
+                placeholder="Enter number"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
               />
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Time taken (minutes)
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Time Taken (minutes) <span className="text-rose-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.timeTaken}
                 onChange={(e) => updateFormData("timeTaken", e.target.value)}
-                placeholder="Enter time in minutes"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
+                placeholder="Enter time"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
               />
             </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">
-                Observations from drill
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Observations <span className="text-rose-500">*</span>
               </Label>
               <Textarea
                 value={formData.drillObservations}
                 onChange={(e) => updateFormData("drillObservations", e.target.value)}
                 placeholder="Describe observations from the evacuation drill"
                 rows={3}
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
               />
             </div>
           </div>
+        )}
+      </div>
 
-        </div>
+      {/* Fire Safety Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Fire Safety Equipment</h4>
 
-        <div className="space-y-4">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Are fire buckets available in classrooms? <span className="text-red-500">*</span></Label>
-          <div className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="firebuckets-yes"
-                checked={formData.classroomsHaveFireBuckets === true}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("classroomsHaveFireBuckets", true);
-                  } else {
-                    updateFormData("classroomsHaveFireBuckets", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-                required
-              />
-              <Label htmlFor="firebuckets-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                Yes
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="firebuckets-no"
-                checked={formData.classroomsHaveFireBuckets === false}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("classroomsHaveFireBuckets", false);
-                  } else {
-                    updateFormData("classroomsHaveFireBuckets", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <Label htmlFor="firebuckets-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                No
-              </Label>
+        <div className="space-y-5">
+          <div>
+            <Label className="text-slate-700 dark:text-slate-200 text-sm font-medium block mb-3">
+              Are fire buckets available in classrooms? <span className="text-rose-500">*</span>
+            </Label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => updateFormData("classroomsHaveFireBuckets", true)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200 ${
+                  formData.classroomsHaveFireBuckets === true
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <span className="font-medium text-sm">Yes</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateFormData("classroomsHaveFireBuckets", false)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200 ${
+                  formData.classroomsHaveFireBuckets === false
+                    ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <span className="font-medium text-sm">No</span>
+              </button>
             </div>
           </div>
 
-          <Label className="text-blue-700 dark:text-blue-400 font-medium"> Are fire extinguishers in working condition and sufficient? <span className="text-red-500">*</span></Label>
-          <div className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="extinguishers-yes"
-                checked={formData.fireExtinguishersFunctional === true}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("fireExtinguishersFunctional", true);
-                  } else {
-                    updateFormData("fireExtinguishersFunctional", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-                required
-              />
-              <Label htmlFor="extinguishers-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                Yes
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="extinguishers-no"
-                checked={formData.fireExtinguishersFunctional === false}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    updateFormData("fireExtinguishersFunctional", false);
-                  } else {
-                    updateFormData("fireExtinguishersFunctional", null);
-                  }
-                }}
-                className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <Label htmlFor="extinguishers-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-                No
-              </Label>
+          <div>
+            <Label className="text-slate-700 dark:text-slate-200 text-sm font-medium block mb-3">
+              Are fire extinguishers in working condition? <span className="text-rose-500">*</span>
+            </Label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => updateFormData("fireExtinguishersFunctional", true)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200 ${
+                  formData.fireExtinguishersFunctional === true
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <span className="font-medium text-sm">Yes</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateFormData("fireExtinguishersFunctional", false)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 transition-all duration-200 ${
+                  formData.fireExtinguishersFunctional === false
+                    ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <span className="font-medium text-sm">No</span>
+              </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Incident Report Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Incident Report Summary</h4>
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Total Incidents <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.numberOfIncidents}
+              onChange={(e) => updateFormData("numberOfIncidents", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Students Involved <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsInvolved}
+              onChange={(e) => updateFormData("studentsInvolved", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Teachers Involved <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.teachersInvolvedIncidents}
+              onChange={(e) => updateFormData("teachersInvolvedIncidents", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Prevention Actions <span className="text-rose-500">*</span>
+            </Label>
+            <Textarea
+              value={formData.preventionActions}
+              onChange={(e) => updateFormData("preventionActions", e.target.value)}
+              placeholder="Describe actions taken to prevent future incidents"
+              rows={3}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Validation */}
+      {currentSection === 9 && (
+        (formData.evacuationDrillHeld === null ||
+         formData.classroomsHaveFireBuckets === null ||
+         formData.fireExtinguishersFunctional === null ||
+         !formData.numberOfIncidents.trim() ||
+         !formData.studentsInvolved.trim() ||
+         !formData.teachersInvolvedIncidents.trim() ||
+         !formData.preventionActions.trim() ||
+         (formData.evacuationDrillHeld === true && (
+           !formData.personsInvolved.trim() || !formData.timeTaken.trim() || !formData.drillObservations.trim()
+         ))) && (
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">All safety fields are required to continue</span>
+          </div>
+        )
+      )}
+    </div>
+  )
+
+  const renderMeetings = () => (
+    <div className="space-y-6">
+      {/* Question Card */}
+      <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+        <Label className="text-slate-700 dark:text-slate-200 text-base font-medium block mb-4">
+          Was a general staff meeting held this month?
+          <span className="text-rose-500 ml-1">*</span>
+        </Label>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => updateFormData("generalStaffMeetingHeld", true)}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200
+              ${formData.generalStaffMeetingHeld === true
+                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+              }
+            `}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.generalStaffMeetingHeld === true
+                ? 'border-emerald-500 bg-emerald-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.generalStaffMeetingHeld === true && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">Yes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              updateFormData("generalStaffMeetingHeld", false);
+              updateFormData("keyIssuesDiscussed", "");
+              updateFormData("decisionsImplemented", "");
+            }}
+            className={`
+              flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all duration-200
+              ${formData.generalStaffMeetingHeld === false
+                ? 'border-slate-500 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'
+              }
+            `}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              formData.generalStaffMeetingHeld === false
+                ? 'border-slate-500 bg-slate-500'
+                : 'border-slate-300 dark:border-slate-600'
+            }`}>
+              {formData.generalStaffMeetingHeld === false && (
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <span className="font-medium">No</span>
+          </button>
+        </div>
+
+        {currentSection === 10 && formData.generalStaffMeetingHeld === null && (
+          <div className="mt-3 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">Please select an option to continue</span>
+          </div>
+        )}
+      </div>
+
+
+      {/* Meeting Details Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Meeting Details</h4>
 
         <div className="space-y-4">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400"> Incident Report Summary</h4>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium"> Total number of reported incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.numberOfIncidents}
-                onChange={(e) => updateFormData("numberOfIncidents", e.target.value)}
-                placeholder="Enter number of incidents"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of students involved in incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.studentsInvolved}
-                onChange={(e) => updateFormData("studentsInvolved", e.target.value)}
-                placeholder="Enter number of students"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">Number of teachers involved in incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.teachersInvolvedIncidents}
-                onChange={(e) => updateFormData("teachersInvolvedIncidents", e.target.value)}
-                placeholder="Enter number of teachers"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">Describe actions taken to prevent future incidents <span className="text-red-500">*</span></Label>
-              <Textarea
-                value={formData.preventionActions}
-                onChange={(e) => updateFormData("preventionActions", e.target.value)}
-                placeholder="Describe actions taken to prevent incidents"
-                rows={3}
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              What were the key issues discussed
+              {formData.generalStaffMeetingHeld === true && <span className="text-rose-500 ml-1">*</span>}
+            </Label>
+            <Textarea
+              value={formData.keyIssuesDiscussed}
+              onChange={(e) => updateFormData("keyIssuesDiscussed", e.target.value)}
+              placeholder="Describe the key issues discussed in the meeting"
+              rows={4}
+              disabled={formData.generalStaffMeetingHeld !== true}
+              required={formData.generalStaffMeetingHeld === true}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
           </div>
 
-          {currentSection === 9 && (
-            (formData.evacuationDrillHeld === null || 
-             formData.classroomsHaveFireBuckets === null ||
-             formData.fireExtinguishersFunctional === null ||
-             !formData.numberOfIncidents.trim() ||
-             !formData.studentsInvolved.trim() ||
-             !formData.teachersInvolvedIncidents.trim() ||
-             !formData.preventionActions.trim() ||
-             (formData.evacuationDrillHeld === true && (
-               !formData.personsInvolved.trim() || 
-               !formData.timeTaken.trim() || 
-               !formData.drillObservations.trim()
-             ))) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All accident & safety fields must be completed to continue.
-                  </p>
-                </div>
-              </div>
-            )
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              What Percentage of decisions were implemented
+              {formData.generalStaffMeetingHeld === true && <span className="text-rose-500 ml-1">*</span>}
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.decisionsImplemented}
+              onChange={(e) => updateFormData("decisionsImplemented", e.target.value)}
+              placeholder="Enter percentage (0-100)"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-blue-500/20 rounded-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={formData.generalStaffMeetingHeld !== true}
+              required={formData.generalStaffMeetingHeld === true}
+            />
+          </div>
+
+          {currentSection === 10 && formData.generalStaffMeetingHeld === true && (
+            !formData.keyIssuesDiscussed.trim() || !formData.decisionsImplemented.trim()
+          ) && (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 pt-2">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-sm">All meeting details must be filled when a meeting was held</span>
+            </div>
           )}
         </div>
       </div>
     </div>
   )
 
-  const renderMeetings = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
-        Section 10: Staff Meetings
-        {savedSections.has(10) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
-
-      <div className="space-y-4">
-        <Label className="text-blue-700 dark:text-blue-400 font-medium">Was a general staff meeting held this month? <span className="text-red-500">*</span></Label>
-        <div className="flex gap-6">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="meeting-yes"
-              checked={formData.generalStaffMeetingHeld === true}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  updateFormData("generalStaffMeetingHeld", true);
-                } else {
-                  updateFormData("generalStaffMeetingHeld", null);
-                }
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-              required
-            />
-            <Label htmlFor="meeting-yes" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-              Yes
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="meeting-no"
-              checked={formData.generalStaffMeetingHeld === false}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  updateFormData("generalStaffMeetingHeld", false);
-                  // Clear the other fields when "No" is selected
-                  updateFormData("keyIssuesDiscussed", "");
-                  updateFormData("decisionsImplemented", "");
-                } else {
-                  updateFormData("generalStaffMeetingHeld", null);
-                }
-              }}
-              className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <Label htmlFor="meeting-no" className="text-blue-700 dark:text-blue-400 font-medium cursor-pointer">
-              No
-            </Label>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            What were the key issues discussed
-            {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Textarea
-            value={formData.keyIssuesDiscussed}
-            onChange={(e) => updateFormData("keyIssuesDiscussed", e.target.value)}
-            placeholder="Describe the key issues discussed in the meeting"
-            rows={4}
-            disabled={formData.generalStaffMeetingHeld !== true}
-            required={formData.generalStaffMeetingHeld === true}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">
-            What Percentage of decisions were implemented
-            {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            value={formData.decisionsImplemented}
-            onChange={(e) => updateFormData("decisionsImplemented", e.target.value)}
-            placeholder="Enter percentage (0-100)"
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            disabled={formData.generalStaffMeetingHeld !== true}
-            required={formData.generalStaffMeetingHeld === true}
-          />
-        </div>
-
-        {currentSection === 10 && (
-          (formData.generalStaffMeetingHeld === null || 
-           (formData.generalStaffMeetingHeld === true && (
-             !formData.keyIssuesDiscussed.trim() || 
-             !formData.decisionsImplemented.trim()
-           ))) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <p className="text-red-700 text-sm">
-                  <strong>Required:</strong> {formData.generalStaffMeetingHeld === null 
-                    ? "Please select whether a staff meeting was held." 
-                    : "All staff meeting fields must be filled when 'Yes' is selected."}
-                </p>
-              </div>
-            </div>
-          )
-        )}
-      </div>
-    </div>
-  )
-
   const renderFacilities = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
-        Section 11: Physical Facilities
-        {savedSections.has(11) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
 
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-blue-600 dark:text-blue-400">In Need of Repairs</h4>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addToArray("repairsNeeded", { area: "", details: "" })}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
-            </Button>
+      {/* Repairs Needed Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Items In Need of Repairs</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">List any areas requiring maintenance</p>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addToArray("repairsNeeded", { area: "", details: "" })}
+            className="h-8 text-xs rounded-lg"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Add
+          </Button>
+        </div>
+        <div className="space-y-3">
           {formData.repairsNeeded.map((repair, index) => (
-            <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
+            <div key={index} className="grid gap-3 md:grid-cols-3 p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
               <Select
                 value={repair.area}
                 onValueChange={(value) => {
@@ -4368,8 +4416,8 @@ export function MonthlyReportForm({
                   updateFormData("repairsNeeded", updated)
                 }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Repair Area" />
+                <SelectTrigger className="h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                  <SelectValue placeholder="Select Area" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="school-walls">School Walls</SelectItem>
@@ -4391,19 +4439,28 @@ export function MonthlyReportForm({
                   updateFormData("repairsNeeded", updated)
                 }}
                 rows={2}
+                className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
               />
-              <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("repairsNeeded", index)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeFromArray("repairsNeeded", index)} className="h-10 text-slate-400 hover:text-red-500">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           ))}
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Teachers</h4>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of functional toilets *</Label>
+      {/* Teacher Facilities Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          Teacher Facilities Status
+        </h4>
+        <div className="grid gap-5 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Functional Toilets <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4411,11 +4468,16 @@ export function MonthlyReportForm({
                 value={formData.teacherToiletsFunctional}
                 onChange={(e) => updateFormData("teacherToiletsFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working sinks *</Label>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Working Sinks <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4423,11 +4485,16 @@ export function MonthlyReportForm({
                 value={formData.teacherSinksFunctional}
                 onChange={(e) => updateFormData("teacherSinksFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working taps *</Label>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Working Taps <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4435,17 +4502,26 @@ export function MonthlyReportForm({
                 value={formData.teacherTapsFunctional}
                 onChange={(e) => updateFormData("teacherTapsFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Students</h4>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of functional toilets *</Label>
+      {/* Student Facilities Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          Student Facilities Status
+        </h4>
+        <div className="grid gap-5 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Functional Toilets <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4453,11 +4529,16 @@ export function MonthlyReportForm({
                 value={formData.studentToiletsFunctional}
                 onChange={(e) => updateFormData("studentToiletsFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working taps *</Label>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Working Taps <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4465,11 +4546,16 @@ export function MonthlyReportForm({
                 value={formData.studentTapsFunctional}
                 onChange={(e) => updateFormData("studentTapsFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of working sinks *</Label>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Working Sinks <span className="text-rose-500">*</span>
+            </Label>
+            <div className="relative">
               <Input
                 type="number"
                 min="0"
@@ -4477,87 +4563,104 @@ export function MonthlyReportForm({
                 value={formData.studentSinksFunctional}
                 onChange={(e) => updateFormData("studentSinksFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
             </div>
           </div>
         </div>
-
-        <div className="space-y-4">
-          <h4 className="font-medium text-blue-600 dark:text-blue-400">Facilities Status: Classrooms</h4>
-          <div className="grid gap-4 md:grid-cols-1">
-            <div className="grid gap-2">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">What is the percentage of overcrowded classrooms *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.overcrowdedClassrooms || ""}
-                onChange={(e) => updateFormData("overcrowdedClassrooms", e.target.value)}
-                placeholder="0"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Validation message for facilities status */}
-        {(!formData.teacherToiletsFunctional.trim() ||
-          !formData.teacherSinksFunctional.trim() ||
-          !formData.teacherTapsFunctional.trim() ||
-          !formData.studentToiletsFunctional.trim() ||
-          !formData.studentTapsFunctional.trim() ||
-          !formData.studentSinksFunctional.trim() ||
-          !formData.overcrowdedClassrooms.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> Please fill in all facility percentage fields to continue.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Classroom Status Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+          Classroom Status
+        </h4>
+        <div className="space-y-2 max-w-xs">
+          <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            Overcrowded Classrooms <span className="text-rose-500">*</span>
+          </Label>
+          <div className="relative">
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.overcrowdedClassrooms || ""}
+              onChange={(e) => updateFormData("overcrowdedClassrooms", e.target.value)}
+              placeholder="0"
+              className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg pr-8"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Inline Validation */}
+      {(!formData.teacherToiletsFunctional.trim() ||
+        !formData.teacherSinksFunctional.trim() ||
+        !formData.teacherTapsFunctional.trim() ||
+        !formData.studentToiletsFunctional.trim() ||
+        !formData.studentTapsFunctional.trim() ||
+        !formData.studentSinksFunctional.trim() ||
+        !formData.overcrowdedClassrooms.trim()) && (
+        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+          <AlertCircle className="h-4 w-4" />
+          <span className="text-sm">All facility percentage fields are required to continue</span>
+        </div>
+      )}
     </div>
   )
 
   const renderResources = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
-        Section 12: Resources Needed
-        {savedSections.has(12) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
 
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Curriculum resources needed</Label>
-          <Textarea
-            value={formData.curriculumResources}
-            onChange={(e) => updateFormData("curriculumResources", e.target.value)}
-            placeholder="List textbooks, teaching aids, or subject-specific materials required."
-            rows={4}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Janitorial supplies needed</Label>
-          <Textarea
-            value={formData.janitorialSupplies}
-            onChange={(e) => updateFormData("janitorialSupplies", e.target.value)}
-            placeholder="Specify cleaning products, equipment, or hygiene materials required."
-            rows={4}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-blue-700 dark:text-blue-400 font-medium">Additional Issues Affecting the School</Label>
-          <Textarea
-            value={formData.otherIssues}
-            onChange={(e) => updateFormData("otherIssues", e.target.value)}
-            placeholder="Mention any other challenges impacting school operations."
-            rows={4}
-          />
+      {/* Resources Needed Card */}
+      <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Resources Needed</h4>
+
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Curriculum Resources
+            </Label>
+            <Textarea
+              value={formData.curriculumResources}
+              onChange={(e) => updateFormData("curriculumResources", e.target.value)}
+              placeholder="List textbooks, teaching aids, or subject-specific materials required."
+              rows={3}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+            <p className="text-xs text-slate-400">Textbooks, teaching aids, subject materials</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Janitorial Supplies
+            </Label>
+            <Textarea
+              value={formData.janitorialSupplies}
+              onChange={(e) => updateFormData("janitorialSupplies", e.target.value)}
+              placeholder="Specify cleaning products, equipment, or hygiene materials required."
+              rows={3}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+            <p className="text-xs text-slate-400">Cleaning products, equipment, hygiene materials</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Additional Issues
+            </Label>
+            <Textarea
+              value={formData.otherIssues}
+              onChange={(e) => updateFormData("otherIssues", e.target.value)}
+              placeholder="Mention any other challenges impacting school operations."
+              rows={3}
+              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:border-blue-500 rounded-lg"
+            />
+            <p className="text-xs text-slate-400">Other challenges affecting school operations</p>
+          </div>
         </div>
       </div>
     </div>
@@ -4622,99 +4725,109 @@ export function MonthlyReportForm({
 
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-400">
-          Section 13: Physical Education
-          {savedSections.has(13) && (
-            <span className="ml-2 text-green-600">✅ Section saved</span>
+
+        {/* Physical Education Activities Card */}
+        <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                Physical Education Activities
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">List activities performed this month</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addPhysicalEducationActivity}
+              className="h-8 text-xs rounded-lg"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Activity
+            </Button>
+          </div>
+
+          {activities.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+              <p className="text-sm">No activities added yet</p>
+              <p className="text-xs mt-1">Click "Add Activity" to get started</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activities.map((item, index) => (
+                <div key={index} className="flex gap-3 items-center p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <Input
+                    value={item.activity}
+                    onChange={(e) => updatePhysicalEducationActivity(index, e.target.value)}
+                    placeholder={`Activity ${index + 1} (e.g., Soccer, Running, Gymnastics)`}
+                    className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePhysicalEducationActivity(index)}
+                    className="h-10 text-slate-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
-        </h3>
+        </div>
 
-        <div className="space-y-6">
-          {/* Physical Education Activities */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">Physical Education Activities Performed</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addPhysicalEducationActivity}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Activity
-              </Button>
+        {/* Physical Education Challenges Card */}
+        <div className="p-5 bg-slate-50/50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/30">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                Major Challenges
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">List challenges faced this month</p>
             </div>
-            
-            {activities.length === 0 && (
-              <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed rounded-lg">
-                <p>No activities added yet. Click "Add Activity" to get started.</p>
-              </div>
-            )}
-
-            {activities.map((item, index) => (
-              <div key={index} className="flex gap-2 items-center">
-                <Input
-                  value={item.activity}
-                  onChange={(e) => updatePhysicalEducationActivity(index, e.target.value)}
-                  placeholder={`Activity ${index + 1} (e.g., Soccer practice, Running, Gymnastics)`}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removePhysicalEducationActivity(index)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addPhysicalEducationChallenge}
+              className="h-8 text-xs rounded-lg"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Challenge
+            </Button>
           </div>
 
-          {/* Physical Education Challenges */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-blue-700 dark:text-blue-400 font-medium">Major Challenges in Physical Education</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addPhysicalEducationChallenge}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Challenge
-              </Button>
+          {challenges.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+              <p className="text-sm">No challenges added yet</p>
+              <p className="text-xs mt-1">Click "Add Challenge" to get started</p>
             </div>
-            
-            {challenges.length === 0 && (
-              <div className="text-center py-6 text-slate-500 dark:text-slate-400 border-2 border-dashed rounded-lg">
-                <p>No challenges added yet. Click "Add Challenge" to get started.</p>
-              </div>
-            )}
-
-            {challenges.map((item, index) => (
-              <div key={index} className="flex gap-2 items-center">
-                <Input
-                  value={item.challenge}
-                  onChange={(e) => updatePhysicalEducationChallenge(index, e.target.value)}
-                  placeholder={`Challenge ${index + 1} (e.g., Lack of equipment, Weather conditions, Limited space)`}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removePhysicalEducationChallenge(index)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {challenges.map((item, index) => (
+                <div key={index} className="flex gap-3 items-center p-3 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <Input
+                    value={item.challenge}
+                    onChange={(e) => updatePhysicalEducationChallenge(index, e.target.value)}
+                    placeholder={`Challenge ${index + 1} (e.g., Lack of equipment, Weather, Limited space)`}
+                    className="h-10 flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePhysicalEducationChallenge(index)}
+                    className="h-10 text-slate-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -4867,161 +4980,180 @@ export function MonthlyReportForm({
   }
 
   return (
-    <>
-    {/* Progress Tabs - Clean design - Hidden on mobile */}
-    <div className="hidden sm:block bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl shadow-lg mb-6">
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {previousReportData ? "Previous Report" : "Monthly School Report"}
-          </h2>
-          <div className="text-sm text-slate-600 dark:text-slate-300">
-            {Math.round(calculateProgress())}% Complete
+    <div className="flex flex-row gap-4 h-[calc(100vh-180px)] min-h-[600px]">
+      {/* Sidebar Navigation - Hidden on mobile */}
+      <div className="hidden lg:block lg:w-64 flex-shrink-0 h-full">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl p-4 h-full flex flex-col">
+          {/* Header */}
+          <div className="mb-4 pb-4 border-b border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              {previousReportData ? "Previous Report" : "Monthly Report"}
+            </h2>
+            {previousReportData && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {previousReportData.displayName}
+              </p>
+            )}
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${calculateProgress()}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {Math.round(calculateProgress())}%
+              </span>
+            </div>
           </div>
-        </div>
-        
-        {previousReportData && (
-          <p className="text-slate-600 dark:text-slate-300 mb-4">
-            Submit report for {previousReportData.displayName}
-          </p>
-        )}
-        
-        {/* Progress Steps */}
-        <div className="overflow-x-auto">
-          <div className="flex items-center justify-between min-w-max px-2">
+
+          {/* Section List */}
+          <nav className="space-y-1 flex-1 overflow-y-auto pr-1">
             {SECTIONS.map((section, index) => {
               const isCompleted = savedSections.has(index)
               const isCurrent = index === currentSection
-              
+
               return (
-                <div key={index} className="flex items-center">
-                  {/* Circle and Content */}
-                  <div className="flex flex-col items-center">
-                    <button
-                      onClick={() => setCurrentSection(index)}
-                      disabled={reportStatus === 'submitted'}
-                      className={`
-                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 transition-all duration-200
-                        ${isCurrent 
-                          ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900' 
-                          : isCompleted 
-                            ? 'bg-green-500 text-white' 
-                            : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
-                        }
-                        ${reportStatus === 'submitted' ? 'cursor-not-allowed' : 'cursor-pointer'}
-                      `}
-                    >
-                      {isCompleted ? '✓' : index + 1}
-                    </button>
-                    
-                    <div className="text-center">
-                      <div className="text-xs font-medium text-slate-900 dark:text-slate-100 mb-1 max-w-[70px] leading-tight">
-                        {section.replace(/\s&\s/, '\n&\n')}
-                      </div>
-                      <div className={`text-xs ${isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
-                        {isCompleted ? '100%' : isCurrent ? '50%' : '0%'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Connecting Line */}
-                  {index < SECTIONS.length - 1 && (
-                    <div className={`
-                      w-8 h-0.5 mx-2 mt-[-24px]
-                      ${savedSections.has(index) ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}
-                    `} />
-                  )}
+                <div
+                  key={index}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200
+                    ${isCurrent
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
+                      : ''
+                    }
+                    ${reportStatus === 'submitted' ? 'opacity-60' : ''}
+                  `}
+                >
+                  <span className={`
+                    w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                    ${isCurrent
+                      ? 'bg-blue-600 text-white'
+                      : isCompleted
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    }
+                  `}>
+                    {isCompleted ? '✓' : index + 1}
+                  </span>
+                  <span className={`text-sm truncate ${
+                    isCurrent
+                      ? 'font-medium text-blue-700 dark:text-blue-300'
+                      : isCompleted
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-slate-600 dark:text-slate-400'
+                  }`}>
+                    {section}
+                  </span>
                 </div>
               )
             })}
-          </div>
+          </nav>
         </div>
       </div>
-    </div>
 
-    <Card className="gradient-card border-0 shadow-lg">
-      <CardHeader className="gradient-header text-white rounded-t-lg p-4 sm:p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
-            <FileTextIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg sm:text-xl">
-              Section {currentSection + 1} of {SECTIONS.length}: {SECTIONS[currentSection]}
-            </CardTitle>
-            <CardDescription className="text-blue-100 text-sm sm:text-base">
-              Complete this section to continue with your report
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-4 sm:p-6">
-        <div 
-          className={`min-h-[400px] sm:min-h-[500px] ${reportStatus === 'submitted' ? 'pointer-events-none opacity-75' : ''}`}
-          style={reportStatus === 'submitted' ? { filter: 'none' } : {}}
-        >
-          {renderCurrentSection()}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={prevSection}
-            disabled={currentSection === 0 || reportStatus === 'submitted' || isSavingSection || isLoadingSection}
-            className="order-2 sm:order-1 w-full sm:w-auto flex items-center gap-2"
-          >
-            {isLoadingSection ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Previous</span>
-            <span className="sm:hidden">Prev</span>
-          </Button>
-
-          <div className="text-center order-1 sm:order-2 flex flex-col items-center gap-2">
-            <div className="text-sm text-muted-foreground">
-              {currentSection + 1} of {SECTIONS.length}
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 h-full flex flex-col">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl overflow-hidden flex-1 flex flex-col">
+          {/* Section Header */}
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-200/50 dark:border-slate-700/50">
+            {/* Mobile Progress Bar - Only visible on mobile */}
+            <div className="lg:hidden mb-3">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <span>Step {currentSection + 1} of {SECTIONS.length}</span>
+                <span>{Math.round(((currentSection + 1) / SECTIONS.length) * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300"
+                  style={{ width: `${((currentSection + 1) / SECTIONS.length) * 100}%` }}
+                />
+              </div>
             </div>
-            {reportStatus === 'submitted' && (
-              <div className="text-xs text-green-600 font-medium">
-                ✅ Report Submitted - Read Only
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+                  {currentSection + 1}
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
+                    {SECTIONS[currentSection]}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    {reportStatus === 'submitted' ? 'View only mode' : 'Complete all required fields'}
+                  </p>
+                </div>
               </div>
-            )}
-            {reportStatus !== 'submitted' && hasUnsavedChanges && (
-              <div className="text-xs text-amber-600 font-medium flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" />
-                Unsaved changes
-              </div>
-            )}
-            {reportStatus !== 'submitted' && savedSections.has(currentSection) && !hasUnsavedChanges && (
-              <div className="text-xs text-green-600 font-medium flex items-center gap-1">
-                <Save className="h-3 w-3" />
-                Section saved
-              </div>
-            )}
-            {/* Continue Later Button */}
-            {reportStatus !== 'submitted' && reportId && currentSection > 0 && (
+              {savedSections.has(currentSection) && !hasUnsavedChanges && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-full">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Saved</span>
+                </div>
+              )}
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 rounded-full">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Unsaved</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Form Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div
+              className={`${reportStatus === 'submitted' ? 'pointer-events-none opacity-75' : ''}`}
+              style={reportStatus === 'submitted' ? { filter: 'none' } : {}}
+            >
+              {renderCurrentSection()}
+            </div>
+          </div>
+
+          {/* Navigation Footer - Fixed at bottom */}
+          <div className="flex-shrink-0 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/80 p-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-3 order-2 sm:order-1">
               <Button
                 type="button"
-                variant="ghost"
-                onClick={() => {
-                  toast({
-                    title: "Progress saved",
-                    description: "You can continue this report later from the Head Teacher dashboard.",
-                    duration: 3000,
-                  })
-                  router.push('/dashboard/head-teacher?tab=current-report')
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                variant="outline"
+                onClick={prevSection}
+                disabled={currentSection === 0 || reportStatus === 'submitted' || isSavingSection || isLoadingSection}
+                className="flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
-                Continue Later
+                {isLoadingSection ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+                <span>Previous</span>
               </Button>
-            )}
-          </div>
+
+              {/* Continue Later Button */}
+              {reportStatus !== 'submitted' && reportId && currentSection > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    toast({
+                      title: "Progress saved",
+                      description: "You can continue this report later from the Head Teacher dashboard.",
+                      duration: 3000,
+                    })
+                    router.push('/dashboard/head-teacher?tab=current-report')
+                  }}
+                  className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  Save & Exit
+                </Button>
+              )}
+            </div>
+
+            <div className="text-center order-1 sm:order-2 sm:hidden">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
+                Step {currentSection + 1} of {SECTIONS.length}
+              </span>
+            </div>
 
           {reportStatus === 'submitted' ? (
             <div className="text-sm text-green-600 font-medium order-3 text-center sm:text-right">
@@ -5053,7 +5185,7 @@ export function MonthlyReportForm({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center gap-2"
               >
                 {isSubmitting ? "Submitting..." : "Submit Report"}
               </Button>
@@ -5068,7 +5200,7 @@ export function MonthlyReportForm({
                 !formData.educationDistrict || 
                 !userSchool
               }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5084,7 +5216,7 @@ export function MonthlyReportForm({
                 !formData.studentsTransferredIn.trim() ||
                 !formData.studentsTransferredOut.trim()
               }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5101,7 +5233,7 @@ export function MonthlyReportForm({
                 !formData.teacherAttendanceRate.trim() ||
                 !formData.teacherPunctualityRate.trim()
               }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5119,7 +5251,7 @@ export function MonthlyReportForm({
                 !formData.overStaffedBy.trim() ||
                 formData.secondmentCertificatesPrepared === null
               }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5139,7 +5271,7 @@ export function MonthlyReportForm({
                   !formData.pdOutcomes.trim()
                 ))
               }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5168,7 +5300,7 @@ export function MonthlyReportForm({
                 !formData.hodNegativeFindings.trim() ||
                 !formData.hodFollowUpActions.trim()
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5183,7 +5315,7 @@ export function MonthlyReportForm({
                 !formData.teachersNoLessonPlans.trim() || 
                 !formData.curriculumActionsTaken.trim()
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5200,7 +5332,7 @@ export function MonthlyReportForm({
                 !formData.totalExpenditure.trim() || 
                 !formData.closingBalance.trim()
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5210,7 +5342,7 @@ export function MonthlyReportForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !reportId}
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5235,7 +5367,7 @@ export function MonthlyReportForm({
                   !formData.drillObservations.trim()
                 ))
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5253,7 +5385,7 @@ export function MonthlyReportForm({
                   !formData.decisionsImplemented.trim()
                 ))
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5273,7 +5405,7 @@ export function MonthlyReportForm({
                 !formData.studentSinksFunctional.trim() ||
                 !formData.overcrowdedClassrooms.trim()
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5289,7 +5421,7 @@ export function MonthlyReportForm({
                 !formData.janitorialSupplies.trim() ||
                 !formData.otherIssues.trim()
               }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSubmitting ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4" />
@@ -5301,7 +5433,7 @@ export function MonthlyReportForm({
                 <Button
                   type="button"
                   onClick={handleViewSubmittedReport}
-                  className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
                 >
                   <Eye className="h-4 w-4" />
                   View Report
@@ -5323,7 +5455,7 @@ export function MonthlyReportForm({
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting || !reportId}
-                className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
               >
                 {isSubmitting ? "Saving..." : "Complete Report"}
                 <ChevronRight className="h-4 w-4" />
@@ -5334,7 +5466,7 @@ export function MonthlyReportForm({
               type="button"
               onClick={nextSection}
               disabled={isSavingSection || isLoadingSection}
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+              className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               {isSavingSection ? "Saving..." : isLoadingSection ? "Loading..." : "Next"}
               {isSavingSection || isLoadingSection ? (
@@ -5345,8 +5477,9 @@ export function MonthlyReportForm({
             </Button>
           )}
         </div>
-      </CardContent>
-    </Card>
-    </>
+      </div>
+    </div>
+  </div>
+</div>
   )
 }

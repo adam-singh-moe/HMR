@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CalendarIcon, UsersIcon, GraduationCapIcon, FileTextIcon, TrendingUpIcon, Loader2, Eye, RefreshCw, BookOpenIcon, PlusCircleIcon, ClockIcon, EyeIcon, BarChart3Icon } from "lucide-react"
+import { CalendarIcon, UsersIcon, GraduationCapIcon, FileTextIcon, TrendingUpIcon, Loader2, Eye, RefreshCw, BookOpenIcon, PlusCircleIcon, ClockIcon, EyeIcon, BarChart3Icon, Sun, Moon, Bell, Lightbulb } from "lucide-react"
+import { useTheme } from "next-themes"
 import { getHmrReports } from "@/app/actions/hmr-reports"
 import { getSubmittedNurseryAssessments } from "@/app/actions/nursery-assessment"
 import { getUser, getUserSchoolInfo } from "@/app/actions/auth"
@@ -67,7 +68,14 @@ function HeadTeacherDashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
-  
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Mount effect for theme toggle
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Get tab from URL params, with fallback based on main tab
   const currentMainTab = searchParams.get('mainTab') || 'dashboard'
   const getDefaultTab = () => {
@@ -80,22 +88,25 @@ function HeadTeacherDashboardContent() {
   }
   const currentTab = searchParams.get('tab') || getDefaultTab()
   
-  // State for reports and loading
+  // State for reports and loading (cached to prevent re-fetching on tab switch)
   const [reports, setReports] = useState<HmrReport[]>([])
+  const [reportsLoaded, setReportsLoaded] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null)
+  const [schoolInfoLoaded, setSchoolInfoLoaded] = useState(false)
   const [isNurserySchool, setIsNurserySchool] = useState(false)
-  
-  // State for nursery assessments
+
+  // State for nursery assessments (cached to prevent re-fetching on tab switch)
   const [nurseryAssessments, setNurseryAssessments] = useState<any[]>([])
+  const [nurseryAssessmentsLoaded, setNurseryAssessmentsLoaded] = useState(false)
   const [nurseryAssessmentsLoading, setNurseryAssessmentsLoading] = useState(false)
   const [nurseryAssessmentsError, setNurseryAssessmentsError] = useState<string | null>(null)
-  
+
   // State for teachers (cached to prevent re-fetching on tab switch)
   const [cachedTeachers, setCachedTeachers] = useState<any[] | undefined>(undefined)
   const [cachedDeletedTeachers, setCachedDeletedTeachers] = useState<any[] | undefined>(undefined)
-  
+
   // State for current report status (cached to prevent re-fetching on tab switch)
   const [cachedReportStatus, setCachedReportStatus] = useState<{
     reportId: string | null
@@ -103,8 +114,8 @@ function HeadTeacherDashboardContent() {
     status: string
     hasExistingReport: boolean
   } | undefined>(undefined)
-  
-  // State for dashboard trends
+
+  // State for dashboard trends (cached to prevent re-fetching on tab switch)
   const [trendsData, setTrendsData] = useState<any>({
     enrollmentTrends: [],
     attendanceTrends: [],
@@ -112,8 +123,10 @@ function HeadTeacherDashboardContent() {
     expenditureTrends: [],
     availableYears: []
   })
+  const [trendsLoaded, setTrendsLoaded] = useState(false)
   const [trendsLoading, setTrendsLoading] = useState(false)
-  const [selectedTrendsYear, setSelectedTrendsYear] = useState<number>(new Date().getFullYear())
+  const [selectedTrendsYear, setSelectedTrendsYear] = useState<number | null>(null)
+  const [initialYearSet, setInitialYearSet] = useState(false)
   
   // Callback to cache teachers data
   const handleTeachersDataLoaded = (teachers: any[], deletedTeachers: any[]) => {
@@ -159,33 +172,38 @@ function HeadTeacherDashboardContent() {
     router.replace(`/dashboard/head-teacher?${params.toString()}`)
   }
 
-  // Function to fetch school information
-  const fetchSchoolInfo = async () => {
+  // Function to fetch school information (with caching)
+  const fetchSchoolInfo = async (forceRefresh = false) => {
+    // Skip if already loaded and not forcing refresh
+    if (schoolInfoLoaded && !forceRefresh) return
+
     try {
-      //console.log('Fetching school info...')
       const result = await getUserSchoolInfo()
-     // console.log('School info result:', result)
-      
+
       if (result.error) {
         console.error('Error fetching school info:', result.error)
         return
       }
 
       if (result.school) {
-       // console.log('School data:', result.school)
-       // console.log('School level:', result.school.level)
         setSchoolInfo(result.school)
         const isNursery = result.school.level?.toLowerCase() === 'nursery' || result.school.has_nursery_class === true
-       // console.log('Is nursery school?', isNursery)
         setIsNurserySchool(isNursery)
+        setSchoolInfoLoaded(true)
       }
     } catch (err) {
       console.error('Error in fetchSchoolInfo:', err)
     }
   }
-  
-  // Function to fetch reports
-  const fetchReports = async () => {
+
+  // Function to fetch reports (with caching)
+  const fetchReports = async (forceRefresh = false) => {
+    // Skip if already loaded and not forcing refresh
+    if (reportsLoaded && !forceRefresh) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
 
@@ -195,11 +213,10 @@ function HeadTeacherDashboardContent() {
         console.error("Error from getHmrReports:", result.error)
         setError(result.error)
       } else {
-
         // Filter only submitted reports
         const submittedReports = result.reports.filter((report) => report.status === "submitted")
-
         setReports(submittedReports)
+        setReportsLoaded(true)
       }
     } catch (err) {
       console.error("Error in fetchReports:", err)
@@ -208,11 +225,14 @@ function HeadTeacherDashboardContent() {
       setLoading(false)
     }
   }
-  
-  // Function to fetch nursery assessments
-  const fetchNurseryAssessments = async () => {
+
+  // Function to fetch nursery assessments (with caching)
+  const fetchNurseryAssessments = async (forceRefresh = false) => {
     if (!user?.id) return
-    
+
+    // Skip if already loaded and not forcing refresh
+    if (nurseryAssessmentsLoaded && !forceRefresh) return
+
     try {
       setNurseryAssessmentsLoading(true)
       setNurseryAssessmentsError(null)
@@ -224,6 +244,7 @@ function HeadTeacherDashboardContent() {
         setNurseryAssessmentsError(result.error)
       } else {
         setNurseryAssessments(result.assessments)
+        setNurseryAssessmentsLoaded(true)
       }
     } catch (err) {
       console.error("Error in fetchNurseryAssessments:", err)
@@ -243,18 +264,28 @@ function HeadTeacherDashboardContent() {
 
   // Function to handle successful report submission
   const handleReportSuccess = () => {
-    router.refresh() // Refresh the page to update the status
+    // Force refresh reports and trends data
+    setReportsLoaded(false)
+    setTrendsLoaded(false)
+    setCachedReportStatus(undefined)
+    fetchReports(true)
+    fetchTrendsData(selectedTrendsYear || undefined, true)
     updateURL('view-reports') // Switch to view previous reports tab to show the submitted report
   }
 
   // Function to handle successful nursery assessment submission
   const handleNurseryAssessmentSuccess = () => {
-    router.refresh() // Refresh the page to update the status
+    // Force refresh nursery assessments
+    setNurseryAssessmentsLoaded(false)
+    fetchNurseryAssessments(true)
     updateURL('view-assessments') // Switch to view previous assessments tab to show the submitted assessment
   }
 
-  // Function to fetch trends data
-  const fetchTrendsData = async (year?: number) => {
+  // Function to fetch trends data (with caching)
+  const fetchTrendsData = async (year?: number, forceRefresh = false) => {
+    // Skip if already loaded for this year and not forcing refresh (unless year changed)
+    if (trendsLoaded && !forceRefresh && year === selectedTrendsYear) return
+
     setTrendsLoading(true)
     try {
       console.log('Fetching trends for year:', year)
@@ -264,9 +295,13 @@ function HeadTeacherDashboardContent() {
         console.error('Error fetching trends:', result.error)
       } else {
         setTrendsData(result)
-        // Set the selected year if available years exist and current selection isn't in the list
-        if (result.availableYears?.length > 0 && !result.availableYears.includes(selectedTrendsYear)) {
-          setSelectedTrendsYear(result.availableYears[0])
+        setTrendsLoaded(true)
+        // On initial load, set to the latest year with actual data
+        if (!initialYearSet && result.availableYears?.length > 0) {
+          // Use latestYearWithData if available, otherwise first in list
+          const defaultYear = result.latestYearWithData || result.availableYears[0]
+          setSelectedTrendsYear(defaultYear)
+          setInitialYearSet(true)
         }
       }
     } catch (error) {
@@ -276,18 +311,20 @@ function HeadTeacherDashboardContent() {
     }
   }
 
-  // Re-fetch trends when year changes
+  // Re-fetch trends when year changes (but not on initial null state)
   useEffect(() => {
-    if (selectedTrendsYear) {
-      fetchTrendsData(selectedTrendsYear)
+    if (selectedTrendsYear !== null && initialYearSet) {
+      // Force refresh when year changes
+      fetchTrendsData(selectedTrendsYear, true)
     }
   }, [selectedTrendsYear])
 
+  // Initial data fetch - only runs once
   useEffect(() => {
-    fetchSchoolInfo()
-    fetchReports()
-    fetchTrendsData()
-    if (user?.id) {
+    if (!schoolInfoLoaded) fetchSchoolInfo()
+    if (!reportsLoaded) fetchReports()
+    if (!trendsLoaded) fetchTrendsData()
+    if (user?.id && !nurseryAssessmentsLoaded) {
       fetchNurseryAssessments()
     }
   }, [user?.id])
@@ -438,7 +475,7 @@ function HeadTeacherDashboardContent() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchReports()}
+            onClick={() => fetchReports(true)}
             disabled={loading}
             className="text-xs sm:text-sm dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
           >
@@ -540,74 +577,46 @@ function HeadTeacherDashboardContent() {
 
   // Main component return
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto px-4 lg:px-6">
-      {/* Top Navigation Tabs - Centered above header */}
-      {isNurserySchool && (
-        <div className="flex justify-center">
-          <div className="flex gap-2 p-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 w-fit">
-            <button
-              onClick={() => updateMainTab('dashboard')}
-              className={`
-                px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                ${currentMainTab === 'dashboard' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                }
-              `}
-            >
-              <BarChart3Icon className="h-4 w-4" />
-              Dashboard
-            </button>
-            
-            <button
-              onClick={() => updateMainTab('monthly-reports')}
-              className={`
-                px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                ${currentMainTab === 'monthly-reports' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                }
-              `}
-            >
-              <FileTextIcon className="h-4 w-4" />
-              Monthly Report
-            </button>
-            
-            <button
-              onClick={() => updateMainTab('nursery-assessment')}
-              className={`
-                px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                ${currentMainTab === 'nursery-assessment' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                }
-              `}
-            >
-              <BookOpenIcon className="h-4 w-4" />
-              Nursery Assessment
-            </button>
-            
-            <button
-              onClick={() => updateMainTab('teachers')}
-              className={`
-                px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                ${currentMainTab === 'teachers' 
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                }
-              `}
-            >
-              <UsersIcon className="h-4 w-4" />
-              Teachers
-            </button>
-          </div>
-        </div>
-      )}
-
+    <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto p-4 lg:p-6">
       {/* Conditional Tab Structure */}
       {isNurserySchool ? (
         /* Nursery School: Content based on selected tab */
         <div className="space-y-6">
+          {/* Action Icons - Top Right */}
+          <div className="flex justify-end">
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {mounted && (theme === 'dark' ? (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                ) : (
+                  <Moon className="h-5 w-5 text-slate-600" />
+                ))}
+              </button>
+
+              {/* Notifications */}
+              <button
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300 relative"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+              </button>
+
+              {/* Feature Requests */}
+              <Link href="/dashboard/feature-requests">
+                <button
+                  className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
+                  title="Feature Requests"
+                >
+                  <Lightbulb className="h-5 w-5" />
+                </button>
+              </Link>
+            </div>
+          </div>
 
           {/* Dashboard Tab Content */}
           {currentMainTab === 'dashboard' && (
@@ -704,7 +713,7 @@ function HeadTeacherDashboardContent() {
                   <div className="flex items-center justify-end gap-2">
                     <span className="text-xs text-slate-500 dark:text-slate-400">Year:</span>
                     <select
-                      value={selectedTrendsYear}
+                      value={selectedTrendsYear || ''}
                       onChange={(e) => setSelectedTrendsYear(Number(e.target.value))}
                       className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     >
@@ -727,7 +736,7 @@ function HeadTeacherDashboardContent() {
                           </div>
                           Enrollment Trends
                         </CardTitle>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear || '...'}</span>
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-4">
@@ -737,7 +746,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                       ) : trendsData.enrollmentTrends?.length === 0 ? (
                         <div className="h-48 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                          No enrollment data for {selectedTrendsYear}
+                          No enrollment data for {selectedTrendsYear || 'selected year'}
                         </div>
                       ) : (
                         <>
@@ -779,7 +788,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                         Attendance Rates
                       </CardTitle>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear || '...'}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-4">
@@ -826,7 +835,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                         Punctuality Rates
                       </CardTitle>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear || '...'}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-4">
@@ -1098,52 +1107,41 @@ function HeadTeacherDashboardContent() {
           )}
         </div>
       ) : (
-        /* Non-Nursery Schools: Clean two-tab structure */
+        /* Non-Nursery Schools: Clean structure with sidebar navigation */
         <div className="space-y-4 sm:space-y-6">
-          {/* Top Navigation Tabs - Centered above header */}
-          <div className="flex justify-center">
-            <div className="flex gap-2 p-1.5 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 w-fit">
+          {/* Action Icons - Top Right */}
+          <div className="flex justify-end">
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
               <button
-                onClick={() => updateMainTab('dashboard')}
-                className={`
-                  px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                  ${currentMainTab === 'dashboard' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                  }
-                `}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                <BarChart3Icon className="h-4 w-4" />
-                Dashboard
+                {mounted && (theme === 'dark' ? (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                ) : (
+                  <Moon className="h-5 w-5 text-slate-600" />
+                ))}
               </button>
-              
+
+              {/* Notifications */}
               <button
-                onClick={() => updateMainTab('monthly-reports')}
-                className={`
-                  px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                  ${currentMainTab === 'monthly-reports' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                  }
-                `}
+                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300 relative"
+                title="Notifications"
               >
-                <FileTextIcon className="h-4 w-4" />
-                Monthly Report
+                <Bell className="h-5 w-5" />
               </button>
-              
-              <button
-                onClick={() => updateMainTab('teachers')}
-                className={`
-                  px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2
-                  ${currentMainTab === 'teachers' 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                  }
-                `}
-              >
-                <UsersIcon className="h-4 w-4" />
-                Teachers
-              </button>
+
+              {/* Feature Requests */}
+              <Link href="/dashboard/feature-requests">
+                <button
+                  className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
+                  title="Feature Requests"
+                >
+                  <Lightbulb className="h-5 w-5" />
+                </button>
+              </Link>
             </div>
           </div>
 
@@ -1248,7 +1246,7 @@ function HeadTeacherDashboardContent() {
                   <div className="flex items-center justify-end gap-2">
                     <span className="text-xs text-slate-500 dark:text-slate-400">Year:</span>
                     <select
-                      value={selectedTrendsYear}
+                      value={selectedTrendsYear || ''}
                       onChange={(e) => setSelectedTrendsYear(Number(e.target.value))}
                       className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     >
@@ -1271,7 +1269,7 @@ function HeadTeacherDashboardContent() {
                           </div>
                           Attendance Rates
                         </CardTitle>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear || '...'}</span>
                       </div>
                     </CardHeader>
                     <CardContent className="px-4 pb-4">
@@ -1281,7 +1279,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                       ) : trendsData.attendanceTrends?.length === 0 ? (
                         <div className="h-44 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                          No attendance data for {selectedTrendsYear}
+                          No attendance data for {selectedTrendsYear || 'selected year'}
                         </div>
                       ) : (
                         <>
@@ -1322,7 +1320,7 @@ function HeadTeacherDashboardContent() {
                         </div>
                         Punctuality Rates
                       </CardTitle>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-md">{selectedTrendsYear || '...'}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-4">
@@ -1332,7 +1330,7 @@ function HeadTeacherDashboardContent() {
                       </div>
                     ) : trendsData.punctualityTrends?.length === 0 ? (
                       <div className="h-44 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                        No punctuality data for {selectedTrendsYear}
+                        No punctuality data for {selectedTrendsYear || 'selected year'}
                       </div>
                     ) : (
                       <>
@@ -1383,7 +1381,7 @@ function HeadTeacherDashboardContent() {
                       </div>
                     ) : trendsData.expenditureTrends?.length === 0 ? (
                       <div className="h-44 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                        No expenditure data for {selectedTrendsYear}
+                        No expenditure data for {selectedTrendsYear || 'selected year'}
                       </div>
                     ) : (
                       <>
