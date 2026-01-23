@@ -1085,13 +1085,16 @@ function HeadTeacherDashboardContent() {
             <div className="space-y-6">
               {/* Simple Header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Teacher Management</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Add and manage your school's teaching staff information</p>
+                <div className="flex items-center gap-3">
+                  <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Teacher Management</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1">Add and manage your school's teaching staff information</p>
+                  </div>
                 </div>
               </div>
-              
-              <TeachersList 
+
+              <TeachersList
                 initialTeachers={cachedTeachers}
                 initialDeletedTeachers={cachedDeletedTeachers}
                 onDataLoaded={handleTeachersDataLoaded}
@@ -1543,13 +1546,16 @@ function HeadTeacherDashboardContent() {
             <div className="space-y-6">
               {/* Simple Header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Teacher Management</h1>
-                  <p className="text-slate-600 dark:text-slate-400 mt-1">Add and manage your school's teaching staff information</p>
+                <div className="flex items-center gap-3">
+                  <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Teacher Management</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1">Add and manage your school's teaching staff information</p>
+                  </div>
                 </div>
               </div>
-              
-              <TeachersList 
+
+              <TeachersList
                 initialTeachers={cachedTeachers}
                 initialDeletedTeachers={cachedDeletedTeachers}
                 onDataLoaded={handleTeachersDataLoaded}
