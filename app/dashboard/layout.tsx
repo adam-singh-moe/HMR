@@ -49,6 +49,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect("/auth")
   }
 
+  // Regional Officers have their own layout with sidebar, so skip DashboardShell
+  if (role === "Regional Officer") {
+    return <>{children}</>
+  }
+
   // Capitalize the user's name and format role with region/school
   const capitalizedName = capitalizeName(user.name || "")
   const formattedRole = formatRoleWithRegion(role, user.region_name || null, user.school_name || null)

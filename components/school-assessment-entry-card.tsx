@@ -384,21 +384,29 @@ interface RegionalMetrics {
   weeklyVelocity: number // submissions this week vs last week (percentage change)
 }
 
-export function RegionalOfficerAssessmentCard({ 
-  regionId, 
-  className = "" 
+export function RegionalOfficerAssessmentCard({
+  regionId,
+  className = ""
 }: RegionalOfficerAssessmentCardProps) {
   const router = useRouter()
   const [metrics, setMetrics] = useState<RegionalMetrics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   useEffect(() => {
     async function loadMetrics() {
+      // Skip if data already loaded for this region
+      if (dataLoaded && metrics) {
+        setLoading(false)
+        return
+      }
+
       try {
         const response = await fetch(`/api/school-assessment/regional-metrics?regionId=${regionId}`)
         if (response.ok) {
           const data = await response.json()
           setMetrics(data)
+          setDataLoaded(true)
         }
       } catch (error) {
         console.error('Failed to load regional metrics:', error)
@@ -406,12 +414,12 @@ export function RegionalOfficerAssessmentCard({
         setLoading(false)
       }
     }
-    if (regionId) {
+    if (regionId && !dataLoaded) {
       loadMetrics()
-    } else {
+    } else if (!regionId) {
       setLoading(false)
     }
-  }, [regionId])
+  }, [regionId, dataLoaded, metrics])
 
   const getComplianceConfig = (rate: number) => {
     if (rate >= 80) return { gradient: 'from-emerald-500 to-green-600', status: 'Excellent', color: 'emerald' }
@@ -436,15 +444,15 @@ export function RegionalOfficerAssessmentCard({
         <CardContent className="p-0">
           <div className="flex">
             <div className="flex-1 p-6 space-y-4">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-96" />
+              <Skeleton className="h-8 w-64 dark:bg-slate-700" />
+              <Skeleton className="h-4 w-96 dark:bg-slate-700" />
               <div className="flex gap-2">
-                <Skeleton className="h-8 w-28" />
-                <Skeleton className="h-8 w-28" />
+                <Skeleton className="h-8 w-28 dark:bg-slate-700" />
+                <Skeleton className="h-8 w-28 dark:bg-slate-700" />
               </div>
-              <Skeleton className="h-10 w-52" />
+              <Skeleton className="h-10 w-52 dark:bg-slate-700" />
             </div>
-            <Skeleton className="w-72 h-56" />
+            <Skeleton className="w-72 h-56 dark:bg-slate-700" />
           </div>
         </CardContent>
       </Card>
@@ -730,20 +738,20 @@ export function EducationOfficialAssessmentCard({
 
   if (loading) {
     return (
-      <Card className={`overflow-hidden ${className}`}>
+      <Card className={`overflow-hidden bg-white dark:bg-slate-800 ${className}`}>
         <CardContent className="p-0">
           <div className="flex">
             <div className="flex-1 p-6 space-y-4">
-              <Skeleton className="h-8 w-72" />
-              <Skeleton className="h-4 w-full max-w-lg" />
+              <Skeleton className="h-8 w-72 dark:bg-slate-700" />
+              <Skeleton className="h-4 w-full max-w-lg dark:bg-slate-700" />
               <div className="flex gap-2">
-                <Skeleton className="h-10 w-32" />
-                <Skeleton className="h-10 w-32" />
-                <Skeleton className="h-10 w-32" />
+                <Skeleton className="h-10 w-32 dark:bg-slate-700" />
+                <Skeleton className="h-10 w-32 dark:bg-slate-700" />
+                <Skeleton className="h-10 w-32 dark:bg-slate-700" />
               </div>
-              <Skeleton className="h-11 w-60" />
+              <Skeleton className="h-11 w-60 dark:bg-slate-700" />
             </div>
-            <Skeleton className="w-80 h-64" />
+            <Skeleton className="w-80 h-64 dark:bg-slate-700" />
           </div>
         </CardContent>
       </Card>

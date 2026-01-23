@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTheme } from "next-themes"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -63,6 +64,8 @@ import {
   Menu,
   X,
   Search,
+  Moon,
+  Sun,
 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -81,6 +84,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { getAllNurseryAssessments } from "@/app/actions/nursery-assessment"
 import Link from "next/link"
 import { format } from "date-fns"
+import { NotificationBell } from "@/components/notification-bell"
+import { FeatureRequestButton } from "@/components/feature-request-button"
 
 // Data will be loaded from actual database
 
@@ -122,7 +127,18 @@ function RegionalOfficerDashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isLoading: authLoading } = useAuth()
-  
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Set mounted state for theme toggle
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
   // Get tab and view from URL params, with fallbacks
   const currentTab = searchParams.get('tab') || 'overview'
   const currentView = searchParams.get('view') || 'current'
@@ -147,6 +163,7 @@ function RegionalOfficerDashboardContent() {
   const [reportsError, setReportsError] = useState<string | null>(null)
   const [currentMonthError, setCurrentMonthError] = useState<string | null>(null)
   const [schoolReadinessPercentage, setSchoolReadinessPercentage] = useState<number | null>(null)
+  const [schoolReadinessLoaded, setSchoolReadinessLoaded] = useState<boolean>(false)
   const [expenditureData, setExpenditureData] = useState<any[]>([])
   const [expenditureSchools, setExpenditureSchools] = useState<string[]>([])
   const [isLoadingExpenditure, setIsLoadingExpenditure] = useState<boolean>(false)
@@ -210,17 +227,22 @@ function RegionalOfficerDashboardContent() {
   const [nurseryAssessmentPage, setNurseryAssessmentPage] = useState<number>(1)
   const [nurseryAssessmentPageSize, setNurseryAssessmentPageSize] = useState<number>(10)
 
-  // Load all dashboard data in parallel when component mounts
-  useEffect(() => {
-    loadAllDashboardData()
-  }, [])
+  // Cache flag to prevent reloading dashboard data
+  const [dashboardDataLoaded, setDashboardDataLoaded] = useState<boolean>(false)
 
-  // Load school readiness percentage when user is available
+  // Load all dashboard data in parallel when component mounts (only if not already loaded)
   useEffect(() => {
-    if (user?.region_name) {
+    if (!dashboardDataLoaded) {
+      loadAllDashboardData()
+    }
+  }, [dashboardDataLoaded])
+
+  // Load school readiness percentage when user is available (only if not already loaded)
+  useEffect(() => {
+    if (user?.region_name && !schoolReadinessLoaded) {
       loadSchoolReadinessPercentage()
     }
-  }, [user?.region_name])
+  }, [user?.region_name, schoolReadinessLoaded])
 
   // Load nursery assessments for the regional officer's region
   const loadNurseryAssessments = async (forceReload = false) => {
@@ -313,9 +335,10 @@ function RegionalOfficerDashboardContent() {
   }
 
   // Load school readiness percentage (lightweight)
-  const loadSchoolReadinessPercentage = async () => {
+  const loadSchoolReadinessPercentage = async (forceReload = false) => {
     if (!user?.region_name) return
-    
+    if (schoolReadinessLoaded && !forceReload) return
+
     try {
       const result = await getSchoolReadinessPercentage(user.region_name)
       if (result.success && result.ready_percentage !== undefined) {
@@ -323,6 +346,8 @@ function RegionalOfficerDashboardContent() {
       }
     } catch (error) {
       console.error("Error loading school readiness percentage:", error)
+    } finally {
+      setSchoolReadinessLoaded(true)
     }
   }
 
@@ -339,7 +364,12 @@ function RegionalOfficerDashboardContent() {
   }, [selectedExpenditureYear])
 
   // Parallel loading function for all dashboard data
-  const loadAllDashboardData = async () => {
+  const loadAllDashboardData = async (forceReload = false) => {
+    // Skip loading if data already loaded and not forcing reload
+    if (dashboardDataLoaded && !forceReload) {
+      return
+    }
+
     // Set all loading states to true
     setIsLoadingCurrentMonth(true)
     setIsLoadingExpenditure(true)
@@ -386,6 +416,11 @@ function RegionalOfficerDashboardContent() {
         setExpenditureSchools(expenditureResult.topSchools || [])
         if (expenditureResult.availableYears && expenditureResult.availableYears.length > 0) {
           setAvailableExpenditureYears(expenditureResult.availableYears)
+          // Set default to the highest available year with data
+          const highestYear = Math.max(...expenditureResult.availableYears)
+          setSelectedExpenditureYear(highestYear)
+          // Reload expenditure trends with the correct year
+          loadExpenditureTrends(highestYear)
         }
       }
 
@@ -395,6 +430,14 @@ function RegionalOfficerDashboardContent() {
         setAttendanceTrendsData([])
       } else {
         setAttendanceTrendsData(attendanceResult.trendsData)
+        // Set default to the highest year with actual data
+        if (attendanceResult.trendsData && attendanceResult.trendsData.length > 0) {
+          const yearsWithData = [...new Set(attendanceResult.trendsData.map((d: any) => d.year))]
+          if (yearsWithData.length > 0) {
+            const highestYear = Math.max(...yearsWithData)
+            setSelectedYear(highestYear)
+          }
+        }
       }
 
       // Process finance periods
@@ -445,6 +488,8 @@ function RegionalOfficerDashboardContent() {
       setIsLoadingExpenditure(false)
       setIsLoadingAttendanceTrends(false)
       setIsLoadingTopExpenditure(false)
+      // Mark dashboard data as loaded (cached)
+      setDashboardDataLoaded(true)
     }
   }
 
@@ -1019,116 +1064,10 @@ function RegionalOfficerDashboardContent() {
     return `${monthNames[month]} ${year}`
   }
 
-  // State for mobile sidebar
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  // Navigation items for sidebar
-  const navigationItems = [
-    { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard, description: 'Key metrics & analytics' },
-    { id: 'reports', label: 'Submitted Reports', icon: FileText, description: 'School report submissions' },
-    { id: 'pe-reports', label: 'Regional PE Reports', icon: ClipboardList, description: 'Physical education reports' },
-    { id: 'nursery-assessment', label: 'Nursery Assessment', icon: Baby, description: 'Early childhood evaluations' },
-    { id: 'ai-insights', label: 'AI Insights', icon: Sparkles, description: 'AI-powered analytics' },
-  ]
-
   return (
     <div className="min-h-screen">
-      {/* Fixed Sidebar Navigation - starts below main header */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-14 sm:top-16 md:top-[72px] bottom-0 left-0 z-40 w-[260px] bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-700/50 transition-transform duration-300 ease-in-out flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50`}>
-        {/* Sidebar Header - Modern Design */}
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200/50 dark:border-blue-500/20">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-600/20">
-              <MapPin className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Regional Officer</p>
-              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{user?.region_name || 'Region'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Items - Scrollable */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-          {navigationItems.map((item) => {
-            const Icon = item.icon
-            const isActive = currentTab === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  updateURL(item.id)
-                  setSidebarOpen(false)
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-blue-600 dark:bg-blue-600 text-white shadow-md shadow-blue-600/25'
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-600 dark:text-slate-300'
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-                  isActive
-                    ? 'bg-white/20'
-                    : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
-                }`}>
-                  <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <p className={`text-[13px] font-semibold truncate ${isActive ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>{item.label}</p>
-                  <p className={`text-[11px] truncate ${isActive ? 'text-white/70' : 'text-slate-500 dark:text-slate-500'}`}>{item.description}</p>
-                </div>
-                {isActive && (
-                  <div className="w-1 h-6 bg-white/40 rounded-full flex-shrink-0" />
-                )}
-              </button>
-            )
-          })}
-        </nav>
-
-        {/* School Readiness Card - Fixed at Bottom */}
-        <div className="p-3 border-t border-slate-200/80 dark:border-slate-700/50">
-          <div
-            onClick={() => router.push('/dashboard/regional-officer/school-readiness')}
-            className="p-4 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-600 dark:to-indigo-600 text-white cursor-pointer hover:shadow-lg hover:shadow-blue-600/25 transition-all duration-300 hover:scale-[1.02]"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                <span className="text-sm font-semibold">School Readiness</span>
-              </div>
-              <ChevronRight className="w-4 h-4 opacity-70" />
-            </div>
-            <p className="text-2xl font-bold">{schoolReadinessPercentage !== null ? `${schoolReadinessPercentage}%` : '--'}</p>
-            <p className="text-[11px] text-white/70 mt-1">Click to view details</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-slate-900/60 z-30 backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Mobile Header - only shows on small screens */}
-      <div className="lg:hidden fixed top-14 sm:top-16 md:top-[72px] left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-700/50">
-        <div>
-          <h1 className="text-base font-bold text-slate-800 dark:text-white">Regional Dashboard</h1>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{user?.region_name || 'Region'}</p>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-        >
-          {sidebarOpen ? <X className="h-5 w-5 text-slate-600 dark:text-white" /> : <Menu className="h-5 w-5 text-slate-600 dark:text-white" />}
-        </button>
-      </div>
-
       {/* Main Content Area */}
-      <main className="lg:ml-[260px] min-h-screen pt-14 lg:pt-0">
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+      <div className="p-4 lg:p-6 max-w-7xl mx-auto">
         <Tabs value={currentTab} onValueChange={(value) => updateURL(value)} className="space-y-4 lg:space-y-6">
           {/* Hidden TabsList - using sidebar for navigation but keeping Tabs for content organization */}
           <TabsList className="hidden">
@@ -1140,7 +1079,7 @@ function RegionalOfficerDashboardContent() {
           </TabsList>
 
         <TabsContent value="overview" className="space-y-5 lg:space-y-6">
-          {/* Page Header with Stats */}
+          {/* Page Header with Action Bar */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5 tracking-tight">
@@ -1149,7 +1088,34 @@ function RegionalOfficerDashboardContent() {
               </h2>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Monitor key metrics and performance indicators</p>
             </div>
-            {/* Quick Stats Cards - Unified styling */}
+
+            {/* Action Bar - Theme Toggle, Notifications, Feature Request */}
+            <div className="flex items-center gap-2.5">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 border border-slate-200/80 dark:border-slate-700/50"
+                aria-label="Toggle theme"
+              >
+                {mounted && (
+                  theme === "dark" ? (
+                    <Sun className="h-4 w-4 text-amber-400" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-slate-500" />
+                  )
+                )}
+              </button>
+
+              {/* Notification Bell */}
+              <NotificationBell />
+
+              {/* Feature Request Button */}
+              <FeatureRequestButton />
+            </div>
+          </div>
+
+          {/* Quick Stats Cards - Aligned Right */}
+          <div className="flex justify-end">
             <div className="flex gap-2.5 flex-wrap">
               <div className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20">
                 <div className="flex items-center gap-2.5">
@@ -2655,8 +2621,7 @@ function RegionalOfficerDashboardContent() {
         </TabsContent>
 
         </Tabs>
-        </div>
-      </main>
+      </div>
 
       {/* Scroll to Top Button */}
       {showScrollTop && (
