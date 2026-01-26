@@ -1079,39 +1079,13 @@ function RegionalOfficerDashboardContent() {
           </TabsList>
 
         <TabsContent value="overview" className="space-y-5 lg:space-y-6">
-          {/* Page Header with Action Bar */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5 tracking-tight">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
-                System Overview
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Monitor key metrics and performance indicators</p>
-            </div>
-
-            {/* Action Bar - Theme Toggle, Notifications, Feature Request */}
-            <div className="flex items-center gap-2.5">
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 border border-slate-200/80 dark:border-slate-700/50"
-                aria-label="Toggle theme"
-              >
-                {mounted && (
-                  theme === "dark" ? (
-                    <Sun className="h-4 w-4 text-amber-400" />
-                  ) : (
-                    <Moon className="h-4 w-4 text-slate-500" />
-                  )
-                )}
-              </button>
-
-              {/* Notification Bell */}
-              <NotificationBell />
-
-              {/* Feature Request Button */}
-              <FeatureRequestButton />
-            </div>
+          {/* Page Header */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5 tracking-tight">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+              System Overview
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Monitor key metrics and performance indicators</p>
           </div>
 
           {/* Quick Stats Cards - Aligned Right */}
