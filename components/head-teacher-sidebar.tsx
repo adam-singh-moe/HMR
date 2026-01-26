@@ -184,23 +184,23 @@ export function HeadTeacherSidebar({ onNavigate }: HeadTeacherSidebarProps) {
 
             <div className="flex-1 min-w-0 text-left">
               {/* User Name */}
-              <h3 className="text-xs 2xl:text-base font-bold text-slate-800 dark:text-white truncate">
+              <h3 className="text-[10px] 2xl:text-sm font-bold text-slate-800 dark:text-white leading-tight break-words">
                 {user?.name ? capitalizeName(user.name) : 'Loading...'}
               </h3>
 
               {/* Role Badge */}
               <div className="inline-flex items-center gap-1 2xl:gap-1.5 mt-0.5 2xl:mt-1">
                 <div className="w-1.5 h-1.5 2xl:w-2 2xl:h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] 2xl:text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">
+                <span className="text-[8px] 2xl:text-[10px] font-semibold text-slate-600 dark:text-slate-400 uppercase">
                   Head Teacher
                 </span>
               </div>
 
               {/* School Name */}
               {schoolInfo?.name && (
-                <div className="flex items-center gap-1 2xl:gap-1.5 mt-0.5 2xl:mt-1 text-[9px] 2xl:text-xs text-slate-500 dark:text-slate-400">
-                  <GraduationCap className="w-2.5 h-2.5 2xl:w-3.5 2xl:h-3.5 flex-shrink-0" />
-                  <span className="truncate">{schoolInfo.name}</span>
+                <div className="flex items-start gap-1 2xl:gap-1.5 mt-0.5 2xl:mt-1 text-[8px] 2xl:text-[11px] text-slate-500 dark:text-slate-400">
+                  <GraduationCap className="w-2.5 h-2.5 2xl:w-3.5 2xl:h-3.5 flex-shrink-0 mt-0.5" />
+                  <span className="leading-tight break-words">{schoolInfo.name}</span>
                 </div>
               )}
             </div>
