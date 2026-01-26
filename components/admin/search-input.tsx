@@ -32,13 +32,13 @@ export function SearchInput({ placeholder, baseUrl }: SearchInputProps) {
   }, [searchTerm, debouncedSearch])
 
   return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="relative w-full sm:w-[240px]">
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <Input
         placeholder={placeholder}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10"
+        className="pl-10 h-9 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm"
       />
     </div>
   )

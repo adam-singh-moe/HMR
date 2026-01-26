@@ -274,7 +274,7 @@ export async function rejectUserAction(formData: FormData) {
   return await rejectUser(userId)
 }
 
-export async function getUsers(page = 1, limit = 10, search = "") {
+export async function getUsers(page = 1, limit = 10, search = "", role = "", schoolId = "") {
   try {
     const user = await getUser()
 
@@ -290,9 +290,11 @@ export async function getUsers(page = 1, limit = 10, search = "") {
       .select(`
         *,
         hmr_user_roles (
+          id,
           name
         ),
         sms_schools (
+          id,
           name
         ),
         sms_regions (
@@ -305,6 +307,25 @@ export async function getUsers(page = 1, limit = 10, search = "") {
 
     if (search) {
       query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
+    }
+
+    // Filter by role
+    if (role) {
+      // Get the role ID first
+      const { data: roleData } = await supabase
+        .from("hmr_user_roles")
+        .select("id")
+        .eq("name", role)
+        .single()
+
+      if (roleData) {
+        query = query.eq("role_id", roleData.id)
+      }
+    }
+
+    // Filter by school
+    if (schoolId) {
+      query = query.eq("school_id", schoolId)
     }
 
     const { data: users, error, count } = await query
@@ -326,6 +347,60 @@ export async function getUsers(page = 1, limit = 10, search = "") {
   } catch (error) {
     console.error("Error in getUsers:", error)
     return { users: [], total: 0, error: "An unexpected error occurred." }
+  }
+}
+
+export async function getUserRoles() {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { roles: [], error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { data: roles, error } = await supabase
+      .from("hmr_user_roles")
+      .select("id, name")
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching roles:", error)
+      return { roles: [], error: "Failed to fetch roles." }
+    }
+
+    return { roles: roles || [], error: null }
+  } catch (error) {
+    console.error("Error in getUserRoles:", error)
+    return { roles: [], error: "An unexpected error occurred." }
+  }
+}
+
+export async function getSchoolsForFilter() {
+  try {
+    const user = await getUser()
+
+    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+      return { schools: [], error: "Unauthorized access." }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const { data: schools, error } = await supabase
+      .from("sms_schools")
+      .select("id, name")
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching schools:", error)
+      return { schools: [], error: "Failed to fetch schools." }
+    }
+
+    return { schools: schools || [], error: null }
+  } catch (error) {
+    console.error("Error in getSchoolsForFilter:", error)
+    return { schools: [], error: "An unexpected error occurred." }
   }
 }
 

@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, Key, ExternalLink, Eye, EyeOff, AlertTriangle } from 'lucide-react'
+import { Copy, Key, ExternalLink, Eye, EyeOff, AlertTriangle, Shield, Clock, Lock, CheckCircle2 } from 'lucide-react'
 import { generateUserAccessToken } from '@/app/actions/admin-access-tokens'
 import { toast } from 'sonner'
 
@@ -43,23 +43,23 @@ export function GenerateAccessTokenDialog({ userId, userName, userEmail }: Gener
   const handleGenerateToken = async () => {
     setLoading(true)
     console.log('Generating token for user:', userId)
-    
+
     try {
       const result = await generateUserAccessToken(userId, adminId)
       console.log('Token generation result:', result)
-      
+
       if (result.token && result.expiresAt) {
         const accessUrl = `${window.location.origin}/auth/token?token=${encodeURIComponent(result.token)}`
-        
+
         const newTokenData = {
           token: result.token,
           expiresAt: result.expiresAt,
           accessUrl
         }
-        
+
         console.log('Setting token data:', newTokenData)
         setTokenData(newTokenData)
-        
+
         toast.success(`Access token generated for ${userName}. Valid for 30 minutes.`)
       } else {
         console.error('Token generation failed:', result.error)
@@ -108,60 +108,104 @@ export function GenerateAccessTokenDialog({ userId, userName, userEmail }: Gener
           Generate Access Token
         </DropdownMenuItem>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle>Generate Access Token</DialogTitle>
-          <DialogDescription>
-            Create a secure access token to login as {userName} ({userEmail}). 
-            This token will be valid for 30 minutes and provides full account access.
+          <DialogTitle className="flex items-center gap-2 text-slate-800 dark:text-white">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <Key className="h-4 w-4 text-white" />
+            </div>
+            Generate Access Token
+          </DialogTitle>
+          <DialogDescription className="text-slate-500 dark:text-slate-400">
+            Create a secure access token to login as <span className="font-medium text-slate-700 dark:text-slate-300">{userName}</span> ({userEmail}).
+            This token will be valid for 30 minutes.
           </DialogDescription>
         </DialogHeader>
-        
+
         {!tokenData ? (
           <div className="space-y-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="flex items-start space-x-2">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            {/* Security Warning */}
+            <div className="rounded-xl border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-800/50 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
                 <div>
-                  <h4 className="text-sm font-medium text-amber-800 mb-2">Security Warning</h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
-                    <li>• This token grants full access to the user's account</li>
-                    <li>• Token expires in 30 minutes</li>
-                    <li>• Handle with care and share securely</li>
-                    <li>• Token cannot be revoked once generated</li>
+                  <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-2">Security Warning</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                      <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>Full access to the user's account</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                      <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>Token expires in 30 minutes</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                      <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <span>Handle with care and share securely</span>
+                    </li>
                   </ul>
                 </div>
               </div>
             </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={handleClose}>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleGenerateToken} disabled={loading}>
-                {loading ? "Generating..." : "Generate Token"}
+              <Button
+                onClick={handleGenerateToken}
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
+              >
+                {loading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4 mr-2" />
+                    Generate Token
+                  </>
+                )}
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Success indicator */}
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-medium">Token generated successfully!</span>
+            </div>
+
+            {/* Token field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="token">Access Token</Label>
-                <div className="flex space-x-2">
+                <Label htmlFor="token" className="text-slate-700 dark:text-slate-300">Access Token</Label>
+                <div className="flex gap-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowToken(!showToken)}
+                    className="h-8 w-8 p-0 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
-                    {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(tokenData.token, "Token")}
+                    className="h-8 w-8 p-0 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -169,48 +213,61 @@ export function GenerateAccessTokenDialog({ userId, userName, userEmail }: Gener
                 id="token"
                 value={showToken ? tokenData.token : "••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••"}
                 readOnly
-                className="font-mono text-xs min-h-[100px] resize-none"
+                className="font-mono text-xs min-h-[80px] resize-none bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
               />
             </div>
-            
+
+            {/* URL field */}
             <div className="space-y-2">
-              <Label htmlFor="accessUrl">Authentication URL</Label>
-              <div className="flex space-x-2">
+              <Label htmlFor="accessUrl" className="text-slate-700 dark:text-slate-300">Authentication URL</Label>
+              <div className="flex gap-2">
                 <Input
                   id="accessUrl"
                   value={tokenData.accessUrl}
                   readOnly
-                  className="text-sm font-mono"
+                  className="text-xs font-mono bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200"
                 />
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => copyToClipboard(tokenData.accessUrl, "URL")}
+                  className="h-9 w-9 p-0 flex-shrink-0 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={openInNewTab}
                   title="Open in new tab"
+                  className="h-9 w-9 p-0 flex-shrink-0 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
-            
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <div className="text-sm text-red-800">
-                <p><strong>Expires:</strong> {new Date(tokenData.expiresAt).toLocaleString()}</p>
-                <p className="mt-1 font-medium">
-                  ⚠️ Save this token securely. It cannot be retrieved again.
-                </p>
+
+            {/* Expiry warning */}
+            <div className="rounded-xl border border-red-200 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 p-3">
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="text-red-700 dark:text-red-300">
+                    <span className="font-medium">Expires:</span> {new Date(tokenData.expiresAt).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-red-600 dark:text-red-400 font-medium">
+                    Save this token securely. It cannot be retrieved again.
+                  </p>
+                </div>
               </div>
             </div>
-            
-            <div className="flex justify-end">
-              <Button onClick={handleClose}>
+
+            {/* Done button */}
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={handleClose}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
+              >
                 Done
               </Button>
             </div>
