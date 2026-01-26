@@ -6,7 +6,9 @@ import { useTheme } from "next-themes"
 import { HeadTeacherSidebar } from "@/components/head-teacher-sidebar"
 import { EducationOfficialSidebar } from "@/components/education-official-sidebar"
 import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
-import { Menu, X, Sun, Moon, Bell, Lightbulb } from "lucide-react"
+import { NotificationBell } from "@/components/notification-bell"
+import { FeatureRequestButton } from "@/components/feature-request-button"
+import { Menu, X, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface NurseryAssessmentViewLayoutProps {
@@ -62,6 +64,7 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                   size="sm"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
                   {theme === 'dark' ? (
                     <Sun className="h-4 w-4 text-amber-500" />
@@ -69,20 +72,8 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                     <Moon className="h-4 w-4 text-slate-600" />
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Lightbulb className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
+                <NotificationBell />
+                <FeatureRequestButton />
               </div>
             </div>
 
@@ -133,6 +124,7 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                   size="sm"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
                   {theme === 'dark' ? (
                     <Sun className="h-4 w-4 text-amber-500" />
@@ -140,20 +132,8 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                     <Moon className="h-4 w-4 text-slate-600" />
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Lightbulb className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
+                <NotificationBell />
+                <FeatureRequestButton />
               </div>
             </div>
 
@@ -213,6 +193,7 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                   size="sm"
                   onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                   className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
                   {theme === 'dark' ? (
                     <Sun className="h-4 w-4 text-amber-500" />
@@ -220,20 +201,8 @@ export default function NurseryAssessmentViewLayout({ children }: NurseryAssessm
                     <Moon className="h-4 w-4 text-slate-600" />
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  <Lightbulb className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </Button>
+                <NotificationBell />
+                <FeatureRequestButton />
               </div>
             </div>
 

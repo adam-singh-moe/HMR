@@ -6,7 +6,9 @@ import { useAuth } from "@/components/auth-wrapper"
 import { useTheme } from "next-themes"
 import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
 import { HelpDeskButton } from "@/components/help-desk-button"
-import { Menu, X, Sun, Moon, Bell, Lightbulb } from "lucide-react"
+import { NotificationBell } from "@/components/notification-bell"
+import { FeatureRequestButton } from "@/components/feature-request-button"
+import { Menu, X, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface RegionalOfficerLayoutProps {
@@ -127,6 +129,7 @@ export default function RegionalOfficerLayout({ children }: RegionalOfficerLayou
                 size="sm"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {theme === 'dark' ? (
                   <Sun className="h-4 w-4 text-amber-500" />
@@ -134,20 +137,8 @@ export default function RegionalOfficerLayout({ children }: RegionalOfficerLayou
                   <Moon className="h-4 w-4 text-slate-600" />
                 )}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-              >
-                <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-              >
-                <Lightbulb className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              </Button>
+              <NotificationBell />
+              <FeatureRequestButton />
             </div>
           </div>
 
