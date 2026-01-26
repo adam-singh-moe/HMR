@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { getUserDetails } from "@/app/actions/users"
 import { redirect } from "next/navigation"
-import EducationOfficialNav from "./education-official-nav"
+import { EducationOfficialLayoutClient } from "./layout-client"
 
 export default async function EducationOfficialLayout({
   children,
@@ -15,20 +15,10 @@ export default async function EducationOfficialLayout({
     redirect("/auth")
   }
 
-  return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary-700">
-            {role === "Regional Officer" ? "Regional Officer Dashboard" : "Education Official Dashboard"}
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">Monitor reports and school performance across the system</p>
-        </div>
-      </div>
+  // If Regional Officer, redirect to their dashboard
+  if (role === "Regional Officer") {
+    redirect("/dashboard/regional-officer")
+  }
 
-      {role === "Education Official" && <EducationOfficialNav />}
-
-      {children}
-    </div>
-  )
+  return <EducationOfficialLayoutClient>{children}</EducationOfficialLayoutClient>
 }

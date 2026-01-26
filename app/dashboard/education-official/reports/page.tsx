@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { getSubmittedReportsWithSearchAndPagination, getSchoolsForSearch, getRegionsForFilter, getSchoolLevelsForFilter } from "@/app/actions/education-official-reports"
 import EnhancedAllReportsClient from "./EnhancedAllReportsClient"
@@ -145,10 +145,10 @@ function AllReportsPageContent() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="mt-2 text-gray-600">Loading reports...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50 shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+          <p className="text-slate-600 dark:text-slate-400">Loading reports...</p>
         </div>
       </div>
     )
@@ -156,34 +156,24 @@ function AllReportsPageContent() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>All Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center text-red-600">
-              <p>Error loading reports: {error}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50 shadow-sm">
+          <div className="text-red-600 dark:text-red-400">
+            <p>Error loading reports: {error}</p>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!initialData) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>All Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center text-red-600">
-              <p>No data available</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center p-8 bg-white dark:bg-[hsl(222,47%,9%)] rounded-xl border border-slate-200/80 dark:border-slate-700/50 shadow-sm">
+          <div className="text-slate-500 dark:text-slate-400">
+            <p>No data available</p>
+          </div>
+        </div>
       </div>
     )
   }

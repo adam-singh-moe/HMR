@@ -49,8 +49,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect("/auth")
   }
 
-  // Regional Officers and Head Teachers have their own layout with sidebar, so skip DashboardShell
-  if (role === "Regional Officer" || role === "Head Teacher") {
+  // Regional Officers, Head Teachers, and Education Officials have their own layout with sidebar, so skip DashboardShell
+  if (role === "Regional Officer" || role === "Head Teacher" || role === "Education Official") {
     return <>{children}</>
   }
 

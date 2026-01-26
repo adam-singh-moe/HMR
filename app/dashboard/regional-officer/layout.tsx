@@ -3,9 +3,10 @@
 import { ReactNode, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-wrapper"
+import { useTheme } from "next-themes"
 import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
 import { HelpDeskButton } from "@/components/help-desk-button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, Sun, Moon, Bell, Lightbulb } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface RegionalOfficerLayoutProps {
@@ -14,6 +15,7 @@ interface RegionalOfficerLayoutProps {
 
 export default function RegionalOfficerLayout({ children }: RegionalOfficerLayoutProps) {
   const { user, isLoading } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Show loading state
@@ -115,7 +117,43 @@ export default function RegionalOfficerLayout({ children }: RegionalOfficerLayou
 
       {/* Main Content Area */}
       <main className="lg:ml-[300px] min-h-screen relative">
-        {children}
+        {/* Page Content with Action Icons */}
+        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+          {/* Action Icons - Top right of content area */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4 text-amber-500" />
+                ) : (
+                  <Moon className="h-4 w-4 text-slate-600" />
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <Lightbulb className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          {children}
+        </div>
       </main>
 
       {/* Help Desk Button */}
