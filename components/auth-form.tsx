@@ -30,6 +30,7 @@ function AuthFormContent() {
   const [schools, setSchools] = useState<Array<{ id: string; name: string; region_id: string; code: string }>>([])
   const [regions, setRegions] = useState<Array<{ id: string; name: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [email, setEmail] = useState<string>("")
   const [detectedSchool, setDetectedSchool] = useState<{ id: string; name: string; region_id: string; code: string } | null>(null)
   const [isDetectingSchool, setIsDetectingSchool] = useState(false)
@@ -249,18 +250,21 @@ function AuthFormContent() {
     setError(null)
     setShowSuccess(false)
     setPasswordError(null)
+    setIsSubmitting(true)
 
     // Validate password confirmation for sign up
     if (isSignUp) {
       const password = formData.get("password") as string
       if (password !== confirmPassword) {
         setPasswordError("Passwords do not match")
+        setIsSubmitting(false)
         return
       }
-      
+
       // Basic password validation
       if (password.length < 6) {
         setPasswordError("Password must be at least 6 characters long")
+        setIsSubmitting(false)
         return
       }
     }
@@ -268,6 +272,7 @@ function AuthFormContent() {
     // Validate regional officer has selected a region
     if (isSignUp && role === "regional_officer" && !selectedRegion && regions.length > 0) {
       setError("Please select a region for Regional Officer role")
+      setIsSubmitting(false)
       return
     }
 
@@ -275,23 +280,27 @@ function AuthFormContent() {
     if (isSignUp && role === "head_teacher") {
       if (!email) {
         setError("Please enter your head teacher email")
+        setIsSubmitting(false)
         return
       }
-      
+
       // Check email format
       const emailPattern = /^hm\.([a-z0-9]+)@moe\.edu\.gy$/i
       if (!emailPattern.test(email)) {
         setError("Head teacher email must be in format: hm.code@moe.edu.gy")
+        setIsSubmitting(false)
         return
       }
-      
+
       if (!detectedSchool) {
         setError("Could not detect school from email. Please verify your email address contains a valid school code.")
+        setIsSubmitting(false)
         return
       }
-      
+
       if (!selectedSchool) {
         setError("School detection failed. Please try again or contact support.")
+        setIsSubmitting(false)
         return
       }
     }
@@ -362,6 +371,7 @@ function AuthFormContent() {
           setInitialVerificationToken(verifyData.token) // Store the token from signup
           //console.log("Set initial verification token and showing email verification")
           setShowEmailVerification(true)
+          setIsSubmitting(false)
           return // Don't proceed with signup yet
         } else {
           throw new Error(verifyData.error || "Failed to send verification code")
@@ -377,7 +387,7 @@ function AuthFormContent() {
         //   result,
         //   requiresName: result.requiresName
         // })
-        
+
         // For head teachers with default password, show account setup flow
         if (result.userRole === "Head Teacher") {
           setAccountSetupUser({
@@ -389,6 +399,7 @@ function AuthFormContent() {
             schoolName: result.schoolName || null
           })
           setShowAccountSetup(true)
+          setIsSubmitting(false)
           return
         } else {
           // For other roles, go directly to password change
@@ -399,6 +410,7 @@ function AuthFormContent() {
             requiresName: result.requiresName || false
           })
           setShowPasswordChange(true)
+          setIsSubmitting(false)
           return
         }
       }
@@ -406,6 +418,7 @@ function AuthFormContent() {
       // Only set error if there's actually an error returned
       if (result?.error) {
         setError(result.error)
+        setIsSubmitting(false)
       }
     } catch (error: any) {
       // Only handle actual errors, not redirects
@@ -416,6 +429,7 @@ function AuthFormContent() {
 
       console.error("Form submission error:", error)
       setError("An unexpected error occurred. Please try again.")
+      setIsSubmitting(false)
     }
   }
 
@@ -481,6 +495,7 @@ function AuthFormContent() {
       return
     }
 
+    setIsSubmitting(true)
     try {
       const response = await fetch("/api/forgot-password", {
         method: "POST",
@@ -506,6 +521,8 @@ function AuthFormContent() {
     } catch (error) {
       console.error("Forgot password error:", error)
       setError("Failed to process request. Please try again.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -938,9 +955,17 @@ function AuthFormContent() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"}
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {isForgotPassword ? "Sending..." : isSignUp ? "Creating Account..." : "Signing In..."}
+                </span>
+              ) : (
+                isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"
+              )}
             </Button>
           </form>
           

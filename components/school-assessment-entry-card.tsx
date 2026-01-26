@@ -759,209 +759,182 @@ export function EducationOfficialAssessmentCard({
   }
 
   return (
-    <Card className={`overflow-hidden border-0 shadow-xl bg-white ${className}`}>
+    <Card className={`overflow-hidden border border-slate-200/80 dark:border-slate-700/50 shadow-xl bg-white dark:bg-[hsl(222,47%,11%)] rounded-xl ${className}`}>
       <CardContent className="p-0">
         <div className="flex flex-col xl:flex-row">
           {/* Left Content */}
-          <div className="flex-1 p-6 lg:p-8 flex flex-col justify-center">
-            <div className="space-y-5">
+          <div className="flex-1 p-4 lg:p-5 flex flex-col justify-center">
+            <div className="space-y-3">
               <div>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600">
-                    <Globe className="h-5 w-5 text-white" />
-                  </div>
-                  <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 font-medium">
-                    <Zap className="h-3 w-3 mr-1" />
-                    Ministry Dashboard
-                  </Badge>
-                  {/* Critical Alerts Badge */}
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    National School Assessment
+                  </h3>
                   {hasCriticalItems && (
-                    <Badge className="bg-red-100 text-red-700 border-0 text-xs animate-pulse">
-                      <AlertCircle className="h-3 w-3 mr-1" />
+                    <Badge className="bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-0 text-[10px] animate-pulse">
+                      <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
                       {metrics?.criticalRegionsCount} Regions Need Attention
                     </Badge>
                   )}
-                  {/* National Trend Badge */}
-                  {metrics?.nationalTrend && metrics.nationalTrend !== 'stable' && (
-                    <Badge className={`border-0 text-xs ${
-                      metrics.nationalTrend === 'improving'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {metrics.nationalTrend === 'improving' ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {metrics.weeklyChange > 0 ? '+' : ''}{metrics.weeklyChange}% this week
-                    </Badge>
-                  )}
                 </div>
-                <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  National School Assessment
-                </h3>
-                <p className="text-gray-600 text-sm lg:text-base leading-relaxed">
+                <p className="text-gray-600 dark:text-slate-400 text-xs leading-relaxed">
                   {hasCriticalItems
-                    ? `⚠️ ${metrics?.criticalRegionsCount || 0} regions underperforming, ${metrics?.neverAssessedCount || 0} schools never assessed. Review regional data for intervention.`
-                    : "Monitor education quality across all regions. Identify high-performing schools for recognition and those requiring intervention."
+                    ? `${metrics?.criticalRegionsCount || 0} regions underperforming, ${metrics?.neverAssessedCount || 0} schools never assessed.`
+                    : "Monitor education quality across all regions."
                   }
                 </p>
               </div>
 
-              {/* Stats Cards with Urgency Indicators */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-emerald-700">{metrics?.outstandingCount ?? 0}</p>
-                  <p className="text-xs text-emerald-600 font-medium">Outstanding</p>
+              {/* Stats Cards - Compact */}
+              <div className="grid grid-cols-4 gap-2">
+                <div className="bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/50 dark:border-emerald-800/50 rounded-lg p-2 text-center">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 mx-auto mb-0.5" />
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400 leading-none">{metrics?.outstandingCount ?? 0}</p>
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-500 font-medium mt-0.5">Outstanding</p>
                 </div>
-                <div className={`border rounded-xl p-3 text-center ${
-                  (metrics?.needsImprovementCount ?? 0) > 10 
-                    ? 'bg-red-50 border-red-300 animate-pulse' 
-                    : 'bg-red-50 border-red-200'
+
+                <div className={`border rounded-lg p-2 text-center ${
+                  (metrics?.needsImprovementCount ?? 0) > 10
+                    ? 'bg-red-50/80 dark:bg-red-950/40 border-red-300/50 dark:border-red-800/50'
+                    : 'bg-red-50/80 dark:bg-red-950/40 border-red-200/50 dark:border-red-800/50'
                 }`}>
-                  <AlertTriangle className="h-5 w-5 text-red-600 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-red-700">{metrics?.needsImprovementCount ?? 0}</p>
-                  <p className="text-xs text-red-600 font-medium">Need Support</p>
+                  <AlertTriangle className="h-3.5 w-3.5 text-red-600 dark:text-red-400 mx-auto mb-0.5" />
+                  <p className="text-lg font-bold text-red-700 dark:text-red-400 leading-none">{metrics?.needsImprovementCount ?? 0}</p>
+                  <p className="text-[9px] text-red-600 dark:text-red-500 font-medium mt-0.5">Need Support</p>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-                  <School className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-blue-700">{metrics?.totalSubmitted ?? 0}</p>
-                  <p className="text-xs text-blue-600 font-medium">Assessed</p>
+
+                <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-2 text-center">
+                  <School className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 mx-auto mb-0.5" />
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-400 leading-none">{metrics?.totalSubmitted ?? 0}</p>
+                  <p className="text-[9px] text-blue-600 dark:text-blue-500 font-medium mt-0.5">Assessed</p>
                 </div>
-                <div className={`border rounded-xl p-3 text-center ${
+
+                <div className={`border rounded-lg p-2 text-center ${
                   (metrics?.neverAssessedCount ?? 0) > 50
-                    ? 'bg-orange-50 border-orange-300'
-                    : 'bg-purple-50 border-purple-200'
+                    ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-300/50 dark:border-orange-800/50'
+                    : 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-200/50 dark:border-purple-800/50'
                 }`}>
                   {(metrics?.neverAssessedCount ?? 0) > 50 ? (
                     <>
-                      <AlertCircle className="h-5 w-5 text-orange-600 mx-auto mb-1" />
-                      <p className="text-2xl font-bold text-orange-700">{metrics?.neverAssessedCount ?? 0}</p>
-                      <p className="text-xs text-orange-600 font-medium">Not Assessed</p>
+                      <AlertCircle className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400 mx-auto mb-0.5" />
+                      <p className="text-lg font-bold text-orange-700 dark:text-orange-400 leading-none">{metrics?.neverAssessedCount ?? 0}</p>
+                      <p className="text-[9px] text-orange-600 dark:text-orange-500 font-medium mt-0.5">Not Assessed</p>
                     </>
                   ) : (
                     <>
-                      <MapPin className="h-5 w-5 text-purple-600 mx-auto mb-1" />
-                      <p className="text-2xl font-bold text-purple-700">{metrics?.totalRegions ?? 0}</p>
-                      <p className="text-xs text-purple-600 font-medium">Regions</p>
+                      <MapPin className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400 mx-auto mb-0.5" />
+                      <p className="text-lg font-bold text-purple-700 dark:text-purple-400 leading-none">{metrics?.totalRegions ?? 0}</p>
+                      <p className="text-[9px] text-purple-600 dark:text-purple-500 font-medium mt-0.5">Regions</p>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Urgency Pills Row */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Urgency Pills Row - Compact */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 {metrics?.lowestRegion && (
-                  <div className="flex items-center gap-1.5 bg-red-50 px-3 py-1.5 rounded-full text-sm border border-red-200">
-                    <ArrowDown className="h-4 w-4 text-red-600" />
-                    <span className="font-semibold text-red-700">
+                  <div className="flex items-center gap-1 bg-red-50 dark:bg-red-950/50 px-2 py-1 rounded-full text-xs border border-red-200 dark:border-red-800/50">
+                    <ArrowDown className="h-3 w-3 text-red-600 dark:text-red-400" />
+                    <span className="font-semibold text-red-700 dark:text-red-400">
                       Lowest: {metrics.lowestRegion.name} ({metrics.lowestRegion.score})
                     </span>
                   </div>
                 )}
                 {metrics?.topRegion && (
-                  <div className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full text-sm border border-emerald-200">
-                    <Award className="h-4 w-4 text-emerald-600" />
-                    <span className="font-semibold text-emerald-700">
+                  <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-full text-xs border border-emerald-200 dark:border-emerald-800/50">
+                    <Award className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                       Top: {metrics.topRegion.name} ({metrics.topRegion.score})
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 rounded-full text-sm">
-                  <Activity className="h-4 w-4 text-blue-600" />
-                  <span className="font-semibold text-blue-700">
+                <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-950/50 px-2 py-1 rounded-full text-xs border border-blue-200 dark:border-blue-800/50">
+                  <Activity className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                  <span className="font-semibold text-blue-700 dark:text-blue-400">
                     {Math.round(metrics?.submissionRate ?? 0)}% Coverage
                   </span>
                 </div>
               </div>
 
-              <Button 
+              <Button
                 onClick={() => router.push('/dashboard/education-official/school-assessment')}
-                size="lg"
-                className={`bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white shadow-lg gap-2 font-semibold ${
+                size="sm"
+                className={`bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md shadow-emerald-500/20 gap-1.5 font-semibold text-xs h-8 ${
                   hasCriticalItems ? 'animate-pulse' : ''
                 }`}
               >
-                <BarChart3 className="h-4 w-4" />
-                {hasCriticalItems ? 'View Critical Regions' : 'View National Assessment Data'}
-                <ArrowRight className="h-4 w-4" />
+                <BarChart3 className="h-3.5 w-3.5" />
+                {hasCriticalItems ? 'View Critical Regions' : 'View National Data'}
+                <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
 
           {/* Right Side - Interactive Regional Comparison Chart */}
-          <div className={`relative w-full xl:w-[420px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-6 min-h-[340px]`}>
+          <div className={`relative w-full xl:w-[280px] bg-gradient-to-br ${config.gradient} flex flex-col items-center justify-center p-4 min-h-[240px]`}>
             {/* Background decorative elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-4 right-4 opacity-20">
-                <Globe className="h-12 w-12 text-white" />
+              <div className="absolute top-3 right-3 opacity-15">
+                <Globe className="h-8 w-8 text-white" />
               </div>
-              <div className="absolute bottom-4 left-4 opacity-20">
-                <Sparkles className="h-8 w-8 text-white" />
+              <div className="absolute bottom-3 left-3 opacity-15">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
-              {/* Abstract shapes */}
-              <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-              <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-white/10 rounded-full blur-xl" />
+              <div className="absolute top-1/4 left-1/4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
             </div>
 
             {/* Main Display */}
             <div className="relative z-10 text-center w-full">
               {/* Large Score */}
-              <div className="mb-3">
-                <span className="text-6xl lg:text-7xl font-bold text-white drop-shadow-lg">
+              <div className="mb-2">
+                <span className="text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
                   {Math.round(nationalAvg)}
                 </span>
-                <p className="text-white/80 text-base font-medium">National Average</p>
-                <p className="text-white/60 text-sm">out of 1000 points</p>
+                <p className="text-white/80 text-xs font-medium">National Average</p>
+                <p className="text-white/60 text-[10px]">out of 1000 points</p>
               </div>
-              
+
               {/* Status Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
-                <Star className="h-4 w-4 text-yellow-300" />
-                <span className="text-white font-semibold text-sm">{config.status} Performance</span>
+              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full mb-3">
+                <Star className="h-3 w-3 text-yellow-300" />
+                <span className="text-white font-semibold text-[10px]">{config.status} Performance</span>
               </div>
 
               {/* Regional Comparison Bar Chart */}
               {regionalData.length > 0 && (
-                <div className="w-full h-28 mt-2 bg-white/10 rounded-xl p-2 pb-0">
-                  <p className="text-white/80 text-[10px] mb-1 font-medium">Regional Performance (GT & R1-R10)</p>
+                <div className="w-full h-20 bg-white/10 rounded-lg p-1.5 pb-0">
+                  <p className="text-white/80 text-[8px] mb-0.5 font-medium">Regional Performance (GT & R1-R10)</p>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={regionalData} margin={{ top: 5, right: 5, left: 5, bottom: 15 }}>
-                      <XAxis 
-                        dataKey="name" 
-                        tick={{ fill: 'white', fontSize: 8, fontWeight: 600 }}
+                    <BarChart data={regionalData} margin={{ top: 2, right: 2, left: 2, bottom: 10 }}>
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: 'white', fontSize: 6, fontWeight: 600 }}
                         tickLine={false}
                         axisLine={false}
                         interval={0}
                       />
                       <YAxis hide domain={[0, 1000]} />
                       <Tooltip
-                        labelFormatter={(label, payload) => {
-                          if (payload && payload.length > 0) {
-                            return payload[0].payload.fullName;
-                          }
-                          return label;
-                        }}
-                        contentStyle={{ 
-                          background: 'rgba(255,255,255,0.98)', 
-                          border: 'none', 
-                          borderRadius: '8px',
-                          fontSize: '12px',
+                        contentStyle={{
+                          background: 'rgba(255,255,255,0.98)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '10px',
                           color: '#1f2937',
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                          boxShadow: '0 2px 4px rgb(0 0 0 / 0.1)'
                         }}
-                        itemStyle={{ color: '#1f2937', padding: '2px 0' }}
-                        labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
+                        itemStyle={{ color: '#1f2937', padding: '1px 0' }}
+                        labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '2px' }}
                         formatter={((value: number, name: string) => [
                           name === 'score' ? `${value} pts` : `${value}%`,
                           name === 'score' ? 'Avg Score' : 'Compliance'
                         ]) as any}
                       />
-                      <Bar 
-                        dataKey="score" 
+                      <Bar
+                        dataKey="score"
                         radius={[2, 2, 0, 0]}
-                        barSize={18}
+                        barSize={12}
                       >
                         {regionalData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={getBarColor(entry.score)} />
@@ -974,11 +947,11 @@ export function EducationOfficialAssessmentCard({
 
               {/* Critical Region Alert */}
               {metrics?.lowestRegion && metrics.lowestRegion.score < 400 && (
-                <div className="bg-red-500/30 backdrop-blur-sm rounded-xl p-2 mt-3 border border-red-300/50">
-                  <div className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-300" />
-                    <span className="text-white text-xs font-semibold">
-                      {metrics.lowestRegion.name} needs immediate intervention ({metrics.lowestRegion.score} pts)
+                <div className="bg-red-500/30 backdrop-blur-sm rounded-lg p-1.5 mt-2 border border-red-300/50">
+                  <div className="flex items-center justify-center gap-1">
+                    <AlertCircle className="h-3 w-3 text-yellow-300" />
+                    <span className="text-white text-[9px] font-semibold">
+                      {metrics.lowestRegion.name} needs intervention ({metrics.lowestRegion.score} pts)
                     </span>
                   </div>
                 </div>
