@@ -4,9 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useFormStatus } from "react-dom"
 import { signIn, signUp } from "@/app/actions/auth"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ExclamationTriangleIcon, CheckCircledIcon } from "@radix-ui/react-icons"
@@ -18,19 +16,6 @@ import { PasswordChangeForm } from "./password-change-form"
 import { SchoolConfirmationForm } from "./school-confirmation-form"
 import { AccountSetupFlow } from "./account-setup-flow"
 import { Loader2, Eye, EyeOff } from "lucide-react"
-
-function SubmitButton({ text }: { text: string }) {
-  const { pending } = useFormStatus()
-  return (
-    <Button
-      type="submit"
-      className="w-full gradient-button text-white hover:shadow-lg transition-all duration-200"
-      disabled={pending}
-    >
-      {pending ? "Processing..." : text}
-    </Button>
-  )
-}
 
 function AuthFormContent() {
   const router = useRouter()
@@ -662,83 +647,75 @@ function AuthFormContent() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Logo and Header */}
-      <div className="text-center mb-8">
-        <div className="relative h-20 w-20 mx-auto mb-4">
-          <Image src="/images/moe-logo.png" alt="Ministry of Education Guyana" fill className="object-contain" />
-        </div>
-        <h1 className="text-2xl font-bold text-primary-700 mb-2">Ministry of Education</h1>
-        <p className="text-muted-foreground">Republic of Guyana</p>
-      </div>
-
-      <Card className="gradient-card shadow-xl border-0">
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-xl text-primary-700">
-            {isForgotPassword ? "Forgot Password" : isSignUp ? "Create Account" : "Sign In"}
-          </CardTitle>
-          <CardDescription>
+      <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-colors duration-300">
+        {/* Card Header */}
+        <div className="px-8 pt-8 pb-6 text-center border-b border-slate-200 dark:border-slate-800/50">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            {isForgotPassword ? "Forgot Password" : isSignUp ? "Create Account" : "Welcome Back"}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">
             {isForgotPassword 
               ? "Enter your email to receive a password reset code" 
               : isSignUp 
-                ? "Register for your School Headteachers' Monthly Reporting Portal account" 
-                : "Access your School Headteachers' Monthly reporting portal account"}
-          </CardDescription>
+                ? "Register for the HMR Portal" 
+                : "Sign in to access your dashboard"}
+          </p>
           
           {/* First-time login notice for Head Teachers */}
           {!isSignUp && !isForgotPassword && (
-            <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg flash-red">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center animate-bounce">
-                    <span className="text-white text-sm font-bold">!</span>
-                  </div>
+            <div className="mt-5 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white dark:text-slate-900 text-sm font-bold">!</span>
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-base font-bold text-red-800 mb-2 uppercase tracking-wide text-center">
-                    FIRST-TIME HEAD TEACHERS - IMPORTANT!
+                <div className="flex-1 text-left">
+                  <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                    First-time Head Teachers
                   </h4>
-                  <p className="text-sm font-medium text-red-700 leading-relaxed text-center">
-                    If you're logging in for the first time, use your <strong className="text-red-900 bg-red-100 px-1 rounded">school's email address</strong> and the default password: 
-                    <code className="bg-red-200 px-2 py-1 rounded text-red-900 font-bold text-base ml-1">hnCf4MN</code>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                    Use your school email and default password: 
+                    <code className="bg-amber-100 dark:bg-slate-800 px-2 py-0.5 rounded text-amber-700 dark:text-amber-400 font-mono ml-1">hnCf4MN</code>
                   </p>
                 </div>
               </div>
             </div>
           )}
-        </CardHeader>
-        <CardContent>
-          <form action={isForgotPassword ? handleForgotPassword : handleSubmit} className="grid gap-4">
+        </div>
+        
+        {/* Card Content */}
+        <div className="px-8 py-6">
+          <form action={isForgotPassword ? handleForgotPassword : handleSubmit} className="space-y-5">
             {showSuccess && (
-              <Alert className="border-green-200 bg-green-50 text-green-800">
-                <CheckCircledIcon className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800">Registration Successful!</AlertTitle>
-                <AlertDescription className="text-green-700">{successMessage}</AlertDescription>
+              <Alert className="border-cyan-300 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
+                <CheckCircledIcon className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                <AlertTitle className="text-cyan-700 dark:text-cyan-300">Registration Successful!</AlertTitle>
+                <AlertDescription className="text-cyan-600 dark:text-cyan-200/80">{successMessage}</AlertDescription>
               </Alert>
             )}
             {error && (
-              <Alert variant="destructive">
-                <ExclamationTriangleIcon className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+              <Alert className="border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
+                <ExclamationTriangleIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <AlertTitle className="text-red-600 dark:text-red-400">Error</AlertTitle>
+                <AlertDescription className="text-red-500 dark:text-red-300/80">{error}</AlertDescription>
               </Alert>
             )}
             {isSignUp && (
-              <div className="grid gap-2">
-                <Label htmlFor="name" className="text-primary-700 font-medium">
-                 Head Teacher's / MOE Officer Full Name
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
+                  Full Name
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   placeholder="John Doe"
                   required
-                  className="border-primary-200 focus:border-primary-500"
+                  className="bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20"
                 />
               </div>
             )}
-            <div className="grid gap-2">
-              <Label htmlFor="email" className="text-primary-700 font-medium">
-                School's Email / MOE Officer's Email
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
+                Email Address
               </Label>
               <Input
                 id="email"
@@ -748,12 +725,12 @@ function AuthFormContent() {
                 onChange={handleEmailChange}
                 placeholder={isSignUp && role === "head_teacher" ? "hm.code@moe.edu.gy" : "email@moe.gov.gy"}
                 required
-                className="border-primary-200 focus:border-primary-500"
+                className="bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20"
               />
             </div>
             {!isForgotPassword && (
-              <div className="grid gap-2">
-                <Label htmlFor="password" className="text-primary-700 font-medium">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                   Password
                 </Label>
               <div className="relative">
@@ -762,14 +739,14 @@ function AuthFormContent() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="border-primary-200 focus:border-primary-500 pr-10"
+                  className="bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20 pr-10"
                   onKeyPress={handleKeyPress}
                   onKeyUp={handleKeyUp}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -780,7 +757,7 @@ function AuthFormContent() {
                 </button>
               </div>
               {capsLockOn && (
-                <div className="flex items-center gap-2 text-amber-600 text-sm">
+                <div className="flex items-center gap-2 text-amber-400 text-sm">
                   <ExclamationTriangleIcon className="h-4 w-4" />
                   <span>Caps Lock is ON</span>
                 </div>
@@ -788,8 +765,8 @@ function AuthFormContent() {
             </div>
             )}
             {isSignUp && (
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword" className="text-primary-700 font-medium">
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                   Confirm Password
                 </Label>
                 <div className="relative">
@@ -805,14 +782,14 @@ function AuthFormContent() {
                     onKeyPress={handleKeyPress}
                     onKeyUp={handleKeyUp}
                     required
-                    className={`border-primary-200 focus:border-primary-500 pr-10 ${
+                    className={`bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20 pr-10 ${
                       passwordError ? 'border-red-500 focus:border-red-500' : ''
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
                     {showConfirmPassword ? (
@@ -823,44 +800,44 @@ function AuthFormContent() {
                   </button>
                 </div>
                 {capsLockOn && (
-                  <div className="flex items-center gap-2 text-amber-600 text-sm">
+                  <div className="flex items-center gap-2 text-amber-400 text-sm">
                     <ExclamationTriangleIcon className="h-4 w-4" />
                     <span>Caps Lock is ON</span>
                   </div>
                 )}
                 {passwordError && (
-                  <p className="text-red-600 text-sm mt-1">{passwordError}</p>
+                  <p className="text-red-400 text-sm mt-1">{passwordError}</p>
                 )}
               </div>
             )}
             {isSignUp && (
               <>
-                <div className="grid gap-2">
-                  <Label htmlFor="role" className="text-primary-700 font-medium">
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                     Role
                   </Label>
                   <Select value={role} onValueChange={handleRoleChange}>
-                    <SelectTrigger id="role" name="role" className="border-primary-200 focus:border-primary-500">
+                    <SelectTrigger id="role" name="role" className="bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500">
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="head_teacher">Head Teacher</SelectItem>
-                      <SelectItem value="regional_officer">Regional Officer</SelectItem>
-                      <SelectItem value="education_official">Education Official</SelectItem>
+                    <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                      <SelectItem value="head_teacher" className="text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700">Head Teacher</SelectItem>
+                      <SelectItem value="regional_officer" className="text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700">Regional Officer</SelectItem>
+                      <SelectItem value="education_official" className="text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700">Education Official</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {role === "head_teacher" && (
-                  <div className="grid gap-2">
-                    <Label className="text-primary-700 font-medium">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                       School Detection
                     </Label>
                     
                     {/* Show loading state */}
                     {isDetectingSchool && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                        <p className="text-sm text-blue-800">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-500/30 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
                           🔍 Detecting school from email...
                         </p>
                       </div>
@@ -868,34 +845,33 @@ function AuthFormContent() {
                     
                     {/* Show detected school */}
                     {detectedSchool && !isDetectingSchool && (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                        <p className="text-sm text-green-800 font-medium">
+                      <div className="p-3 bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-300 dark:border-cyan-500/30 rounded-lg">
+                        <p className="text-sm text-cyan-700 dark:text-cyan-300 font-medium">
                           ✅ School Detected: {detectedSchool.name}
                         </p>
-                        <p className="text-xs text-green-700 mt-1">
-                          Code: {detectedSchool.code} | Region: {regions.find(r => r.id === detectedSchool.region_id)?.name} (Auto-selected)
+                        <p className="text-xs text-cyan-600 dark:text-cyan-400/80 mt-1">
+                          Code: {detectedSchool.code} | Region: {regions.find(r => r.id === detectedSchool.region_id)?.name}
                         </p>
                       </div>
                     )}
                     
                     {/* Show instruction when no email or wrong format */}
                     {!detectedSchool && !isDetectingSchool && email && role === "head_teacher" && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-                        <p className="text-sm text-amber-800">
-                          💡 Please enter your head teacher email in the format: <strong>hm.code@moe.edu.gy</strong>
+                      <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-lg">
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          💡 Enter email: <strong className="text-amber-800 dark:text-amber-200">hm.code@moe.edu.gy</strong>
                         </p>
-                        <p className="text-xs text-amber-700 mt-1">
-                          Example: hm.pr05004@moe.edu.gy (where pr05004 is your school code)
+                        <p className="text-xs text-amber-600 dark:text-amber-400/70 mt-1">
+                          Example: hm.pr05004@moe.edu.gy
                         </p>
                       </div>
                     )}
                     
                     {/* Show initial instruction when no email */}
                     {!email && role === "head_teacher" && (
-                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-                        <p className="text-sm text-gray-700">
-                         Enter your email to detect your school automatically.(School detection works only for @moe.edu.gy emails)
-
+                      <div className="p-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          Enter your email to detect your school automatically
                         </p>
                       </div>
                     )}
@@ -907,15 +883,15 @@ function AuthFormContent() {
                 )}
 
                 {role === "regional_officer" && (
-                  <div className="grid gap-2">
-                    <Label htmlFor="region" className="text-primary-700 font-medium">
+                  <div className="space-y-2">
+                    <Label htmlFor="region" className="text-slate-700 dark:text-slate-300 text-sm font-medium">
                       Affiliated Region
                     </Label>
                     <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                       <SelectTrigger
                         id="region"
                         name="region"
-                        className="border-primary-200 focus:border-primary-500"
+                        className="bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-blue-500"
                         disabled={isLoading || regions.length === 0}
                       >
                         <SelectValue
@@ -928,14 +904,14 @@ function AuthFormContent() {
                           }
                         />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         {regions.length === 0 ? (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="" disabled className="text-slate-500 dark:text-slate-400">
                             No regions available
                           </SelectItem>
                         ) : (
                           regions.map((region) => (
-                            <SelectItem key={region.id} value={region.id}>
+                            <SelectItem key={region.id} value={region.id} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700">
                               {region.name}
                             </SelectItem>
                           ))
@@ -946,10 +922,10 @@ function AuthFormContent() {
                 )}
 
                 {role === "education_official" && (
-                  <div className="grid gap-2">
-                    <Label className="text-primary-700 font-medium">Education Official</Label>
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-                      <p className="text-sm text-amber-800">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 dark:text-slate-300 text-sm font-medium">Education Official</Label>
+                    <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-lg">
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
                         <strong>Note:</strong> Your account will require admin verification before you can access the
                         dashboard.
                       </p>
@@ -958,47 +934,56 @@ function AuthFormContent() {
                 )}
               </>
             )}
-            <SubmitButton text={isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"} />
+            
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300"
+            >
+              {isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"}
+            </Button>
           </form>
+          
           {!isForgotPassword && !isSignUp && (
-            <div className="mt-4 text-center text-sm">
+            <div className="mt-4 text-center">
               <Button
                 variant="link"
                 onClick={() => setIsForgotPassword(true)}
-                className="p-0 h-auto text-primary-600 hover:text-primary-700"
+                className="p-0 h-auto text-blue-400 hover:text-blue-300 text-sm"
               >
                 Forgot your password?
               </Button>
             </div>
           )}
-          
-          <div className="mt-6 text-center text-sm">
-            {isForgotPassword ? (
-              <>
-                Remember your password?{" "}
-                <Button
-                  variant="link"
-                  onClick={() => setIsForgotPassword(false)}
-                  className="p-0 h-auto text-primary-600 hover:text-primary-700"
-                >
-                  Back to Sign In
-                </Button>
-              </>
-            ) : (
-              <>
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                <Button
-                  variant="link"
-                  onClick={toggleSignUp}
-                  className="p-0 h-auto text-primary-600 hover:text-primary-700"
-                >
-                  {isSignUp ? "Sign In" : "Create Account"}
-                </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        
+        {/* Card Footer */}
+        <div className="px-8 py-5 bg-slate-100 dark:bg-slate-800/30 border-t border-slate-200 dark:border-slate-800/50 text-center">
+          {isForgotPassword ? (
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Remember your password?{" "}
+              <Button
+                variant="link"
+                onClick={() => setIsForgotPassword(false)}
+                className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+              >
+                Back to Sign In
+              </Button>
+            </p>
+          ) : (
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+              <Button
+                variant="link"
+                onClick={toggleSignUp}
+                className="p-0 h-auto text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+              >
+                {isSignUp ? "Sign In" : "Create Account"}
+              </Button>
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -1006,27 +991,15 @@ function AuthFormContent() {
 function AuthFormFallback() {
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Logo and Header */}
-      <div className="text-center mb-8">
-        <div className="relative h-20 w-20 mx-auto mb-4">
-          <Image src="/images/moe-logo.png" alt="Ministry of Education Guyana" fill className="object-contain" />
-        </div>
-        <h1 className="text-2xl font-bold text-primary-700 mb-2">Ministry of Education</h1>
-        <p className="text-muted-foreground">Republic of Guyana</p>
-      </div>
-
-      <Card className="gradient-card shadow-xl border-0">
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-xl text-primary-700">Loading...</CardTitle>
-          <CardDescription>Please wait while we load the authentication form</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-            <span className="ml-2 text-primary-600">Loading...</span>
+      <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="px-8 py-12 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Loading...</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-8">Please wait while we load the authentication form</p>
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

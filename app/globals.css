@@ -4,48 +4,88 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light Theme - Clean, Professional */
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
     --radius: 0.75rem;
+
+    /* Dashboard specific colors */
+    --dashboard-bg: 210 20% 98%;
+    --dashboard-sidebar: 0 0% 100%;
+    --dashboard-header: 0 0% 100%;
+    --dashboard-card: 0 0% 100%;
+    --dashboard-border: 214 32% 91%;
+    --dashboard-accent: 221 83% 53%;
+    --dashboard-accent-muted: 221 83% 96%;
+
+    /* Status colors */
+    --status-success: 142 76% 36%;
+    --status-success-bg: 142 76% 96%;
+    --status-warning: 38 92% 50%;
+    --status-warning-bg: 38 92% 95%;
+    --status-error: 0 84% 60%;
+    --status-error-bg: 0 84% 97%;
+    --status-info: 221 83% 53%;
+    --status-info-bg: 221 83% 96%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark Theme - Deep, Sophisticated Blue-Slate */
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 8%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 217 33% 15%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 15%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
+
+    /* Dashboard specific colors - Unified dark palette */
+    --dashboard-bg: 222 47% 6%;
+    --dashboard-sidebar: 222 47% 7%;
+    --dashboard-header: 222 47% 7%;
+    --dashboard-card: 222 47% 9%;
+    --dashboard-border: 217 33% 15%;
+    --dashboard-accent: 217 91% 60%;
+    --dashboard-accent-muted: 217 91% 15%;
+
+    /* Status colors - Muted for dark theme */
+    --status-success: 142 70% 45%;
+    --status-success-bg: 142 70% 12%;
+    --status-warning: 38 92% 50%;
+    --status-warning-bg: 38 70% 12%;
+    --status-error: 0 72% 51%;
+    --status-error-bg: 0 72% 12%;
+    --status-info: 217 91% 60%;
+    --status-info-bg: 217 91% 12%;
   }
 }
 
@@ -54,7 +94,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-gradient-to-br from-blue-50 to-white text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -67,6 +107,16 @@
 .gradient-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e2e8f0;
+}
+
+/* Dark mode support for gradient classes */
+.dark .gradient-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.dark .gradient-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
 }
 
 .gradient-button {
@@ -184,6 +234,17 @@
   select {
     font-size: 16px !important;
   }
+}
+
+/* Floating bubble animation */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-15px) translateX(8px); }
+  66% { transform: translateY(8px) translateX(-8px); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
 }
 
 /* Flashing animation for important notices */

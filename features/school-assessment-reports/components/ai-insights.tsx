@@ -72,8 +72,8 @@ function FullscreenInsightModal({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] w-[1200px] h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 border-b bg-muted/30">
+      <DialogContent className="max-w-[95vw] w-[1200px] h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)]">
+        <DialogHeader className="p-6 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
           <div className="flex items-center justify-between pr-8">
             <div>
               <DialogTitle className="text-2xl flex items-center gap-2">
@@ -93,7 +93,7 @@ function FullscreenInsightModal({
             </Button>
           </div>
         </DialogHeader>
-        <ScrollArea className="flex-1 p-8 bg-background">
+        <ScrollArea className="flex-1 p-8 bg-white dark:bg-[hsl(222,47%,11%)]">
           <div className="max-w-4xl mx-auto py-4">
             <MarkdownRenderer content={content} />
           </div>
@@ -647,12 +647,12 @@ function RenderSection({ section }: { section: ParsedSection }) {
 
     case 'table':
       return (
-        <div className="rounded-lg border overflow-hidden my-3">
-          <Table>
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/50 overflow-hidden my-3">
+          <Table className="bg-white dark:bg-[hsl(222,47%,9%)]">
             <TableHeader>
-              <TableRow className="bg-purple-50 dark:bg-purple-950/30">
+              <TableRow className="bg-blue-50 dark:bg-blue-500/10 border-b border-slate-200/80 dark:border-slate-700/50">
                 {section.headers?.map((header, idx) => (
-                  <TableHead key={idx} className="font-semibold text-purple-800 dark:text-purple-200">
+                  <TableHead key={idx} className="font-semibold text-blue-800 dark:text-blue-300">
                     <FormattedText text={header} />
                   </TableHead>
                 ))}
@@ -660,9 +660,9 @@ function RenderSection({ section }: { section: ParsedSection }) {
             </TableHeader>
             <TableBody>
               {section.rows?.map((row, rowIdx) => (
-                <TableRow key={rowIdx} className="hover:bg-muted/50">
+                <TableRow key={rowIdx} className="bg-white dark:bg-[hsl(222,47%,9%)] hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,11%)] border-b border-slate-200/50 dark:border-slate-700/30 last:border-0">
                   {row.map((cell, cellIdx) => (
-                    <TableCell key={cellIdx} className="text-sm">
+                    <TableCell key={cellIdx} className="text-sm text-slate-700 dark:text-slate-300">
                       <FormattedText text={cell} />
                     </TableCell>
                   ))}
@@ -950,7 +950,7 @@ export function AIInsightPanel({
                 New Question
               </Button>
             </div>
-            <div className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30">
+            <div className="max-h-[400px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]">
               <MarkdownRenderer content={insight} />
             </div>
           </div>
@@ -1101,7 +1101,7 @@ export function PredictiveAnalyticsCard({
             <p className="text-xs text-muted-foreground">Performance Trend</p>
           </div>
           
-          <div className="p-4 rounded-lg bg-muted/50">
+          <div className="p-4 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,11%)]">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-3 h-3 rounded-full ${riskColor[predictions.riskLevel]}`} />
               <span className="text-sm font-medium capitalize">{predictions.riskLevel} Risk</span>
@@ -1393,7 +1393,7 @@ export function CohortComparisonCard({
           {cohort.map((school, index) => (
             <div 
               key={school.schoolId}
-              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)] cursor-pointer transition-colors"
               onClick={() => onViewSchool?.(school.schoolId)}
             >
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-sm font-medium text-blue-700 dark:text-blue-300">
@@ -1432,7 +1432,7 @@ export function CohortComparisonCard({
               <ChevronRight className={`h-4 w-4 transition-transform ${showInsights ? 'rotate-90' : ''}`} />
             </Button>
             {showInsights && (
-              <div className="mt-3 p-4 rounded-lg bg-purple-50 dark:bg-purple-950/30">
+              <div className="mt-3 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/50 bg-white dark:bg-[hsl(222,47%,11%)]">
                 <MarkdownRenderer content={insights} />
               </div>
             )}
@@ -1638,7 +1638,7 @@ export function ImprovementPlanCard({
           <MarkdownRenderer content={plan} />
         </div>
       </CardContent>
-      <CardFooter className="border-t bg-muted/30">
+      <CardFooter className="border-t border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
         <Button variant="outline" size="sm" onClick={onGenerate} className="gap-2">
           <RefreshCw className="h-4 w-4" />
           Regenerate Plan
@@ -1891,8 +1891,8 @@ export function AIInsightCard({
 
   return (
     <div>
-      <Card className={`border-purple-200 dark:border-purple-800 ${className}`}>
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-purple-200/50 dark:border-purple-500/20 ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-500/5 dark:to-blue-500/5 border-b border-purple-200/30 dark:border-purple-500/10">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -1967,10 +1967,10 @@ export function AIInsightCard({
         {loading && (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="relative">
-              <Brain className="h-12 w-12 text-purple-300" />
-              <Loader2 className="h-6 w-6 animate-spin text-purple-600 absolute -bottom-1 -right-1" />
+              <Brain className="h-12 w-12 text-purple-400 dark:text-purple-300" />
+              <Loader2 className="h-6 w-6 animate-spin text-purple-600 dark:text-purple-400 absolute -bottom-1 -right-1" />
             </div>
-            <p className="text-sm text-muted-foreground">Analyzing assessment data with AI...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Analyzing assessment data with AI...</p>
             <div className="w-48">
               <Progress value={33} className="h-1" />
             </div>
@@ -2001,7 +2001,7 @@ export function AIInsightCard({
             <div
               ref={printContentRef}
               data-print-scroll
-              className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
+              className="max-h-[400px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]"
             >
               <MarkdownRenderer content={insight} />
             </div>
@@ -2114,8 +2114,8 @@ export function AIAtRiskAlert({
   )
 
   return (
-    <Card className={`border-orange-200 dark:border-orange-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30">
+    <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-orange-200/50 dark:border-orange-500/20 ${className}`}>
+      <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-500/5 dark:to-red-500/5 border-b border-orange-200/30 dark:border-orange-500/10">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -2157,8 +2157,8 @@ export function AIAtRiskAlert({
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-6 gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-orange-600" />
-            <p className="text-sm text-muted-foreground">Analyzing performance patterns...</p>
+            <Loader2 className="h-6 w-6 animate-spin text-orange-600 dark:text-orange-400" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">Analyzing performance patterns...</p>
           </div>
         )}
 
@@ -2408,7 +2408,7 @@ export function AIRecommendationPanel({
 
         {recommendations && !loading && (
           <div className="space-y-4">
-            <div className="max-h-[300px] overflow-y-auto rounded-lg border p-4 bg-muted/30">
+            <div className="max-h-[300px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]">
               <MarkdownRenderer content={recommendations} />
             </div>
             <div className="flex items-center gap-2">
@@ -2610,26 +2610,26 @@ export function AITrendPrediction({
         {prediction && !loading && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-center">
                 <p className="text-xs text-muted-foreground">Predicted Score</p>
                 <p className="text-2xl font-bold text-indigo-600">
                   {prediction.nextTermScore || prediction.predictedScore || '—'}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-center">
                 <p className="text-xs text-muted-foreground">Trend</p>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   {getTrendIcon(prediction.trend)}
                   <span className="text-sm font-medium capitalize">{prediction.trend || 'stable'}</span>
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-center">
                 <p className="text-xs text-muted-foreground">Confidence</p>
                 <p className="text-lg font-bold">{prediction.confidence || 0}%</p>
               </div>
             </div>
             {prediction.insight && (
-              <div className="rounded-lg border p-3 bg-muted/30">
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-3 bg-white dark:bg-[hsl(222,47%,11%)]">
                 <MarkdownRenderer content={prediction.insight} />
               </div>
             )}
@@ -2735,8 +2735,8 @@ export function AIComparativeAnalysis({
 
   return (
     <div>
-      <Card className={`border-teal-200 dark:border-teal-800 ${className}`}>
-        <CardHeader className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/30">
+      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-teal-200/50 dark:border-teal-500/20 ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-500/5 dark:to-emerald-500/5 border-b border-teal-200/30 dark:border-teal-500/10">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -2791,8 +2791,8 @@ export function AIComparativeAnalysis({
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-6 gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
-            <p className="text-sm text-muted-foreground">Comparing and analyzing data...</p>
+            <Loader2 className="h-6 w-6 animate-spin text-teal-600 dark:text-teal-400" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">Comparing and analyzing data...</p>
           </div>
         )}
 
@@ -2808,13 +2808,13 @@ export function AIComparativeAnalysis({
             <div
               ref={printContentRef}
               data-print-scroll
-              className="max-h-[300px] overflow-y-auto rounded-lg border p-4 bg-muted/30"
+              className="max-h-[300px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]"
             >
               <MarkdownRenderer content={analysis} />
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={generateAnalysis}
               className="gap-2"
             >
@@ -2934,7 +2934,7 @@ export function AIActionPlanCard({
 
         {plan && !loading && (
           <div className="space-y-4">
-            <div className="max-h-[400px] overflow-y-auto rounded-lg border p-4 bg-muted/30">
+            <div className="max-h-[400px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]">
               <MarkdownRenderer content={plan} />
             </div>
             <Button 

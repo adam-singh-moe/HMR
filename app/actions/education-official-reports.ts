@@ -1853,6 +1853,11 @@ export async function getRegionalPhysicalEducationReports({
       query = query.eq('hmr_report.sms_schools.region_id', user.region)
     }
 
+    // For Education Officials/Admins, apply region filter if selected
+    if ((user.role === "Education Official" || user.role === "Admin") && selectedRegionId && selectedRegionId !== "all") {
+      query = query.eq('hmr_report.sms_schools.region_id', selectedRegionId)
+    }
+
     // Apply additional filters
     if (searchTerm.trim()) {
       query = query.ilike('hmr_report.sms_schools.name', `%${searchTerm}%`)

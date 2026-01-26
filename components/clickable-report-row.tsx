@@ -33,7 +33,7 @@ export function ClickableReportRow({ report, children }: ClickableReportRowProps
   
   return (
     <TableRow 
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      className="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors border-b border-slate-100 dark:border-slate-700/50"
       onClick={handleRowClick}
     >
       {children}

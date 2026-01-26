@@ -10,16 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
-import { 
-  FileTextIcon, 
-  TrendingUpIcon, 
-  Loader2, 
+import {
+  FileTextIcon,
+  TrendingUpIcon,
+  Loader2,
   BarChart3,
   MapPin,
   School,
   Download,
   AlertTriangle,
-  ChevronLeft,
+  ClipboardCheck,
+  Building2,
 } from "lucide-react"
 import { getUser } from "@/app/actions/auth"
 import { 
@@ -157,15 +158,26 @@ function RegionalOfficerAssessmentContent() {
       if (userData?.region) {
         setRegionId(userData.region)
         setRegionName(userData.region_name || '')
-        
+
         // Get active term window
         const windowResult = await getActiveTermWindow()
+        let periodId: string | undefined = undefined
+
         if (windowResult.window) {
           setActiveWindow(windowResult.window)
+
+          // Get the period ID for the active term window
+          const { periods } = await getAcademicYearPeriods(windowResult.window.academicYear)
+          if (periods) {
+            const period = periods.find((p: any) => p.termName === windowResult.window!.termName)
+            if (period) {
+              periodId = period.id
+            }
+          }
         }
-        
-        // Load regional data (pass undefined for periodId - we'll filter by term later if needed)
-        await loadRegionalData(userData.region, undefined)
+
+        // Load regional data with the resolved period ID
+        await loadRegionalData(userData.region, periodId)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -370,8 +382,9 @@ function RegionalOfficerAssessmentContent() {
   
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        <span className="ml-2 text-blue-600 dark:text-blue-400 text-sm">Loading assessment data...</span>
       </div>
     )
   }
@@ -389,39 +402,29 @@ function RegionalOfficerAssessmentContent() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header with Back Navigation */}
-      <div className="flex items-center gap-4 mb-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleBackToDashboard}
-          className="gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Button>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Regional Assessment Dashboard</h1>
-          <p className="text-muted-foreground flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            {regionName || 'Your Region'}
-          </p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <ClipboardCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            Regional Assessment Dashboard
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{regionName || 'Your Region'} • {stats?.totalSchools || 0} schools</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {activeWindow && (
-            <Badge variant="outline">
+            <span className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium border border-blue-200/80 dark:border-blue-500/20">
               {activeWindow.academicYear} - {activeWindow.termNumber === 1 ? 'First' : activeWindow.termNumber === 2 ? 'Second' : 'Third'} Term
-            </Badge>
+            </span>
           )}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleExportCSV}
             disabled={isExporting || !activeWindow}
+            className="h-9 px-4 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
             {isExporting ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -435,20 +438,20 @@ function RegionalOfficerAssessmentContent() {
 
       {/* Tabs */}
       <Tabs value={currentTab} onValueChange={setCurrentTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="overview" className="gap-2">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,9%)] p-1 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/50">
+          <TabsTrigger value="overview" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="schools" className="gap-2">
+          <TabsTrigger value="schools" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
             <School className="h-4 w-4" />
             <span className="hidden sm:inline">Schools</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
+          <TabsTrigger value="reports" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
             <FileTextIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
-          <TabsTrigger value="view" className="gap-2" disabled={!selectedReport}>
+          <TabsTrigger value="view" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm disabled:opacity-50" disabled={!selectedReport}>
             <TrendingUpIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Details</span>
           </TabsTrigger>
@@ -456,35 +459,53 @@ function RegionalOfficerAssessmentContent() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Total Schools"
-              value={stats?.totalSchools || 0}
-              description="In your region"
-              icon={<School className="h-4 w-4 text-muted-foreground" />}
-            />
-            <StatCard
-              title="Submitted"
-              value={stats?.submittedCount || 0}
-              description={`${stats?.pendingCount || 0} pending`}
-              icon={<FileTextIcon className="h-4 w-4 text-muted-foreground" />}
-            />
-            <StatCard
-              title="Average Score"
-              value={stats?.averageScore || 0}
-              description="Regional average"
-              icon={<TrendingUpIcon className="h-4 w-4 text-muted-foreground" />}
-            />
-            <StatCard
-              title="Submission Rate"
-              value={stats?.totalSchools 
-                ? `${Math.round((stats.submittedCount / stats.totalSchools) * 100)}%`
-                : '0%'
-              }
-              description="For current period"
-              icon={<BarChart3 className="h-4 w-4 text-muted-foreground" />}
-            />
+          {/* Stats Row - Pill Style */}
+          <div className="flex gap-2.5 flex-wrap">
+            {/* Total Schools */}
+            <div className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20">
+              <div className="flex items-center gap-2.5">
+                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="text-xl font-bold text-blue-700 dark:text-blue-400">{stats?.totalSchools || 0}</p>
+                  <p className="text-[11px] text-blue-600/70 dark:text-blue-400/70 font-medium">Total Schools</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submitted */}
+            <div className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20">
+              <div className="flex items-center gap-2.5">
+                <FileTextIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <div>
+                  <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{stats?.submittedCount || 0}</p>
+                  <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 font-medium">Submitted ({stats?.pendingCount || 0} pending)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Average Score */}
+            <div className="px-4 py-2.5 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200/80 dark:border-violet-500/20">
+              <div className="flex items-center gap-2.5">
+                <TrendingUpIcon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                <div>
+                  <p className="text-xl font-bold text-violet-700 dark:text-violet-400">{stats?.averageScore || 0}</p>
+                  <p className="text-[11px] text-violet-600/70 dark:text-violet-400/70 font-medium">Regional Average</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submission Rate */}
+            <div className="px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20">
+              <div className="flex items-center gap-2.5">
+                <BarChart3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <p className="text-xl font-bold text-amber-700 dark:text-amber-400">
+                    {stats?.totalSchools ? `${Math.round((stats.submittedCount / stats.totalSchools) * 100)}%` : '0%'}
+                  </p>
+                  <p className="text-[11px] text-amber-600/70 dark:text-amber-400/70 font-medium">Submission Rate</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Charts */}
@@ -602,6 +623,7 @@ function RegionalOfficerAssessmentContent() {
               regionId={regionId || undefined}
               regionName={regionName || 'Your Region'}
               threshold={400}
+              autoGenerate={false}
             />
           </div>
 
@@ -709,6 +731,7 @@ function RegionalOfficerAssessmentContent() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   )
 }

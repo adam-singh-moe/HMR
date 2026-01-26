@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(frontend-design)",
+      "Bash(xargs ls:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git checkout:*)"
+    ]
+  }
+}

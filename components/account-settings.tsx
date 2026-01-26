@@ -4,25 +4,30 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { useFormStatus } from "react-dom"
 import { updateUserProfile, updateUserPassword } from "@/app/actions/users"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircledIcon, ExclamationTriangleIcon } from "@radix-ui/react-icons"
-import { User, Lock, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { User, Lock, Mail, Shield, Eye, EyeOff, CheckCircle2, KeyRound, MapPin, Pencil } from "lucide-react"
 
-function SubmitButton({ text, variant = "default" }: { text: string; variant?: "default" | "destructive" }) {
+function SubmitButton({ text, icon: Icon }: { text: string; icon?: React.ElementType }) {
   const { pending } = useFormStatus()
   return (
     <Button
       type="submit"
       disabled={pending}
-      variant={variant}
-      className={variant === "default" ? "gradient-button text-white hover:shadow-lg transition-all duration-200" : ""}
+      className="h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
     >
-      {pending ? "Updating..." : text}
+      {pending ? (
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          Saving...
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="h-3.5 w-3.5" />}
+          {text}
+        </div>
+      )}
     </Button>
   )
 }
@@ -33,12 +38,18 @@ interface AccountSettingsProps {
     name: string
     email: string
     role: string
+    region_name?: string
   }
 }
 
 export function AccountSettings({ user }: AccountSettingsProps) {
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState("")
+  const [activeSection, setActiveSection] = useState<"profile" | "security">("profile")
 
   const handleProfileUpdate = async (formData: FormData) => {
     setProfileMessage(null)
@@ -48,7 +59,6 @@ export function AccountSettings({ user }: AccountSettingsProps) {
       setProfileMessage({ type: "error", message: result.error })
     } else {
       setProfileMessage({ type: "success", message: "Profile updated successfully!" })
-      // Clear success message after 3 seconds
       setTimeout(() => setProfileMessage(null), 3000)
     }
   }
@@ -61,219 +71,340 @@ export function AccountSettings({ user }: AccountSettingsProps) {
       setPasswordMessage({ type: "error", message: result.error })
     } else {
       setPasswordMessage({ type: "success", message: "Password updated successfully!" })
-      // Clear the form
       const form = document.getElementById("password-form") as HTMLFormElement
       form?.reset()
-      // Clear success message after 3 seconds
+      setNewPassword("")
       setTimeout(() => setPasswordMessage(null), 3000)
     }
   }
 
-  // Determine the correct dashboard URL based on user role
-  const getDashboardUrl = () => {
-    if (user.role === "Head Teacher") {
-      return "/dashboard/head-teacher"
-    } else if (user.role === "Regional Officer") {
-      return "/dashboard/regional-officer"
-    } else if (user.role === "Admin") {
-      return "/dashboard/admin"
-    } else if (user.role === "Education Official") {
-      return "/dashboard/education-official"
-    }
-    // For unknown roles, default to admin dashboard
-    return "/dashboard/admin"
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
   }
 
+  // Password strength calculation
+  const getPasswordStrength = (password: string) => {
+    let strength = 0
+    if (password.length >= 6) strength++
+    if (password.length >= 8) strength++
+    if (/[A-Z]/.test(password)) strength++
+    if (/[0-9]/.test(password)) strength++
+    if (/[^A-Za-z0-9]/.test(password)) strength++
+    return strength
+  }
+
+  const passwordStrength = getPasswordStrength(newPassword)
+  const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong"]
+  const strengthColors = [
+    "bg-red-500",
+    "bg-orange-500",
+    "bg-yellow-500",
+    "bg-blue-500",
+    "bg-emerald-500",
+  ]
+
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto">
-      {/* Back Button */}
-      <div className="flex items-center gap-4">
-        <Link href={getDashboardUrl()}>
-          <Button variant="outline" size="sm" className="border-primary-200 text-primary-700 hover:bg-primary-50">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-            <span className="sm:hidden">Back</span>
-          </Button>
-        </Link>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          Account Settings
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage your profile and security preferences</p>
       </div>
 
-      {/* Header */}
-      <div className="gradient-header rounded-xl p-4 sm:p-6 text-white shadow-lg">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="p-2 sm:p-3 bg-white/20 rounded-lg">
-            <User className="h-6 w-6 sm:h-8 sm:w-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Account Settings</h1>
-            <p className="text-blue-100 text-sm sm:text-base">Manage your profile information and security settings</p>
+      {/* Profile Card */}
+      <div className="max-w-3xl mx-auto bg-white dark:bg-[hsl(222,47%,9%)] rounded-2xl border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+        {/* Profile Header */}
+        <div className="p-6 border-b border-slate-200/80 dark:border-slate-700/50">
+          <div className="flex items-start gap-4">
+            {/* Avatar */}
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-blue-500/20">
+                {getInitials(user.name)}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white dark:border-[hsl(222,47%,9%)]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{user.name}</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{user.email}</p>
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium">
+                  <Shield className="w-3.5 h-3.5" />
+                  {user.role}
+                </span>
+                {user.region_name && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-medium">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {user.region_name}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Profile Information */}
-        <Card className="gradient-card border-0 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <User className="h-5 w-5 text-primary-600" />
-              </div>
-              <div>
-                <CardTitle className="text-primary-700">Profile Information</CardTitle>
-                <CardDescription>Update your personal information</CardDescription>
-              </div>
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200/80 dark:border-slate-700/50">
+          <button
+            onClick={() => setActiveSection("profile")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeSection === "profile"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <User className="w-4 h-4" />
+              Profile
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {profileMessage && (
-              <Alert
-                variant={profileMessage.type === "error" ? "destructive" : "default"}
-                className={profileMessage.type === "success" ? "border-green-200 bg-green-50" : ""}
-              >
-                {profileMessage.type === "success" ? (
-                  <CheckCircledIcon className="h-4 w-4 text-green-600" />
-                ) : (
-                  <ExclamationTriangleIcon className="h-4 w-4" />
-                )}
-                <AlertTitle className={profileMessage.type === "success" ? "text-green-800" : ""}>
-                  {profileMessage.type === "success" ? "Success" : "Error"}
-                </AlertTitle>
-                <AlertDescription className={profileMessage.type === "success" ? "text-green-700" : ""}>
-                  {profileMessage.message}
-                </AlertDescription>
-              </Alert>
+            {activeSection === "profile" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
             )}
-
-            <form action={handleProfileUpdate} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name" className="text-primary-700 font-medium">
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={user.name}
-                  required
-                  className="border-primary-200 focus:border-primary-500"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="email" className="text-primary-700 font-medium">
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="bg-gray-50 border-gray-200 text-gray-500"
-                />
-                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="role" className="text-primary-700 font-medium">
-                  Role
-                </Label>
-                <Input
-                  id="role"
-                  name="role"
-                  value={user.role}
-                  disabled
-                  className="bg-gray-50 border-gray-200 text-gray-500"
-                />
-                <p className="text-xs text-muted-foreground">Role cannot be changed</p>
-              </div>
-
-              <SubmitButton text="Update Profile" />
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Password Security */}
-        <Card className="gradient-card border-0 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <Lock className="h-5 w-5 text-primary-600" />
-              </div>
-              <div>
-                <CardTitle className="text-primary-700">Password Security</CardTitle>
-                <CardDescription>Update your password to keep your account secure</CardDescription>
-              </div>
+          </button>
+          <button
+            onClick={() => setActiveSection("security")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+              activeSection === "security"
+                ? "text-blue-600 dark:text-blue-400"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <KeyRound className="w-4 h-4" />
+              Security
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {passwordMessage && (
-              <Alert
-                variant={passwordMessage.type === "error" ? "destructive" : "default"}
-                className={passwordMessage.type === "success" ? "border-green-200 bg-green-50" : ""}
-              >
-                {passwordMessage.type === "success" ? (
-                  <CheckCircledIcon className="h-4 w-4 text-green-600" />
-                ) : (
-                  <ExclamationTriangleIcon className="h-4 w-4" />
-                )}
-                <AlertTitle className={passwordMessage.type === "success" ? "text-green-800" : ""}>
-                  {passwordMessage.type === "success" ? "Success" : "Error"}
-                </AlertTitle>
-                <AlertDescription className={passwordMessage.type === "success" ? "text-green-700" : ""}>
-                  {passwordMessage.message}
-                </AlertDescription>
-              </Alert>
+            {activeSection === "security" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
             )}
+          </button>
+        </div>
 
-            <form id="password-form" action={handlePasswordUpdate} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="current_password" className="text-primary-700 font-medium">
-                  Current Password
-                </Label>
-                <Input
-                  id="current_password"
-                  name="current_password"
-                  type="password"
-                  required
-                  className="border-primary-200 focus:border-primary-500"
-                />
-              </div>
+        {/* Content */}
+        <div className="p-6">
+          {activeSection === "profile" ? (
+            <div>
+              {profileMessage && (
+                <div className={`mb-5 p-3.5 rounded-xl flex items-start gap-2.5 ${
+                  profileMessage.type === "success"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20"
+                    : "bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20"
+                }`}>
+                  {profileMessage.type === "success" ? (
+                    <CheckCircledIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <p className={`text-sm ${
+                    profileMessage.type === "success" ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"
+                  }`}>
+                    {profileMessage.message}
+                  </p>
+                </div>
+              )}
 
-              <Separator />
+              <form action={handleProfileUpdate} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="name"
+                      name="name"
+                      defaultValue={user.name}
+                      required
+                      className="h-11 rounded-xl border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,11%)] text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+                      placeholder="Enter your full name"
+                    />
+                    <Pencil className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="new_password" className="text-primary-700 font-medium">
-                  New Password
-                </Label>
-                <Input
-                  id="new_password"
-                  name="new_password"
-                  type="password"
-                  required
-                  minLength={6}
-                  className="border-primary-200 focus:border-primary-500"
-                />
-                <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Email Address
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={user.email}
+                      disabled
+                      className="h-11 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,8%)] border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-500 cursor-not-allowed pr-10"
+                    />
+                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    Contact an administrator to change your email
+                  </p>
+                </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="confirm_password" className="text-primary-700 font-medium">
-                  Confirm New Password
-                </Label>
-                <Input
-                  id="confirm_password"
-                  name="confirm_password"
-                  type="password"
-                  required
-                  minLength={6}
-                  className="border-primary-200 focus:border-primary-500"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Role
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="role"
+                      name="role"
+                      value={user.role}
+                      disabled
+                      className="h-11 rounded-xl bg-slate-100 dark:bg-[hsl(222,47%,8%)] border-slate-200 dark:border-slate-700/50 text-slate-500 dark:text-slate-500 cursor-not-allowed pr-10"
+                    />
+                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    Roles are managed by system administrators
+                  </p>
+                </div>
 
-              <SubmitButton text="Update Password" />
-            </form>
-          </CardContent>
-        </Card>
+                <div className="pt-3 flex justify-end">
+                  <SubmitButton text="Save Changes" icon={CheckCircle2} />
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div>
+              {passwordMessage && (
+                <div className={`mb-5 p-3.5 rounded-xl flex items-start gap-2.5 ${
+                  passwordMessage.type === "success"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20"
+                    : "bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20"
+                }`}>
+                  {passwordMessage.type === "success" ? (
+                    <CheckCircledIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <p className={`text-sm ${
+                    passwordMessage.type === "success" ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"
+                  }`}>
+                    {passwordMessage.message}
+                  </p>
+                </div>
+              )}
+
+              <form id="password-form" action={handlePasswordUpdate} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="current_password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Current Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="current_password"
+                      name="current_password"
+                      type={showCurrentPassword ? "text" : "password"}
+                      required
+                      className="h-11 rounded-xl border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,11%)] text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-px bg-slate-200 dark:bg-slate-700/50" />
+
+                <div className="space-y-2">
+                  <Label htmlFor="new_password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="new_password"
+                      name="new_password"
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="h-11 rounded-xl border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,11%)] text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Password Strength Indicator */}
+                  {newPassword && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                              i < passwordStrength ? strengthColors[passwordStrength - 1] : "bg-slate-200 dark:bg-slate-700"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className={`text-xs font-medium ${
+                        passwordStrength <= 1 ? "text-red-500" :
+                        passwordStrength === 2 ? "text-orange-500" :
+                        passwordStrength === 3 ? "text-yellow-600 dark:text-yellow-500" :
+                        passwordStrength === 4 ? "text-blue-500" :
+                        "text-emerald-500"
+                      }`}>
+                        {strengthLabels[passwordStrength - 1] || "Very Weak"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm_password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Confirm New Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="confirm_password"
+                      name="confirm_password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      className="h-11 rounded-xl border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,11%)] text-slate-900 dark:text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-10"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-3 flex justify-end">
+                  <SubmitButton text="Update Password" icon={KeyRound} />
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

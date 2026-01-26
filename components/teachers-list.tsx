@@ -248,30 +248,34 @@ export function TeachersList({
   })
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-2xl shadow-xl">
+      <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-3 text-slate-900 dark:text-white">
               {showTrash ? (
                 <>
-                  <Trash className="h-5 w-5 text-red-500" />
-                  Trash
-                  <Badge className="ml-2 bg-red-100 text-red-700 text-base px-3 py-1">
+                  <div className="p-2 bg-gradient-to-br from-red-500 to-rose-600 rounded-xl shadow-lg shadow-red-500/25">
+                    <Trash className="h-5 w-5 text-white" />
+                  </div>
+                  <span>Trash</span>
+                  <Badge className="ml-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 text-base px-3 py-1 border border-red-200 dark:border-red-800">
                     {deletedTeachers.length}
                   </Badge>
                 </>
               ) : (
                 <>
-                  <Users className="h-5 w-5" />
-                  Teachers
-                  <Badge className="ml-2 bg-primary text-primary-foreground text-base px-3 py-1">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/25">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
+                  <span>Teachers</span>
+                  <Badge className="ml-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-base px-3 py-1 border border-blue-200 dark:border-blue-800">
                     {teachers.length}
                   </Badge>
                 </>
               )}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-600 dark:text-slate-400 mt-1">
               {showTrash 
                 ? "Deleted teachers can be restored or permanently removed"
                 : "Manage your school's teaching staff information"
@@ -283,12 +287,15 @@ export function TeachersList({
               variant={showTrash ? "default" : "outline"}
               size="sm" 
               onClick={() => setShowTrash(!showTrash)}
-              className={showTrash ? "bg-red-500 hover:bg-red-600" : ""}
+              className={showTrash 
+                ? "bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-lg shadow-red-500/25 border-0" 
+                : "border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+              }
             >
               <Trash className="h-4 w-4 mr-2" />
               Trash
               {!showTrash && deletedTeachers.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-500">
                   {deletedTeachers.length}
                 </Badge>
               )}
@@ -298,11 +305,15 @@ export function TeachersList({
               size="sm" 
               onClick={() => showTrash ? fetchDeletedTeachers(true) : fetchTeachers(true)}
               disabled={loading}
+              className="border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             {!showTrash && (
-              <Button onClick={() => setIsAddModalOpen(true)}>
+              <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 border-0"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Teacher
               </Button>
@@ -312,70 +323,76 @@ export function TeachersList({
       </CardHeader>
       <CardContent>
         {/* Search */}
-        <div className="mb-4">
+        <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
             <Input
               placeholder={showTrash ? "Search deleted teachers..." : "Search teachers by name..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-11 bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4">
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm mb-6 border border-red-200 dark:border-red-800">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Loading {showTrash ? "deleted " : ""}teachers...</span>
+          <div className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-3">
+              <div className="p-4 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-full">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500 dark:text-blue-400" />
+              </div>
+              <span className="text-slate-600 dark:text-slate-400">Loading {showTrash ? "deleted " : ""}teachers...</span>
+            </div>
           </div>
         ) : showTrash ? (
           /* Trash View */
           filteredDeletedTeachers.length === 0 ? (
-            <div className="text-center py-12">
-              <Trash className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">
+            <div className="text-center py-16">
+              <div className="p-6 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700/50 dark:to-slate-800/50 rounded-full w-fit mx-auto mb-4">
+                <Trash className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+              </div>
+              <p className="text-slate-600 dark:text-slate-400">
                 {searchQuery ? "No deleted teachers found matching your search." : "Trash is empty."}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Deleted On</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Name</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Status</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Email</TableHead>
+                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Deleted On</TableHead>
+                    <TableHead className="text-right text-slate-600 dark:text-slate-400 font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredDeletedTeachers.map((teacher) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell className="font-medium">
+                    <TableRow key={teacher.id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
+                      <TableCell className="font-medium text-slate-900 dark:text-white">
                         {teacher.first_name} {teacher.middle_name} {teacher.last_name}
                       </TableCell>
-                      <TableCell>{teacher.status || '-'}</TableCell>
+                      <TableCell className="text-slate-600 dark:text-slate-400">{teacher.status || '-'}</TableCell>
                       <TableCell>
                         {teacher.email_address ? (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3 text-gray-400" />
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                            <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                             <span className="truncate max-w-[150px]" title={teacher.email_address}>
                               {teacher.email_address}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-slate-400 dark:text-slate-500">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-gray-500">
+                      <TableCell className="text-slate-600 dark:text-slate-400">
                         {formatDate(teacher.deleted_at)}
                       </TableCell>
                       <TableCell className="text-right">
@@ -384,7 +401,7 @@ export function TeachersList({
                             variant="outline"
                             size="sm"
                             onClick={() => setRestoringTeacher(teacher)}
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                           >
                             <RotateCcw className="h-4 w-4 mr-1" />
                             Restore
@@ -393,7 +410,7 @@ export function TeachersList({
                             variant="outline"
                             size="sm"
                             onClick={() => setPermanentlyDeletingTeacher(teacher)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/30"
                           >
                             <Trash2 className="h-4 w-4 mr-1" />
                             Delete Forever
@@ -405,22 +422,24 @@ export function TeachersList({
                 </TableBody>
               </Table>
               {/* Trash Summary */}
-              <div className="mt-4 text-sm text-gray-500">
+              <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
                 Showing {filteredDeletedTeachers.length} of {deletedTeachers.length} deleted teacher{deletedTeachers.length !== 1 ? 's' : ''}
               </div>
             </div>
           )
         ) : filteredTeachers.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">
-              {searchQuery ? "No teachers found matching your search." : "No teachers added yet."}
+          <div className="text-center py-16">
+            <div className="p-6 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full w-fit mx-auto mb-4">
+              <Users className="h-12 w-12 text-blue-500 dark:text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Teachers Yet</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              {searchQuery ? "No teachers found matching your search." : "Start by adding your first teacher."}
             </p>
             {!searchQuery && (
               <Button 
                 onClick={() => setIsAddModalOpen(true)} 
-                className="mt-4"
-                variant="outline"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Teacher
@@ -428,30 +447,34 @@ export function TeachersList({
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
                   <TableHead className="w-[40px]"></TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>MOE Email</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>CPCE</TableHead>
-                  <TableHead>UG</TableHead>
-                  <TableHead>Current Appt.</TableHead>
-                  <TableHead>Degrees</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Name</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">MOE Email</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Email</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">CPCE</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">UG</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Current Appt.</TableHead>
+                  <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Degrees</TableHead>
+                  <TableHead className="text-right text-slate-600 dark:text-slate-400 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTeachers.map((teacher) => (
                   <React.Fragment key={teacher.id}>
                     <TableRow 
-                      className="cursor-pointer hover:bg-gray-50"
+                      className={`cursor-pointer border-b border-slate-100 dark:border-slate-700/50 transition-all duration-200 ${
+                        expandedRows.has(teacher.id) 
+                          ? 'bg-blue-50/50 dark:bg-blue-900/20' 
+                          : 'hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                      }`}
                       onClick={() => toggleRow(teacher.id)}
                     >
                       <TableCell className="w-[40px]">
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-100/50 dark:hover:bg-blue-900/30">
                           {expandedRows.has(teacher.id) ? (
                             <ChevronDown className="h-4 w-4" />
                           ) : (
@@ -459,19 +482,19 @@ export function TeachersList({
                           )}
                         </Button>
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-slate-900 dark:text-white">
                         <div>
                           {teacher.first_name} {teacher.middle_name} {teacher.last_name}
                         </div>
                       </TableCell>
                     <TableCell>
                       {teacher.has_moe_email ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 flex items-center gap-1 w-fit">
+                        <Badge variant="secondary" className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 w-fit">
                           <CheckCircle className="h-3 w-3" />
                           Yes
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-gray-100 text-gray-500 flex items-center gap-1 w-fit">
+                        <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 flex items-center gap-1 w-fit">
                           <XCircle className="h-3 w-3" />
                           No
                         </Badge>
@@ -479,71 +502,71 @@ export function TeachersList({
                     </TableCell>
                     <TableCell>
                       {teacher.email_address ? (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Mail className="h-3 w-3 text-gray-400" />
+                        <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                          <Mail className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                           <span className="truncate max-w-[150px]" title={teacher.email_address}>
                             {teacher.email_address}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-slate-400 dark:text-slate-500">-</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {teacher.cpce_major && (
-                          <div className="text-gray-900">{teacher.cpce_major}</div>
+                          <div className="text-slate-900 dark:text-white font-medium">{teacher.cpce_major}</div>
                         )}
                         {teacher.cpce_minor && (
-                          <div className="text-gray-500 text-xs">{teacher.cpce_minor}</div>
+                          <div className="text-slate-500 dark:text-slate-400 text-xs">{teacher.cpce_minor}</div>
                         )}
-                        {!teacher.cpce_major && !teacher.cpce_minor && "-"}
+                        {!teacher.cpce_major && !teacher.cpce_minor && <span className="text-slate-400 dark:text-slate-500">-</span>}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {teacher.ug_major && (
-                          <div className="text-gray-900">{teacher.ug_major}</div>
+                          <div className="text-slate-900 dark:text-white font-medium">{teacher.ug_major}</div>
                         )}
                         {teacher.ug_minor && (
-                          <div className="text-gray-500 text-xs">{teacher.ug_minor}</div>
+                          <div className="text-slate-500 dark:text-slate-400 text-xs">{teacher.ug_minor}</div>
                         )}
-                        {!teacher.ug_major && !teacher.ug_minor && "-"}
+                        {!teacher.ug_major && !teacher.ug_minor && <span className="text-slate-400 dark:text-slate-500">-</span>}
                       </div>
                     </TableCell>
-                    <TableCell>{formatDate(teacher.current_appt_date)}</TableCell>
+                    <TableCell className="text-slate-700 dark:text-slate-300">{formatDate(teacher.current_appt_date)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1.5">
                         {teacher.has_masters_degree && (
-                          <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <Badge variant="secondary" className="text-xs flex items-center gap-1 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
                             <GraduationCap className="h-3 w-3" />
                             MA
                           </Badge>
                         )}
                         {(teacher.has_phd === "yes" || teacher.has_phd === "true") && (
-                          <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                          <Badge variant="secondary" className="text-xs flex items-center gap-1 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             <Award className="h-3 w-3" />
                             PhD
                           </Badge>
                         )}
-                        {!teacher.has_masters_degree && teacher.has_phd !== "yes" && teacher.has_phd !== "true" && "-"}
+                        {!teacher.has_masters_degree && teacher.has_phd !== "yes" && teacher.has_phd !== "true" && <span className="text-slate-400 dark:text-slate-500">-</span>}
                       </div>
                     </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-100/50 dark:hover:bg-blue-900/30">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setConfirmEditTeacher(teacher)}>
+                          <DropdownMenuContent align="end" className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                            <DropdownMenuItem onClick={() => setConfirmEditTeacher(teacher)} className="text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus:bg-blue-50 dark:focus:bg-blue-900/30">
                               <Pencil className="h-4 w-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => setDeletingTeacher(teacher)}
-                              className="text-red-600"
+                              className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:bg-red-50 dark:focus:bg-red-900/30"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete
@@ -553,122 +576,124 @@ export function TeachersList({
                       </TableCell>
                     </TableRow>
                     
-                    {/* Expanded Details Row */}
+                    {/* Expanded Details Row - Redesigned */}
                     {expandedRows.has(teacher.id) && (
-                      <TableRow key={`${teacher.id}-details`} className="bg-gray-50/30 hover:bg-gray-50/30">
+                      <TableRow key={`${teacher.id}-details`} className="bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-transparent dark:from-blue-900/20 dark:via-indigo-900/10 dark:to-slate-800/50">
                         <TableCell colSpan={9} className="p-0">
-                          <div className="px-6 py-5 border-l-4 border-primary/30 bg-gradient-to-r from-blue-50/30 to-transparent">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                              {/* Personal Info */}
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm text-gray-800 flex items-center gap-2 pb-2 border-b border-gray-200">
-                                  <Users className="h-4 w-4 text-primary" />
+                          <div className="px-6 py-6 border-l-4 border-blue-500 dark:border-blue-400">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Personal Info Card */}
+                              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-200/70 dark:border-slate-700/70 shadow-sm hover:shadow-lg hover:border-blue-400/50 dark:hover:border-blue-500/50 transition-all duration-300">
+                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2 pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
+                                  <div className="p-1.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                                    <Users className="h-3.5 w-3.5 text-white" />
+                                  </div>
                                   Personal Information
                                 </h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Gender</span>
-                                    <span className="font-medium">{teacher.gender || '-'}</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Gender</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.gender || '-'}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Date of Birth</span>
-                                    <span className="font-medium">{formatDate(teacher.date_of_birth)}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Date of Birth</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{formatDate(teacher.date_of_birth)}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Status</span>
-                                    <span className="font-medium">{teacher.status || '-'}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Status</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.status || '-'}</p>
                                   </div>
                                   {teacher.contact_number && (
-                                    <div className="col-span-2">
-                                      <span className="text-gray-500 block text-xs">Contact</span>
-                                      <span className="font-medium flex items-center gap-1">
-                                        <Phone className="h-3 w-3 text-gray-400" />
+                                    <div className="space-y-1">
+                                      <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Contact</span>
+                                      <p className="text-slate-900 dark:text-white font-medium flex items-center gap-1.5">
+                                        <Phone className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
                                         {teacher.contact_number}
-                                      </span>
+                                      </p>
                                     </div>
                                   )}
                                 </div>
                               </div>
 
-                              {/* Education */}
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm text-gray-800 flex items-center gap-2 pb-2 border-b border-gray-200">
-                                  <BookOpen className="h-4 w-4 text-primary" />
+                              {/* Education Card */}
+                              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-200/70 dark:border-slate-700/70 shadow-sm hover:shadow-lg hover:border-emerald-400/50 dark:hover:border-emerald-500/50 transition-all duration-300">
+                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2 pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
+                                  <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+                                    <BookOpen className="h-3.5 w-3.5 text-white" />
+                                  </div>
                                   Education
                                 </h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Currently at CPCE</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Currently at CPCE</span>
                                     {teacher.currently_at_cpce ? (
-                                      <span className="font-medium text-green-600">Yes</span>
+                                      <p className="font-medium text-emerald-600 dark:text-emerald-400">Yes</p>
                                     ) : (
-                                      <span className="text-gray-400">No</span>
+                                      <p className="text-slate-500 dark:text-slate-400">No</p>
                                     )}
                                   </div>
-                                  {teacher.currently_at_cpce && teacher.cpce_expected_graduation_date && (
-                                    <div>
-                                      <span className="text-gray-500 block text-xs">Expected Graduation</span>
-                                      <span className="font-medium">{formatDate(teacher.cpce_expected_graduation_date)}</span>
-                                    </div>
-                                  )}
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">CPCE Major</span>
-                                    <span className="font-medium">{teacher.cpce_major || '-'}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">CPCE Major</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.cpce_major || '-'}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">CPCE Minor</span>
-                                    <span className="font-medium">{teacher.cpce_minor || '-'}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">CPCE Minor</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.cpce_minor || '-'}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">UG Major</span>
-                                    <span className="font-medium">{teacher.ug_major || '-'}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">UG Major</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.ug_major || '-'}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">UG Minor</span>
-                                    <span className="font-medium">{teacher.ug_minor || '-'}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">UG Minor</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{teacher.ug_minor || '-'}</p>
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Appointments */}
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm text-gray-800 flex items-center gap-2 pb-2 border-b border-gray-200">
-                                  <Calendar className="h-4 w-4 text-primary" />
+                              {/* Appointments Card */}
+                              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-200/70 dark:border-slate-700/70 shadow-sm hover:shadow-lg hover:border-amber-400/50 dark:hover:border-amber-500/50 transition-all duration-300">
+                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2 pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
+                                  <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
+                                    <Calendar className="h-3.5 w-3.5 text-white" />
+                                  </div>
                                   Appointments
                                 </h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Current Appointment</span>
-                                    <span className="font-medium">{formatDate(teacher.current_appt_date)}</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Current Appointment</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{formatDate(teacher.current_appt_date)}</p>
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Last Appointment</span>
-                                    <span className="font-medium">{formatDate(teacher.last_appt_date)}</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Last Appointment</span>
+                                    <p className="text-slate-900 dark:text-white font-medium">{formatDate(teacher.last_appt_date)}</p>
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Advanced Degrees */}
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm text-gray-800 flex items-center gap-2 pb-2 border-b border-gray-200">
-                                  <GraduationCap className="h-4 w-4 text-primary" />
+                              {/* Advanced Degrees Card */}
+                              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-slate-200/70 dark:border-slate-700/70 shadow-sm hover:shadow-lg hover:border-violet-400/50 dark:hover:border-violet-500/50 transition-all duration-300">
+                                <h4 className="font-semibold text-sm text-slate-900 dark:text-white flex items-center gap-2 pb-3 mb-4 border-b border-slate-200 dark:border-slate-700">
+                                  <div className="p-1.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg">
+                                    <GraduationCap className="h-3.5 w-3.5 text-white" />
+                                  </div>
                                   Advanced Degrees
                                 </h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">Master's Degree</span>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">Master's Degree</span>
                                     {teacher.has_masters_degree ? (
-                                      <span className="font-medium text-green-600">{teacher.masters_degree || 'Yes'}</span>
+                                      <p className="font-medium text-violet-600 dark:text-violet-400">{teacher.masters_degree || 'Yes'}</p>
                                     ) : (
-                                      <span className="text-gray-400">No</span>
+                                      <p className="text-slate-500 dark:text-slate-400">No</p>
                                     )}
                                   </div>
-                                  <div>
-                                    <span className="text-gray-500 block text-xs">PhD</span>
+                                  <div className="space-y-1">
+                                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">PhD</span>
                                     {(teacher.has_phd === "yes" || teacher.has_phd === "true") ? (
-                                      <span className="font-medium text-green-600">{teacher.phd || 'Yes'}</span>
+                                      <p className="font-medium text-amber-600 dark:text-amber-400">{teacher.phd || 'Yes'}</p>
                                     ) : (
-                                      <span className="text-gray-400">No</span>
+                                      <p className="text-slate-500 dark:text-slate-400">No</p>
                                     )}
                                   </div>
                                 </div>
@@ -682,13 +707,10 @@ export function TeachersList({
                 ))}
               </TableBody>
             </Table>
-          </div>
-        )}
-
-        {/* Summary */}
-        {!loading && filteredTeachers.length > 0 && (
-          <div className="mt-4 text-sm text-gray-500">
-            Showing {filteredTeachers.length} of {teachers.length} teacher{teachers.length !== 1 ? 's' : ''}
+            {/* Summary */}
+            <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700">
+              Showing {filteredTeachers.length} of {teachers.length} teacher{teachers.length !== 1 ? 's' : ''}
+            </div>
           </div>
         )}
       </CardContent>

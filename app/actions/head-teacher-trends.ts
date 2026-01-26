@@ -52,12 +52,23 @@ export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
       .eq("school_id", schoolId)
       .eq("status", "submitted")
       .is("deleted_on", null)
-    
-    const yearsFromData = Array.from(new Set((yearsData || []).map(r => parseInt(r.year))))
+
+    // Years that have actual submitted reports
+    const yearsWithData = Array.from(new Set((yearsData || []).map(r => parseInt(r.year)))).filter(y => !isNaN(y))
+
+    // For the filter dropdown, include recent years for browsing
     const currentYear = new Date().getFullYear()
-    // Always include current year and a few recent years for browsing
-    const allYears = new Set([...yearsFromData, currentYear, currentYear - 1, currentYear - 2])
+    const currentMonth = new Date().getMonth() // 0-indexed
+    // If we're in January, the "current reporting year" is actually last year
+    const latestReportingYear = currentMonth === 0 ? currentYear - 1 : currentYear
+
+    // Include years for browsing (latest reporting year and a couple previous)
+    const browsingYears = [latestReportingYear, latestReportingYear - 1, latestReportingYear - 2]
+    const allYears = new Set([...yearsWithData, ...browsingYears])
     const availableYears = Array.from(allYears).filter(y => !isNaN(y)).sort((a, b) => b - a)
+
+    // The latest year with actual data (for defaulting)
+    const latestYearWithData = yearsWithData.length > 0 ? Math.max(...yearsWithData) : latestReportingYear
     
     // Convert year to string for database query (year column is text type)
     const yearStr = String(year)
@@ -163,13 +174,14 @@ export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
     //   expenditureCount: expenditureTrends.length
     // })
 
-    return { 
+    return {
       enrollmentTrends,
       attendanceTrends,
       punctualityTrends,
       expenditureTrends,
       availableYears,
-      error: null 
+      latestYearWithData,
+      error: null
     }
 
   } catch (error) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { EyeIcon, CalendarIcon, AcademicCapIcon } from "@heroicons/react/24/outline"
+import { Eye, Calendar, GraduationCap, FileText, Loader2 } from "lucide-react"
 import { getSubmittedNurseryAssessments } from "@/app/actions/nursery-assessment"
 import { useAuth } from "@/components/auth-wrapper"
 import { Button } from "@/components/ui/button"
@@ -89,10 +90,13 @@ export function NurseryAssessmentsList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading assessments...</p>
+      <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+        <div className="flex flex-col items-center justify-center">
+          <Loader2 className="h-10 w-10 text-blue-500 dark:text-blue-400 mb-4 animate-spin" />
+          <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">Loading Assessments</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-center text-sm">
+            Please wait while we fetch your assessments...
+          </p>
         </div>
       </div>
     )
@@ -100,27 +104,33 @@ export function NurseryAssessmentsList() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="p-6 bg-red-50 rounded-full w-fit mx-auto mb-4">
-          <AcademicCapIcon className="h-12 w-12 text-red-600" />
+      <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
+            <GraduationCap className="h-8 w-8 text-red-500 dark:text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2 text-red-700 dark:text-red-400">Error Loading Assessments</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-4">{error}</p>
+          <Button onClick={fetchAssessments} variant="outline" className="rounded-lg">
+            Try Again
+          </Button>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Assessments</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <Button onClick={fetchAssessments} variant="outline">
-          Try Again
-        </Button>
       </div>
     )
   }
 
   if (assessments.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="p-6 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-          <AcademicCapIcon className="h-12 w-12 text-gray-400" />
+      <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
+            <GraduationCap className="h-8 w-8 text-emerald-500 dark:text-emerald-400" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">No Assessments Yet</h3>
+          <p className="text-slate-500 dark:text-slate-400 text-center text-sm max-w-md">
+            You haven't submitted any nursery assessments yet. Use the "Submit Assessment" tab to create your first assessment.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Assessments Found</h3>
-        <p className="text-gray-600">You haven't submitted any nursery assessments yet.</p>
       </div>
     )
   }
@@ -137,130 +147,156 @@ export function NurseryAssessmentsList() {
   )).sort()
 
   return (
-    <>
-      <div className="space-y-6 px-6">
-        {/* Filters */}
-        <div className="flex justify-end">
-          <div className="flex gap-3">
-            <div className="w-40">
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Filter by year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Years</SelectItem>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="w-48">
-              <Select value={selectedAssessmentType} onValueChange={setSelectedAssessmentType}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {availableAssessmentTypes.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {(selectedYear !== "all" || selectedAssessmentType !== "all") && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setSelectedYear("all")
-                  setSelectedAssessmentType("all")
-                }}
-                className="h-9"
-              >
-                Clear
-              </Button>
-            )}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Eye className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Submitted Assessments
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Browse and review previously submitted nursery assessments
+            </p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50">
+            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{filteredAssessments.length} Assessments</span>
+          </div>
+        </div>
+      </div>
 
-        {filteredAssessments.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="p-6 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-              <AcademicCapIcon className="h-12 w-12 text-gray-400" />
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="w-40">
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="h-9 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <SelectValue placeholder="Filter by year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              {availableYears.map(year => (
+                <SelectItem key={year} value={year}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-48">
+          <Select value={selectedAssessmentType} onValueChange={setSelectedAssessmentType}>
+            <SelectTrigger className="h-9 rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <SelectValue placeholder="Filter by type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {availableAssessmentTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {(selectedYear !== "all" || selectedAssessmentType !== "all") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedYear("all")
+              setSelectedAssessmentType("all")
+            }}
+            className="h-9 rounded-lg border-slate-200 dark:border-slate-700"
+          >
+            Clear Filters
+          </Button>
+        )}
+      </div>
+
+      {filteredAssessments.length === 0 ? (
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4">
+              <GraduationCap className="h-8 w-8 text-slate-400 dark:text-slate-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Assessments Found</h3>
-            <p className="text-gray-600">No assessments match the selected filters.</p>
-            <Button 
-              variant="outline" 
+            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">No Assessments Found</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-4">No assessments match the selected filters.</p>
+            <Button
+              variant="outline"
               onClick={() => {
                 setSelectedYear("all")
                 setSelectedAssessmentType("all")
               }}
-              className="mt-4"
+              className="rounded-lg"
             >
               Clear Filters
             </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredAssessments.map((assessment) => (
-              <Card key={assessment.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-blue-600">
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredAssessments.map((assessment) => (
+            <div
+              key={assessment.id}
+              className="group relative bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-500/5 transition-all duration-300 cursor-pointer"
+              onClick={() => handleViewDetails(assessment.id)}
+            >
+              {/* Left accent border */}
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+              <div className="p-5 pl-6">
+                {/* Header with icon and badge */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center flex-shrink-0 border border-blue-100 dark:border-blue-800/50">
+                    <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {format(new Date(assessment.created_at), 'MMMM yyyy')}
                       </h3>
-                      <Badge 
-                        variant="default" 
-                        className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-1"
-                      >
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                         Submitted
-                      </Badge>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-blue-600">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>Submitted: {format(new Date(assessment.created_at), 'M/d/yyyy')}</span>
-                    </div>
-                    
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="space-y-1">
-                        <div className="text-sm">
-                          <span className="font-medium text-blue-600">School:</span> <span className="text-gray-700">{assessment.schools?.name || 'Unknown School'}</span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium text-blue-600">Created:</span> <span className="text-gray-700">{format(new Date(assessment.created_at), 'M/d/yyyy')}</span>
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium text-blue-600">Enrollment:</span> <span className="text-gray-700">{assessment.enrollment} Students</span>
-                        </div>
-                      </div>
-                      <div className="mt-3 p-2 bg-blue-50 rounded-md border-l-4 border-blue-400">
-                        <div className="text-sm font-semibold text-blue-800">
-                          Type: {assessment.assessment_type}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewDetails(assessment.id)}
-                      className="w-full flex items-center justify-center gap-2 text-gray-600 border-gray-300 hover:bg-gray-50"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                      View Report
-                    </Button>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      {assessment.schools?.name || 'Unknown School'}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
+                </div>
+
+                {/* Assessment Type Badge */}
+                <div className="mt-3 inline-flex items-center px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{assessment.assessment_type}</span>
+                </div>
+
+                {/* Details */}
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{format(new Date(assessment.created_at), 'M/d/yyyy')}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">{assessment.enrollment}</span>
+                      <span>Students</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>View</span>
+                    <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

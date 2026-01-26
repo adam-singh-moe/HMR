@@ -255,7 +255,7 @@ function SectionContent({
         return (
           <div className="space-y-6">
             {data.map((attendance, index) => (
-              <div key={index} className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
+              <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/80 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground leading-5">Role</label>
@@ -348,22 +348,22 @@ function SectionContent({
 
             {/* Teachers Who Left School */}
             {teacherStatusData.leftSchool && teacherStatusData.leftSchool.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-red-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-red-800 mb-4 leading-6">Teachers Who Left School</h4>
+              <div className="border border-red-200 dark:border-red-800/50 rounded-lg p-4 bg-red-50 dark:bg-red-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-4 leading-6">Teachers Who Left School</h4>
                 <div className="space-y-3">
                   {teacherStatusData.leftSchool.map((teacher: any, index: number) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white/80 rounded-md border border-red-200">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white dark:bg-slate-800/80 rounded-md border border-red-200 dark:border-red-800/30">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Name</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.name}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Name</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Status</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.status}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Status</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.status}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Reason</label>
-                        <p className="text-base mt-1 leading-6">{teacher.reason}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Reason</label>
+                        <p className="text-base mt-1 leading-6 text-slate-700 dark:text-slate-300">{teacher.reason}</p>
                       </div>
                     </div>
                   ))}
@@ -373,22 +373,22 @@ function SectionContent({
 
             {/* Teachers on Special Leave */}
             {teacherStatusData.specialLeave && teacherStatusData.specialLeave.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-orange-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-orange-800 mb-4 leading-6">Teachers on Special Leave</h4>
+              <div className="border border-orange-200 dark:border-orange-800/50 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-orange-700 dark:text-orange-400 mb-4 leading-6">Teachers on Special Leave</h4>
                 <div className="space-y-3">
                   {teacherStatusData.specialLeave.map((teacher: any, index: number) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white/80 rounded-md border border-orange-200">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white dark:bg-slate-800/80 rounded-md border border-orange-200 dark:border-orange-800/30">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Name</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.name}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Name</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Status</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.status}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Status</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.status}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Offence</label>
-                        <p className="text-base mt-1 leading-6">{teacher.offence}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Offence</label>
+                        <p className="text-base mt-1 leading-6 text-slate-700 dark:text-slate-300">{teacher.offence}</p>
                       </div>
                     </div>
                   ))}
@@ -398,18 +398,18 @@ function SectionContent({
 
             {/* Teachers Who Assumed Duty */}
             {teacherStatusData.assumedDuty && teacherStatusData.assumedDuty.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-green-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-green-800 mb-4 leading-6">Teachers Who Assumed Duty</h4>
+              <div className="border border-green-200 dark:border-green-800/50 rounded-lg p-4 bg-green-50 dark:bg-green-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-green-700 dark:text-green-400 mb-4 leading-6">Teachers Who Assumed Duty</h4>
                 <div className="space-y-3">
                   {teacherStatusData.assumedDuty.map((teacher: any, index: number) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-white/80 rounded-md border border-green-200">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-white dark:bg-slate-800/80 rounded-md border border-green-200 dark:border-green-800/30">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Name</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.name}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Name</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Status</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.status}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Status</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.status}</p>
                       </div>
                     </div>
                   ))}
@@ -419,30 +419,30 @@ function SectionContent({
 
             {/* Teachers Not Reported */}
             {teacherStatusData.notReported && teacherStatusData.notReported.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-yellow-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-yellow-800 mb-4 leading-6">Teachers Not Reported</h4>
+              <div className="border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-yellow-700 dark:text-yellow-400 mb-4 leading-6">Teachers Not Reported</h4>
                 <div className="space-y-3">
                   {teacherStatusData.notReported.map((teacher: any, index: number) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-3 bg-white/80 rounded-md border border-yellow-200">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-3 bg-white dark:bg-slate-800/80 rounded-md border border-yellow-200 dark:border-yellow-800/30">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Name</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.name}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Name</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Status</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.status}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Status</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.status}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Reason</label>
-                        <p className="text-base mt-1 leading-6">{teacher.reason}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Reason</label>
+                        <p className="text-base mt-1 leading-6 text-slate-700 dark:text-slate-300">{teacher.reason}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Days Absent</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.daysAbsent}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Days Absent</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.daysAbsent}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Action Taken</label>
-                        <p className="text-base mt-1 leading-6">{teacher.actionTaken}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Action Taken</label>
+                        <p className="text-base mt-1 leading-6 text-slate-700 dark:text-slate-300">{teacher.actionTaken}</p>
                       </div>
                     </div>
                   ))}
@@ -452,22 +452,22 @@ function SectionContent({
 
             {/* Teachers Without Salary */}
             {teacherStatusData.didNotReceiveSalary && teacherStatusData.didNotReceiveSalary.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-purple-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-purple-800 mb-4 leading-6">Teachers Who Did Not Receive Salary</h4>
+              <div className="border border-purple-200 dark:border-purple-800/50 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-purple-700 dark:text-purple-400 mb-4 leading-6">Teachers Who Did Not Receive Salary</h4>
                 <div className="space-y-3">
                   {teacherStatusData.didNotReceiveSalary.map((teacher: any, index: number) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white/80 rounded-md border border-purple-200">
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-white dark:bg-slate-800/80 rounded-md border border-purple-200 dark:border-purple-800/30">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Name</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.name}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Name</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.name}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Status</label>
-                        <p className="text-base font-semibold mt-1 leading-6">{teacher.status}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Status</label>
+                        <p className="text-base font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{teacher.status}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground leading-5">Reason</label>
-                        <p className="text-base mt-1 leading-6">{teacher.reason}</p>
+                        <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Reason</label>
+                        <p className="text-base mt-1 leading-6 text-slate-700 dark:text-slate-300">{teacher.reason}</p>
                       </div>
                     </div>
                   ))}
@@ -519,8 +519,8 @@ function SectionContent({
           {developmentData.PD_topic && (
             <div>
               <label className="text-sm font-medium text-muted-foreground leading-5">PD Topic</label>
-              <div className="mt-2 p-4 bg-muted rounded-md">
-                <p className="text-base leading-6">{developmentData.PD_topic}</p>
+              <div className="mt-2 p-4 bg-slate-100 dark:bg-slate-800/80 rounded-md border border-slate-200 dark:border-slate-700">
+                <p className="text-base leading-6 text-slate-900 dark:text-slate-100">{developmentData.PD_topic}</p>
               </div>
             </div>
           )}
@@ -528,8 +528,8 @@ function SectionContent({
           {developmentData.Outcomes && (
             <div>
               <label className="text-sm font-medium text-muted-foreground leading-5">Outcomes</label>
-              <div className="mt-2 p-4 bg-muted/50 border border-border rounded-lg shadow-sm">
-                <p className="text-base leading-6 whitespace-pre-wrap">{developmentData.Outcomes}</p>
+              <div className="mt-2 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg shadow-sm">
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{developmentData.Outcomes}</p>
               </div>
             </div>
           )}
@@ -537,8 +537,8 @@ function SectionContent({
           {developmentData.Reason && (
             <div>
               <label className="text-sm font-medium text-muted-foreground leading-5">Reason</label>
-              <div className="mt-2 p-4 bg-muted/50 border border-border rounded-lg shadow-sm">
-                <p className="text-base leading-6 whitespace-pre-wrap">{developmentData.Reason}</p>
+              <div className="mt-2 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg shadow-sm">
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{developmentData.Reason}</p>
               </div>
             </div>
           )}
@@ -559,9 +559,9 @@ function SectionContent({
         return (
           <div className="space-y-6">
             {data.map((supervision, index) => (
-              <div key={index} className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/80 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="mb-4">
-                  <h4 className="text-lg font-semibold leading-7">{supervision.role || "Unknown Role"}</h4>
+                  <h4 className="text-lg font-semibold leading-7 text-slate-900 dark:text-white">{supervision.role || "Unknown Role"}</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -573,8 +573,8 @@ function SectionContent({
                 {supervision.positive_findings && (
                   <div className="mt-4">
                     <label className="text-sm font-medium text-muted-foreground leading-5">Positive Findings</label>
-                    <div className="mt-2 p-4 bg-green-50/80 border border-green-200 rounded-lg shadow-sm">
-                      <p className="text-base leading-6 whitespace-pre-wrap">{supervision.positive_findings}</p>
+                    <div className="mt-2 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg shadow-sm">
+                      <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{supervision.positive_findings}</p>
                     </div>
                   </div>
                 )}
@@ -582,8 +582,8 @@ function SectionContent({
                 {supervision.negative_findings && (
                   <div className="mt-4">
                     <label className="text-sm font-medium text-muted-foreground leading-5">Negative Findings</label>
-                    <div className="mt-2 p-4 bg-red-50/80 border border-red-200 rounded-lg shadow-sm">
-                      <p className="text-base leading-6 whitespace-pre-wrap">{supervision.negative_findings}</p>
+                    <div className="mt-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg shadow-sm">
+                      <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{supervision.negative_findings}</p>
                     </div>
                   </div>
                 )}
@@ -591,8 +591,8 @@ function SectionContent({
                 {supervision.follow_up_actions && (
                   <div className="mt-4">
                     <label className="text-sm font-medium text-muted-foreground leading-5">Follow-up Actions</label>
-                    <div className="mt-2 p-4 bg-blue-50/80 border border-blue-200 rounded-lg shadow-sm">
-                      <p className="text-base leading-6 whitespace-pre-wrap">{supervision.follow_up_actions}</p>
+                    <div className="mt-2 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg shadow-sm">
+                      <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{supervision.follow_up_actions}</p>
                     </div>
                   </div>
                 )}
@@ -632,8 +632,8 @@ function SectionContent({
           {curriculumData.actions_taken && (
             <div>
               <label className="text-sm font-medium text-muted-foreground leading-5">Actions Taken</label>
-              <div className="mt-2 p-4 bg-muted/50 border border-border rounded-lg shadow-sm">
-                <p className="text-base leading-6 whitespace-pre-wrap">{curriculumData.actions_taken}</p>
+              <div className="mt-2 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800/50 rounded-lg shadow-sm">
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{curriculumData.actions_taken}</p>
               </div>
             </div>
           )}
@@ -688,11 +688,11 @@ function SectionContent({
            
             <div className="space-y-4">
               {data.map((income, index) => (
-                <div key={index} className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
+                <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/80 shadow-sm">
                   <div className="flex justify-between items-center">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground leading-5">Source</label>
-                      <p className="text-lg font-semibold mt-1 leading-6">{income.source}</p>
+                      <p className="text-lg font-semibold mt-1 leading-6 text-slate-900 dark:text-white">{income.source}</p>
                     </div>
                     <div className="text-right">
                       <label className="text-sm font-medium text-muted-foreground leading-5">Amount</label>
@@ -735,41 +735,41 @@ function SectionContent({
       return (
         <div className="space-y-6">
           <div className="space-y-6">
-            <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-sky-50 to-sky-100 shadow-sm">
-              <h4 className="text-lg font-semibold text-sky-800 mb-3 leading-6">Evacuation Drill</h4>
+            <div className="border border-sky-200 dark:border-sky-800/50 rounded-lg p-4 bg-sky-50 dark:bg-sky-900/20 shadow-sm">
+              <h4 className="text-lg font-semibold text-sky-700 dark:text-sky-400 mb-3 leading-6">Evacuation Drill</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Drill Conducted</label>
-                  <p className="text-lg font-semibold mt-2 leading-6">
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Drill Conducted</label>
+                  <p className="text-lg font-semibold mt-2 leading-6 text-slate-900 dark:text-white">
                     {safetyData.evacuation_drill === 'yes' || safetyData.evacuation_drill === true ? "Yes" : "No"}
                   
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Persons Involved</label>
-                  <p className="text-xl font-semibold mt-2 leading-7">{safetyData.persons_involved_drill || 0}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Persons Involved</label>
+                  <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{safetyData.persons_involved_drill || 0}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Time Taken (minutes)</label>
-                  <p className="text-xl font-semibold mt-2 leading-7">{safetyData.time_taken_drill || 0}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Time Taken (minutes)</label>
+                  <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{safetyData.time_taken_drill || 0}</p>
                 </div>
               </div>
               
               {safetyData.observations_drill && (
                 <div className="mt-4">
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Observations</label>
-                  <div className="mt-2 p-4 bg-white/80 border border-sky-200 rounded-lg shadow-sm">
-                    <p className="text-base leading-6 whitespace-pre-wrap">{safetyData.observations_drill}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Observations</label>
+                  <div className="mt-2 p-4 bg-white dark:bg-slate-800/80 border border-sky-200 dark:border-sky-800/30 rounded-lg shadow-sm">
+                    <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{safetyData.observations_drill}</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-rose-50 to-rose-100 shadow-sm">
-              <h4 className="text-lg font-semibold text-rose-800 mb-3 leading-6">Fire Safety Equipment</h4>
+            <div className="border border-rose-200 dark:border-rose-800/50 rounded-lg p-4 bg-rose-50 dark:bg-rose-900/20 shadow-sm">
+              <h4 className="text-lg font-semibold text-rose-700 dark:text-rose-400 mb-3 leading-6">Fire Safety Equipment</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Classroom Fire Buckets</label>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Classroom Fire Buckets</label>
                   <div className="mt-2">
                     <Badge variant={safetyData.classroom_firebuckets === 'yes' || safetyData.classroom_firebuckets === true ? "default" : "destructive"}>
                       {safetyData.classroom_firebuckets === 'yes' || safetyData.classroom_firebuckets === true ? "Available" : "Not Available"}
@@ -778,7 +778,7 @@ function SectionContent({
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Functional Fire Extinguishers</label>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Functional Fire Extinguishers</label>
                   <div className="mt-2">
                     <Badge variant={safetyData.functional_fire_extinguishers === 'yes' || safetyData.functional_fire_extinguishers === true ? "default" : "destructive"}>
                       {safetyData.functional_fire_extinguishers === 'yes' || safetyData.functional_fire_extinguishers === true ? "Functional" : "Not Functional"}
@@ -789,28 +789,28 @@ function SectionContent({
               </div>
             </div>
 
-            <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-amber-50 to-amber-100 shadow-sm">
-              <h4 className="text-lg font-semibold text-amber-800 mb-3 leading-6">Accident Records</h4>
+            <div className="border border-amber-200 dark:border-amber-800/50 rounded-lg p-4 bg-amber-50 dark:bg-amber-900/20 shadow-sm">
+              <h4 className="text-lg font-semibold text-amber-700 dark:text-amber-400 mb-3 leading-6">Accident Records</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Total Accidents</label>
-                  <p className="text-xl font-semibold mt-2 leading-7">{safetyData.total_accidents || 0}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Total Accidents</label>
+                  <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{safetyData.total_accidents || 0}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Students Involved</label>
-                  <p className="text-xl font-semibold mt-2 leading-7">{safetyData.total_students_involved || 0}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Students Involved</label>
+                  <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{safetyData.total_students_involved || 0}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Teachers Involved</label>
-                  <p className="text-xl font-semibold mt-2 leading-7">{safetyData.total_teachers_involved || 0}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Teachers Involved</label>
+                  <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{safetyData.total_teachers_involved || 0}</p>
                 </div>
               </div>
               
               {safetyData.actions && (
                 <div className="mt-4">
-                  <label className="text-sm font-medium text-muted-foreground leading-5">Actions Taken</label>
-                  <div className="mt-2 p-4 bg-white/80 border border-amber-200 rounded-lg shadow-sm">
-                    <p className="text-base leading-6 whitespace-pre-wrap">{safetyData.actions}</p>
+                  <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Actions Taken</label>
+                  <div className="mt-2 p-4 bg-white dark:bg-slate-800/80 border border-amber-200 dark:border-amber-800/30 rounded-lg shadow-sm">
+                    <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{safetyData.actions}</p>
                   </div>
                 </div>
               )}
@@ -834,23 +834,23 @@ function SectionContent({
       return (
         <div className="space-y-6">
 
-          <div className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-800/80 shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-medium text-muted-foreground leading-5">General Meeting Held</label>
-                <p className="text-lg font-semibold mt-2 leading-7">{meetingData.general_meeting ? "Yes" : "No"}</p>
+                <p className="text-lg font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{meetingData.general_meeting ? "Yes" : "No"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground leading-5">Implementation Percentage</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{meetingData.percentage_decisions_implemented || 0}%</p>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{meetingData.percentage_decisions_implemented || 0}%</p>
               </div>
             </div>
 
             {meetingData.key_issues && (
               <div className="mt-4">
                 <label className="text-sm font-medium text-muted-foreground leading-5">Key Issues Discussed</label>
-                <div className="mt-2 p-4 bg-white/80 border border-border rounded-lg shadow-sm">
-                  <p className="text-base leading-6 whitespace-pre-wrap">{meetingData.key_issues}</p>
+                <div className="mt-2 p-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                  <p className="text-base leading-6 whitespace-pre-wrap text-slate-900 dark:text-slate-100">{meetingData.key_issues}</p>
                 </div>
               </div>
             )}
@@ -878,51 +878,51 @@ function SectionContent({
           <h4 className="text-lg font-semibold leading-6">Facilities Status</h4>
 
           {/* Teacher Facilities */}
-          <div className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
-            <h5 className="text-md font-semibold mb-3 leading-6">Teacher Facilities</h5>
+          <div className="border border-indigo-200 dark:border-indigo-800/50 rounded-lg p-4 bg-indigo-50 dark:bg-indigo-900/20 shadow-sm">
+            <h5 className="text-md font-semibold mb-3 leading-6 text-indigo-700 dark:text-indigo-400">Teacher Facilities</h5>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Functional Washrooms</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{teacherFacilities?.percentage_functional_washroom || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Functional Washrooms</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{teacherFacilities?.percentage_functional_washroom || 0}%</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Working Sinks</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{teacherFacilities?.percentage_working_sinks || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Working Sinks</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{teacherFacilities?.percentage_working_sinks || 0}%</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Working Taps</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{teacherFacilities?.percentage_working_taps || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Working Taps</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{teacherFacilities?.percentage_working_taps || 0}%</p>
               </div>
             </div>
           </div>
 
           {/* Student Facilities */}
-          <div className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
-            <h5 className="text-md font-semibold mb-3 leading-6">Student Facilities</h5>
+          <div className="border border-teal-200 dark:border-teal-800/50 rounded-lg p-4 bg-teal-50 dark:bg-teal-900/20 shadow-sm">
+            <h5 className="text-md font-semibold mb-3 leading-6 text-teal-700 dark:text-teal-400">Student Facilities</h5>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Functional Washrooms</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{studentFacilities?.percentage_functional_washroom || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Functional Washrooms</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{studentFacilities?.percentage_functional_washroom || 0}%</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Working Sinks</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{studentFacilities?.percentage_working_sinks || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Working Sinks</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{studentFacilities?.percentage_working_sinks || 0}%</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Working Taps</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{studentFacilities?.percentage_working_taps || 0}%</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Working Taps</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{studentFacilities?.percentage_working_taps || 0}%</p>
               </div>
             </div>
           </div>
 
           {/* Classroom Facilities - Always display, getting data from Student role */}
-          <div className="border border-border rounded-lg p-4 bg-muted/50 shadow-sm">
-            <h5 className="text-md font-semibold mb-3 leading-6">Classroom Facilities</h5>
+          <div className="border border-violet-200 dark:border-violet-800/50 rounded-lg p-4 bg-violet-50 dark:bg-violet-900/20 shadow-sm">
+            <h5 className="text-md font-semibold mb-3 leading-6 text-violet-700 dark:text-violet-400">Classroom Facilities</h5>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="text-sm font-medium text-muted-foreground leading-5">Overcrowded Classrooms</label>
-                <p className="text-xl font-semibold mt-2 leading-7">{studentFacilities?.percentage_overcrowded_classroom || 0}%</p>
-                <p className="text-xs text-muted-foreground mt-1">Percentage of classrooms that are overcrowded</p>
+                <label className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-5">Overcrowded Classrooms</label>
+                <p className="text-xl font-semibold mt-2 leading-7 text-slate-900 dark:text-white">{studentFacilities?.percentage_overcrowded_classroom || 0}%</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Percentage of classrooms that are overcrowded</p>
               </div>
             </div>
           </div>
@@ -947,15 +947,15 @@ function SectionContent({
             
             <div className="grid gap-4">
               {data.map((repair, index) => (
-                <div key={index} className="border border-border rounded-lg p-4 bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm">
+                <div key={index} className="border border-orange-200 dark:border-orange-800/50 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20 shadow-sm">
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
-                      <h4 className="text-lg font-semibold text-orange-800 mb-2 leading-6">{repair.repair_area}</h4>
-                      <p className="text-base leading-6 text-gray-700 whitespace-pre-wrap">{repair.details}</p>
+                      <h4 className="text-lg font-semibold text-orange-700 dark:text-orange-400 mb-2 leading-6">{repair.repair_area}</h4>
+                      <p className="text-base leading-6 text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{repair.details}</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <div className="p-2 bg-orange-200 rounded-full">
-                        <Wrench className="h-4 w-4 text-orange-600" />
+                      <div className="p-2 bg-orange-200 dark:bg-orange-800/50 rounded-full">
+                        <Wrench className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                       </div>
                     </div>
                   </div>
@@ -988,23 +988,23 @@ function SectionContent({
         <div className="space-y-6">
           <div className="space-y-4">
             {resourceData.curriculum_resources && (
-              <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-sky-50 to-sky-100 shadow-sm">
-                <h4 className="text-lg font-semibold text-sky-800 mb-2 leading-6">Curriculum Resources</h4>
-                <p className="text-base leading-6 whitespace-pre-wrap">{resourceData.curriculum_resources}</p>
+              <div className="border border-sky-200 dark:border-sky-800/50 rounded-lg p-4 bg-sky-50 dark:bg-sky-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-sky-700 dark:text-sky-400 mb-2 leading-6">Curriculum Resources</h4>
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-700 dark:text-slate-300">{resourceData.curriculum_resources}</p>
               </div>
             )}
             
             {resourceData.janitorial_supplies && (
-              <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 shadow-sm">
-                <h4 className="text-lg font-semibold text-emerald-800 mb-2 leading-6">Janitorial Supplies</h4>
-                <p className="text-base leading-6 whitespace-pre-wrap">{resourceData.janitorial_supplies}</p>
+              <div className="border border-emerald-200 dark:border-emerald-800/50 rounded-lg p-4 bg-emerald-50 dark:bg-emerald-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400 mb-2 leading-6">Janitorial Supplies</h4>
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-700 dark:text-slate-300">{resourceData.janitorial_supplies}</p>
               </div>
             )}
             
             {resourceData.issues && (
-              <div className="border border-border rounded-lg p-4 bg-gradient-to-r from-rose-50 to-rose-100 shadow-sm">
-                <h4 className="text-lg font-semibold text-rose-800 mb-2 leading-6">Other Issues</h4>
-                <p className="text-base leading-6 whitespace-pre-wrap">{resourceData.issues}</p>
+              <div className="border border-rose-200 dark:border-rose-800/50 rounded-lg p-4 bg-rose-50 dark:bg-rose-900/20 shadow-sm">
+                <h4 className="text-lg font-semibold text-rose-700 dark:text-rose-400 mb-2 leading-6">Other Issues</h4>
+                <p className="text-base leading-6 whitespace-pre-wrap text-slate-700 dark:text-slate-300">{resourceData.issues}</p>
               </div>
             )}
             
@@ -1037,9 +1037,9 @@ function SectionContent({
               <label className="text-sm font-medium text-muted-foreground leading-5">Physical Education Activities</label>
               <div className="mt-2 space-y-2">
                 {physicalEducationData.activities.split(',').map((activity: string, index: number) => (
-                  <div key={index} className="flex items-center p-3 bg-blue-50/80 border border-blue-200 rounded-lg shadow-sm">
-                    <Activity className="h-4 w-4 text-blue-600 mr-3 flex-shrink-0" />
-                    <span className="text-base leading-6">{activity.trim()}</span>
+                  <div key={index} className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg shadow-sm">
+                    <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
+                    <span className="text-base leading-6 text-slate-900 dark:text-slate-100">{activity.trim()}</span>
                   </div>
                 ))}
               </div>
@@ -1051,9 +1051,9 @@ function SectionContent({
               <label className="text-sm font-medium text-muted-foreground leading-5">Challenges Faced</label>
               <div className="mt-2 space-y-2">
                 {physicalEducationData.challenges.split(',').map((challenge: string, index: number) => (
-                  <div key={index} className="flex items-start p-3 bg-red-50/80 border border-red-200 rounded-lg shadow-sm">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span className="text-base leading-6">{challenge.trim()}</span>
+                  <div key={index} className="flex items-start p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg shadow-sm">
+                    <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    <span className="text-base leading-6 text-slate-900 dark:text-slate-100">{challenge.trim()}</span>
                   </div>
                 ))}
               </div>
@@ -1522,9 +1522,9 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-background">
-      <Card className="h-full flex flex-col shadow-lg">
-        <CardHeader className="flex-shrink-0 border-b bg-background/95 backdrop-blur-sm">
+    <div className="h-[calc(100vh-72px)] overflow-hidden bg-slate-50 dark:bg-[hsl(222,47%,6%)] p-4 lg:p-6">
+      <Card className="h-full flex flex-col shadow-sm bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50 rounded-xl overflow-hidden max-w-6xl mx-auto">
+        <CardHeader className="flex-shrink-0 border-b border-slate-200/80 dark:border-slate-700/50 bg-white dark:bg-[hsl(222,47%,9%)]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <Button
@@ -1627,25 +1627,25 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
           
           {/* Responsive Sidebar */}
           <div className={`
-            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-            md:translate-x-0 
-            fixed md:static 
-            inset-y-0 left-0 
+            ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            md:translate-x-0
+            fixed md:static
+            inset-y-0 left-0
             z-50 md:z-auto
-            w-64 md:w-72 lg:w-80 
-            flex-shrink-0 
-            border-r 
-            bg-background md:bg-gradient-to-b md:from-muted/30 md:to-muted/50 
-            flex flex-col 
+            w-56 md:w-60 lg:w-64
+            flex-shrink-0
+            border-r border-slate-200 dark:border-slate-700/50
+            bg-white dark:bg-[hsl(222,47%,9%)]
+            flex flex-col
             overflow-hidden
             transition-transform duration-300 ease-in-out
             md:transition-none
           `}>
-            <div className="p-3 md:p-3.5 lg:p-4 border-b bg-background flex-shrink-0">
+            <div className="p-3 border-b border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base lg:text-lg font-semibold text-foreground">Report Sections</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1 break-words">Navigate between sections</p>
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-white">Report Sections</h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Navigate sections</p>
                 </div>
                 {/* Close button for mobile */}
                 <Button
@@ -1659,18 +1659,18 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent bg-background md:bg-transparent" role="navigation" aria-label="Report sections navigation">
-              <div className="space-y-1 p-3 md:p-3.5 lg:p-4">
+            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent" role="navigation" aria-label="Report sections navigation">
+              <div className="space-y-0.5 p-2">
                 {reportSections.map((section) => {
                   const Icon = section.icon
+                  const isActive = activeSection === section.id
                   return (
-                    <Button
+                    <button
                       key={section.id}
-                      variant={activeSection === section.id ? "default" : "ghost"}
-                      className={`w-full justify-start h-auto py-2.5 md:py-3 px-3 md:px-3.5 lg:px-4 text-sm md:text-sm lg:text-base transition-all duration-200 hover:scale-105 min-h-[44px] focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                        activeSection === section.id 
-                          ? "hover:shadow-md" 
-                          : "hover:bg-accent"
+                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-200 text-left min-h-[36px] focus:ring-2 focus:ring-blue-500/50 focus:outline-none ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                       onClick={() => handleSectionChange(section.id)}
                       onKeyDown={(e) => {
@@ -1681,15 +1681,12 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
                       }}
                       disabled={isLoading}
                       aria-label={`Navigate to ${section.name} section`}
-                      aria-current={activeSection === section.id ? "page" : undefined}
+                      aria-current={isActive ? "page" : undefined}
                       tabIndex={0}
                     >
-                      <Icon className="h-4 w-4 md:h-4.5 md:w-4.5 lg:h-5 lg:w-5 mr-2.5 md:mr-3 flex-shrink-0" aria-hidden="true" />
-                      <span className="text-left text-sm md:text-sm lg:text-base font-medium break-words hyphens-auto">{section.name}</span>
-                      {activeSection === section.id && (
-                        <div className="ml-auto w-2 h-2 bg-current rounded-full flex-shrink-0" aria-hidden="true"></div>
-                      )}
-                    </Button>
+                      <Icon className={`h-[19px] w-[19px] flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} aria-hidden="true" />
+                      <span className="text-[16px] font-medium truncate">{section.name}</span>
+                    </button>
                   )
                 })}
               </div>
@@ -1697,8 +1694,8 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-            <div className="p-3 lg:p-4 border-b bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)]">
+            <div className="p-3 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex-shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 {/* Mobile menu button in content header for easier access */}
                 <Button
@@ -1727,7 +1724,7 @@ function ViewFullReportPageContent({ params }: PageProps): JSX.Element {
               </div>
             </div>
             
-            <div ref={contentRef} className="flex-1 overflow-y-auto overflow-x-hidden snap-y snap-mandatory p-4 lg:p-6 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent" role="main" aria-live="polite" aria-label="Report content area">
+            <div ref={contentRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent bg-white dark:bg-[hsl(222,47%,9%)]" role="main" aria-live="polite" aria-label="Report content area">
               <SectionContent
                 sectionIndex={activeSection}
                 data={sectionData}
