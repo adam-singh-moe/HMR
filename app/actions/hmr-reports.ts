@@ -2568,26 +2568,30 @@ export async function getMissingMonthsForSchool() {
     )
 
     const missingMonths: Array<{ month: number, year: number, displayName: string }> = []
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ]
 
-    // Check for missing months in the current year only
-    // Start from January to previous month of current year
-    const startMonth = 1
-    const endMonth = currentMonth - 1 // Only check up to the previous month
+    // Check for missing months from 2025 onwards
+    const startYear = 2025
+    
+    for (let year = startYear; year <= currentYear; year++) {
+      // For years before current year, check all 12 months
+      // For current year, only check up to the previous month
+      const startMonth = 1
+      const endMonth = (year === currentYear) ? currentMonth - 1 : 12
 
-    for (let month = startMonth; month <= endMonth; month++) {
-      const monthYearKey = `${month}-${currentYear}`
-      
-      if (!existingMonthYears.has(monthYearKey)) {
-        const monthNames = [
-          "January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
-        ]
+      for (let month = startMonth; month <= endMonth; month++) {
+        const monthYearKey = `${month}-${year}`
         
-        missingMonths.push({
-          month,
-          year: currentYear,
-          displayName: `${monthNames[month - 1]} ${currentYear}`
-        })
+        if (!existingMonthYears.has(monthYearKey)) {
+          missingMonths.push({
+            month,
+            year,
+            displayName: `${monthNames[month - 1]} ${year}`
+          })
+        }
       }
     }
 
