@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
@@ -20,9 +18,8 @@ import {
   restoreNotification,
   permanentDeleteNotification,
 } from "@/app/actions/notifications"
-import { Bell, Plus, Trash2, MessageSquare, Users, X, RotateCcw, Loader2, Info, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react"
+import { Bell, Plus, Trash2, MessageSquare, Users, X, RotateCcw, Loader2, AlertCircle, Megaphone } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import Link from "next/link"
 import { CreateNotificationForm } from "@/components/admin/create-notification-form"
 import { useEffect } from "react"
 
@@ -48,16 +45,16 @@ interface Notification {
   is_active?: boolean
 }
 
-function getPriorityColor(priority: string) {
+function getPriorityBadge(priority: string) {
   switch (priority) {
     case "urgent":
-      return "bg-red-500"
+      return "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700/50"
     case "high":
-      return "bg-orange-500"
+      return "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700/50"
     case "normal":
-      return "bg-blue-500"
+      return "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700/50"
     default:
-      return "bg-gray-500"
+      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
   }
 }
 
@@ -68,16 +65,16 @@ function getTypeIcon(type: string) {
     case "deadline":
       return <Bell className="h-4 w-4" />
     case "alert":
-      return <Bell className="h-4 w-4" />
+      return <AlertCircle className="h-4 w-4" />
     default:
       return <MessageSquare className="h-4 w-4" />
   }
 }
 
-function DeleteNotificationButton({ 
-  notificationId, 
-  onDelete 
-}: { 
+function DeleteNotificationButton({
+  notificationId,
+  onDelete
+}: {
   notificationId: string
   onDelete: () => void
 }) {
@@ -88,14 +85,14 @@ function DeleteNotificationButton({
     setIsDeleting(true)
     try {
       const result = await deleteNotification(notificationId)
-      
+
       if (result.error) {
         console.error('Delete failed:', result.error)
         alert('Failed to delete notification: ' + result.error)
       } else {
         console.log('Delete successful')
         setShowDeleteModal(false)
-        onDelete() // Refresh the notifications list
+        onDelete()
       }
     } catch (error) {
       console.error('Error deleting notification:', error)
@@ -107,40 +104,42 @@ function DeleteNotificationButton({
 
   return (
     <>
-      <Button 
-        onClick={() => setShowDeleteModal(true)} 
-        variant="ghost" 
+      <Button
+        onClick={() => setShowDeleteModal(true)}
+        variant="ghost"
         size="sm"
         type="button"
-        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
 
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle>Move to Trash</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-slate-800 dark:text-white">Move to Trash</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
               This notification will be moved to trash. You can restore it later or permanently delete it from the trash.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowDeleteModal(false)}
               disabled={isDeleting}
+              className="border-slate-200 dark:border-slate-700"
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
+              className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
             >
               {isDeleting ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Moving to trash...
                 </div>
               ) : (
@@ -154,19 +153,18 @@ function DeleteNotificationButton({
   )
 }
 
-function RestoreNotificationButton({ 
-  notificationId, 
-  onRestore 
-}: { 
+function RestoreNotificationButton({
+  notificationId,
+  onRestore
+}: {
   notificationId: string
-  onRestore: () => void 
+  onRestore: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleRestore = async () => {
     setIsLoading(true)
     try {
-      // For now, we'll use a simple update - you might need to create a specific restore action
       const result = await restoreNotification(notificationId)
       if (result.error) {
         console.error("Error restoring notification:", result.error)
@@ -186,20 +184,20 @@ function RestoreNotificationButton({
       size="sm"
       onClick={handleRestore}
       disabled={isLoading}
-      className="text-green-600 border-green-200 hover:bg-green-50"
+      className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
     >
-      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4 mr-1" />}
       {isLoading ? "Restoring..." : "Restore"}
     </Button>
   )
 }
 
-function PermanentDeleteButton({ 
-  notificationId, 
-  onDelete 
-}: { 
+function PermanentDeleteButton({
+  notificationId,
+  onDelete
+}: {
   notificationId: string
-  onDelete: () => void 
+  onDelete: () => void
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -227,27 +225,28 @@ function PermanentDeleteButton({
         <Button
           variant="outline"
           size="sm"
-          className="text-red-600 border-red-200 hover:bg-red-50"
+          className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-900/20"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 mr-1" />
           Delete Forever
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle>Permanently Delete Notification</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-slate-800 dark:text-white">Permanently Delete Notification</DialogTitle>
+          <DialogDescription className="text-slate-500 dark:text-slate-400">
             This action cannot be undone. This notification will be permanently deleted from the system.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button variant="outline" onClick={() => setIsOpen(false)} className="border-slate-200 dark:border-slate-700">
             Cancel
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             onClick={handlePermanentDelete}
             disabled={isLoading}
+            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Delete Forever
@@ -261,7 +260,7 @@ function PermanentDeleteButton({
 export default function NotificationsPage({ searchParams }: NotificationsPageProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [trashedNotifications, setTrashedNotifications] = useState<Notification[]>([])
-  const [error, setError] = useState<string>("") 
+  const [error, setError] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("broadcast")
   const [showTrash, setShowTrash] = useState(false)
@@ -274,11 +273,10 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
         if (result.error) {
           setError(result.error)
         } else {
-          // Filter active and trashed notifications
           const allNotifications = result.notifications || []
           const activeNotifications = allNotifications.filter(n => n.is_active !== false)
           const trashedNotifications = allNotifications.filter(n => n.is_active === false)
-          
+
           setNotifications(activeNotifications)
           setTrashedNotifications(trashedNotifications)
         }
@@ -301,11 +299,10 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
       if (result.error) {
         setError(result.error)
       } else {
-        // Filter active and trashed notifications
         const allNotifications = result.notifications || []
         const activeNotifications = allNotifications.filter(n => n.is_active !== false)
         const trashedNotifications = allNotifications.filter(n => n.is_active === false)
-        
+
         setNotifications(activeNotifications)
         setTrashedNotifications(trashedNotifications)
       }
@@ -318,120 +315,145 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl lg:text-2xl font-bold">Notification Center</h2>
-          <p className="text-sm lg:text-base text-muted-foreground">
-            Broadcast messages and manage notifications
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-xl lg:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <Megaphone className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          Notification Center
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Broadcast messages and manage notifications
+        </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="broadcast">
+        <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <TabsTrigger
+            value="broadcast"
+            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Broadcast
           </TabsTrigger>
-          <TabsTrigger value="manage">
+          <TabsTrigger
+            value="manage"
+            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
+          >
             <Users className="h-4 w-4 mr-2" />
             Manage Notifications
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="broadcast" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
+        <TabsContent value="broadcast" className="space-y-4 mt-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+            <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Create New Broadcast
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div className="p-4 lg:p-6">
               <CreateNotificationForm />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="manage" className="space-y-4">
-          <Card>
-            <CardHeader>
+        <TabsContent value="manage" className="space-y-4 mt-4">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+            <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   {showTrash ? "Trash" : "Recent Broadcasts"}
-                </CardTitle>
+                </h3>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowTrash(!showTrash)}
-                  className={showTrash ? "text-blue-600 border-blue-200 bg-blue-50" : "text-gray-600 border-gray-200"}
+                  className={showTrash
+                    ? "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  }
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   {showTrash ? "Show Active" : "Show Trash"}
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+
+            <div className="p-4 lg:p-6">
               {loading && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-muted-foreground">{showTrash ? "Loading trash..." : "Loading notifications..."}</div>
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    {showTrash ? "Loading trash..." : "Loading notifications..."}
+                  </div>
                 </div>
               )}
-              
+
               {error && !loading && (
-                <div className="text-red-600 bg-red-50 p-3 rounded mb-4">
-                  Error: {error}
+                <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <p className="text-red-800 dark:text-red-300">Error: {error}</p>
+                  </div>
                 </div>
               )}
-              
+
+              {/* Empty State - No broadcasts */}
               {!loading && !showTrash && !notifications.length && !error && (
-                <div className="flex flex-col items-center justify-center py-8 lg:py-12">
-                  <Bell className="h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-base lg:text-lg font-semibold mb-2">No broadcasts yet</h3>
-                  <p className="text-sm lg:text-base text-muted-foreground text-center">
+                <div className="flex flex-col items-center justify-center py-12 lg:py-16">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
+                    <Bell className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">No broadcasts yet</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
                     Create your first broadcast message to notify users
                   </p>
                 </div>
               )}
-              
+
+              {/* Empty State - Trash empty */}
               {!loading && showTrash && !trashedNotifications.length && !error && (
-                <div className="flex flex-col items-center justify-center py-8 lg:py-12">
-                  <Trash2 className="h-10 w-10 lg:h-12 lg:w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-base lg:text-lg font-semibold mb-2">Trash is empty</h3>
-                  <p className="text-sm lg:text-base text-muted-foreground text-center">
+                <div className="flex flex-col items-center justify-center py-12 lg:py-16">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center mb-4 shadow-lg shadow-slate-500/20">
+                    <Trash2 className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Trash is empty</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
                     Deleted notifications will appear here
                   </p>
                 </div>
               )}
-              
+
+              {/* Active Notifications List */}
               {!loading && !showTrash && notifications.length > 0 && (
                 <div className="space-y-4">
                   {notifications.map((notification) => (
-                    <div key={notification.id} className="border rounded-lg p-4 bg-white">
+                    <div
+                      key={notification.id}
+                      className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 p-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                               {getTypeIcon(notification.notification_type)}
-                              <h3 className="font-semibold text-lg">{notification.title}</h3>
+                              <h3 className="font-semibold text-base text-slate-800 dark:text-white">{notification.title}</h3>
                             </div>
-                            <Badge 
-                              variant="outline" 
-                              className={`${getPriorityColor(notification.priority)} text-white border-0`}
-                            >
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityBadge(notification.priority)}`}>
                               {notification.priority}
-                            </Badge>
-                            <Badge variant="secondary">
+                            </span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                               {notification.notification_type}
-                            </Badge>
+                            </span>
                           </div>
-                          
-                          <p className="text-gray-600 text-sm line-clamp-3">
+
+                          <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-2">
                             {notification.message}
                           </p>
-                          
-                          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+
+                          <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-500">
                             <span>
                               Created {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </span>
@@ -444,31 +466,34 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="flex flex-wrap gap-2 text-xs">
                             {notification.target_all_users && (
-                              <Badge variant="outline">All Users</Badge>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/50">
+                                All Users
+                              </span>
                             )}
                             {notification.target_user_roles?.map((role: string) => (
-                              <Badge key={role} variant="outline">Sent to: {role}</Badge>
+                              <span key={role} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700/50">
+                                {role}
+                              </span>
                             ))}
                             {notification.target_school_levels?.map((level: string) => (
-                              <Badge key={level} variant="outline">Sent to: {level}</Badge>
+                              <span key={level} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700/50">
+                                {level}
+                              </span>
                             ))}
                             {notification.target_regions?.map((region: string) => (
-                              <Badge key={region} variant="outline">Sent to: {region}</Badge>
+                              <span key={region} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50">
+                                {region}
+                              </span>
                             ))}
-                            {notification.target_user_ids?.length && (
-                              <Badge variant="outline">
-                                Sent to: {notification.target_user_ids.length} specific users
-                              </Badge>
-                            )}
                           </div>
                         </div>
-                        
+
                         <div className="flex-shrink-0">
-                          <DeleteNotificationButton 
-                            notificationId={notification.id} 
+                          <DeleteNotificationButton
+                            notificationId={notification.id}
                             onDelete={refreshNotifications}
                           />
                         </div>
@@ -477,78 +502,51 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
                   ))}
                 </div>
               )}
-              
+
+              {/* Trashed Notifications List */}
               {!loading && showTrash && trashedNotifications.length > 0 && (
                 <div className="space-y-4">
                   {trashedNotifications.map((notification) => (
-                    <div key={notification.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div
+                      key={notification.id}
+                      className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-100 dark:bg-slate-800/30 p-4 opacity-75"
+                    >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-500">
                               {getTypeIcon(notification.notification_type)}
-                              <h3 className="font-semibold text-lg text-gray-700">{notification.title}</h3>
+                              <h3 className="font-semibold text-base text-slate-600 dark:text-slate-400">{notification.title}</h3>
                             </div>
-                            <Badge 
-                              variant="outline" 
-                              className={`${getPriorityColor(notification.priority)} text-white border-0 opacity-75`}
-                            >
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border opacity-75 ${getPriorityBadge(notification.priority)}`}>
                               {notification.priority}
-                            </Badge>
-                            <Badge variant="secondary" className="opacity-75">
-                              {notification.notification_type}
-                            </Badge>
-                            <Badge variant="outline" className="text-red-600 border-red-200">
+                            </span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700/50">
                               Deleted {formatDistanceToNow(new Date(notification.updated_at || notification.created_at))} ago
-                            </Badge>
+                            </span>
                           </div>
-                          
-                          <p className="text-gray-600 text-sm line-clamp-3">
+
+                          <p className="text-slate-500 dark:text-slate-500 text-sm line-clamp-2">
                             {notification.message}
                           </p>
-                          
-                          <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+
+                          <div className="flex flex-wrap gap-4 text-xs text-slate-400 dark:text-slate-600">
                             <span>
                               Created {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </span>
                             <span>
                               By: {notification.hmr_users?.name || 'Unknown'}
                             </span>
-                            {notification.expires_at && (
-                              <span>
-                                Expires: {new Date(notification.expires_at).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            {notification.target_all_users && (
-                              <Badge variant="outline" className="opacity-75">All Users</Badge>
-                            )}
-                            {notification.target_user_roles?.map((role: string) => (
-                              <Badge key={role} variant="outline" className="opacity-75">Sent to: {role}</Badge>
-                            ))}
-                            {notification.target_school_levels?.map((level: string) => (
-                              <Badge key={level} variant="outline" className="opacity-75">Sent to: {level}</Badge>
-                            ))}
-                            {notification.target_regions?.map((region: string) => (
-                              <Badge key={region} variant="outline" className="opacity-75">Sent to: {region}</Badge>
-                            ))}
-                            {notification.target_user_ids?.length && (
-                              <Badge variant="outline" className="opacity-75">
-                                Sent to: {notification.target_user_ids.length} specific users
-                              </Badge>
-                            )}
                           </div>
                         </div>
-                        
+
                         <div className="flex-shrink-0 flex gap-2">
-                          <RestoreNotificationButton 
-                            notificationId={notification.id} 
+                          <RestoreNotificationButton
+                            notificationId={notification.id}
                             onRestore={refreshNotifications}
                           />
-                          <PermanentDeleteButton 
-                            notificationId={notification.id} 
+                          <PermanentDeleteButton
+                            notificationId={notification.id}
                             onDelete={refreshNotifications}
                           />
                         </div>
@@ -557,8 +555,8 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

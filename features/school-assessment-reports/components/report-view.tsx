@@ -603,212 +603,163 @@ export function ReportView({
   const percentageDiff = comparisonReport ? overallPercentage - comparisonPercentage! : null
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Sticky Header for Mobile */}
-      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-white/95 dark:bg-[hsl(222,47%,8%)]/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-[hsl(222,47%,8%)]/60 border-b border-slate-200/80 dark:border-slate-700/50 md:hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${gradeTone.bgClass}`}>
-              <span className="text-xs font-bold">{resolvedGrade}</span>
-            </div>
+    <div className="space-y-4 pb-12">
+      {/* Modern Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50">
+        {/* Gradient Accent Bar */}
+        <div className={`absolute top-0 left-0 right-0 h-1 ${
+          resolvedGrade === 'A' ? 'bg-green-500' :
+          resolvedGrade === 'B' ? 'bg-blue-500' :
+          resolvedGrade === 'C' ? 'bg-amber-500' :
+          resolvedGrade === 'D' ? 'bg-orange-500' : 'bg-red-500'
+        }`} />
+
+        <div className="p-5 md:p-6">
+          {/* Top Row: School Info + Actions */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
-              <div className="text-sm font-bold truncate max-w-[150px] text-slate-900 dark:text-white">{report.schoolName}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">{report.totalScore} pts</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {isComparisonMode && comparisonReport && (
-              <Badge variant={percentageDiff! >= 0 ? "success" : "destructive"} className="text-[10px] px-1.5 py-0">
-                {percentageDiff! >= 0 ? '+' : ''}{percentageDiff}%
-              </Badge>
-            )}
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Header & Controls */}
-      <Card className="overflow-hidden border border-slate-200/80 dark:border-slate-700/50 shadow-md bg-white dark:bg-[hsl(222,47%,9%)]">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <div className={`relative overflow-hidden border-2 ${gradeTone.ringClass} h-24 w-24 rounded-3xl flex flex-col items-center justify-center shadow-inner bg-slate-100 dark:bg-[hsl(222,47%,11%)]`}>
-                <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-1">Grade</span>
-                <span className={`text-5xl font-black leading-none ${gradeTone.textClass}`}>{resolvedGrade}</span>
+              <div className="flex items-center gap-2 mb-1">
+                <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{report.schoolName}</h2>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{report.schoolName}</CardTitle>
-                </div>
-                <CardDescription className="text-base flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  {report.regionName}
-                  <Separator orientation="vertical" className="h-4 bg-slate-300 dark:bg-slate-600" />
-                  <span className="font-medium text-slate-700 dark:text-slate-300">{report.academicYear}</span>
-                  <Separator orientation="vertical" className="h-4 bg-slate-300 dark:bg-slate-600" />
-                  <span className="font-medium text-slate-700 dark:text-slate-300">{report.termName}</span>
-                </CardDescription>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium">{report.regionName}</span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium">{report.academicYear}</span>
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-medium">{report.termName}</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-[hsl(222,47%,11%)] p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/50">
-                <div className="flex items-center gap-2 px-2">
-                  <ArrowLeftRight className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  <Label htmlFor="comparison-mode" className="text-xs font-medium cursor-pointer">Compare</Label>
-                  <Switch 
-                    id="comparison-mode" 
-                    checked={isComparisonMode} 
-                    onCheckedChange={handleComparisonToggle}
-                  />
-                </div>
-                {isComparisonMode && (
-                  <Select value={comparisonSchoolId || ""} onValueChange={handleSchoolChange}>
-                    <SelectTrigger className="h-8 w-[180px] text-xs border-none bg-transparent focus:ring-0">
-                      <SelectValue placeholder="Select school..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="top-performer">Regional Top Performer</SelectItem>
-                      {availableSchools.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                <ArrowLeftRight className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                <Label htmlFor="comparison-mode" className="text-xs font-medium cursor-pointer text-slate-600 dark:text-slate-400">Compare</Label>
+                <Switch id="comparison-mode" checked={isComparisonMode} onCheckedChange={handleComparisonToggle} className="scale-90" />
               </div>
-
+              {isComparisonMode && (
+                <Select value={comparisonSchoolId || ""} onValueChange={handleSchoolChange}>
+                  <SelectTrigger className="h-8 w-[150px] text-xs bg-slate-100 dark:bg-slate-800 border-0">
+                    <SelectValue placeholder="Select school..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top-performer">Top Performer</SelectItem>
+                    {availableSchools.map(s => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              )}
               {showExportButtons && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 shadow-sm gap-2 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,13%)]"
-                    onClick={handleExportCSV}
-                  >
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Export CSV
+                <>
+                  <Button size="sm" className="h-8 text-xs gap-1.5 bg-slate-100 dark:bg-slate-800 border-0 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700" onClick={handleExportCSV}>
+                    <FileSpreadsheet className="h-3.5 w-3.5" /> CSV
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 shadow-sm gap-2 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,13%)]"
-                    onClick={handleExportPDF}
-                    disabled={isExporting}
-                  >
-                    {isExporting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Printer className="h-4 w-4" />
-                    )}
-                    Export PDF
+                  <Button size="sm" className="h-8 text-xs gap-1.5 bg-slate-100 dark:bg-slate-800 border-0 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700" onClick={handleExportPDF} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Printer className="h-3.5 w-3.5" />} PDF
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => {/* Open settings modal */}}>
-                    <Settings2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                </>
               )}
             </div>
           </div>
-        </CardHeader>
-      </Card>
 
-      {/* Hero Section: Overall Score & Comparison */}
-      <div className={`grid gap-6 ${isComparisonMode ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-        {/* Primary School Score */}
-        <Card className={`relative overflow-hidden border-2 ${gradeTone.ringClass} bg-white dark:bg-[hsl(222,47%,9%)]`}>
-          <div className={`absolute top-0 right-0 p-4 opacity-10`}>
-            {getTAPSGradeIcon(resolvedGrade)}
-          </div>
-          <CardContent className="pt-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Overall Score</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{report.totalScore}</span>
-                  <span className="text-xl text-slate-500 dark:text-slate-400 font-medium">/ {maxScore}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`inline-flex flex-col items-center justify-center rounded-2xl p-4 ${gradeTone.badgeClass}`}>
-                  <span className="text-xs font-bold uppercase opacity-70">Grade</span>
-                  <span className="text-4xl font-black">{resolvedGrade}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300">
-                <span>Performance Index</span>
-                <span>{overallPercentage}%</span>
-              </div>
-              <Progress value={overallPercentage} className={`h-4 rounded-full ${gradeTone.barClass}`} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Comparison School Score */}
-        {isComparisonMode && (
-          <Card className={`relative overflow-hidden border-2 border-dashed ${isLoadingComparison ? 'animate-pulse' : ''} ${comparisonGradeTone?.ringClass || ''} bg-white dark:bg-[hsl(222,47%,9%)]`}>
-            {isLoadingComparison ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-[hsl(222,47%,9%)]/50 z-10">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
-              </div>
-            ) : comparisonReport ? (
-              <>
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  {getTAPSGradeIcon(resolvedComparisonGrade!)}
-                </div>
-                <CardContent className="pt-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {comparisonSchoolId === 'top-performer' ? 'Regional Top Performer' : comparisonReport.schoolName}
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-black tracking-tighter text-slate-500 dark:text-slate-400">{comparisonReport.totalScore}</span>
-                        <span className="text-xl text-slate-500 dark:text-slate-400 font-medium">/ {maxScore}</span>
-                      </div>
-                    </div>
-                    <div className="text-right flex flex-col items-end gap-3">
-                      {resolvedComparisonGrade && (
-                        <div className={`inline-flex flex-col items-center justify-center rounded-xl p-2 px-4 ${comparisonGradeTone?.badgeClass}`}>
-                          <span className="text-[10px] font-bold uppercase opacity-70">Grade</span>
-                          <span className="text-2xl font-black">{resolvedComparisonGrade}</span>
-                        </div>
-                      )}
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge variant={percentageDiff! >= 0 ? "success" : "destructive"} className="text-xs px-2 py-0.5 rounded-lg">
-                          {percentageDiff! >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
-                          {Math.abs(percentageDiff!)}% Diff
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-medium text-slate-500 dark:text-slate-400">
-                      <span>Comparison Index</span>
-                      <span>{comparisonPercentage}%</span>
-                    </div>
-                    <Progress value={comparisonPercentage!} className={`h-4 rounded-full ${comparisonGradeTone?.barClass || 'bg-slate-200 dark:bg-slate-700'}`} />
-                  </div>
-                </CardContent>
-              </>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-[hsl(222,47%,11%)] flex items-center justify-center">
-                  <ArrowLeftRight className="h-6 w-6 text-slate-500 dark:text-slate-400" />
-                </div>
+          {/* Score Cards Row */}
+          <div className={`grid gap-4 ${isComparisonMode ? 'md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+            {/* Main Grade Card */}
+            <div className={`${isComparisonMode ? '' : 'md:col-span-1'} relative overflow-hidden rounded-xl p-5 ${gradeTone.bgClass} border ${gradeTone.borderClass}`}>
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-bold text-slate-900 dark:text-white">No comparison data</div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">Select a school to see comparative analytics</div>
+                  <p className="text-xs font-semibold uppercase tracking-wider opacity-70 mb-1">Performance Grade</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-6xl font-black ${gradeTone.textClass}`}>{resolvedGrade}</span>
+                    <span className={`text-lg font-bold ${gradeTone.textClass} opacity-70`}>{isTAPS ? TAPS_RATING_LABELS[resolvedGrade] : RATING_DISPLAY_LABELS[report.ratingLevel]}</span>
+                  </div>
+                </div>
+                <div className={`h-16 w-16 rounded-full flex items-center justify-center ${gradeTone.badgeClass} shadow-lg`}>
+                  {getTAPSGradeIcon(resolvedGrade)}
                 </div>
               </div>
-            )}
-          </Card>
-        )}
+            </div>
+
+            {/* Score Card */}
+            <div className={`${isComparisonMode ? '' : 'md:col-span-2'} rounded-xl p-5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/50`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Total Score</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">{report.totalScore}</span>
+                    <span className="text-lg text-slate-400 dark:text-slate-500">/ {maxScore}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Achievement</p>
+                  <span className={`text-3xl font-black ${gradeTone.textClass}`}>{overallPercentage}%</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <span>Progress to Maximum</span>
+                  <span>{report.totalScore} of {maxScore} points</span>
+                </div>
+                <div className="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      resolvedGrade === 'A' ? 'bg-green-500' :
+                      resolvedGrade === 'B' ? 'bg-blue-500' :
+                      resolvedGrade === 'C' ? 'bg-amber-500' :
+                      resolvedGrade === 'D' ? 'bg-orange-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${overallPercentage}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparison Section */}
+          {isComparisonMode && (
+            <div className={`mt-4 rounded-xl p-4 border-2 border-dashed ${isLoadingComparison ? 'animate-pulse' : ''} ${comparisonGradeTone?.borderClass || 'border-slate-300 dark:border-slate-600'} bg-slate-50/50 dark:bg-slate-800/20`}>
+              {isLoadingComparison ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
+                </div>
+              ) : comparisonReport ? (
+                <div className="flex items-center gap-6">
+                  <div className={`shrink-0 h-14 w-14 rounded-xl flex items-center justify-center ${comparisonGradeTone?.badgeClass}`}>
+                    <span className="text-3xl font-black">{resolvedComparisonGrade}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">
+                        {comparisonSchoolId === 'top-performer' ? 'Regional Top Performer' : comparisonReport.schoolName}
+                      </p>
+                      <Badge variant={percentageDiff! >= 0 ? "success" : "destructive"} className="shrink-0">
+                        {percentageDiff! >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
+                        {percentageDiff! >= 0 ? '+' : ''}{percentageDiff}% vs you
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xl font-bold text-slate-600 dark:text-slate-400">{comparisonReport.totalScore}<span className="text-sm font-normal text-slate-400 dark:text-slate-500">/{maxScore}</span></span>
+                      <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            resolvedComparisonGrade === 'A' ? 'bg-green-500' :
+                            resolvedComparisonGrade === 'B' ? 'bg-blue-500' :
+                            resolvedComparisonGrade === 'C' ? 'bg-amber-500' :
+                            resolvedComparisonGrade === 'D' ? 'bg-orange-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${comparisonPercentage}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{comparisonPercentage}%</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 py-4 text-slate-500 dark:text-slate-400">
+                  <ArrowLeftRight className="h-4 w-4" />
+                  <span className="text-sm">Select a school above to compare performance</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Visual Analytics Section */}
@@ -818,29 +769,29 @@ export function ReportView({
         comparisonSchoolId={isComparisonMode ? comparisonSchoolId : undefined}
       />
 
-      {/* Category Breakdown - Summary First Approach */}
-      <div className="space-y-4">
+      {/* Category Breakdown - Compact Grid Layout */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Category Breakdown</h3>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => setExpandedCategories({})}>Collapse All</Button>
-            <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => {
+          <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Category Breakdown</h3>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => setExpandedCategories({})}>Collapse</Button>
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,13%)]" onClick={() => {
               const all: any = {}
               const configs = isTAPS ? TAPS_CATEGORY_CONFIG : CATEGORY_CONFIG
               Object.keys(configs).forEach(k => all[k] = true)
               setExpandedCategories(all)
-            }}>Expand All</Button>
+            }}>Expand</Button>
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-2 md:grid-cols-2">
           {(Object.entries(isTAPS ? TAPS_CATEGORY_CONFIG : CATEGORY_CONFIG) as [any, { label: string; maxScore: number }][]).map(([category, config]) => {
             const score = isTAPS ? report.tapsCategoryScores?.[category as TAPSCategoryName] || 0 : report.categoryScores[category as CategoryName] || 0
             const percentage = getPercentage(score, config.maxScore)
             const tone = getPerformanceTone(percentage)
             const isExpanded = expandedCategories[category]
 
-            const compScore = isComparisonMode && comparisonReport 
+            const compScore = isComparisonMode && comparisonReport
               ? (isTAPS ? comparisonReport.tapsCategoryScores?.[category] : comparisonReport.categoryScores[category]) || 0
               : null
             const compPercentage = compScore !== null ? getPercentage(compScore, config.maxScore) : null
@@ -851,71 +802,53 @@ export function ReportView({
                 key={category}
                 open={isExpanded}
                 onOpenChange={() => toggleCategory(category)}
-                className={`rounded-xl border-2 transition-all duration-200 ${isExpanded ? 'bg-white dark:bg-[hsl(222,47%,9%)] shadow-md' : 'bg-slate-50 dark:bg-[hsl(222,47%,8%)] hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,11%)]'} ${tone.borderClass}`}
+                className={`rounded-lg border transition-all duration-200 ${isExpanded ? 'bg-white dark:bg-[hsl(222,47%,9%)] shadow-sm col-span-full' : 'bg-slate-50 dark:bg-[hsl(222,47%,8%)] hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,10%)]'} ${tone.borderClass}`}
               >
                 <CollapsibleTrigger asChild>
-                  <div className="p-4 cursor-pointer flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${tone.bgClass}`}>
-                        <span className={tone.iconClass}>{isTAPS ? TAPS_CATEGORY_ICONS[category as TAPSCategoryName] : CATEGORY_ICONS[category as CategoryName]}</span>
+                  <div className="p-3 cursor-pointer flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${tone.bgClass}`}>
+                        <span className={`${tone.iconClass} [&>svg]:h-4 [&>svg]:w-4`}>{isTAPS ? TAPS_CATEGORY_ICONS[category as TAPSCategoryName] : CATEGORY_ICONS[category as CategoryName]}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold truncate text-slate-900 dark:text-white">{config.label}</span>
-                          <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${tone.badgeClass}`}>{tone.label}</Badge>
+                          <span className="text-sm font-semibold truncate text-slate-900 dark:text-white">{config.label}</span>
+                          <Badge variant="outline" className={`text-[9px] px-1.5 py-0 uppercase ${tone.badgeClass}`}>{tone.label}</Badge>
                         </div>
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-lg font-black text-slate-900 dark:text-white">{score}</span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400">/ {config.maxScore}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">{score}<span className="text-xs text-slate-400 dark:text-slate-500 font-normal">/{config.maxScore}</span></span>
+                          <div className="flex-1 max-w-[80px]">
+                            <Progress value={percentage} className={`h-1 ${tone.barClass}`} />
                           </div>
-                          <div className="flex-1 max-w-[100px] md:max-w-[200px]">
-                            <Progress value={percentage} className={`h-1.5 ${tone.barClass}`} />
-                          </div>
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{percentage}%</span>
+                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{percentage}%</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 shrink-0">
                       {isComparisonMode && compScore !== null && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${catDiff! >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                {catDiff! >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                                {Math.abs(catDiff!)}%
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>vs {comparisonSchoolId === 'top-performer' ? 'Top Performer' : 'Comparison School'}</p>
-                              <p className="font-bold">{compScore} / {config.maxScore} ({compPercentage}%)</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${catDiff! >= 0 ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}>
+                          {catDiff! >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                          {Math.abs(catDiff!)}%
+                        </div>
                       )}
-                      {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-500 dark:text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-500 dark:text-slate-400" />}
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                     </div>
                   </div>
                 </CollapsibleTrigger>
-                
-                <CollapsibleContent className="px-4 pb-4 border-t border-dashed border-slate-200/80 dark:border-slate-700/50 mt-2 pt-4">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Metric Breakdown</h4>
-                      {/* Detailed metrics would go here */}
-                      <div className="p-4 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-dashed border-slate-200 dark:border-slate-700/50 text-center text-sm text-slate-500 dark:text-slate-400">
-                        Detailed metric visualization for {config.label}
-                      </div>
+
+                <CollapsibleContent className="px-3 pb-3 border-t border-dashed border-slate-200/80 dark:border-slate-700/50 pt-3">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="p-3 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-dashed border-slate-200 dark:border-slate-700/50">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Metrics</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Detailed breakdown for {config.label}</p>
                     </div>
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">AI Insights</h4>
-                      <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
-                        <p className="text-sm leading-relaxed italic text-slate-700 dark:text-slate-300">
-                          "The school shows {tone.label.toLowerCase()} performance in {config.label.toLowerCase()}.
-                          {percentage < 60 ? ' Immediate focus is required to address underlying gaps.' : ' Maintaining this trajectory will lead to sustained excellence.'}"
-                        </p>
-                      </div>
+                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">AI Insight</h4>
+                      <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                        {tone.label} performance in {config.label.toLowerCase()}.
+                        {percentage < 60 ? ' Focus needed.' : ' Great progress!'}
+                      </p>
                     </div>
                   </div>
                 </CollapsibleContent>
@@ -925,111 +858,90 @@ export function ReportView({
         </div>
       </div>
 
-      {/* Recommendations Section */}
-      <div className="space-y-4">
+      {/* Recommendations Section - Compact */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-            <Lightbulb className="h-6 w-6 text-amber-500" />
-            Actionable Roadmap
+          <h3 className="text-lg font-bold tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
+            <Lightbulb className="h-5 w-5 text-amber-500" />
+            Recommendations
           </h3>
-          <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30">
-            {recommendations.length} Suggestions
+          <Badge variant="secondary" className="text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30">
+            {recommendations.length}
           </Badge>
         </div>
 
         {isGeneratingRecommendations && recommendations.length === 0 ? (
-          <Card className="border-dashed border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
-            <CardContent className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <div className="font-bold text-slate-900 dark:text-white">Analyzing performance data...</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Generating tailored recommendations for improvement</div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="p-6 rounded-lg border border-dashed border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)] flex flex-col items-center justify-center text-center">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400 mb-2" />
+            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Generating recommendations...</div>
+          </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2 md:grid-cols-2">
             {recommendations.map((rec) => (
-              <Card key={rec.id} className={`overflow-hidden border-l-4 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50 ${rec.priority === 'high' ? 'border-l-red-500' : rec.priority === 'medium' ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-[hsl(222,47%,11%)] flex items-center justify-center text-slate-600 dark:text-slate-400">
-                        {isTAPS
-                          ? TAPS_CATEGORY_ICONS[rec.category as TAPSCategoryName | 'general'] || <Lightbulb className="h-4 w-4" />
-                          : CATEGORY_ICONS[rec.category as CategoryName | 'general'] || <Lightbulb className="h-4 w-4" />
-                        }
-                      </div>
-                      <span className="font-bold text-sm text-slate-900 dark:text-white">
-                        {isTAPS
-                          ? TAPS_CATEGORY_CONFIG[rec.category as TAPSCategoryName | 'general']?.label || rec.category
-                          : CATEGORY_CONFIG[rec.category as CategoryName | 'general']?.label || rec.category
-                        }
-                      </span>
+              <div key={rec.id} className={`p-3 rounded-lg border-l-3 bg-white dark:bg-[hsl(222,47%,9%)] border border-slate-200/80 dark:border-slate-700/50 ${rec.priority === 'high' ? 'border-l-red-500' : rec.priority === 'medium' ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-md bg-slate-100 dark:bg-[hsl(222,47%,11%)] flex items-center justify-center text-slate-500 dark:text-slate-400 [&>svg]:h-3.5 [&>svg]:w-3.5">
+                      {isTAPS
+                        ? TAPS_CATEGORY_ICONS[rec.category as TAPSCategoryName | 'general'] || <Lightbulb className="h-3.5 w-3.5" />
+                        : CATEGORY_ICONS[rec.category as CategoryName | 'general'] || <Lightbulb className="h-3.5 w-3.5" />
+                      }
                     </div>
-                    <Badge className={PRIORITY_COLORS[rec.priority]}>{rec.priority}</Badge>
+                    <span className="font-semibold text-xs text-slate-900 dark:text-white truncate">
+                      {isTAPS
+                        ? TAPS_CATEGORY_CONFIG[rec.category as TAPSCategoryName | 'general']?.label || rec.category
+                        : CATEGORY_CONFIG[rec.category as CategoryName | 'general']?.label || rec.category
+                      }
+                    </span>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed mb-4 text-slate-700 dark:text-slate-300">{rec.recommendationText}</p>
-                  {rec.focusAreas && rec.focusAreas.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {rec.focusAreas.map((area, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-[10px] font-medium bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-slate-600 dark:text-slate-400">
-                          {area}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                  <Badge className={`text-[9px] px-1.5 py-0 ${PRIORITY_COLORS[rec.priority]}`}>{rec.priority}</Badge>
+                </div>
+                <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-3">{rec.recommendationText}</p>
+                {rec.focusAreas && rec.focusAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {rec.focusAreas.slice(0, 3).map((area, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-[9px] px-1 py-0 font-normal bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-slate-500 dark:text-slate-400">
+                        {area}
+                      </Badge>
+                    ))}
+                    {rec.focusAreas.length > 3 && (
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 font-normal bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-slate-500 dark:text-slate-400">
+                        +{rec.focusAreas.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Rating Scale Reference */}
-      <Collapsible className="rounded-xl border border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full flex justify-between p-4 h-auto text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[hsl(222,47%,11%)]">
-            <span className="text-sm font-bold">Rating Scale Reference</span>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="p-4 pt-0">
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {isTAPS ? (
-              (Object.entries(TAPS_RATING_THRESHOLDS) as [TAPSRatingGrade, any][]).map(([grade, config]) => (
-                <div key={grade} className={`p-3 rounded-xl border-2 bg-white dark:bg-[hsl(222,47%,9%)] ${getTAPSGradeTone(grade).borderClass}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-xl font-black ${getTAPSGradeTone(grade).textClass}`}>{grade}</span>
-                    <div className={`h-2 w-2 rounded-full ${TAPS_GRADE_COLORS[grade]}`} />
-                  </div>
-                  <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{config.label}</div>
-                  <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">{config.min}-{config.max} pts</div>
-                </div>
-              ))
-            ) : (
-              (Object.entries(RATING_THRESHOLDS) as [any, any][]).map(([key, config]) => {
-                const grade = config.grade as TAPSRatingGrade
-                const tone = getTAPSGradeTone(grade)
-                return (
-                  <div key={key} className={`p-3 rounded-xl border-2 bg-white dark:bg-[hsl(222,47%,9%)] ${tone.borderClass}`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-xl font-black ${tone.textClass}`}>{grade}</span>
-                      <div className={`h-2 w-2 rounded-full ${TAPS_GRADE_COLORS[grade]}`} />
-                    </div>
-                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{config.label}</div>
-                    <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300">{config.min}-{config.max} pts</div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Rating Scale Reference - Compact Inline */}
+      <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-slate-50 dark:bg-[hsl(222,47%,8%)] border border-slate-200/80 dark:border-slate-700/50">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-2">Scale:</span>
+        {isTAPS ? (
+          (Object.entries(TAPS_RATING_THRESHOLDS) as [TAPSRatingGrade, any][]).map(([grade, config]) => (
+            <div key={grade} className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${getTAPSGradeTone(grade).borderClass} bg-white dark:bg-[hsl(222,47%,9%)]`}>
+              <span className={`text-sm font-black ${getTAPSGradeTone(grade).textClass}`}>{grade}</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">{config.label}</span>
+              <span className="text-[9px] text-slate-400 dark:text-slate-500">({config.min}-{config.max})</span>
+            </div>
+          ))
+        ) : (
+          (Object.entries(RATING_THRESHOLDS) as [any, any][]).map(([key, config]) => {
+            const grade = config.grade as TAPSRatingGrade
+            const tone = getTAPSGradeTone(grade)
+            return (
+              <div key={key} className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${tone.borderClass} bg-white dark:bg-[hsl(222,47%,9%)]`}>
+                <span className={`text-sm font-black ${tone.textClass}`}>{grade}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">{config.label}</span>
+                <span className="text-[9px] text-slate-400 dark:text-slate-500">({config.min}-{config.max})</span>
+              </div>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }

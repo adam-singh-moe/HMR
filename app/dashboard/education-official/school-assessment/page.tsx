@@ -28,8 +28,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react"
-import { 
-  ReportView, 
+import {
+  ReportView,
   ReportsList,
   TrendChart,
   CategoryBarChart,
@@ -49,6 +49,7 @@ import {
   AITrendPrediction,
   AIComparativeAnalysis,
   UnifiedRatingBadge,
+  SchoolRankingsTable,
 } from "@/features/school-assessment-reports/components"
 import { calculateAllCategoryScores } from "@/features/school-assessment-reports/actions/scoring"
 import type { AssessmentPeriod, RatingLevel } from "@/features/school-assessment-reports/types"
@@ -435,26 +436,13 @@ function EducationOfficialAssessmentContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Navigation */}
-      <div className="flex items-center gap-4 mb-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleBackToDashboard}
-          className="gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Button>
-      </div>
-      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Globe className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <Globe className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             National School Assessment
           </h1>
-          <p className="text-muted-foreground flex items-center gap-2 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
             <MapPin className="h-4 w-4" />
             Country-wide Performance Overview
           </p>
@@ -465,10 +453,10 @@ function EducationOfficialAssessmentContent() {
               value={selectedPeriodId || ""}
               onValueChange={(value) => setSelectedPeriodId(value)}
             >
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-[220px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                 {allPeriods.map((period) => (
                   <SelectItem key={period.id} value={period.id}>
                     {period.academicYear} - {period.termName}
@@ -484,26 +472,26 @@ function EducationOfficialAssessmentContent() {
       {/* Tabs */}
       <Tabs value={currentTab} onValueChange={handleTabChange}>
         <TabsList
-          className={`grid w-full ${selectedReport ? "grid-cols-5" : "grid-cols-4"} lg:w-auto lg:inline-grid`}
+          className={`grid w-full ${selectedReport ? "grid-cols-5" : "grid-cols-4"} lg:w-auto lg:inline-grid bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-slate-200/50 dark:border-slate-700/50`}
         >
-          <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsTrigger value="overview" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="regions" className="flex items-center gap-2">
+          <TabsTrigger value="regions" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <MapPin className="h-4 w-4" />
             <span className="hidden sm:inline">Regions</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
+          <TabsTrigger value="reports" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <FileTextIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
-          <TabsTrigger value="underperforming" className="flex items-center gap-2">
+          <TabsTrigger value="underperforming" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <AlertTriangle className="h-4 w-4" />
             <span className="hidden sm:inline">Needs Attention</span>
           </TabsTrigger>
           {selectedReport && (
-            <TabsTrigger value="details" className="flex items-center gap-2">
+            <TabsTrigger value="details" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
               <FileTextIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Details</span>
             </TabsTrigger>
@@ -511,117 +499,120 @@ function EducationOfficialAssessmentContent() {
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-l-4 border-l-blue-500">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Regions</CardTitle>
-                <Globe className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalRegions || 11}</div>
-                <p className="text-xs text-muted-foreground">Across the country</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-purple-500">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Schools</CardTitle>
-                <School className="h-4 w-4 text-purple-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalSchools || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.submittedCount || 0} submitted assessments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">National Average</CardTitle>
-                <TrendingUpIcon className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.nationalAverageScore || 0}</div>
-                <p className="text-xs text-muted-foreground">Average assessment score</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-amber-500">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Top Region</CardTitle>
-                <Trophy className="h-4 w-4 text-amber-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.topPerformingRegion?.regionName || 'N/A'}</div>
-                <p className="text-xs text-muted-foreground">
-                  Score: {stats?.topPerformingRegion?.averageScore || 0}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Historical Trend Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>National Performance Trend</CardTitle>
-              <CardDescription>Historical average scores across assessment periods</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {trends.length > 0 ? (
-                <TrendChart data={trends} />
-              ) : (
-                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  No historical data available yet
+        <TabsContent value="overview" className="space-y-4 lg:space-y-6">
+          {/* Stats Cards - Colorful Style */}
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <div className="px-4 py-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20">
+                  <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats?.totalRegions || 11}</p>
+              <p className="text-xs text-blue-600/70 dark:text-blue-400/70 font-medium">Total Regions</p>
+              <p className="text-[10px] text-blue-500/60 dark:text-blue-400/50 mt-0.5">Across the country</p>
+            </div>
 
-          {/* Charts Row */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>National Rating Distribution</CardTitle>
-                <CardDescription>Schools by performance level</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {stats?.ratingDistribution && Object.keys(stats.ratingDistribution).length > 0 ? (
-                  <RatingDistributionChart distribution={stats.ratingDistribution} />
-                ) : (
-                  <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                    No data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="px-4 py-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200/80 dark:border-purple-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-500/20">
+                  <School className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-purple-700 dark:text-purple-400">{stats?.totalSchools || 0}</p>
+              <p className="text-xs text-purple-600/70 dark:text-purple-400/70 font-medium">Total Schools</p>
+              <p className="text-[10px] text-purple-500/60 dark:text-purple-400/50 mt-0.5">{stats?.submittedCount || 0} submitted assessments</p>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>National Performance Profile</CardTitle>
-                <CardDescription>Average scores by category</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {stats?.categoryAverages && Object.keys(stats.categoryAverages).length > 0 ? (
-                  <CategoryRadarChart scores={stats.categoryAverages} />
-                ) : (
-                  <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                    No data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="px-4 py-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+                  <TrendingUpIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats?.nationalAverageScore || 0}</p>
+              <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-medium">National Average</p>
+              <p className="text-[10px] text-emerald-500/60 dark:text-emerald-400/50 mt-0.5">Average assessment score</p>
+            </div>
+
+            <div className="px-4 py-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+                  <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 truncate">{stats?.topPerformingRegion?.regionName || 'N/A'}</p>
+              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 font-medium">Top Region</p>
+              <p className="text-[10px] text-amber-500/60 dark:text-amber-400/50 mt-0.5">
+                {stats?.topPerformingRegion ? `Score: ${stats.topPerformingRegion.averageScore}` : 'Score: 0'}
+              </p>
+            </div>
           </div>
 
-          {/* Completion Rate and Score Distribution */}
-          <div className="grid gap-6 md:grid-cols-2">
+          {/* AI Insights Section - At top for visibility */}
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
+            <AIInsightCard
+              type="overview"
+              title="AI National Analysis"
+              description="Get AI-powered insights about national assessment performance"
+              autoGenerate={false}
+            />
+            <AIAtRiskAlert
+              threshold={400}
+              autoGenerate={false}
+            />
+            {trends.length > 0 ? (
+              <AITrendPrediction
+                type="national"
+                historicalData={trends.map(t => ({
+                  period: t.period,
+                  score: t.averageScore || 0
+                }))}
+                title="AI Performance Prediction"
+                description="AI-powered forecast of national assessment trends"
+                autoGenerate={false}
+              />
+            ) : (
+              <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white text-base">
+                    <TrendingUpIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    AI Performance Prediction
+                  </CardTitle>
+                  <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">
+                    AI-powered forecast of national assessment trends
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-6 text-slate-500 dark:text-slate-400">
+                    <p className="text-sm">No trend data available yet</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Charts Grid - 2 columns */}
+          <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
+            <RatingDistributionChart
+              distribution={stats?.ratingDistribution || {}}
+              title="National Rating Distribution"
+              description="Schools by performance level"
+            />
+            <CategoryRadarChart
+              scores={stats?.categoryAverages || {}}
+              title="National Performance Profile"
+              description="Average scores by category"
+            />
+          </div>
+
+          {/* Second Row - Completion Rate & Score Distribution */}
+          <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
             {submissionProgress && !submissionProgress.error && (
               <CompletionRateGauge
                 submitted={submissionProgress.submitted}
                 total={(submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)}
-                percentage={((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)) > 0 
+                percentage={((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0)) > 0
                   ? Math.round(((submissionProgress.submitted || 0) / ((submissionProgress.submitted || 0) + (submissionProgress.inProgress || 0) + (submissionProgress.notStarted || 0))) * 100)
                   : 0}
                 title="National Completion Rate"
@@ -636,119 +627,46 @@ function EducationOfficialAssessmentContent() {
             )}
           </div>
 
-          {/* Category Gap Analysis */}
-          {categoryGaps && !categoryGaps.error && categoryGaps.gaps && categoryGaps.gaps.length > 0 && (
-            <CategoryGapAnalysisChart
-              gaps={categoryGaps.gaps}
-              weakestCategory={categoryGaps.weakestCategory}
-              strongestCategory={categoryGaps.strongestCategory}
-              title="National Category Improvement Opportunities"
-            />
-          )}
+          {/* Third Row - Category Gap & Most Improved */}
+          <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
+            {categoryGaps && !categoryGaps.error && categoryGaps.gaps && categoryGaps.gaps.length > 0 && (
+              <CategoryGapAnalysisChart
+                gaps={categoryGaps.gaps}
+                weakestCategory={categoryGaps.weakestCategory}
+                strongestCategory={categoryGaps.strongestCategory}
+                title="Category Improvement Opportunities"
+              />
+            )}
+            {mostImproved && (mostImproved.improved?.length > 0 || mostImproved.declined?.length > 0) && (
+              <MostImprovedSchoolsTable
+                improved={mostImproved.improved || []}
+                declined={mostImproved.declined || []}
+                title="School Improvement Trends"
+              />
+            )}
+          </div>
 
-          {/* Most Improved Schools */}
-          {mostImproved && (mostImproved.improved?.length > 0 || mostImproved.declined?.length > 0) && (
-            <MostImprovedSchoolsTable
-              improved={mostImproved.improved || []}
-              declined={mostImproved.declined || []}
-              title="School Improvement Trends"
-            />
-          )}
-
-          {/* Category Leaders Table */}
-          {categoryLeaders && categoryLeaders.length > 0 && (
-            <CategoryLeadersTable
-              leaders={categoryLeaders}
-              title="Category Leaders"
-            />
-          )}
-
-          {/* Top Schools */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top 10 Schools Nationally</CardTitle>
-              <CardDescription>Highest performing schools this term</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Rank</TableHead>
-                    <TableHead>School</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Rating</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rankings.slice(0, 10).map((school: any, index: number) => (
-                    <TableRow 
-                      key={school.schoolId}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => {
-                        const report = reports.find((r: any) => r.schoolId === school.schoolId)
-                        if (report) handleViewReport(report.id)
-                      }}
-                    >
-                      <TableCell>
-                        <Badge variant={index < 3 ? "default" : "secondary"}>
-                          {index + 1}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{school.schoolName}</TableCell>
-                      <TableCell>{school.regionName}</TableCell>
-                      <TableCell>{school.totalScore}</TableCell>
-                      <TableCell>
-                        <UnifiedRatingBadge 
-                          ratingLevel={school.ratingLevel}
-                          tapsRatingGrade={school.tapsRatingGrade}
-                          isTAPS={school.isTAPS}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {rankings.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No school rankings available yet
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* AI Insights Section */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* AI National Overview */}
-            <AIInsightCard
-              type="overview"
-              title="AI National Analysis"
-              description="Get AI-powered insights about national assessment performance"
-              autoGenerate={false}
-            />
-            
-            {/* AI At-Risk Schools */}
-            <AIAtRiskAlert
-              threshold={400}
+          {/* Fourth Row - Trends & Top Schools */}
+          <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-2">
+            {trends.length > 0 && (
+              <TrendChart
+                data={trends}
+                title="National Trends"
+                description="Average scores over time"
+              />
+            )}
+            <SchoolRankingsTable
+              rankings={rankings.slice(0, 10)}
+              title="Top 10 Schools Nationally"
+              description="Highest performing schools this term"
+              onViewSchool={(schoolId) => {
+                const report = reports.find((r: any) => r.schoolId === schoolId)
+                if (report) handleViewReport(report.id)
+              }}
             />
           </div>
 
-          {/* AI Trend Prediction */}
-          {trends.length > 0 && (
-            <AITrendPrediction
-              type="national"
-              historicalData={trends.map(t => ({
-                period: t.period,
-                score: t.averageScore || 0
-              }))}
-              title="AI Performance Prediction"
-              description="AI-powered forecast of national assessment trends"
-            />
-          )}
-
-          {/* AI Comparative Analysis */}
+          {/* AI Comparative Analysis - Only show if we have region data */}
           {stats?.regionComparison && stats.regionComparison.length > 2 && (
             <AIComparativeAnalysis
               type="regions"
@@ -771,103 +689,110 @@ function EducationOfficialAssessmentContent() {
               }}
             />
           )}
-          
-          {/* Region Comparison Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Regional Comparison</CardTitle>
-              <CardDescription>Average scores by region</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats?.regionComparison && stats.regionComparison.length > 0 ? (
-                <RegionComparisonChart regions={stats.regionComparison} />
-              ) : (
-                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  No regional data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Submission Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Submission Status by Region</CardTitle>
-              <CardDescription>Report submission progress</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {submissionStatus.length > 0 ? (
-                <SubmissionStatusChart data={submissionStatus} />
-              ) : (
-                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  No submission data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Charts Grid - Side by Side */}
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <RegionComparisonChart
+              regions={stats?.regionComparison || []}
+              title="Regional Comparison"
+              description="Average scores by region"
+              compact
+            />
+            <SubmissionStatusChart
+              data={submissionStatus}
+              title="Submission Status by Region"
+              description="Report submission progress"
+              compact
+            />
+          </div>
 
           {/* Regional Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {submissionStatus.map((region: any) => (
-              <Card 
-                key={region.regionId} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setRegionFilter(region.regionName)
-                  handleTabChange('reports')
-                }}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{region.regionName}</CardTitle>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            {submissionStatus.map((region: any, index: number) => {
+              const progress = region.totalSchools > 0
+                ? Math.round((region.submittedCount / region.totalSchools) * 100)
+                : 0
+              const colors = [
+                { bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200/80 dark:border-blue-500/20', icon: 'bg-blue-100 dark:bg-blue-500/20', iconText: 'text-blue-600 dark:text-blue-400', text: 'text-blue-700 dark:text-blue-400' },
+                { bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200/80 dark:border-emerald-500/20', icon: 'bg-emerald-100 dark:bg-emerald-500/20', iconText: 'text-emerald-600 dark:text-emerald-400', text: 'text-emerald-700 dark:text-emerald-400' },
+                { bg: 'bg-purple-50 dark:bg-purple-500/10', border: 'border-purple-200/80 dark:border-purple-500/20', icon: 'bg-purple-100 dark:bg-purple-500/20', iconText: 'text-purple-600 dark:text-purple-400', text: 'text-purple-700 dark:text-purple-400' },
+                { bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200/80 dark:border-amber-500/20', icon: 'bg-amber-100 dark:bg-amber-500/20', iconText: 'text-amber-600 dark:text-amber-400', text: 'text-amber-700 dark:text-amber-400' },
+                { bg: 'bg-rose-50 dark:bg-rose-500/10', border: 'border-rose-200/80 dark:border-rose-500/20', icon: 'bg-rose-100 dark:bg-rose-500/20', iconText: 'text-rose-600 dark:text-rose-400', text: 'text-rose-700 dark:text-rose-400' },
+                { bg: 'bg-cyan-50 dark:bg-cyan-500/10', border: 'border-cyan-200/80 dark:border-cyan-500/20', icon: 'bg-cyan-100 dark:bg-cyan-500/20', iconText: 'text-cyan-600 dark:text-cyan-400', text: 'text-cyan-700 dark:text-cyan-400' },
+              ]
+              const color = colors[index % colors.length]
+
+              return (
+                <div
+                  key={region.regionId}
+                  className={`px-4 py-4 rounded-xl ${color.bg} border ${color.border} cursor-pointer hover:shadow-md transition-all`}
+                  onClick={() => {
+                    setRegionFilter(region.regionName)
+                    handleTabChange('reports')
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${color.icon}`}>
+                        <MapPin className={`w-4 h-4 ${color.iconText}`} />
+                      </div>
+                      <h3 className={`font-semibold ${color.text}`}>{region.regionName}</h3>
+                    </div>
+                    <ChevronRight className={`h-4 w-4 ${color.iconText}`} />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
+
+                  <div className="grid grid-cols-4 gap-2 text-center">
                     <div>
-                      <p className="text-sm text-muted-foreground">Schools</p>
-                      <p className="text-xl font-bold">{region.totalSchools}</p>
+                      <p className={`text-lg font-bold ${color.text}`}>{region.totalSchools}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Schools</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Submitted</p>
-                      <p className="text-xl font-bold text-green-600">{region.submittedCount}</p>
+                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{region.submittedCount}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Submitted</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Pending</p>
-                      <p className="text-xl font-bold text-amber-600">{region.pendingCount}</p>
+                      <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{region.pendingCount}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Pending</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Progress</p>
-                      <p className="text-xl font-bold">
-                        {region.totalSchools > 0 
-                          ? Math.round((region.submittedCount / region.totalSchools) * 100)
-                          : 0}%
+                      <p className={`text-lg font-bold ${progress >= 75 ? 'text-emerald-600 dark:text-emerald-400' : progress >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {progress}%
                       </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Progress</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                  {/* Progress Bar */}
+                  <div className="mt-3 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${progress >= 75 ? 'bg-emerald-500' : progress >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </TabsContent>
 
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
-          <Card>
+          <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle>Assessment Reports</CardTitle>
-                <CardDescription>
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                  <FileTextIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  Assessment Reports
+                </CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
                   {filteredReports.length} of {reports.length} reports
                 </CardDescription>
               </div>
               <Button
-                variant="outline"
                 size="sm"
                 onClick={handleExportCSV}
                 disabled={isExporting || !reports.length}
-                className="gap-2"
+                className="gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               >
                 {isExporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -881,19 +806,19 @@ function EducationOfficialAssessmentContent() {
               {/* Filters */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <Input
                     placeholder="Search by school or region..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="All Regions" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Regions</SelectItem>
                     {regions.map((region) => (
                       <SelectItem key={region} value={region}>
@@ -905,101 +830,109 @@ function EducationOfficialAssessmentContent() {
               </div>
 
               {/* Reports Table */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>School</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReports.map((report: any) => (
-                    <TableRow 
-                      key={report.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleViewReport(report.id)}
-                    >
-                      <TableCell className="font-medium">
-                        {report.school?.name || report.schoolName || 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        {report.school?.region?.name || report.regionName || 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={report.status === 'submitted' ? 'default' : 'secondary'}>
-                          {report.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {report.totalScore || '-'}
-                        {report.totalScore && (
-                          <span className="text-muted-foreground text-xs ml-1">
-                            /{report.isTAPS ? '429' : '1000'}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <UnifiedRatingBadge 
-                          ratingLevel={report.ratingLevel}
-                          tapsRatingGrade={report.tapsRatingGrade}
-                          isTAPS={report.isTAPS}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {report.submittedAt 
-                          ? new Date(report.submittedAt).toLocaleDateString()
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Region</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Status</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Score</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Rating</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Date</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  ))}
-                  {filteredReports.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No reports found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredReports.map((report: any) => (
+                      <TableRow
+                        key={report.id}
+                        className="cursor-pointer border-b border-slate-200/50 dark:border-slate-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors"
+                        onClick={() => handleViewReport(report.id)}
+                      >
+                        <TableCell className="font-medium text-slate-900 dark:text-white">
+                          {report.school?.name || report.schoolName || 'Unknown'}
+                        </TableCell>
+                        <TableCell className="text-slate-600 dark:text-slate-400">
+                          {report.school?.region?.name || report.regionName || 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={report.status === 'submitted' ? 'default' : 'secondary'}
+                            className={report.status === 'submitted'
+                              ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30'
+                              : 'bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/30'
+                            }
+                          >
+                            {report.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-slate-900 dark:text-white font-medium">
+                          {report.totalScore || '-'}
+                          {report.totalScore && (
+                            <span className="text-slate-400 dark:text-slate-500 text-xs ml-1">
+                              /{report.isTAPS ? '429' : '1000'}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <UnifiedRatingBadge
+                            ratingLevel={report.ratingLevel}
+                            tapsRatingGrade={report.tapsRatingGrade}
+                            isTAPS={report.isTAPS}
+                          />
+                        </TableCell>
+                        <TableCell className="text-slate-600 dark:text-slate-400">
+                          {report.submittedAt
+                            ? new Date(report.submittedAt).toLocaleDateString()
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filteredReports.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                          No reports found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Underperforming Schools Tab */}
         <TabsContent value="underperforming" className="space-y-6">
-          <Card>
+          <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                    <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     Schools Needing Attention
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-slate-500 dark:text-slate-400">
                     Schools scoring below the threshold require additional support
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Score below:</span>
-                  <Select 
-                    value={scoreThreshold.toString()} 
+                  <span className="text-sm text-slate-500 dark:text-slate-400">Score below:</span>
+                  <Select
+                    value={scoreThreshold.toString()}
                     onValueChange={(v) => setScoreThreshold(parseInt(v))}
                   >
-                    <SelectTrigger className="w-[120px]">
+                    <SelectTrigger className="w-[120px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                       <SelectItem value="400">400 (Satisfactory)</SelectItem>
                       <SelectItem value="550">550 (Good)</SelectItem>
                       <SelectItem value="700">700 (Very Good)</SelectItem>
@@ -1012,57 +945,66 @@ function EducationOfficialAssessmentContent() {
             <CardContent>
               {/* Summary Stats */}
               <div className="grid gap-4 md:grid-cols-3 mb-6">
-                <Card className="bg-red-50 border-red-200">
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-red-600 font-medium">Needs Improvement</p>
-                      <p className="text-3xl font-bold text-red-700">
+                <div className="px-4 py-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200/80 dark:border-red-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
+                      <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-red-700 dark:text-red-400">
                         {reports.filter((r: any) => r.totalScore && r.totalScore < 400).length}
                       </p>
-                      <p className="text-xs text-red-500">Score below 400</p>
+                      <p className="text-xs text-red-600/70 dark:text-red-400/70 font-medium">Needs Improvement</p>
+                      <p className="text-[10px] text-red-500/60 dark:text-red-400/50">Score below 400</p>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-amber-50 border-amber-200">
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-amber-600 font-medium">Satisfactory</p>
-                      <p className="text-3xl font-bold text-amber-700">
+                  </div>
+                </div>
+                <div className="px-4 py-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/20">
+                      <Target className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">
                         {reports.filter((r: any) => r.totalScore && r.totalScore >= 400 && r.totalScore < 550).length}
                       </p>
-                      <p className="text-xs text-amber-500">Score 400-549</p>
+                      <p className="text-xs text-amber-600/70 dark:text-amber-400/70 font-medium">Satisfactory</p>
+                      <p className="text-[10px] text-amber-500/60 dark:text-amber-400/50">Score 400-549</p>
                     </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="pt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-green-600 font-medium">Above Threshold</p>
-                      <p className="text-3xl font-bold text-green-700">
+                  </div>
+                </div>
+                <div className="px-4 py-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+                      <Trophy className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                         {reports.filter((r: any) => r.totalScore && r.totalScore >= scoreThreshold).length}
                       </p>
-                      <p className="text-xs text-green-500">Score {scoreThreshold}+</p>
+                      <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-medium">Above Threshold</p>
+                      <p className="text-[10px] text-emerald-500/60 dark:text-emerald-400/50">Score {scoreThreshold}+</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
 
               {/* Filters */}
               <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <Input
                     placeholder="Search by school or region..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   />
                 </div>
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="All Regions" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Regions</SelectItem>
                     {regions.map((region) => (
                       <SelectItem key={region} value={region}>
@@ -1074,64 +1016,66 @@ function EducationOfficialAssessmentContent() {
               </div>
 
               {/* Underperforming Schools Table */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>School</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Gap to Threshold</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUnderperforming.map((report: any) => (
-                    <TableRow 
-                      key={report.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleViewReport(report.id)}
-                    >
-                      <TableCell className="font-medium">
-                        {report.school?.name || report.schoolName || 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        {report.school?.region?.name || report.regionName || 'Unknown'}
-                      </TableCell>
-                      <TableCell className="font-bold text-red-600">
-                        {report.totalScore || 0}
-                      </TableCell>
-                      <TableCell>
-                        <UnifiedRatingBadge 
-                          ratingLevel={report.ratingLevel}
-                          tapsRatingGrade={report.tapsRatingGrade}
-                          isTAPS={report.isTAPS}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-red-600">
-                          <ArrowDownRight className="h-4 w-4" />
-                          {scoreThreshold - (report.totalScore || 0)} points
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Region</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Score</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Rating</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Gap to Threshold</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  ))}
-                  {filteredUnderperforming.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        {reports.length === 0 
-                          ? "No submitted reports yet" 
-                          : "No schools below the threshold - great job!"}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUnderperforming.map((report: any) => (
+                      <TableRow
+                        key={report.id}
+                        className="cursor-pointer border-b border-slate-200/50 dark:border-slate-700/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors"
+                        onClick={() => handleViewReport(report.id)}
+                      >
+                        <TableCell className="font-medium text-slate-900 dark:text-white">
+                          {report.school?.name || report.schoolName || 'Unknown'}
+                        </TableCell>
+                        <TableCell className="text-slate-600 dark:text-slate-400">
+                          {report.school?.region?.name || report.regionName || 'Unknown'}
+                        </TableCell>
+                        <TableCell className="font-bold text-red-600 dark:text-red-400">
+                          {report.totalScore || 0}
+                        </TableCell>
+                        <TableCell>
+                          <UnifiedRatingBadge
+                            ratingLevel={report.ratingLevel}
+                            tapsRatingGrade={report.tapsRatingGrade}
+                            isTAPS={report.isTAPS}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                            <ArrowDownRight className="h-4 w-4" />
+                            {scoreThreshold - (report.totalScore || 0)} points
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filteredUnderperforming.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                          {reports.length === 0
+                            ? "No submitted reports yet"
+                            : "No schools below the threshold - great job!"}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -520,11 +520,11 @@ export function getPerformanceTone(percentage: number): {
     return {
       label: 'Excellent',
       barClass: '[&>div]:bg-emerald-500',
-      borderClass: 'border-emerald-200',
-      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      iconClass: 'text-emerald-600',
-      textClass: 'text-emerald-700',
-      bgClass: 'bg-emerald-50',
+      borderClass: 'border-emerald-200 dark:border-emerald-500/30',
+      badgeClass: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
+      iconClass: 'text-emerald-600 dark:text-emerald-400',
+      textClass: 'text-emerald-700 dark:text-emerald-400',
+      bgClass: 'bg-emerald-50 dark:bg-emerald-500/10',
     }
   }
 
@@ -532,11 +532,11 @@ export function getPerformanceTone(percentage: number): {
     return {
       label: 'Strong',
       barClass: '[&>div]:bg-blue-500',
-      borderClass: 'border-blue-200',
-      badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-      iconClass: 'text-blue-600',
-      textClass: 'text-blue-700',
-      bgClass: 'bg-blue-50',
+      borderClass: 'border-blue-200 dark:border-blue-500/30',
+      badgeClass: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+      iconClass: 'text-blue-600 dark:text-blue-400',
+      textClass: 'text-blue-700 dark:text-blue-400',
+      bgClass: 'bg-blue-50 dark:bg-blue-500/10',
     }
   }
 
@@ -544,11 +544,11 @@ export function getPerformanceTone(percentage: number): {
     return {
       label: 'On track',
       barClass: '[&>div]:bg-amber-500',
-      borderClass: 'border-amber-200',
-      badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
-      iconClass: 'text-amber-600',
-      textClass: 'text-amber-700',
-      bgClass: 'bg-amber-50',
+      borderClass: 'border-amber-200 dark:border-amber-500/30',
+      badgeClass: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+      iconClass: 'text-amber-600 dark:text-amber-400',
+      textClass: 'text-amber-700 dark:text-amber-400',
+      bgClass: 'bg-amber-50 dark:bg-amber-500/10',
     }
   }
 
@@ -556,22 +556,22 @@ export function getPerformanceTone(percentage: number): {
     return {
       label: 'Needs focus',
       barClass: '[&>div]:bg-orange-500',
-      borderClass: 'border-orange-200',
-      badgeClass: 'bg-orange-50 text-orange-700 border-orange-200',
-      iconClass: 'text-orange-600',
-      textClass: 'text-orange-700',
-      bgClass: 'bg-orange-50',
+      borderClass: 'border-orange-200 dark:border-orange-500/30',
+      badgeClass: 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+      iconClass: 'text-orange-600 dark:text-orange-400',
+      textClass: 'text-orange-700 dark:text-orange-400',
+      bgClass: 'bg-orange-50 dark:bg-orange-500/10',
     }
   }
 
   return {
     label: 'Critical',
     barClass: '[&>div]:bg-red-500',
-    borderClass: 'border-red-200',
-    badgeClass: 'bg-red-50 text-red-700 border-red-200',
-    iconClass: 'text-red-600',
-    textClass: 'text-red-700',
-    bgClass: 'bg-red-50',
+    borderClass: 'border-red-200 dark:border-red-500/30',
+    badgeClass: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
+    iconClass: 'text-red-600 dark:text-red-400',
+    textClass: 'text-red-700 dark:text-red-400',
+    bgClass: 'bg-red-50 dark:bg-red-500/10',
   }
 }
 
@@ -591,52 +591,52 @@ export function getTAPSGradeTone(grade: TAPSRatingGrade): {
     case 'A':
       return {
         barClass: '[&>div]:bg-green-500',
-        badgeClass: 'bg-green-50 text-green-800 border-green-200',
-        iconClass: 'text-green-600',
-        bgClass: 'bg-green-50',
-        ringClass: 'ring-1 ring-green-200',
-        textClass: 'text-green-800',
-        borderClass: 'border-green-200',
+        badgeClass: 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400 border-green-200 dark:border-green-500/30',
+        iconClass: 'text-green-600 dark:text-green-400',
+        bgClass: 'bg-green-50 dark:bg-green-500/10',
+        ringClass: 'ring-1 ring-green-200 dark:ring-green-500/30',
+        textClass: 'text-green-700 dark:text-green-400',
+        borderClass: 'border-green-200 dark:border-green-500/30',
       }
     case 'B':
       return {
         barClass: '[&>div]:bg-blue-500',
-        badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
-        iconClass: 'text-blue-600',
-        bgClass: 'bg-blue-50',
-        ringClass: 'ring-1 ring-blue-200',
-        textClass: 'text-blue-800',
-        borderClass: 'border-blue-200',
+        badgeClass: 'bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+        iconClass: 'text-blue-600 dark:text-blue-400',
+        bgClass: 'bg-blue-50 dark:bg-blue-500/10',
+        ringClass: 'ring-1 ring-blue-200 dark:ring-blue-500/30',
+        textClass: 'text-blue-700 dark:text-blue-400',
+        borderClass: 'border-blue-200 dark:border-blue-500/30',
       }
     case 'C':
       return {
         barClass: '[&>div]:bg-amber-500',
-        badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
-        iconClass: 'text-amber-600',
-        bgClass: 'bg-amber-50',
-        ringClass: 'ring-1 ring-amber-200',
-        textClass: 'text-amber-800',
-        borderClass: 'border-amber-200',
+        badgeClass: 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+        iconClass: 'text-amber-600 dark:text-amber-400',
+        bgClass: 'bg-amber-50 dark:bg-amber-500/10',
+        ringClass: 'ring-1 ring-amber-200 dark:ring-amber-500/30',
+        textClass: 'text-amber-700 dark:text-amber-400',
+        borderClass: 'border-amber-200 dark:border-amber-500/30',
       }
     case 'D':
       return {
         barClass: '[&>div]:bg-orange-500',
-        badgeClass: 'bg-orange-50 text-orange-800 border-orange-200',
-        iconClass: 'text-orange-600',
-        bgClass: 'bg-orange-50',
-        ringClass: 'ring-1 ring-orange-200',
-        textClass: 'text-orange-800',
-        borderClass: 'border-orange-200',
+        badgeClass: 'bg-orange-100 dark:bg-orange-500/20 text-orange-800 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+        iconClass: 'text-orange-600 dark:text-orange-400',
+        bgClass: 'bg-orange-50 dark:bg-orange-500/10',
+        ringClass: 'ring-1 ring-orange-200 dark:ring-orange-500/30',
+        textClass: 'text-orange-700 dark:text-orange-400',
+        borderClass: 'border-orange-200 dark:border-orange-500/30',
       }
     default:
       return {
         barClass: '[&>div]:bg-red-500',
-        badgeClass: 'bg-red-50 text-red-800 border-red-200',
-        iconClass: 'text-red-600',
-        bgClass: 'bg-red-50',
-        ringClass: 'ring-1 ring-red-200',
-        textClass: 'text-red-800',
-        borderClass: 'border-red-200',
+        badgeClass: 'bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400 border-red-200 dark:border-red-500/30',
+        iconClass: 'text-red-600 dark:text-red-400',
+        bgClass: 'bg-red-50 dark:bg-red-500/10',
+        ringClass: 'ring-1 ring-red-200 dark:ring-red-500/30',
+        textClass: 'text-red-700 dark:text-red-400',
+        borderClass: 'border-red-200 dark:border-red-500/30',
       }
   }
 }

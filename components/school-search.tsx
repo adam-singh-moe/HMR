@@ -271,7 +271,7 @@ export function SchoolSearch({
     <>
       <div className="relative w-full" ref={containerRef}>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500">
           {isSearching ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -290,9 +290,9 @@ export function SchoolSearch({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            "pl-10",
+            "pl-10 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700",
             allowClear && searchQuery && "pr-10",
-            "border-primary-200 focus:border-primary-500 transition-colors"
+            "focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
           )}
         />
         
@@ -302,9 +302,9 @@ export function SchoolSearch({
             variant="ghost"
             size="sm"
             onClick={handleClearSelection}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-700"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           </Button>
         )}
       </div>
@@ -314,9 +314,9 @@ export function SchoolSearch({
 
       {/* Dropdown Results */}
       {showDropdown && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-hidden">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg max-h-60 overflow-hidden">
           {isSearching ? (
-            <div className="px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+            <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Searching...
             </div>
@@ -329,20 +329,22 @@ export function SchoolSearch({
                     onClick={() => handleSelectItem(item.id)}
                     className={cn(
                       "px-3 py-2 text-sm cursor-pointer flex items-center justify-between",
-                      "hover:bg-primary-50 transition-colors",
-                      item.id === selectedValue ? "bg-primary-50 text-primary-700" : "text-gray-900"
+                      "hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors",
+                      item.id === selectedValue
+                        ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                        : "text-slate-900 dark:text-slate-100"
                     )}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{item.name}</div>
                       {showRegion && item.regionName && (
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {item.regionName}
                         </div>
                       )}
                     </div>
                     {item.id === selectedValue && (
-                      <Check className="h-4 w-4 text-primary-600 flex-shrink-0 ml-2" />
+                      <Check className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />
                     )}
                   </li>
                 ))}
@@ -350,14 +352,14 @@ export function SchoolSearch({
             </div>
           ) : searchQuery ? (
             <div className="space-y-2">
-              <div className="px-3 py-2 text-sm text-muted-foreground">
+              <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
                 No schools found matching "{searchQuery}"
               </div>
               {allowAddNew && (
-                <div className="border-t border-gray-100">
+                <div className="border-t border-slate-200 dark:border-slate-700">
                   <div
                     onClick={() => setShowAddNewForm(true)}
-                    className="px-3 py-2 text-sm cursor-pointer flex items-center gap-2 hover:bg-primary-50 transition-colors text-primary-600"
+                    className="px-3 py-2 text-sm cursor-pointer flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
                   >
                     <Plus className="h-4 w-4" />
                     Add "{searchQuery}" as new school
@@ -366,7 +368,7 @@ export function SchoolSearch({
               )}
             </div>
           ) : (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
+            <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
               Start typing to search schools...
             </div>
           )}

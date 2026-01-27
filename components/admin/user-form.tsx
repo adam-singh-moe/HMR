@@ -75,24 +75,37 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" name="name" defaultValue={user?.name || ""} required />
+            <Label htmlFor="name" className="text-slate-700 dark:text-slate-300">Full Name</Label>
+            <Input
+              id="name"
+              name="name"
+              defaultValue={user?.name || ""}
+              required
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input id="email" name="email" type="email" defaultValue={user?.email || ""} required />
+            <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Email Address</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              defaultValue={user?.email || ""}
+              required
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role" className="text-slate-700 dark:text-slate-300">Role</Label>
             <Select name="role_id" defaultValue={user?.role_id || ""} onValueChange={setSelectedRole} required>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
                     {role.name}
@@ -103,14 +116,22 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">{isEditing ? "Password (leave blank to keep current)" : "Password"}</Label>
-            <Input id="password" name="password" type="password" required={!isEditing} />
+            <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">
+              {isEditing ? "Password (leave blank to keep current)" : "Password"}
+            </Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              required={!isEditing}
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            />
           </div>
         </div>
 
         {isHeadTeacher && (
           <div className="space-y-2">
-            <Label htmlFor="school">School</Label>
+            <Label htmlFor="school" className="text-slate-700 dark:text-slate-300">School</Label>
             <SchoolSearch
               schools={schools}
               value={selectedSchoolId}
@@ -124,12 +145,12 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
 
         {isRegionalOfficer && (
           <div className="space-y-2">
-            <Label htmlFor="region">Region</Label>
+            <Label htmlFor="region" className="text-slate-700 dark:text-slate-300">Region</Label>
             <Select name="region" defaultValue={user?.region || ""} required>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="Select region" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 {regions.map((region) => (
                   <SelectItem key={region.id} value={region.id}>
                     {region.name}
@@ -141,16 +162,21 @@ export function UserForm({ user, roles, regions, schools, isEditing = false }: U
         )}
       </div>
 
-      <div className="flex justify-end gap-4">
+      <div className="flex justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.push("/dashboard/admin/users")}
           disabled={isLoading}
+          className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
+        >
           {isLoading ? "Saving..." : isEditing ? "Update User" : "Create User"}
         </Button>
       </div>

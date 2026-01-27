@@ -483,7 +483,10 @@ export function SchoolRankingsTable({
     return (
       <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-white">{title}</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+            <Trophy className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            {title}
+          </CardTitle>
           {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
@@ -527,93 +530,91 @@ export function SchoolRankingsTable({
 
   return (
     <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <CardHeader className="pb-4">
+        <div className="space-y-4">
+          {/* Title and Description */}
           <div>
             <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-              <Trophy className="h-5 w-5 text-amber-500" />
+              <Trophy className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               {title}
             </CardTitle>
             {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
           </div>
 
-          <div className="flex flex-col gap-2 sm:items-end">
-            <div className="relative w-full sm:w-[260px]">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+          {/* Filters Row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[180px] max-w-[240px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search schools…"
-                className="pl-8 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="pl-8 h-9 text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 sm:justify-end">
-              <Select value={ratingFilter} onValueChange={(v) => setRatingFilter(v as any)}>
-                <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                  <SelectValue placeholder="Filter by rating" />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
-                  <SelectItem value="all">All ratings</SelectItem>
-                  <SelectItem value="outstanding">Outstanding</SelectItem>
-                  <SelectItem value="very_good">Very Good</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="satisfactory">Satisfactory</SelectItem>
-                  <SelectItem value="needs_improvement">Needs Improvement</SelectItem>
-                </SelectContent>
-              </Select>
+            <Select value={ratingFilter} onValueChange={(v) => setRatingFilter(v as any)}>
+              <SelectTrigger className="h-9 w-[140px] text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <SelectValue placeholder="All ratings" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                <SelectItem value="all">All ratings</SelectItem>
+                <SelectItem value="outstanding">Outstanding</SelectItem>
+                <SelectItem value="very_good">Very Good</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="satisfactory">Satisfactory</SelectItem>
+                <SelectItem value="needs_improvement">Needs Improvement</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <Select value={`${sortBy}:${sortDirection}`} onValueChange={(v) => {
-                const [nextBy, nextDir] = v.split(":") as any
-                setSortBy(nextBy)
-                setSortDirection(nextDir)
-              }}>
-                <SelectTrigger className="w-[190px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                  <ArrowUpDown className="h-4 w-4 mr-2 text-slate-400 dark:text-slate-500" />
-                  <SelectValue placeholder="Sort" />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
-                  <SelectItem value="rank:asc">Rank (best first)</SelectItem>
-                  <SelectItem value="rank:desc">Rank (worst first)</SelectItem>
-                  <SelectItem value="score:desc">Score (high to low)</SelectItem>
-                  <SelectItem value="score:asc">Score (low to high)</SelectItem>
-                  <SelectItem value="school:asc">School (A to Z)</SelectItem>
-                  <SelectItem value="school:desc">School (Z to A)</SelectItem>
-                  <SelectItem value="rating:asc">Rating (A to Z)</SelectItem>
-                  <SelectItem value="rating:desc">Rating (Z to A)</SelectItem>
-                </SelectContent>
-              </Select>
+            <Select value={`${sortBy}:${sortDirection}`} onValueChange={(v) => {
+              const [nextBy, nextDir] = v.split(":") as any
+              setSortBy(nextBy)
+              setSortDirection(nextDir)
+            }}>
+              <SelectTrigger className="h-9 w-[160px] text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-slate-400 dark:text-slate-500" />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                <SelectItem value="rank:asc">Rank (best first)</SelectItem>
+                <SelectItem value="rank:desc">Rank (worst first)</SelectItem>
+                <SelectItem value="score:desc">Score (high to low)</SelectItem>
+                <SelectItem value="score:asc">Score (low to high)</SelectItem>
+                <SelectItem value="school:asc">School (A to Z)</SelectItem>
+                <SelectItem value="school:desc">School (Z to A)</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-                <SelectTrigger className="w-[120px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
-                  <SelectValue placeholder="Rows" />
-                </SelectTrigger>
-                <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
-                  <SelectItem value="10">10 / page</SelectItem>
-                  <SelectItem value="20">20 / page</SelectItem>
-                  <SelectItem value="50">50 / page</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-9 w-[120px] text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <SelectValue placeholder="Rows" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {sorted.length === 0 ? (
           <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
             No schools match your filters
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+            <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
-                    <TableHead className="w-[60px] text-slate-600 dark:text-slate-400 font-semibold">Rank</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Region</TableHead>
-                    <TableHead className="text-right text-slate-600 dark:text-slate-400 font-semibold">Score</TableHead>
-                    <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Rating</TableHead>
+                    <TableHead className="w-[60px] text-xs text-slate-600 dark:text-slate-400 font-semibold">Rank</TableHead>
+                    <TableHead className="min-w-[140px] text-xs text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
+                    <TableHead className="w-[100px] text-xs text-slate-600 dark:text-slate-400 font-semibold">Region</TableHead>
+                    <TableHead className="w-[70px] text-center text-xs text-slate-600 dark:text-slate-400 font-semibold">Score</TableHead>
+                    <TableHead className="min-w-[180px] text-xs text-slate-600 dark:text-slate-400 font-semibold">Rating</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -625,9 +626,9 @@ export function SchoolRankingsTable({
                         className={`border-b border-slate-200/50 dark:border-slate-700/30 ${onViewSchool ? "cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-500/5" : "hover:bg-transparent dark:hover:bg-transparent"} transition-colors`}
                         onClick={() => onViewSchool?.(school.schoolId)}
                       >
-                        <TableCell>
+                        <TableCell className="py-1.5">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                            className={`flex items-center justify-center w-6 h-6 rounded-full text-xs ${
                               displayRank <= 3
                                 ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 font-bold'
                                 : 'bg-slate-100 dark:bg-[hsl(222,47%,11%)] text-slate-500 dark:text-slate-400'
@@ -636,17 +637,18 @@ export function SchoolRankingsTable({
                             {displayRank}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium text-slate-900 dark:text-white">{school.schoolName}</TableCell>
-                        <TableCell className="text-slate-600 dark:text-slate-400">{school.regionName}</TableCell>
-                        <TableCell className="text-right font-mono font-bold text-slate-900 dark:text-white">
+                        <TableCell className="py-1.5 text-sm font-medium text-slate-900 dark:text-white">{school.schoolName}</TableCell>
+                        <TableCell className="py-1.5 text-sm text-slate-600 dark:text-slate-400">{school.regionName}</TableCell>
+                        <TableCell className="py-1.5 text-sm text-center font-mono font-bold text-slate-900 dark:text-white">
                           {school.totalScore}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-1.5">
                           <UnifiedRatingBadge
                             ratingLevel={school.ratingLevel}
                             tapsRatingGrade={school.tapsRatingGrade}
                             totalScore={school.totalScore}
                             isTAPS={school.isTAPS}
+                            compact
                           />
                         </TableCell>
                       </TableRow>

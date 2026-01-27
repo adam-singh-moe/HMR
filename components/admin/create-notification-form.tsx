@@ -13,8 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { X, Plus } from "lucide-react"
+import { X, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import { createNotification, getNotificationTargetingOptions } from "@/app/actions/notifications"
 import { useEffect } from "react"
 
@@ -72,10 +71,10 @@ export function CreateNotificationForm() {
       return
     }
 
-    if (!targetAllUsers && 
-        selectedRoles.length === 0 && 
-        selectedSchoolLevels.length === 0 && 
-        selectedRegions.length === 0) {
+    if (!targetAllUsers &&
+      selectedRoles.length === 0 &&
+      selectedSchoolLevels.length === 0 &&
+      selectedRegions.length === 0) {
       setError("At least one targeting option must be selected")
       setIsLoading(false)
       return
@@ -107,7 +106,7 @@ export function CreateNotificationForm() {
       setSelectedSchoolLevels([])
       setSelectedRegions([])
       setExpiresAt("")
-      
+
       // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000)
     }
@@ -130,32 +129,36 @@ export function CreateNotificationForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="text-red-600 bg-red-50 p-3 rounded border">
-          {error}
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="text-green-600 bg-green-50 p-3 rounded border">
-          Notification sent successfully!
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20">
+          <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <p className="text-sm text-emerald-800 dark:text-emerald-300">Notification sent successfully!</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column - Message Details */}
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-slate-700 dark:text-slate-300">Title *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter notification title"
               required
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
             />
           </div>
 
-          <div>
-            <Label htmlFor="message">Message *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="message" className="text-slate-700 dark:text-slate-300">Message *</Label>
             <Textarea
               id="message"
               value={message}
@@ -163,17 +166,18 @@ export function CreateNotificationForm() {
               placeholder="Enter notification message"
               rows={4}
               required
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="priority">Priority</Label>
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-slate-700 dark:text-slate-300">Priority</Label>
               <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="normal">Normal</SelectItem>
                   <SelectItem value="high">High</SelectItem>
@@ -182,13 +186,13 @@ export function CreateNotificationForm() {
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="type">Type</Label>
+            <div className="space-y-2">
+              <Label htmlFor="type" className="text-slate-700 dark:text-slate-300">Type</Label>
               <Select value={type} onValueChange={(value: any) => setType(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="announcement">Announcement</SelectItem>
                   <SelectItem value="deadline">Deadline</SelectItem>
@@ -199,21 +203,23 @@ export function CreateNotificationForm() {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="expires">Expires At (Optional)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="expires" className="text-slate-700 dark:text-slate-300">Expires At (Optional)</Label>
             <Input
               id="expires"
               type="datetime-local"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
             />
           </div>
         </div>
 
+        {/* Right Column - Targeting */}
         <div className="space-y-4">
           <div>
-            <Label className="text-base font-semibold">Targeting</Label>
-            <p className="text-sm text-muted-foreground mb-4">
+            <Label className="text-base font-semibold text-slate-800 dark:text-white">Targeting</Label>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
               Choose who should receive this notification
             </p>
 
@@ -223,25 +229,26 @@ export function CreateNotificationForm() {
                   id="targetAll"
                   checked={targetAllUsers}
                   onCheckedChange={(checked) => setTargetAllUsers(!!checked)}
+                  className="border-slate-300 dark:border-slate-600"
                 />
-                <Label htmlFor="targetAll" className="font-medium">
+                <Label htmlFor="targetAll" className="font-medium text-slate-700 dark:text-slate-300">
                   All Users
                 </Label>
               </div>
 
               {!targetAllUsers && (
                 <>
-                  <div>
-                    <Label>User Roles</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 dark:text-slate-300">User Roles</Label>
                     <Select onValueChange={(role) => {
                       if (!selectedRoles.includes(role)) {
                         setSelectedRoles([...selectedRoles, role])
                       }
                     }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectValue placeholder="Add roles" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         {targetingOptions.roles.map((role) => (
                           <SelectItem key={role} value={role}>
                             {role}
@@ -251,31 +258,34 @@ export function CreateNotificationForm() {
                     </Select>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedRoles.map((role) => (
-                        <Badge key={role} variant="secondary">
+                        <span
+                          key={role}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700/50"
+                        >
                           {role}
                           <button
                             type="button"
                             onClick={() => removeRole(role)}
-                            className="ml-2 text-muted-foreground hover:text-foreground"
+                            className="ml-1.5 text-purple-500 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-200"
                           >
                             <X className="h-3 w-3" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   </div>
 
-                  <div>
-                    <Label>School Levels</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 dark:text-slate-300">School Levels</Label>
                     <Select onValueChange={(level) => {
                       if (!selectedSchoolLevels.includes(level)) {
                         setSelectedSchoolLevels([...selectedSchoolLevels, level])
                       }
                     }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectValue placeholder="Add school levels" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         {targetingOptions.schoolLevels.map((level) => (
                           <SelectItem key={level} value={level}>
                             {level}
@@ -285,31 +295,34 @@ export function CreateNotificationForm() {
                     </Select>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedSchoolLevels.map((level) => (
-                        <Badge key={level} variant="secondary">
+                        <span
+                          key={level}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700/50"
+                        >
                           {level}
                           <button
                             type="button"
                             onClick={() => removeSchoolLevel(level)}
-                            className="ml-2 text-muted-foreground hover:text-foreground"
+                            className="ml-1.5 text-cyan-500 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-200"
                           >
                             <X className="h-3 w-3" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Regions</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 dark:text-slate-300">Regions</Label>
                     <Select onValueChange={(region) => {
                       if (!selectedRegions.includes(region)) {
                         setSelectedRegions([...selectedRegions, region])
                       }
                     }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         <SelectValue placeholder="Add regions" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                         {targetingOptions.regions.map((region) => (
                           <SelectItem key={region} value={region}>
                             {region}
@@ -319,16 +332,19 @@ export function CreateNotificationForm() {
                     </Select>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedRegions.map((region) => (
-                        <Badge key={region} variant="secondary">
+                        <span
+                          key={region}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/50"
+                        >
                           {region}
                           <button
                             type="button"
                             onClick={() => removeRegion(region)}
-                            className="ml-2 text-muted-foreground hover:text-foreground"
+                            className="ml-1.5 text-amber-500 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-200"
                           >
                             <X className="h-3 w-3" />
                           </button>
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -339,12 +355,23 @@ export function CreateNotificationForm() {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Button type="submit" disabled={isLoading} className="flex-1 md:flex-initial">
-          {isLoading ? "Sending..." : "Send Notification"}
+      <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="flex-1 md:flex-initial bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Sending...
+            </>
+          ) : (
+            "Send Notification"
+          )}
         </Button>
-        <Button 
-          type="button" 
+        <Button
+          type="button"
           variant="outline"
           onClick={() => {
             setTitle("")
@@ -359,6 +386,7 @@ export function CreateNotificationForm() {
             setError("")
             setSuccess(false)
           }}
+          className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           Clear
         </Button>

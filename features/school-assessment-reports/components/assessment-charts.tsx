@@ -41,7 +41,7 @@ import {
 
 // Fix for Recharts 3.x type issues with React 18/19
 const PolarAngleAxisAny = PolarAngleAxis as any;
-import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar, LineChart as LineChartIcon, BarChart as BarChartIcon } from "lucide-react"
+import { Loader2, Medal, Trophy, TrendingUp, TrendingDown, Minus, Award, Target, Calendar, LineChart as LineChartIcon, BarChart as BarChartIcon, PieChart as PieChartIcon, BarChart3, FileText, AlertTriangle } from "lucide-react"
 import type { CategoryName, RatingLevel, TAPSCategoryName, TAPSRatingGrade } from "../types"
 import { TAPS_RATING_THRESHOLDS, TAPS_TOTAL_MAX_SCORE, RATING_THRESHOLDS } from "../types"
 import { getRegionalCategoryRankings, getSchoolTrends } from "../actions/analytics"
@@ -164,18 +164,22 @@ interface TrendChartProps {
   data: TrendDataPoint[]
   title?: string
   description?: string
+  compact?: boolean
 }
 
-export function TrendChart({ data, title = "Score Trends", description }: TrendChartProps) {
+export function TrendChart({ data, title = "Score Trends", description, compact = false }: TrendChartProps) {
   if (!data || data.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+        <CardHeader className={compact ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+            <TrendingUp className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+            {title}
+          </CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className={`flex items-center justify-center ${compact ? 'h-40' : 'h-64'} text-slate-500 dark:text-slate-400`}>
             No trend data available
           </div>
         </CardContent>
@@ -184,50 +188,62 @@ export function TrendChart({ data, title = "Score Trends", description }: TrendC
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <TrendingUp className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 60 }}>
+      <CardContent className={compact ? 'pt-0' : ''}>
+        <ResponsiveContainer width="100%" height={compact ? 220 : 300}>
+          <AreaChart data={data} margin={{ top: 10, right: compact ? 10 : 30, left: compact ? 0 : 10, bottom: compact ? 40 : 60 }}>
             <defs>
-              <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+              <linearGradient id="colorScoreTrend" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.5} />
-            <XAxis 
-              dataKey="period" 
-              tick={{ fontSize: 11, fill: '#64748b' }}
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" vertical={false} />
+            <XAxis
+              dataKey="period"
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               angle={-45}
               textAnchor="end"
               height={70}
               interval={0}
+              axisLine={{ stroke: 'rgba(148, 163, 184, 0.2)' }}
+              tickLine={false}
             />
-            <YAxis 
-              tick={{ fontSize: 11, fill: '#64748b' }} 
+            <YAxis
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
               domain={[0, (dataMax: number) => Math.max(dataMax * 1.1, 100)]}
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip 
-              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(51, 65, 85, 0.5)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+              }}
+              itemStyle={{ color: '#e2e8f0', fontSize: '13px' }}
+              labelStyle={{ color: '#94a3b8', fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}
               formatter={((value: any) => [value, 'Average Score']) as any}
-              labelStyle={{ fontWeight: 'bold' }}
             />
             <Legend verticalAlign="top" height={40} align="right" iconType="circle" />
             <Area
               type="monotone"
               dataKey="averageScore"
-              stroke="#8884d8"
+              stroke="#6366f1"
               strokeWidth={3}
               fillOpacity={1}
-              fill="url(#colorScore)"
+              fill="url(#colorScoreTrend)"
               name="Average Score"
-              activeDot={{ r: 6, strokeWidth: 0 }}
+              activeDot={{ r: 6, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -240,31 +256,45 @@ interface CategoryBarChartProps {
   scores: Record<CategoryName, number>
   title?: string
   description?: string
+  compact?: boolean
 }
 
-export function CategoryBarChart({ scores, title = "Category Scores", description }: CategoryBarChartProps) {
+export function CategoryBarChart({ scores, title = "Category Scores", description, compact = false }: CategoryBarChartProps) {
   const data = useMemo(() => {
     return (Object.entries(CATEGORY_CONFIG) as [CategoryName, { label: string; maxScore: number }][]).map(([category, config], index) => ({
-      category: config.label,
+      category: compact ? config.label.split(' ')[0] : config.label,
+      fullCategory: config.label,
       score: scores[category] || 0,
       maxScore: config.maxScore,
       fill: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
     }))
-  }, [scores])
+  }, [scores, compact])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <BarChartIcon className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 'dataMax']} />
-            <YAxis type="category" dataKey="category" tick={{ fontSize: 11 }} width={140} />
-            <Tooltip 
+      <CardContent className={compact ? 'pt-0' : ''}>
+        <ResponsiveContainer width="100%" height={compact ? 220 : 300}>
+          <BarChart data={data} layout="vertical" margin={{ top: 5, right: compact ? 10 : 30, left: compact ? 5 : 100, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.15)" />
+            <XAxis type="number" domain={[0, 'dataMax']} tick={{ fill: '#94a3b8', fontSize: compact ? 10 : 11 }} axisLine={{ stroke: 'rgba(148, 163, 184, 0.2)' }} tickLine={false} />
+            <YAxis type="category" dataKey="category" tick={{ fontSize: compact ? 9 : 11, fill: '#94a3b8' }} width={compact ? 60 : 140} axisLine={false} tickLine={false} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(51, 65, 85, 0.5)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+              }}
+              itemStyle={{ color: '#e2e8f0', fontSize: '13px' }}
+              labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
               formatter={((value: any, name: string, entry: any) => {
                 const payload = entry?.payload;
                 if (!payload) return [value, 'Score'];
@@ -445,12 +475,14 @@ interface RatingDistributionChartProps {
   distribution: RatingDistribution
   title?: string
   description?: string
+  compact?: boolean
 }
 
-export function RatingDistributionChart({ 
-  distribution, 
-  title = "Rating Distribution", 
-  description 
+export function RatingDistributionChart({
+  distribution,
+  title = "Rating Distribution",
+  description,
+  compact = false
 }: RatingDistributionChartProps) {
   const data = useMemo(() => {
     return (Object.entries(distribution) as [RatingLevel, number][])
@@ -466,13 +498,16 @@ export function RatingDistributionChart({
 
   if (total === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+        <CardHeader className={compact ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+            <PieChartIcon className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+            {title}
+          </CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className={`flex items-center justify-center ${compact ? 'h-40' : 'h-64'} text-slate-500 dark:text-slate-400`}>
             No rating data available
           </div>
         </CardContent>
@@ -481,57 +516,68 @@ export function RatingDistributionChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <PieChartIcon className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="w-full flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height={300}>
+      <CardContent className={compact ? 'pt-0' : ''}>
+        <div className={`flex ${compact ? 'flex-row' : 'flex-col md:flex-row'} items-center gap-4`}>
+          <div className={`${compact ? 'w-1/2' : 'w-full flex-1'} ${compact ? 'min-h-[200px]' : 'min-h-[300px]'}`}>
+            <ResponsiveContainer width="100%" height={compact ? 200 : 300}>
               <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={95}
+                  innerRadius={compact ? 45 : 65}
+                  outerRadius={compact ? 70 : 95}
                   paddingAngle={5}
                   dataKey="value"
                   label={false}
                   labelLine={false}
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="white" strokeWidth={2} />
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="transparent" strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip 
+                <Tooltip
                   formatter={((value: any) => [value, 'Schools']) as any}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    border: '1px solid rgba(51, 65, 85, 0.5)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.3)'
+                  }}
+                  itemStyle={{ color: '#e2e8f0', fontSize: '13px' }}
+                  labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="flex flex-col gap-2 min-w-[280px] flex-shrink-0 bg-muted/10 p-4 rounded-xl border border-gray-100">
+          <div className={`flex flex-col gap-1.5 ${compact ? 'w-1/2' : 'min-w-[280px]'} flex-shrink-0 bg-slate-50 dark:bg-slate-800/50 ${compact ? 'p-2' : 'p-4'} rounded-xl border border-slate-200 dark:border-slate-700`}>
             {(Object.entries(distribution) as [RatingLevel, number][]).map(([rating, count]) => {
               const percent = total > 0 ? (count / total) * 100 : 0;
               return (
-                <div key={rating} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm w-full py-1">
-                  <div 
-                    className="h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold shrink-0 text-white"
+                <div key={rating} className={`grid grid-cols-[auto_1fr_auto] items-center ${compact ? 'gap-2 text-xs' : 'gap-3 text-sm'} w-full ${compact ? 'py-0.5' : 'py-1'}`}>
+                  <div
+                    className={`${compact ? 'h-5 w-5 text-[9px]' : 'h-6 w-6 text-[10px]'} rounded flex items-center justify-center font-bold shrink-0 text-white`}
                     style={{ backgroundColor: RATING_COLORS[rating] }}
                   >
                     {RATING_THRESHOLDS[rating.toUpperCase() as keyof typeof RATING_THRESHOLDS]?.grade || rating[0].toUpperCase()}
                   </div>
-                  <span className="font-medium text-muted-foreground truncate" title={RATING_LABELS[rating]}>
-                    {RATING_LABELS[rating]}
+                  <span className="font-medium text-slate-600 dark:text-slate-300 truncate" title={RATING_LABELS[rating]}>
+                    {compact ? RATING_LABELS[rating].split(' ')[0] : RATING_LABELS[rating]}
                   </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono text-muted-foreground bg-white px-1.5 py-0.5 rounded border border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700`}>
                       {percent.toFixed(0)}%
                     </span>
-                    <Badge variant={count > 0 ? "default" : "secondary"} className="font-mono flex justify-center h-6 min-w-[32px]">
+                    <Badge variant={count > 0 ? "default" : "secondary"} className={`font-mono flex justify-center ${compact ? 'h-5 min-w-[24px] text-[10px]' : 'h-6 min-w-[32px]'}`}>
                       {count}
                     </Badge>
                   </div>
@@ -552,15 +598,17 @@ interface RadarChartProps {
   title?: string
   description?: string
   showPercentage?: boolean
+  compact?: boolean
 }
 
-export function CategoryRadarChart({ 
-  scores, 
+export function CategoryRadarChart({
+  scores,
   comparisonScores,
   comparisonLabel = "Comparison",
-  title = "Performance Profile", 
+  title = "Performance Profile",
   description,
-  showPercentage = true 
+  showPercentage = true,
+  compact = false
 }: RadarChartProps) {
   const data = useMemo(() => {
     return (Object.entries(CATEGORY_CONFIG) as [CategoryName, { label: string; maxScore: number }][]).map(([category, config]) => ({
@@ -578,17 +626,17 @@ export function CategoryRadarChart({
 
   return (
     <Card className="overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
-          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <Target className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
           {title}
         </CardTitle>
-        {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="pt-2">
-        <div className="h-[420px] w-full">
+      <CardContent className={compact ? 'pt-0' : 'pt-2'}>
+        <div className={`${compact ? 'h-[250px]' : 'h-[420px]'} w-full`}>
           <ResponsiveContainer width="100%" height="100%">
-            <RadarChart cx="50%" cy="48%" outerRadius="80%" data={data} margin={{ top: 30, right: 40, bottom: 30, left: 40 }}>
+            <RadarChart cx="50%" cy="48%" outerRadius={compact ? "70%" : "80%"} data={data} margin={compact ? { top: 20, right: 30, bottom: 20, left: 30 } : { top: 30, right: 40, bottom: 30, left: 40 }}>
               <defs>
                 <linearGradient id="radarFillGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.6} />
@@ -598,7 +646,7 @@ export function CategoryRadarChart({
               <PolarGrid stroke="#475569" strokeOpacity={0.3} />
               <PolarAngleAxisAny
                 dataKey="category"
-                tick={{ fontSize: 12, fontWeight: 500, fill: '#94a3b8' }}
+                tick={{ fontSize: compact ? 10 : 12, fontWeight: 500, fill: '#94a3b8' }}
               />
               <PolarRadiusAxis
                 angle={90}
@@ -795,26 +843,33 @@ interface RegionComparisonChartProps {
   regions: RegionComparison[]
   title?: string
   description?: string
+  compact?: boolean
 }
 
-export function RegionComparisonChart({ 
-  regions, 
-  title = "Regional Comparison", 
-  description 
+export function RegionComparisonChart({
+  regions,
+  title = "Regional Comparison",
+  description,
+  compact = false
 }: RegionComparisonChartProps) {
   const sortedRegions = useMemo(() => {
     return [...regions].sort((a, b) => b.averageScore - a.averageScore)
   }, [regions])
 
+  const chartHeight = compact ? Math.min(350, Math.max(280, sortedRegions.length * 32)) : Math.max(300, sortedRegions.length * 40)
+
   if (!regions || regions.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+        <CardHeader className={compact ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+            <BarChart3 className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+            {title}
+          </CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className={`flex items-center justify-center ${compact ? 'h-40' : 'h-64'} text-slate-500 dark:text-slate-400`}>
             No regional data available
           </div>
         </CardContent>
@@ -823,36 +878,46 @@ export function RegionComparisonChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <BarChart3 className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={Math.max(300, sortedRegions.length * 40)}>
-          <BarChart 
-            data={sortedRegions} 
-            layout="vertical" 
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+      <CardContent className={compact ? 'pt-0' : ''}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart
+            data={sortedRegions}
+            layout="vertical"
+            margin={{ top: 5, right: compact ? 10 : 30, left: compact ? 5 : 100, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" domain={[0, 1000]} />
-            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 11 }} width={140} />
-            <Tooltip 
+            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+            <XAxis type="number" domain={[0, 1000]} tick={{ fill: '#64748b', fontSize: compact ? 10 : 12 }} axisLine={{ stroke: '#cbd5e1' }} />
+            <YAxis type="category" dataKey="regionName" tick={{ fontSize: compact ? 10 : 11, fill: '#64748b' }} width={compact ? 55 : 140} axisLine={{ stroke: '#cbd5e1' }} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(222, 47%, 11%)',
+                border: '1px solid hsl(215, 20%, 25%)',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '12px'
+              }}
               formatter={((value: any, name: string, entry: any) => {
                 const payload = entry?.payload;
                 if (!payload) return [value, 'Average Score'];
                 return [
-                  `${value} points (${payload.submittedCount} schools)`,
-                  'Average Score'
+                  `${value} pts (${payload.submittedCount} schools)`,
+                  'Score'
                 ];
               }) as any}
             />
-            <Bar 
-              dataKey="averageScore" 
-              fill="#8884d8" 
+            <Bar
+              dataKey="averageScore"
+              fill="#6366f1"
               radius={[0, 4, 4, 0]}
-              label={{ position: 'right', fontSize: 10 }}
+              label={compact ? false : { position: 'right', fontSize: 10, fill: '#64748b' }}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -865,22 +930,29 @@ interface SubmissionStatusChartProps {
   data: { regionName: string; submitted: number; pending: number }[]
   title?: string
   description?: string
+  compact?: boolean
 }
 
-export function SubmissionStatusChart({ 
-  data, 
-  title = "Submission Status by Region", 
-  description 
+export function SubmissionStatusChart({
+  data,
+  title = "Submission Status by Region",
+  description,
+  compact = false
 }: SubmissionStatusChartProps) {
+  const chartHeight = compact ? Math.min(350, Math.max(280, data.length * 32)) : Math.max(300, data.length * 40)
+
   if (!data || data.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+        <CardHeader className={compact ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+            <FileText className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+            {title}
+          </CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className={`flex items-center justify-center ${compact ? 'h-40' : 'h-64'} text-slate-500 dark:text-slate-400`}>
             No submission data available
           </div>
         </CardContent>
@@ -889,25 +961,36 @@ export function SubmissionStatusChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+      <CardHeader className={compact ? 'pb-2' : ''}>
+        <CardTitle className={`flex items-center gap-2 text-slate-900 dark:text-white ${compact ? 'text-base' : ''}`}>
+          <FileText className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} text-blue-600 dark:text-blue-400`} />
+          {title}
+        </CardTitle>
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400 text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={Math.max(300, data.length * 40)}>
-          <BarChart 
-            data={data} 
+      <CardContent className={compact ? 'pt-0' : ''}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
+          <BarChart
+            data={data}
             layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            margin={{ top: 5, right: compact ? 10 : 30, left: compact ? 5 : 100, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis type="category" dataKey="regionName" tick={{ fontSize: 11 }} width={140} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="submitted" fill="#22c55e" stackId="a" name="Submitted" />
-            <Bar dataKey="pending" fill="#f97316" stackId="a" name="Pending" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+            <XAxis type="number" tick={{ fill: '#64748b', fontSize: compact ? 10 : 12 }} axisLine={{ stroke: '#cbd5e1' }} />
+            <YAxis type="category" dataKey="regionName" tick={{ fontSize: compact ? 10 : 11, fill: '#64748b' }} width={compact ? 55 : 140} axisLine={{ stroke: '#cbd5e1' }} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(222, 47%, 11%)',
+                border: '1px solid hsl(215, 20%, 25%)',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '12px'
+              }}
+            />
+            <Legend wrapperStyle={{ paddingTop: compact ? '5px' : '10px', fontSize: compact ? '11px' : '12px' }} />
+            <Bar dataKey="submitted" fill="#22c55e" stackId="a" name="Submitted" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="pending" fill="#f97316" stackId="a" name="Pending" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -932,19 +1015,22 @@ interface StatCardProps {
 
 export function StatCard({ title, value, description, icon, trend }: StatCardProps) {
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
+        <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{title}</CardTitle>
+        <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
+          {icon}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
         {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
         )}
         {trend && (
-          <p className={`text-xs mt-1 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}% from last term
+          <p className={`text-xs mt-1 flex items-center gap-1 ${trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            {trend.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {Math.abs(trend.value)}% from last term
           </p>
         )}
       </CardContent>
@@ -1719,21 +1805,21 @@ const RATING_BAR_COLORS = [
   '#22c55e', // Outstanding - green
 ]
 
-export function ScoreDistributionHistogram({ 
-  distribution, 
+export function ScoreDistributionHistogram({
+  distribution,
   totalReports,
-  title = "Score Distribution", 
-  description 
+  title = "Score Distribution",
+  description
 }: ScoreDistributionProps) {
   if (!distribution || distribution.length === 0) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardTitle className="text-slate-900 dark:text-white">{title}</CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
             No distribution data available
           </div>
         </CardContent>
@@ -1747,13 +1833,13 @@ export function ScoreDistributionHistogram({
   }))
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChartIcon className="h-5 w-5 text-blue-600" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <BarChartIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           {title}
         </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+        {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
         <Badge variant="secondary" className="w-fit">{totalReports} reports total</Badge>
       </CardHeader>
       <CardContent>
@@ -1831,22 +1917,22 @@ interface CategoryGapProps {
   description?: string
 }
 
-export function CategoryGapAnalysisChart({ 
-  gaps, 
+export function CategoryGapAnalysisChart({
+  gaps,
   weakestCategory,
   strongestCategory,
-  title = "Category Gap Analysis", 
-  description 
+  title = "Category Gap Analysis",
+  description
 }: CategoryGapProps) {
   if (!gaps || gaps.length === 0) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardTitle className="text-slate-900 dark:text-white">{title}</CardTitle>
+          {description && <CardDescription className="text-slate-500 dark:text-slate-400">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
             No gap analysis data available
           </div>
         </CardContent>
@@ -1858,10 +1944,10 @@ export function CategoryGapAnalysisChart({
   const sortedGaps = [...gaps].sort((a, b) => a.filledPercentage - b.filledPercentage)
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-purple-600" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-purple-600 dark:text-purple-400" />
           {title}
         </CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
@@ -1963,64 +2049,64 @@ export function SubmissionProgressBreakdown({
   ].filter(d => d.value > 0)
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-600" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           {title}
         </CardTitle>
-        <CardDescription>{total} schools total</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">{total} schools total</CardDescription>
       </CardHeader>
       <CardContent>
         {/* Stacked Progress Bar */}
-        <div className="relative h-8 bg-muted rounded-full overflow-hidden flex">
-          <div 
-            className="h-full bg-green-500 transition-all duration-500"
+        <div className="relative h-8 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+          <div
+            className="h-full bg-emerald-500 dark:bg-emerald-500 transition-all duration-500"
             style={{ width: `${submittedPercentage}%` }}
           />
-          <div 
-            className="h-full bg-amber-500 transition-all duration-500"
+          <div
+            className="h-full bg-amber-500 dark:bg-amber-500 transition-all duration-500"
             style={{ width: `${inProgressPercentage}%` }}
           />
-          <div 
-            className="h-full bg-red-500 transition-all duration-500"
+          <div
+            className="h-full bg-red-500 dark:bg-red-500 transition-all duration-500"
             style={{ width: `${notStartedPercentage}%` }}
           />
         </div>
 
         {/* Legend */}
         <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+          <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="text-xs text-green-700 font-medium">Submitted</span>
+              <div className="w-3 h-3 rounded-full bg-emerald-500" />
+              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Submitted</span>
             </div>
-            <p className="text-2xl font-bold text-green-700">{submitted}</p>
-            <p className="text-xs text-green-600">{submittedPercentage}%</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{submitted}</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400/70">{submittedPercentage}%</p>
           </div>
-          <div className="text-center p-3 bg-amber-50 rounded-lg border border-amber-100">
+          <div className="text-center p-3 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-3 h-3 rounded-full bg-amber-500" />
-              <span className="text-xs text-amber-700 font-medium">In Progress</span>
+              <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">In Progress</span>
             </div>
-            <p className="text-2xl font-bold text-amber-700">{inProgress}</p>
-            <p className="text-xs text-amber-600">{inProgressPercentage}%</p>
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{inProgress}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400/70">{inProgressPercentage}%</p>
           </div>
-          <div className="text-center p-3 bg-red-50 rounded-lg border border-red-100">
+          <div className="text-center p-3 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-500/20">
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-3 h-3 rounded-full bg-red-500" />
-              <span className="text-xs text-red-700 font-medium">Not Started</span>
+              <span className="text-xs text-red-700 dark:text-red-400 font-medium">Not Started</span>
             </div>
-            <p className="text-2xl font-bold text-red-700">{notStarted}</p>
-            <p className="text-xs text-red-600">{notStartedPercentage}%</p>
+            <p className="text-2xl font-bold text-red-700 dark:text-red-400">{notStarted}</p>
+            <p className="text-xs text-red-600 dark:text-red-400/70">{notStartedPercentage}%</p>
           </div>
         </div>
 
         {/* Alert if many not started */}
         {notStartedPercentage > 30 && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700">
-              ⚠️ {notStarted} schools ({notStartedPercentage}%) haven't started their reports yet.
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {notStarted} schools ({notStartedPercentage}%) haven't started their reports yet.
             </p>
           </div>
         )}
@@ -2055,59 +2141,59 @@ export function RankingPositionCard({
   const hasData = regionalRank !== null || nationalRank !== null
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
           <Award className="h-5 w-5 text-amber-500" />
           {title}
         </CardTitle>
-        <CardDescription>See how you compare</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">See how you compare</CardDescription>
       </CardHeader>
       <CardContent>
         {!hasData ? (
-          <div className="text-center py-6 text-muted-foreground">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400">
             <p>Submit a report to see your ranking</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {/* Regional Ranking */}
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-              <p className="text-xs text-blue-600 font-medium mb-1">Regional Rank</p>
-              <p className="text-3xl font-bold text-blue-700">
+            <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-200 dark:border-blue-500/20">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Regional Rank</p>
+              <p className="text-3xl font-bold text-blue-700 dark:text-blue-400">
                 {regionalRank ? `#${regionalRank}` : '-'}
               </p>
-              <p className="text-xs text-blue-500 mt-1">
+              <p className="text-xs text-blue-500 dark:text-blue-400/70 mt-1">
                 of {regionalTotal} schools in {regionName}
               </p>
             </div>
 
             {/* National Ranking */}
-            <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100">
-              <p className="text-xs text-purple-600 font-medium mb-1">National Rank</p>
-              <p className="text-3xl font-bold text-purple-700">
+            <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg border border-purple-200 dark:border-purple-500/20">
+              <p className="text-xs text-purple-600 dark:text-purple-400 font-medium mb-1">National Rank</p>
+              <p className="text-3xl font-bold text-purple-700 dark:text-purple-400">
                 {nationalRank ? `#${nationalRank}` : '-'}
               </p>
-              <p className="text-xs text-purple-500 mt-1">
+              <p className="text-xs text-purple-500 dark:text-purple-400/70 mt-1">
                 of {nationalTotal} schools nationally
               </p>
             </div>
 
             {/* Percentile */}
             {nationalPercentile !== null && (
-              <div className="col-span-2 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-100">
+              <div className="col-span-2 p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-emerald-600 font-medium mb-1">National Percentile</p>
-                    <p className="text-2xl font-bold text-emerald-700">Top {100 - nationalPercentile}%</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mb-1">National Percentile</p>
+                    <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">Top {100 - nationalPercentile}%</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-4xl font-bold text-emerald-600">{nationalPercentile}th</p>
-                    <p className="text-xs text-emerald-500">percentile</p>
+                    <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">{nationalPercentile}th</p>
+                    <p className="text-xs text-emerald-500 dark:text-emerald-400/70">percentile</p>
                   </div>
                 </div>
-                <Progress 
-                  value={nationalPercentile} 
-                  className="mt-3 h-2 [&>div]:bg-emerald-500"
+                <Progress
+                  value={nationalPercentile}
+                  className="mt-3 h-2 bg-emerald-100 dark:bg-emerald-500/20 [&>div]:bg-emerald-500"
                 />
               </div>
             )}
@@ -2135,12 +2221,12 @@ export function CategoryStrengthCard({
 }: CategoryStrengthProps) {
   if (!strongest && !weakest) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="text-slate-900 dark:text-white">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400">
             <p>Submit a report to see category analysis</p>
           </div>
         </CardContent>
@@ -2149,64 +2235,64 @@ export function CategoryStrengthCard({
   }
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-indigo-500" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
           {title}
         </CardTitle>
-        <CardDescription>Your performance by category</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">Your performance by category</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Strongest */}
         {strongest && (
-          <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">💪</span>
-                  <p className="text-xs font-medium text-green-700 uppercase">Strongest Area</p>
+                  <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 uppercase">Strongest Area</p>
                 </div>
-                <p className="text-lg font-bold text-green-800">{strongest.label}</p>
-                <p className="text-sm text-green-600 mt-1">
+                <p className="text-lg font-bold text-emerald-800 dark:text-emerald-300">{strongest.label}</p>
+                <p className="text-sm text-emerald-600 dark:text-emerald-400/70 mt-1">
                   {strongest.score}/{strongest.maxScore} points
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-green-600">{strongest.percentage}%</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{strongest.percentage}%</p>
               </div>
             </div>
-            <Progress 
-              value={strongest.percentage} 
-              className="mt-3 h-2 [&>div]:bg-green-500"
+            <Progress
+              value={strongest.percentage}
+              className="mt-3 h-2 bg-emerald-100 dark:bg-emerald-500/20 [&>div]:bg-emerald-500"
             />
           </div>
         )}
 
         {/* Weakest */}
         {weakest && (
-          <div className="p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
+          <div className="p-4 bg-orange-50 dark:bg-orange-500/10 rounded-lg border border-orange-200 dark:border-orange-500/20">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">🎯</span>
-                  <p className="text-xs font-medium text-orange-700 uppercase">Needs Improvement</p>
+                  <p className="text-xs font-medium text-orange-700 dark:text-orange-400 uppercase">Needs Improvement</p>
                 </div>
-                <p className="text-lg font-bold text-orange-800">{weakest.label}</p>
-                <p className="text-sm text-orange-600 mt-1">
+                <p className="text-lg font-bold text-orange-800 dark:text-orange-300">{weakest.label}</p>
+                <p className="text-sm text-orange-600 dark:text-orange-400/70 mt-1">
                   {weakest.score}/{weakest.maxScore} points
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-orange-600">{weakest.percentage}%</p>
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{weakest.percentage}%</p>
               </div>
             </div>
-            <Progress 
-              value={weakest.percentage} 
-              className="mt-3 h-2 [&>div]:bg-orange-500"
+            <Progress
+              value={weakest.percentage}
+              className="mt-3 h-2 bg-orange-100 dark:bg-orange-500/20 [&>div]:bg-orange-500"
             />
-            <p className="text-xs text-orange-600 mt-2">
-              💡 Focus on improving this area for the biggest score impact
+            <p className="text-xs text-orange-600 dark:text-orange-400/70 mt-2">
+              Focus on improving this area for the biggest score impact
             </p>
           </div>
         )}
@@ -2233,40 +2319,40 @@ export function MostImprovedSchoolsTable({
   showDeclined = true
 }: MostImprovedProps) {
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-green-600" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           {title}
         </CardTitle>
-        <CardDescription>Schools with biggest score changes from previous term</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">Schools with biggest score changes from previous term</CardDescription>
       </CardHeader>
       <CardContent>
         {/* Most Improved */}
         {improved.length > 0 && (
           <div className="mb-6">
-            <h4 className="text-sm font-medium text-green-700 mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Most Improved ({improved.length})
             </h4>
             <div className="space-y-2">
               {improved.map((school, index) => (
-                <div 
+                <div
                   key={school.schoolId}
-                  className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100"
+                  className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg border border-emerald-200 dark:border-emerald-500/20"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-bold">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-green-800">{school.schoolName}</p>
-                      <p className="text-xs text-green-600">{school.regionName}</p>
+                      <p className="font-medium text-emerald-800 dark:text-emerald-300">{school.schoolName}</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400/70">{school.regionName}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-green-600">+{school.improvement}</p>
-                    <p className="text-xs text-green-500">
+                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+{school.improvement}</p>
+                    <p className="text-xs text-emerald-500 dark:text-emerald-400/70">
                       {school.previousScore} → {school.currentScore}
                     </p>
                   </div>
@@ -2279,28 +2365,28 @@ export function MostImprovedSchoolsTable({
         {/* Declined */}
         {showDeclined && declined.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-red-700 mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
               <TrendingDown className="h-4 w-4" />
               Needs Attention ({declined.length})
             </h4>
             <div className="space-y-2">
               {declined.map((school, index) => (
-                <div 
+                <div
                   key={school.schoolId}
-                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100"
+                  className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-500/20"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-red-800">{school.schoolName}</p>
-                      <p className="text-xs text-red-600">{school.regionName}</p>
+                      <p className="font-medium text-red-800 dark:text-red-300">{school.schoolName}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400/70">{school.regionName}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-red-600">-{school.decline}</p>
-                    <p className="text-xs text-red-500">
+                    <p className="text-lg font-bold text-red-600 dark:text-red-400">-{school.decline}</p>
+                    <p className="text-xs text-red-500 dark:text-red-400/70">
                       {school.previousScore} → {school.currentScore}
                     </p>
                   </div>
@@ -2311,7 +2397,7 @@ export function MostImprovedSchoolsTable({
         )}
 
         {improved.length === 0 && declined.length === 0 && (
-          <div className="text-center py-6 text-muted-foreground">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400">
             <p>Need at least 2 terms of data to show changes</p>
           </div>
         )}
@@ -2348,58 +2434,58 @@ export function RegionVsNationalCard({
   title = "Regional Performance"
 }: RegionVsNationalProps) {
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Award className="h-5 w-5 text-indigo-500" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Award className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
           {title}
         </CardTitle>
-        <CardDescription>How {regionName} compares nationally</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">How {regionName} compares nationally</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Regional Average */}
-          <div className={`p-4 rounded-lg border ${isAboveNational ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-            <p className="text-xs text-muted-foreground mb-1">Regional Average</p>
-            <p className={`text-3xl font-bold ${isAboveNational ? 'text-green-700' : 'text-orange-700'}`}>
+          <div className={`p-4 rounded-lg border ${isAboveNational ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' : 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20'}`}>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Regional Average</p>
+            <p className={`text-3xl font-bold ${isAboveNational ? 'text-emerald-700 dark:text-emerald-400' : 'text-orange-700 dark:text-orange-400'}`}>
               {regionAverage}
             </p>
           </div>
 
           {/* National Average */}
-          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-xs text-muted-foreground mb-1">National Average</p>
-            <p className="text-3xl font-bold text-gray-700">{nationalAverage}</p>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700/50">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">National Average</p>
+            <p className="text-3xl font-bold text-slate-700 dark:text-slate-300">{nationalAverage}</p>
           </div>
         </div>
 
         {/* Difference */}
-        <div className={`p-4 rounded-lg ${isAboveNational ? 'bg-green-100' : 'bg-orange-100'}`}>
+        <div className={`p-4 rounded-lg ${isAboveNational ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'bg-orange-50 dark:bg-orange-500/10'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {isAboveNational ? (
-                <TrendingUp className="h-5 w-5 text-green-600" />
+                <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <TrendingDown className="h-5 w-5 text-orange-600" />
+                <TrendingDown className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               )}
-              <span className={`font-medium ${isAboveNational ? 'text-green-700' : 'text-orange-700'}`}>
+              <span className={`font-medium ${isAboveNational ? 'text-emerald-700 dark:text-emerald-400' : 'text-orange-700 dark:text-orange-400'}`}>
                 {isAboveNational ? 'Above' : 'Below'} National Average
               </span>
             </div>
-            <span className={`text-xl font-bold ${isAboveNational ? 'text-green-600' : 'text-orange-600'}`}>
+            <span className={`text-xl font-bold ${isAboveNational ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400'}`}>
               {isAboveNational ? '+' : ''}{difference} pts
             </span>
           </div>
-          <p className={`text-sm mt-1 ${isAboveNational ? 'text-green-600' : 'text-orange-600'}`}>
+          <p className={`text-sm mt-1 ${isAboveNational ? 'text-emerald-600 dark:text-emerald-400/70' : 'text-orange-600 dark:text-orange-400/70'}`}>
             {Math.abs(differencePercent)}% {isAboveNational ? 'higher' : 'lower'} than national average
           </p>
         </div>
 
         {/* Regional Rank */}
-        <div className="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+        <div className="mt-4 p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg border border-indigo-200 dark:border-indigo-500/20">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-indigo-700">Regional Ranking</span>
-            <span className="text-lg font-bold text-indigo-600">
+            <span className="text-sm text-indigo-700 dark:text-indigo-400">Regional Ranking</span>
+            <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
               #{regionRank} of {totalRegions} regions
             </span>
           </div>
@@ -2458,12 +2544,12 @@ export function CategoryLeadersTable({
 
   if (!leaders || leaders.length === 0) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="text-slate-900 dark:text-white">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
+          <div className="text-center py-6 text-slate-500 dark:text-slate-400">
             <p>No data available</p>
           </div>
         </CardContent>
@@ -2478,20 +2564,20 @@ export function CategoryLeadersTable({
   // (used in contexts like Education Official where drilldown isn't wired).
   if (!regionId) {
     return (
-      <Card>
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <Award className="h-5 w-5 text-amber-500" />
             {title}
           </CardTitle>
-          <CardDescription>Top performing school in each category</CardDescription>
+          <CardDescription className="text-slate-500 dark:text-slate-400">Top performing school in each category</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {leaders.map((leader, index) => (
               <div
                 key={leader.category}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -2501,13 +2587,13 @@ export function CategoryLeadersTable({
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium">{leader.label}</p>
-                    <p className="text-sm text-muted-foreground">{leader.schoolName}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{leader.label}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{leader.schoolName}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold">{leader.percentage}%</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-lg font-bold text-slate-900 dark:text-white">{leader.percentage}%</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {leader.score}/{leader.maxScore}
                   </p>
                 </div>
@@ -2520,22 +2606,22 @@ export function CategoryLeadersTable({
   }
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
           <Award className="h-5 w-5 text-amber-500" />
           {title}
         </CardTitle>
-        <CardDescription>Click a category to view the full rankings</CardDescription>
+        <CardDescription className="text-slate-500 dark:text-slate-400">Click a category to view the full rankings</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto bg-slate-100 dark:bg-slate-800">
             {leaders.map((leader, index) => (
               <TabsTrigger
                 key={leader.category}
                 value={leader.category}
-                className="py-3 data-[state=active]:shadow-none"
+                className="py-3 data-[state=active]:shadow-none data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,11%)]"
               >
                 <div className="w-full text-left">
                   <div className="flex items-center gap-2">
@@ -2543,15 +2629,15 @@ export function CategoryLeadersTable({
                       className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
                     />
-                    <span className="text-xs font-medium leading-tight line-clamp-1">
+                    <span className="text-xs font-medium leading-tight line-clamp-1 text-slate-700 dark:text-slate-300">
                       {leader.label}
                     </span>
                   </div>
                   <div className="mt-2 flex items-baseline justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground line-clamp-1">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
                       {leader.schoolName}
                     </span>
-                    <Badge variant="secondary" className="shrink-0">
+                    <Badge variant="secondary" className="shrink-0 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                       {leader.percentage}%
                     </Badge>
                   </div>
@@ -2562,30 +2648,30 @@ export function CategoryLeadersTable({
 
           <TabsContent value={activeCategory} className="mt-4">
             {loadingRankings ? (
-              <div className="flex items-center justify-center py-10 text-muted-foreground">
+              <div className="flex items-center justify-center py-10 text-slate-500 dark:text-slate-400">
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
                 Loading category rankings…
               </div>
             ) : rankingsError ? (
-              <div className="flex items-center justify-center py-10 text-muted-foreground">
+              <div className="flex items-center justify-center py-10 text-slate-500 dark:text-slate-400">
                 {rankingsError}
               </div>
             ) : rankings.length === 0 ? (
-              <div className="flex items-center justify-center py-10 text-muted-foreground">
+              <div className="flex items-center justify-center py-10 text-slate-500 dark:text-slate-400">
                 No rankings available for this category
               </div>
             ) : (
               <div className="space-y-4">
                 {/* Top 3 spotlight */}
-                <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium">Top 3 schools</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">Top 3 schools</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Highest performers in {leaderByCategory.get(activeCategory)?.label || 'this category'}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                       <Trophy className="h-4 w-4 text-amber-500" />
                       <span className="text-xs">Spotlight</span>
                     </div>
@@ -2595,14 +2681,14 @@ export function CategoryLeadersTable({
                     {top3.map((s, idx) => (
                       <div
                         key={s.schoolId}
-                        className={`rounded-lg border p-3 bg-background ${idx === 0 ? 'md:col-span-1' : ''}`}
+                        className={`rounded-lg border border-slate-200/80 dark:border-slate-700/50 p-3 bg-white dark:bg-[hsl(222,47%,9%)] ${idx === 0 ? 'md:col-span-1' : ''}`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Medal className={`h-4 w-4 ${idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-orange-400'}`} />
-                            <span className="text-sm font-medium">#{s.rank}</span>
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">#{s.rank}</span>
                           </div>
-                          <Badge variant={idx === 0 ? 'default' : 'secondary'}>
+                          <Badge variant={idx === 0 ? 'default' : 'secondary'} className={idx === 0 ? '' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}>
                             {s.percentage}%
                           </Badge>
                         </div>
@@ -2611,13 +2697,13 @@ export function CategoryLeadersTable({
                           className={onViewSchool ? 'mt-2 text-left w-full hover:underline' : 'mt-2 text-left w-full'}
                           onClick={() => onViewSchool?.(s.schoolId)}
                         >
-                          <p className="font-medium leading-tight line-clamp-1">{s.schoolName}</p>
+                          <p className="font-medium leading-tight line-clamp-1 text-slate-900 dark:text-white">{s.schoolName}</p>
                         </button>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           {s.score}/{s.maxScore}
                         </p>
                         <div className="mt-2">
-                          <Progress value={s.percentage} />
+                          <Progress value={s.percentage} className="bg-slate-100 dark:bg-slate-700" />
                         </div>
                       </div>
                     ))}
@@ -2625,44 +2711,44 @@ export function CategoryLeadersTable({
                 </div>
 
                 {/* Full ranked list */}
-                <div className="rounded-md border">
+                <div className="rounded-md border border-slate-200/80 dark:border-slate-700/50 overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[70px]">Rank</TableHead>
-                        <TableHead>School</TableHead>
-                        <TableHead className="w-[120px]">Percent</TableHead>
-                        <TableHead className="text-right w-[140px]">Score</TableHead>
+                      <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
+                        <TableHead className="w-[70px] text-slate-600 dark:text-slate-400">Rank</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-400">School</TableHead>
+                        <TableHead className="w-[120px] text-slate-600 dark:text-slate-400">Percent</TableHead>
+                        <TableHead className="text-right w-[140px] text-slate-600 dark:text-slate-400">Score</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {rankings.map((s) => (
                         <TableRow
                           key={s.schoolId}
-                          className={onViewSchool ? 'cursor-pointer hover:bg-muted/50' : ''}
+                          className={`border-b border-slate-200/50 dark:border-slate-700/30 ${onViewSchool ? 'cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-500/5' : ''}`}
                           onClick={() => onViewSchool?.(s.schoolId)}
                         >
                           <TableCell>
                             <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                              s.rank <= 3 ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-muted text-muted-foreground'
+                              s.rank <= 3 ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                             }`}>
                               {s.rank}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-medium">{s.schoolName}</span>
+                              <span className="font-medium text-slate-900 dark:text-white">{s.schoolName}</span>
                               {s.regionName ? (
-                                <span className="text-xs text-muted-foreground">{s.regionName}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">{s.regionName}</span>
                               ) : null}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{s.percentage}%</Badge>
+                              <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">{s.percentage}%</Badge>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-mono font-semibold">
+                          <TableCell className="text-right font-mono font-semibold text-slate-900 dark:text-white">
                             {s.score}/{s.maxScore}
                           </TableCell>
                         </TableRow>
@@ -2696,17 +2782,17 @@ export function UnderperformingRegionsAlert({
 }: UnderperformingRegionsProps) {
   if (!regions || regions.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20">
         <CardContent className="py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 dark:bg-emerald-500/80 flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <p className="font-medium text-green-800">All Regions Performing Well</p>
-              <p className="text-sm text-green-600">All regions are at or above the national average</p>
+              <p className="font-medium text-emerald-800 dark:text-emerald-400">All Regions Performing Well</p>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400/80">All regions are at or above the national average</p>
             </div>
           </div>
         </CardContent>
@@ -2715,31 +2801,31 @@ export function UnderperformingRegionsAlert({
   }
 
   return (
-    <Card className="border-orange-200">
-      <CardHeader className="bg-orange-50 rounded-t-lg">
-        <CardTitle className="flex items-center gap-2 text-orange-800">
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-orange-200 dark:border-orange-500/30">
+      <CardHeader className="bg-orange-50 dark:bg-orange-500/10 rounded-t-lg border-b border-orange-100 dark:border-orange-500/20">
+        <CardTitle className="flex items-center gap-2 text-orange-800 dark:text-orange-400">
           <AlertTriangle className="h-5 w-5" />
           {title}
         </CardTitle>
-        <CardDescription className="text-orange-600">
+        <CardDescription className="text-orange-600 dark:text-orange-400/80">
           {regions.length} region{regions.length !== 1 ? 's' : ''} need attention
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
         <div className="space-y-3">
           {regions.map(region => (
-            <div 
+            <div
               key={region.regionId}
-              className={`flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100 ${onRegionClick ? 'cursor-pointer hover:bg-orange-100 transition-colors' : ''}`}
+              className={`flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-500/10 rounded-lg border border-orange-100 dark:border-orange-500/20 ${onRegionClick ? 'cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-500/15 transition-colors' : ''}`}
               onClick={() => onRegionClick?.(region.regionName)}
             >
               <div>
-                <p className="font-medium text-orange-800">{region.regionName}</p>
-                <p className="text-xs text-orange-600">{region.schoolCount} schools</p>
+                <p className="font-medium text-orange-800 dark:text-orange-400">{region.regionName}</p>
+                <p className="text-xs text-orange-600 dark:text-orange-400/70">{region.schoolCount} schools</p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-orange-700">{region.average}</p>
-                <p className="text-xs text-orange-500">
+                <p className="text-lg font-bold text-orange-700 dark:text-orange-400">{region.average}</p>
+                <p className="text-xs text-orange-500 dark:text-orange-400/70">
                   -{region.deficit} below avg ({region.nationalAverage})
                 </p>
               </div>
@@ -2769,18 +2855,18 @@ export function CompletionRateGauge({
   title = "Completion Rate"
 }: CompletionRateProps) {
   const getColor = () => {
-    if (percentage >= 80) return { bg: 'bg-green-500', text: 'text-green-600', light: 'bg-green-50' }
-    if (percentage >= 50) return { bg: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50' }
-    return { bg: 'bg-red-500', text: 'text-red-600', light: 'bg-red-50' }
+    if (percentage >= 80) return { bg: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', light: 'bg-emerald-50 dark:bg-emerald-500/10' }
+    if (percentage >= 50) return { bg: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', light: 'bg-amber-50 dark:bg-amber-500/10' }
+    return { bg: 'bg-red-500', text: 'text-red-600 dark:text-red-400', light: 'bg-red-50 dark:bg-red-500/10' }
   }
-  
+
   const colors = getColor()
 
   return (
-    <Card>
+    <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-blue-600" />
+        <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+          <Target className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           {title}
         </CardTitle>
       </CardHeader>
@@ -2797,7 +2883,7 @@ export function CompletionRateGauge({
                 stroke="currentColor"
                 strokeWidth="12"
                 fill="transparent"
-                className="text-muted"
+                className="text-slate-200 dark:text-slate-700"
               />
               <circle
                 cx="64"

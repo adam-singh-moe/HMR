@@ -1890,8 +1890,8 @@ export function AIInsightCard({
   }, [autoGenerate]) // Only run on mount
 
   return (
-    <div>
-      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-purple-200/50 dark:border-purple-500/20 ${className}`}>
+    <div className="h-full">
+      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-purple-200/50 dark:border-purple-500/20 h-full flex flex-col ${className}`}>
         <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-500/5 dark:to-blue-500/5 border-b border-purple-200/30 dark:border-purple-500/10">
           <div className="flex items-center justify-between">
             <div>
@@ -1950,17 +1950,19 @@ export function AIInsightCard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-4 flex-1 flex flex-col">
         {!hasGenerated && !loading && !autoGenerate && (
-          <div className="text-center py-8">
-            <Brain className="h-12 w-12 mx-auto text-purple-300 mb-4" />
+          <div className="text-center flex-1 flex flex-col items-center justify-center py-4">
+            <Brain className="h-10 w-10 mx-auto text-purple-300 dark:text-purple-400 mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
               Click below to generate AI-powered insights based on your assessment data.
             </p>
-            <Button onClick={() => generateInsight()} className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Generate Insights
-            </Button>
+            <div className="mt-auto">
+              <Button onClick={() => generateInsight()} variant="outline" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Generate Insights
+              </Button>
+            </div>
           </div>
         )}
         
@@ -1971,9 +1973,6 @@ export function AIInsightCard({
               <Loader2 className="h-6 w-6 animate-spin text-purple-600 dark:text-purple-400 absolute -bottom-1 -right-1" />
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">Analyzing assessment data with AI...</p>
-            <div className="w-48">
-              <Progress value={33} className="h-1" />
-            </div>
           </div>
         )}
         
@@ -2114,7 +2113,7 @@ export function AIAtRiskAlert({
   )
 
   return (
-    <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-orange-200/50 dark:border-orange-500/20 ${className}`}>
+    <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-orange-200/50 dark:border-orange-500/20 h-full flex flex-col ${className}`}>
       <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-500/5 dark:to-red-500/5 border-b border-orange-200/30 dark:border-orange-500/10">
         <div className="flex items-center justify-between">
           <div>
@@ -2141,17 +2140,19 @@ export function AIAtRiskAlert({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex-1 flex flex-col">
         {!hasLoaded && !loading && !autoGenerate && (
-          <div className="text-center py-6">
-            <Shield className="h-10 w-10 mx-auto text-orange-300 mb-3" />
+          <div className="text-center flex-1 flex flex-col items-center justify-center py-4">
+            <Shield className="h-10 w-10 mx-auto text-orange-300 dark:text-orange-400 mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
               Analyze schools that may need intervention based on performance patterns.
             </p>
-            <Button onClick={() => loadAtRiskSchools()} variant="outline" className="gap-2">
-              <Zap className="h-4 w-4" />
-              Analyze At-Risk Schools
-            </Button>
+            <div className="mt-auto">
+              <Button onClick={() => loadAtRiskSchools()} variant="outline" className="gap-2">
+                <Zap className="h-4 w-4" />
+                Analyze At-Risk Schools
+              </Button>
+            </div>
           </div>
         )}
 
@@ -2526,8 +2527,8 @@ export function AITrendPrediction({
   }
 
   return (
-    <Card className={`border-indigo-200 dark:border-indigo-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30">
+    <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-indigo-200/50 dark:border-indigo-500/20 h-full flex flex-col ${className}`}>
+      <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-500/5 dark:to-purple-500/5 border-b border-indigo-200/30 dark:border-indigo-500/10">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -2579,17 +2580,19 @@ export function AITrendPrediction({
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex-1 flex flex-col">
         {!prediction && !loading && !autoGenerate && (
-          <div className="text-center py-6">
-            <Target className="h-10 w-10 mx-auto text-indigo-300 mb-3" />
+          <div className="text-center flex-1 flex flex-col items-center justify-center py-4">
+            <Target className="h-10 w-10 mx-auto text-indigo-300 dark:text-indigo-400 mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
               Generate a forecast of future performance based on historical data.
             </p>
-            <Button onClick={() => generatePrediction()} variant="outline" className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Generate Prediction
-            </Button>
+            <div className="mt-auto">
+              <Button onClick={() => generatePrediction()} variant="outline" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Generate Prediction
+              </Button>
+            </div>
           </div>
         )}
 
