@@ -28,10 +28,8 @@ Instructions:
 - Start directly with your analysis - do NOT use memorandum format
 - Provide professional, actionable insights
 - Focus on educational outcomes and trends
-- Include a markdown table summarizing key metrics (use | for columns)
-- Include numeric comparisons in format "Category: XX%" for visualization
+- Be concise but thorough
 - Format with ## headers and bullet points
-- End with 2-3 actionable recommendations
 
 Begin your analysis:`
 
