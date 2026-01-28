@@ -210,8 +210,7 @@ function AdminAssessmentContent() {
 
   const loadSchoolOverview = async (schoolId: string, periodId?: string) => {
     const seq = ++overviewSeq.current
-    console.log(`[Admin] Loading school overview for ${schoolId}, seq: ${seq}`)
-    
+
     // Reset state
     setSchoolOverviewReports([])
     setSchoolOverviewTrends([])
@@ -258,8 +257,6 @@ function AdminAssessmentContent() {
         Promise.allSettled([reportsTask, trendsTask]),
         timeoutPromise
       ])
-      
-      console.log(`[Admin] Primary overview loading finished for seq: ${seq}`)
     } catch (error) {
       console.error(`[Admin] Error in loadSchoolOverview (seq ${seq}):`, error)
     } finally {

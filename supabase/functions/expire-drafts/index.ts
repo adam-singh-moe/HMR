@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
     }
 
     if (!expiredPeriods || expiredPeriods.length === 0) {
-      console.log('No expired periods found')
       return new Response(
         JSON.stringify({ message: 'No expired periods to process', processed: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -67,8 +66,6 @@ Deno.serve(async (req) => {
     const processedPeriods: string[] = []
 
     for (const period of expiredPeriods as Period[]) {
-      console.log(`Processing period: ${period.academic_year} - ${period.term_name}`)
-
       // Find all draft reports for this period
       const { data: drafts, error: draftsError } = await supabase
         .from('hmr_school_assessment_reports')
@@ -95,7 +92,6 @@ Deno.serve(async (req) => {
         if (updateError) {
           console.error(`Error expiring drafts for period ${period.id}:`, updateError)
         } else {
-          console.log(`Expired ${drafts.length} drafts for period ${period.id}`)
           totalExpiredDrafts += drafts.length
         }
       }
@@ -112,9 +108,6 @@ Deno.serve(async (req) => {
         processedPeriods.push(`${period.academic_year} - ${period.term_name}`)
       }
     }
-
-    // Log the operation
-    console.log(`Expire drafts completed: ${totalExpiredDrafts} drafts expired, ${processedPeriods.length} periods closed`)
 
     return new Response(
       JSON.stringify({

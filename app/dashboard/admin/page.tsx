@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUserCounts, getSchoolCount, getRegionCount, getPendingVerifications, getSchoolsWithRegions, getUserRegistrationData, getSchoolsByRegion } from "@/app/actions/admin"
 import { SchoolsList } from "@/components/admin/schools-list"
 import Link from "next/link"
-import { Users, School, Map, ArrowRight, UserCheck, TrendingUp, PieChart, Baby } from "lucide-react"
+import { Users, School, Map, ArrowRight, UserCheck, TrendingUp, PieChart, Baby, Loader2 } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -17,10 +17,12 @@ import {
   ResponsiveContainer,
   PieChart as RechartsPieChart,
   Cell,
-  Pie
+  Pie,
+  Area,
+  AreaChart
 } from "recharts"
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1', '#14b8a6']
 
 export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null)
@@ -37,7 +39,7 @@ export default function AdminDashboardPage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      
+
       // Load basic dashboard data
       const [userCounts, schoolCount, regionCount, pendingVerifications, schoolsWithRegions] = await Promise.all([
         getUserCounts(),
@@ -74,9 +76,16 @@ export default function AdminDashboardPage() {
 
   if (loading || !dashboardData) {
     return (
-      <div className="space-y-4 sm:space-y-6">
-        <h2 className="text-xl sm:text-2xl font-bold">System Overview</h2>
-        <div className="text-center py-8">Loading dashboard data...</div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">System Overview</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Admin dashboard and system metrics</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        </div>
       </div>
     )
   }
@@ -84,133 +93,190 @@ export default function AdminDashboardPage() {
   const { userCounts, schoolCount, regionCount, pendingVerifications } = dashboardData
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <h2 className="text-xl sm:text-2xl font-bold">System Overview</h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">System Overview</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Admin dashboard and system metrics</p>
+        </div>
+      </div>
 
-      {/* Pending Verifications */}
+      {/* Pending Verifications Alert */}
       {pendingVerifications.verifications.length > 0 && (
-        <div className="grid gap-4">
-          <Card className="border-red-200 bg-red-50">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-red-800">Pending Verifications</CardTitle>
-              <UserCheck className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-900">{pendingVerifications.verifications.length}</div>
-              <div className="text-xs text-red-700 mt-1">Education Officials awaiting verification</div>
+        <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200/80 dark:border-red-500/20 p-4">
+          <div className="flex items-start gap-4">
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
+              <UserCheck className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-800 dark:text-red-300">Pending Verifications</h3>
+              <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">
+                {pendingVerifications.verifications.length} Education Official{pendingVerifications.verifications.length !== 1 ? 's' : ''} awaiting verification
+              </p>
               <Link
                 href="/dashboard/admin/verifications"
-                className="text-xs text-red-700 flex items-center gap-1 mt-3 hover:underline"
+                className="inline-flex items-center gap-1 text-sm font-medium text-red-700 dark:text-red-400 mt-2 hover:underline"
               >
-                Review Verifications <ArrowRight className="h-3 w-3" />
+                Review Verifications <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Main Stats */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{userCounts.totalUsers}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {userCounts.headTeachers} Head Teachers, {userCounts.regionalOfficers} Regional Officers, {userCounts.educationOfficials} Education
-              Officials
+      {/* Main Stats - Colorful Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Total Users */}
+        <div className="relative overflow-hidden rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Users</p>
+              <p className="text-3xl font-bold text-blue-700 dark:text-blue-300 mt-1">{userCounts.totalUsers}</p>
+              <p className="text-xs text-blue-500/80 dark:text-blue-400/70 mt-2 leading-relaxed">
+                {userCounts.headTeachers} Head Teachers<br />
+                {userCounts.regionalOfficers} Regional Officers<br />
+                {userCounts.educationOfficials} Education Officials
+              </p>
             </div>
-            <Link
-              href="/dashboard/admin/users"
-              className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
-            >
-              Manage Users <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
+            <div className="p-2.5 rounded-xl bg-blue-100 dark:bg-blue-500/20">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+          <Link
+            href="/dashboard/admin/users"
+            className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 mt-4 hover:underline"
+          >
+            Manage Users <ArrowRight className="h-3 w-3" />
+          </Link>
+          {/* Decorative gradient */}
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-200/30 dark:bg-blue-500/10 rounded-full blur-2xl" />
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Schools</CardTitle>
-            <School className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{schoolCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">Across {regionCount} regions</div>
-            <Link
-              href="/dashboard/admin/schools"
-              className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
-            >
-              Manage Schools <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Schools */}
+        <div className="relative overflow-hidden rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20 p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Schools</p>
+              <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">{schoolCount}</p>
+              <p className="text-xs text-emerald-500/80 dark:text-emerald-400/70 mt-2">
+                Across {regionCount} regions
+              </p>
+            </div>
+            <div className="p-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-500/20">
+              <School className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </div>
+          <Link
+            href="/dashboard/admin/schools"
+            className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-4 hover:underline"
+          >
+            Manage Schools <ArrowRight className="h-3 w-3" />
+          </Link>
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-emerald-200/30 dark:bg-emerald-500/10 rounded-full blur-2xl" />
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Nursery Assessments</CardTitle>
-            <Baby className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">-</div>
-            <div className="text-xs text-muted-foreground mt-1">Manage nursery assessments</div>
-            <Link
-              href="/dashboard/admin/nursery-assessments"
-              className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
-            >
-              Manage Assessments <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Nursery Assessments */}
+        <div className="relative overflow-hidden rounded-xl bg-purple-50 dark:bg-purple-500/10 border border-purple-200/80 dark:border-purple-500/20 p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Nursery Assessments</p>
+              <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mt-1">-</p>
+              <p className="text-xs text-purple-500/80 dark:text-purple-400/70 mt-2">
+                Manage nursery assessments
+              </p>
+            </div>
+            <div className="p-2.5 rounded-xl bg-purple-100 dark:bg-purple-500/20">
+              <Baby className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+          <Link
+            href="/dashboard/admin/nursery-assessments"
+            className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400 mt-4 hover:underline"
+          >
+            Manage Assessments <ArrowRight className="h-3 w-3" />
+          </Link>
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-purple-200/30 dark:bg-purple-500/10 rounded-full blur-2xl" />
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Regions</CardTitle>
-            <Map className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{regionCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">Administrative regions</div>
-            <Link
-              href="/dashboard/admin/regions"
-              className="text-xs text-primary flex items-center gap-1 mt-3 hover:underline"
-            >
-              Manage Regions <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardContent>
-        </Card>
+        {/* Regions */}
+        <div className="relative overflow-hidden rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Regions</p>
+              <p className="text-3xl font-bold text-amber-700 dark:text-amber-300 mt-1">{regionCount}</p>
+              <p className="text-xs text-amber-500/80 dark:text-amber-400/70 mt-2">
+                Administrative regions
+              </p>
+            </div>
+            <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-500/20">
+              <Map className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+          </div>
+          <Link
+            href="/dashboard/admin/regions"
+            className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 mt-4 hover:underline"
+          >
+            Manage Regions <ArrowRight className="h-3 w-3" />
+          </Link>
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-amber-200/30 dark:bg-amber-500/10 rounded-full blur-2xl" />
+        </div>
       </div>
 
       {/* Charts Section */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* User Registration Trend */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-500/20">
+                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
               User Registration Trend
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-72">
               {chartData.userRegistration.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData.userRegistration}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="Head Teacher" stroke="#8884d8" />
-                    <Line type="monotone" dataKey="Regional Officer" stroke="#82ca9d" />
-                    <Line type="monotone" dataKey="Education Official" stroke="#ffc658" />
-                    <Line type="monotone" dataKey="total" stroke="#ff7300" strokeWidth={2} />
-                  </LineChart>
+                  <AreaChart data={chartData.userRegistration}>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorHT" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
+                      axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                    />
+                    <YAxis
+                      tick={{ fill: '#6b7280', fontSize: 11 }}
+                      axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(222, 47%, 11%)',
+                        border: '1px solid hsl(222, 47%, 20%)',
+                        borderRadius: '8px',
+                        color: '#fff'
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Area type="monotone" dataKey="total" stroke="#f97316" strokeWidth={2} fill="url(#colorTotal)" name="Total" />
+                    <Line type="monotone" dataKey="Head Teacher" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="Regional Officer" stroke="#10b981" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="Education Official" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                   No registration data available
                 </div>
               )}
@@ -219,15 +285,17 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Schools by Region */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5" />
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+              <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20">
+                <PieChart className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
               Schools by Region
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-72">
               {chartData.schoolsByRegion.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsPieChart>
@@ -235,32 +303,36 @@ export default function AdminDashboardPage() {
                       data={chartData.schoolsByRegion}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
+                      labelLine={{ stroke: '#64748b', strokeWidth: 1 }}
                       label={({ region, count }: any) => `${region}: ${count}`}
-                      outerRadius={80}
-                      fill="#8884d8"
+                      outerRadius={90}
+                      innerRadius={40}
                       dataKey="count"
+                      paddingAngle={2}
+                      stroke="none"
                     >
                       {chartData.schoolsByRegion.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(222, 47%, 11%)',
+                        border: '1px solid hsl(222, 47%, 20%)',
+                        borderRadius: '8px',
+                        color: '#fff'
+                      }}
+                    />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                   No school distribution data available
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Schools List */}
-      <div className="mt-4 sm:mt-6">
-        {/* <SchoolsList schools={schools} error={schoolsError} /> */}
       </div>
     </div>
   )

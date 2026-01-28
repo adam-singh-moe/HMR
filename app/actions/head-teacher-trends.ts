@@ -73,8 +73,6 @@ export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
     // Convert year to string for database query (year column is text type)
     const yearStr = String(year)
 
-    console.log("Fetching trends for school:", schoolId, "year:", yearStr)
-
     // Simple query exactly like regional officer - get reports with attendance data
     const { data: attendanceData, error: attendanceError } = await supabase
       .from("hmr_report")
@@ -95,12 +93,6 @@ export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
       .order("year", { ascending: true })
       .order("month", { ascending: true })
 
-    console.log("Attendance query result:", { 
-      recordCount: attendanceData?.length, 
-      error: attendanceError,
-      sampleData: attendanceData?.[0]
-    })
-
     // Get enrollment data
     const { data: enrollmentData, error: enrollmentError } = await supabase
       .from("hmr_report")
@@ -118,12 +110,6 @@ export async function getHeadTeacherDashboardTrends(selectedYear?: number) {
       .is("deleted_on", null)
       .order("year", { ascending: true })
       .order("month", { ascending: true })
-
-    console.log("Enrollment query result:", { 
-      recordCount: enrollmentData?.length, 
-      error: enrollmentError,
-      sampleData: enrollmentData?.[0]
-    })
 
     // Get expenditure data
     const { data: expenditureData, error: expenditureError } = await supabase

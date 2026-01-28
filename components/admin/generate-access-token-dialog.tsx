@@ -42,11 +42,9 @@ export function GenerateAccessTokenDialog({ userId, userName, userEmail }: Gener
 
   const handleGenerateToken = async () => {
     setLoading(true)
-    console.log('Generating token for user:', userId)
 
     try {
       const result = await generateUserAccessToken(userId, adminId)
-      console.log('Token generation result:', result)
 
       if (result.token && result.expiresAt) {
         const accessUrl = `${window.location.origin}/auth/token?token=${encodeURIComponent(result.token)}`
@@ -57,7 +55,6 @@ export function GenerateAccessTokenDialog({ userId, userName, userEmail }: Gener
           accessUrl
         }
 
-        console.log('Setting token data:', newTokenData)
         setTokenData(newTokenData)
 
         toast.success(`Access token generated for ${userName}. Valid for 30 minutes.`)

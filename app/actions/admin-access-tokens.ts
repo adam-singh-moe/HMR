@@ -9,18 +9,15 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-producti
 // Generate access token for a user (30 minutes expiration)
 export async function generateUserAccessToken(userId: string, adminId: string) {
   try {
-    console.log('Server: Generating token for userId:', userId, 'adminId:', adminId)
     const supabase = createServiceRoleSupabaseClient()
-    
+
     // Verify the user exists
     const { data: user, error: userError } = await supabase
       .from('hmr_users')
       .select('id, email, name, role')
       .eq('id', userId)
       .single()
-    
-    console.log('Server: User query result:', { user, userError })
-    
+
     if (userError || !user) {
       console.error('Server: User not found:', userError)
       return { token: null, error: "User not found" }
@@ -39,15 +36,13 @@ export async function generateUserAccessToken(userId: string, adminId: string) {
     // Generate JWT token
     const token = sign(payload, JWT_SECRET)
     
-    const result = { 
-      token, 
+    const result = {
+      token,
       expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       user: { id: user.id, email: user.email, name: user.name },
       error: null
     }
-    
-    console.log('Server: Token generation successful:', { tokenExists: !!token, expiresAt: result.expiresAt })
-    
+
     return result
   } catch (err) {
     console.error('Error generating access token:', err)

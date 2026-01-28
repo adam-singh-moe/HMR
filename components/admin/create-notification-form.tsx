@@ -45,7 +45,6 @@ export function CreateNotificationForm() {
   useEffect(() => {
     async function loadTargetingOptions() {
       const result = await getNotificationTargetingOptions()
-      console.log('Targeting options result:', result)
       if (!result.error) {
         setTargetingOptions({
           roles: result.roles || [],

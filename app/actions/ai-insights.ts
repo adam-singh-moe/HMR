@@ -284,9 +284,8 @@ async function fetchSectionDataWithReports(supabase: any, tableName: string, fil
   //   reportsFound: reports.length,
   //   sampleReport: reports[0]
   // })
-  
+
   if (!reports.length) {
-    console.log(`No reports found for ${tableName} with filters:`, filters)
     return []
   }
 

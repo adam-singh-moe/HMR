@@ -298,7 +298,6 @@ export async function getRegionalStatistics(
   periodId?: string
 ): Promise<{ stats: AnalyticsRegionalStats | null; error: string | null }> {
   try {
-    console.log('[Analytics] getRegionalStatistics', { regionId, periodId });
     const supabase = createServiceRoleSupabaseClient()
     
     // Get region info
@@ -375,7 +374,6 @@ export async function getRegionalStatistics(
 
     // Use totalSchools even if no reports exist - this prevents the "0 schools" bug for empty regions
     if (!reports || reports.length === 0) {
-      console.log(`[Analytics] No reports found for region ${regionId}, returning baseline stats with ${totalSchools} schools`);
       return {
         stats: {
           regionId,
@@ -1536,12 +1534,11 @@ export async function getSchoolRankingPosition(
     const { data: schoolReportRef, error: schoolReportError } = await filteredBase.limit(1).maybeSingle()
 
     if (schoolReportError || !schoolReportRef) {
-      console.log(`[Ranking] No report found for school ${schoolId} in period ${effectivePeriodId}, skipping expensive ranking calculation.`)
-      return { 
-        regionalRank: null, regionalTotal: 0, 
-        nationalRank: null, nationalTotal: 0, 
+      return {
+        regionalRank: null, regionalTotal: 0,
+        nationalRank: null, nationalTotal: 0,
         nationalPercentile: null, regionName,
-        error: null 
+        error: null
       }
     }
 

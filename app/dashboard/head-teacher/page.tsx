@@ -288,9 +288,7 @@ function HeadTeacherDashboardContent() {
 
     setTrendsLoading(true)
     try {
-      console.log('Fetching trends for year:', year)
       const result = await getHeadTeacherDashboardTrends(year)
-      console.log('Trends result:', result)
       if (result.error) {
         console.error('Error fetching trends:', result.error)
       } else {

@@ -610,9 +610,7 @@ export async function saveSectionData(
     // Check if this is a TAPS category
     const isTAPSCategory = Object.keys(tapsColumnMap).includes(normalizedSection as string)
     const isDemoCategory = Object.keys(demoColumnMap).includes(normalizedSection as string)
-    
-    console.log('saveSectionData - section:', normalizedSection, 'isTAPS:', isTAPSCategory, 'isDemo:', isDemoCategory)
-    
+
     let column: string | undefined
     if (isTAPSCategory) {
       column = tapsColumnMap[normalizedSection as TAPSCategoryName]

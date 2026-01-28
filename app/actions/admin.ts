@@ -1394,8 +1394,13 @@ export async function getMissingMonthsForSchool(schoolId: string) {
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Get all reports submitted by this school in the current year
-    const currentYear = new Date().getFullYear()
+    // Start checking from 2025 onwards
+    const startYear = 2025
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth() + 1 // getMonth() returns 0-11, we want 1-12
+
+    // Get all reports submitted by this school from 2025 onwards
     const { data: reports, error } = await supabase
       .from("hmr_report")
       .select(`
@@ -1404,48 +1409,56 @@ export async function getMissingMonthsForSchool(schoolId: string) {
         status
       `)
       .eq("school_id", schoolId)
-      .eq("year", currentYear.toString()) // Convert year to string since it's stored as text
-      .is("deleted_on", null) // Filter out soft-deleted reports
-      .eq("status", "submitted") // Only count submitted reports as complete
+      .gte("year", startYear.toString())
+      .is("deleted_on", null)
+      .eq("status", "submitted")
 
     if (error) {
       console.error("Error fetching school reports:", error)
       return { missingMonths: [], error: "Failed to fetch school reports." }
     }
 
-    // Debug logging
-    // console.log(`School ${schoolId} has ${reports?.length || 0} reports in ${currentYear}`)
-    // console.log('Reports found:', reports)
+    // Create a Set of submitted month-year combinations
+    const submittedReports = new Set(
+      reports?.map(report => `${report.year}-${report.month}`) || []
+    )
 
-    // Get submitted months - convert text months to numbers
-    const submittedMonths = new Set(reports?.map(report => parseInt(report.month)) || [])
-    //console.log('Submitted months:', Array.from(submittedMonths))
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
 
-    // Generate list of missing months (from January to current month - 1)
-    // Since it's October 1st, we should check Jan-Sep for missing reports
-    const currentDate = new Date()
-    const currentMonth = currentDate.getMonth() + 1 // getMonth() returns 0-11, we want 1-12
-    const missingMonths = []
+    const missingMonths: { month: number; year: number; displayName: string }[] = []
 
-    // Check from January to previous month (not including current month)
-    const monthsToCheck = currentMonth - 1
+    // Loop through each year from 2025 to current year
+    for (let year = startYear; year <= currentYear; year++) {
+      // Determine which months to check for this year
+      let monthsToCheck = 12
 
-    for (let month = 1; month <= monthsToCheck; month++) {
-      if (!submittedMonths.has(month)) {
-        const monthNames = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
-        ]
-        
-        missingMonths.push({
-          month: month,
-          year: currentYear,
-          displayName: `${monthNames[month - 1]} ${currentYear}`
-        })
+      if (year === currentYear) {
+        // For current year, only check up to previous month
+        monthsToCheck = currentMonth - 1
+      }
+
+      // Check each month
+      for (let month = 1; month <= monthsToCheck; month++) {
+        const key = `${year}-${month}`
+        if (!submittedReports.has(key)) {
+          missingMonths.push({
+            month: month,
+            year: year,
+            displayName: `${monthNames[month - 1]} ${year}`
+          })
+        }
       }
     }
 
-    //console.log('Missing months:', missingMonths)
+    // Sort by year and month (most recent first)
+    missingMonths.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year
+      return b.month - a.month
+    })
+
     return { missingMonths, error: null }
   } catch (error) {
     console.error("Error in getMissingMonthsForSchool:", error)
@@ -1920,8 +1933,6 @@ export async function getNurserySchools() {
       return { success: false, error: "Failed to fetch nursery schools.", schools: [] }
     }
 
-    console.log("Nursery schools found:", schools?.length || 0)
-
     const nurserySchools = schools.map(school => ({
       id: school.id,
       name: school.name,
@@ -1964,8 +1975,6 @@ export async function getSchoolsForNurseryAssignment() {
       console.error("Error fetching available schools:", error)
       return { success: false, error: "Failed to fetch available schools.", schools: [] }
     }
-
-    console.log("Available schools found:", schools?.length || 0)
 
     const availableSchools = schools.map(school => ({
       id: school.id,

@@ -400,10 +400,9 @@ export default function AdminNurseryAssessmentsPage() {
                           <Eye className="h-4 w-4 mr-2" />
                           View Assessment
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => {
                             // TODO: Implement edit functionality
-                            console.log('Edit assessment:', assessment.id)
                           }}
                         >
                           <Edit className="h-4 w-4 mr-2" />

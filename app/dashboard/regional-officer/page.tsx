@@ -264,9 +264,8 @@ function RegionalOfficerDashboardContent() {
     }, 30000) // 30 second timeout
 
     try {
-      console.log('Loading nursery assessments for region:', user.region_name)
       const result = await getAllNurseryAssessments(user.region_name)
-      
+
       clearTimeout(timeoutId) // Clear timeout on success
 
       if (result.error) {
@@ -275,7 +274,6 @@ function RegionalOfficerDashboardContent() {
       } else {
         setNurseryAssessments(result.assessments)
         setNurseryAssessmentsLoaded(true)
-        console.log('Loaded', result.assessments.length, 'nursery assessments')
       }
     } catch (error) {
       clearTimeout(timeoutId) // Clear timeout on error

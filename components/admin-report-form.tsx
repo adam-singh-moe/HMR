@@ -13,7 +13,7 @@ import { FileTextIcon, ChevronLeft, ChevronRight, Plus, Trash2, Eye, Loader2, Sa
 import { useRouter } from "next/navigation"
 import type { Report } from "@/types"
 import { supabase } from "@/lib/supabase-client"
-import { createHmrReport, saveStudentEnrollment, getStudentEnrollment, saveAttendance, getAttendance, saveStaffing, getStaffing, saveStaffDevelopment, getStaffDevelopment, saveSupervision, getSupervision, saveCurriculum, getCurriculum, saveFinance, getFinance, saveIncome, getIncome, saveAccidentSafety, getAccidentSafety, saveStaffMeetings, getStaffMeetings, savePhysicalFacilities, getPhysicalFacilities, saveResourcesNeeded, getResourcesNeeded, getReportStatus, getCurrentMonthReport, getReportProgress, getTeacherStatusOptions } from "@/app/actions/hmr-reports"
+import { createHmrReport, saveStudentEnrollment, getStudentEnrollment, saveAttendance, getAttendance, saveStaffing, getStaffing, saveStaffDevelopment, getStaffDevelopment, saveSupervision, getSupervision, saveCurriculum, getCurriculum, saveFinance, getFinance, saveIncome, getIncome, saveAccidentSafety, getAccidentSafety, saveStaffMeetings, getStaffMeetings, savePhysicalFacilities, getPhysicalFacilities, saveResourcesNeeded, getResourcesNeeded, savePhysicalEducation, getPhysicalEducation, getReportStatus, getCurrentMonthReport, getReportProgress, getTeacherStatusOptions } from "@/app/actions/hmr-reports"
 import { submitReport } from "@/app/actions/hmr-reports"
 import { useAutoSave } from "@/hooks/use-auto-save"
 import { useReportProgress } from "@/hooks/use-report-progress"
@@ -139,6 +139,10 @@ interface FormData {
   curriculumResources: string
   janitorialSupplies: string
   otherIssues: string
+
+  // Section 13: Physical Education
+  physicalEducationActivities: Array<{ activity: string }>
+  physicalEducationChallenges: Array<{ challenge: string }>
 }
 
 const SECTIONS = [
@@ -155,6 +159,7 @@ const SECTIONS = [
   "Staff Meetings",
   "Physical Facilities",
   "Resources Needed",
+  "Physical Education",
 ]
 
 export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear, onSuccess }: AdminReportFormProps) {
@@ -234,6 +239,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
     curriculumResources: "",
     janitorialSupplies: "",
     otherIssues: "",
+    physicalEducationActivities: [{ activity: "" }],
+    physicalEducationChallenges: [{ challenge: "" }],
   })
 
   const [schools, setSchools] = useState<Array<{ id: string; name: string; region_id: string }>>([])
@@ -342,7 +349,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         accidentSafetyResult,
         staffMeetingsResult,
         facilitiesResult,
-        resourcesResult
+        resourcesResult,
+        physicalEducationResult
       ] = await Promise.all([
         getStudentEnrollment(reportId),
         getAttendance(reportId),
@@ -355,7 +363,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         getAccidentSafety(reportId),
         getStaffMeetings(reportId),
         getPhysicalFacilities(reportId),
-        getResourcesNeeded(reportId)
+        getResourcesNeeded(reportId),
+        getPhysicalEducation(reportId)
       ])
 
       // Update form data with all loaded data
@@ -468,6 +477,31 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
           updatedData.otherIssues = data.other_issues || ""
         }
 
+        // Physical Education data
+        if ((physicalEducationResult as any).success && (physicalEducationResult as any).data) {
+          const data = (physicalEducationResult as any).data
+          // Parse activities and challenges from JSON strings
+          const activitiesStr = data.activities || "[]"
+          const challengesStr = data.challenges || "[]"
+          
+          try {
+            const activitiesArray = JSON.parse(activitiesStr)
+            const challengesArray = JSON.parse(challengesStr)
+            
+            updatedData.physicalEducationActivities = Array.isArray(activitiesArray) && activitiesArray.length > 0
+              ? activitiesArray.map((activity: string) => ({ activity }))
+              : [{ activity: "" }]
+              
+            updatedData.physicalEducationChallenges = Array.isArray(challengesArray) && challengesArray.length > 0
+              ? challengesArray.map((challenge: string) => ({ challenge }))
+              : [{ challenge: "" }]
+          } catch (parseError) {
+            console.error("Error parsing Physical Education data:", parseError)
+            updatedData.physicalEducationActivities = [{ activity: "" }]
+            updatedData.physicalEducationChallenges = [{ challenge: "" }]
+          }
+        }
+
         return updatedData
       })
 
@@ -476,10 +510,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         setProgressCurrentSection(progressResult.nextIncompleteSection)
       }
 
-      // Mark completed sections as saved
+      // Mark completed sections as saved and update progress
       if (progressResult.success && progressResult.completedSections) {
         const completedSectionsSet = new Set(progressResult.completedSections)
         setSavedSections(completedSectionsSet)
+        // Also update the progress state to sync with savedSections
+        progressResult.completedSections.forEach((sectionIndex: number) => {
+          markSectionComplete(sectionIndex)
+        })
       }
 
     } catch (error) {
@@ -906,6 +944,43 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
     loadResourcesNeededData()
   }, [reportId, currentSection])
 
+  // Load existing physical education data when reportId is available
+  useEffect(() => {
+    async function loadPhysicalEducationData() {
+      if (reportId && currentSection === 13) {
+        try {
+          const result = await getPhysicalEducation(reportId)
+          if ((result as any).success && (result as any).data) {
+            const data = (result as any).data
+            // Parse activities and challenges from JSON strings
+            const activitiesStr = data.activities || "[]"
+            const challengesStr = data.challenges || "[]"
+            
+            try {
+              const activitiesArray = JSON.parse(activitiesStr)
+              const challengesArray = JSON.parse(challengesStr)
+              
+              setFormData((prev) => ({
+                ...prev,
+                physicalEducationActivities: Array.isArray(activitiesArray) && activitiesArray.length > 0
+                  ? activitiesArray.map((activity: string) => ({ activity }))
+                  : [{ activity: "" }],
+                physicalEducationChallenges: Array.isArray(challengesArray) && challengesArray.length > 0
+                  ? challengesArray.map((challenge: string) => ({ challenge }))
+                  : [{ challenge: "" }],
+              }))
+            } catch (parseError) {
+              console.error("Error parsing Physical Education data:", parseError)
+            }
+          }
+        } catch (error) {
+          console.error("Error loading physical education data:", error)
+        }
+      }
+    }
+    loadPhysicalEducationData()
+  }, [reportId, currentSection])
+
   // Check report status when reportId changes
   useEffect(() => {
     async function checkReportStatus() {
@@ -1138,6 +1213,28 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
           }
           result = await saveResourcesNeeded(reportId, resourcesData)
           break
+        case 13: // Physical Education
+          const peFormData = new FormData()
+          peFormData.append("reportId", reportId)
+          
+          // Physical Education Activities
+          const peActivities = safeGetArray("physicalEducationActivities")
+          peActivities.forEach((item: any, index: number) => {
+            if (item && item.activity && item.activity.trim()) {
+              peFormData.append(`activity_${index}`, item.activity)
+            }
+          })
+          
+          // Physical Education Challenges
+          const peChallenges = safeGetArray("physicalEducationChallenges")
+          peChallenges.forEach((item: any, index: number) => {
+            if (item && item.challenge && item.challenge.trim()) {
+              peFormData.append(`challenge_${index}`, item.challenge)
+            }
+          })
+          
+          result = await savePhysicalEducation(peFormData)
+          break
         default:
           // For unknown sections, just mark as successful to avoid errors
           result = { success: true }
@@ -1222,10 +1319,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         setReportId(result.reportId)
         // Update form data to include the saved report ID
         setFormData((prev) => ({ ...prev, reportId: result.reportId }))
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(0)
         setSavedSections((prev) => new Set(prev).add(0))
-        // Show success message with better UX
-       
+
         nextSection() // Automatically move to next section
       }
 
@@ -1254,9 +1351,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(1)
         setSavedSections((prev) => new Set(prev).add(1))
- 
+
         nextSection() // Automatically move to next section
       }
 
@@ -1286,9 +1384,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(2)
         setSavedSections((prev) => new Set(prev).add(2))
-        
+
         nextSection() // Automatically move to next section
       }
 
@@ -1412,7 +1511,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(3)
         setSavedSections((prev) => new Set(prev).add(3))
 
         nextSection() // Automatically move to next section
@@ -1445,7 +1545,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(4)
         setSavedSections((prev) => new Set(prev).add(4))
         
         nextSection() // Automatically move to next section
@@ -1489,7 +1590,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(5)
         setSavedSections((prev) => new Set(prev).add(5))
       
         nextSection() // Automatically move to next section
@@ -1519,7 +1621,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(6)
         setSavedSections((prev) => new Set(prev).add(6))
        
         nextSection() // Automatically move to next section
@@ -1551,7 +1654,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(7)
         setSavedSections((prev) => new Set(prev).add(7))
        
         nextSection() // Automatically move to next section
@@ -1580,7 +1684,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(8)
         setSavedSections((prev) => new Set(prev).add(8))
        
         nextSection() // Automatically move to next section
@@ -1618,7 +1723,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(9)
         setSavedSections((prev) => new Set(prev).add(9))
   
         nextSection() // Automatically move to next section
@@ -1649,7 +1755,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(10)
         setSavedSections((prev) => new Set(prev).add(10))
        
         nextSection() // Automatically move to next section
@@ -1685,7 +1792,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
-        // Mark section as saved
+        // Mark section as saved and update progress
+        markSectionComplete(11)
         setSavedSections((prev) => new Set(prev).add(11))
         
         nextSection() // Automatically move to next section
@@ -1716,29 +1824,72 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       if (result.success) {
+        // Mark section as saved and update progress
+        markSectionComplete(12)
+        setSavedSections((prev) => new Set(prev).add(12))
+        
+        nextSection() // Move to Physical Education section
+      }
+
+      setIsSubmitting(false)
+    } else if (currentSection === 13) {
+      // Save physical education data and submit report
+      if (!reportId) {
+        alert("Please complete the Basic Information section first.")
+        return
+      }
+
+      setIsSubmitting(true)
+
+      // First save the Physical Education data
+      const peFormData = new FormData()
+      peFormData.append("reportId", reportId)
+      
+      // Physical Education Activities
+      formData.physicalEducationActivities.forEach((item, index) => {
+        if (item && item.activity && item.activity.trim()) {
+          peFormData.append(`activity_${index}`, item.activity)
+        }
+      })
+      
+      // Physical Education Challenges
+      formData.physicalEducationChallenges.forEach((item, index) => {
+        if (item && item.challenge && item.challenge.trim()) {
+          peFormData.append(`challenge_${index}`, item.challenge)
+        }
+      })
+      
+      const peResult = await savePhysicalEducation(peFormData)
+
+      if (peResult.error) {
+        alert(`Error: ${peResult.error}`)
+        setIsSubmitting(false)
+        return
+      }
+
+      if (peResult.success) {
         // Mark section as saved
+        markSectionComplete(12)
         setSavedSections((prev) => new Set(prev).add(12))
 
         // Submit the entire report (admin version)
-        //console.log("Admin form submitting report with ID:", reportId)
         const submitResult = await submitReport(reportId)
-       // console.log("Submit result:", submitResult)
         if (submitResult.success) {
           setReportStatus('submitted')
           setJustSubmittedReport(true)
-          
+
           // Clear auto-save data and progress tracking
           clearLocalStorage()
           clearProgress()
           setHasUnsavedChanges(false)
-          
+
           // Show success toast
           toast({
             title: "Report submitted successfully!",
             description: "Your monthly report has been submitted and can no longer be edited.",
             duration: 5000,
           })
-        
+
           onSuccess?.()
         } else {
           alert(`Report data saved but submission failed: ${submitResult.error}`)
@@ -1746,10 +1897,6 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
       }
 
       setIsSubmitting(false)
-    } else {
-      // Final submission - show all data
-    
-      onSuccess?.()
     }
   }
 
@@ -1765,22 +1912,97 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   // Calculate section completion percentage based on filled fields
   const calculateSectionProgress = (sectionIndex: number): number => {
+    const hasValue = (field: string | null | undefined | boolean) => {
+      if (typeof field === 'boolean') return true
+      if (field === null || field === undefined) return false
+      return String(field).trim().length > 0
+    }
+
     switch (sectionIndex) {
       case 0: // Basic Information
         const basicFields = [formData.schoolName, formData.educationDistrict, formData.schoolLevel, formData.schoolGrade]
-        const basicCompleted = basicFields.filter(field => field && field.trim()).length
+        const basicCompleted = basicFields.filter(field => hasValue(field)).length
         return Math.round((basicCompleted / basicFields.length) * 100)
-        
+
       case 1: // Student Enrollment
         const enrollmentFields = [formData.totalStudentsEnrolled, formData.studentsTransferredIn, formData.studentsTransferredOut]
-        const enrollmentCompleted = enrollmentFields.filter(field => field && field.trim()).length
+        const enrollmentCompleted = enrollmentFields.filter(field => hasValue(field)).length
         return Math.round((enrollmentCompleted / enrollmentFields.length) * 100)
-        
+
       case 2: // Attendance
         const attendanceFields = [formData.studentAttendanceRate, formData.studentPunctualityRate, formData.teacherAttendanceRate, formData.teacherPunctualityRate]
-        const attendanceCompleted = attendanceFields.filter(field => field && field.trim()).length
+        const attendanceCompleted = attendanceFields.filter(field => hasValue(field)).length
         return Math.round((attendanceCompleted / attendanceFields.length) * 100)
-        
+
+      case 3: // Staffing & Vacancies
+        const staffingFields = [formData.totalStaffEntitlement, formData.currentTeachersOnStaff]
+        const staffingCompleted = staffingFields.filter(field => hasValue(field)).length
+        // Also check if secondment question is answered
+        const hasSecondment = formData.secondmentCertificatesPrepared !== null ? 1 : 0
+        return Math.round(((staffingCompleted + hasSecondment) / 3) * 100)
+
+      case 4: // Staff Development
+        const pdHeld = formData.wholeschoolPDHeld !== null ? 1 : 0
+        if (formData.wholeschoolPDHeld === true) {
+          const pdFields = [formData.teachersAttendedPD, formData.pdTopic, formData.pdOutcomes]
+          const pdCompleted = pdFields.filter(field => hasValue(field)).length
+          return Math.round(((pdHeld + pdCompleted) / 4) * 100)
+        }
+        return pdHeld * 100
+
+      case 5: // Supervision
+        const supervisionFields = [
+          formData.hmLessonsObserved, formData.hmPositiveFindings, formData.hmNegativeFindings, formData.hmFollowUpActions,
+          formData.dhmLessonsObserved, formData.dhmPositiveFindings, formData.dhmNegativeFindings, formData.dhmFollowUpActions,
+          formData.groupHeadLessonsObserved, formData.groupHeadPositiveFindings, formData.groupHeadNegativeFindings, formData.groupHeadFollowUpActions
+        ]
+        const supervisionCompleted = supervisionFields.filter(field => hasValue(field)).length
+        return Math.round((supervisionCompleted / supervisionFields.length) * 100)
+
+      case 6: // Curriculum Monitoring
+        const curriculumFields = [formData.teachersNoLessonPlans, formData.curriculumActionsTaken]
+        const curriculumCompleted = curriculumFields.filter(field => hasValue(field)).length
+        return Math.round((curriculumCompleted / curriculumFields.length) * 100)
+
+      case 7: // Finance
+        const financeFields = [formData.openingBalance, formData.totalIncome, formData.totalExpenditure, formData.closingBalance]
+        const financeCompleted = financeFields.filter(field => hasValue(field)).length
+        return Math.round((financeCompleted / financeFields.length) * 100)
+
+      case 8: // Income Sources
+        const hasIncomeSources = formData.incomeSources.some(s => hasValue(s.source) && hasValue(s.amount))
+        return hasIncomeSources ? 100 : 0
+
+      case 9: // Accident & Safety
+        const safetyBooleans = [formData.evacuationDrillHeld, formData.classroomsHaveFireBuckets, formData.fireExtinguishersFunctional]
+        const safetyBooleansAnswered = safetyBooleans.filter(field => field !== null).length
+        const safetyFields = [formData.numberOfIncidents, formData.studentsInvolved, formData.teachersInvolvedIncidents, formData.preventionActions]
+        const safetyFieldsCompleted = safetyFields.filter(field => hasValue(field)).length
+        return Math.round(((safetyBooleansAnswered + safetyFieldsCompleted) / 7) * 100)
+
+      case 10: // Staff Meetings
+        const meetingHeld = formData.generalStaffMeetingHeld !== null ? 1 : 0
+        if (formData.generalStaffMeetingHeld === true) {
+          const meetingFields = [formData.keyIssuesDiscussed, formData.decisionsImplemented]
+          const meetingCompleted = meetingFields.filter(field => hasValue(field)).length
+          return Math.round(((meetingHeld + meetingCompleted) / 3) * 100)
+        }
+        return meetingHeld * 100
+
+      case 11: // Physical Facilities
+        const facilityFields = [
+          formData.teacherToiletsFunctional, formData.teacherSinksFunctional, formData.teacherTapsFunctional,
+          formData.studentToiletsFunctional, formData.studentTapsFunctional, formData.studentSinksFunctional,
+          formData.overcrowdedClassrooms
+        ]
+        const facilityCompleted = facilityFields.filter(field => hasValue(field)).length
+        return Math.round((facilityCompleted / facilityFields.length) * 100)
+
+      case 12: // Resources Needed
+        const resourceFields = [formData.curriculumResources, formData.janitorialSupplies, formData.otherIssues]
+        const resourceCompleted = resourceFields.filter(field => hasValue(field)).length
+        return Math.round((resourceCompleted / resourceFields.length) * 100)
+
       default:
         return 0
     }
@@ -1802,90 +2024,88 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Month</Label>
-          <Input value={formData.month} disabled className="bg-gray-50" />
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">Month</Label>
+          <Input value={formData.month} disabled className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100" />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Date</Label>
-          <Input value={formData.date} disabled className="bg-gray-50" />
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">Date</Label>
+          <Input value={formData.date} disabled className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100" />
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Education District</Label>
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">Education District</Label>
           <Input
             value={formData.educationDistrict}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
             placeholder="Auto-populated from your profile"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your school's region</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's region</p>
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Level *</Label>
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">School Level <span className="text-red-500">*</span></Label>
           <Input
             value={formData.schoolLevel}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
             placeholder="Auto-populated from your school"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your school's level</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your school's level</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Name</Label>
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">School Name</Label>
           <Input
             value={formData.schoolName}
             disabled
-            className="bg-gray-50"
+            className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
             placeholder="Auto-populated from your profile"
           />
-          <p className="text-xs text-gray-500">This is automatically set based on your assigned school</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">This is automatically set based on your assigned school</p>
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">School Grade *</Label>
+          <Label className="text-slate-700 dark:text-slate-300 font-medium">School Grade <span className="text-red-500">*</span></Label>
           {schoolDetails?.grade ? (
-            // Auto-populated grade from school data
             <>
               <Input
                 value={`Grade ${formData.schoolGrade}`}
                 disabled
-                className="bg-gray-50"
+                className="bg-slate-100 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100"
                 placeholder="Auto-populated from school data"
               />
-              <p className="text-xs text-gray-500">Grade automatically set from school data</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Grade automatically set from school data</p>
             </>
           ) : (
-            // Manual grade selection when no grade exists in school data
             <>
               <Select value={formData.schoolGrade} onValueChange={(value) => updateFormData("schoolGrade", value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600">
                   <SelectValue placeholder="Select grade" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600">
                   <SelectItem value="A">Grade A</SelectItem>
                   <SelectItem value="B">Grade B</SelectItem>
                   <SelectItem value="C">Grade C</SelectItem>
                   <SelectItem value="D">Grade D</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">Please select your school's grade from the list</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Please select your school's grade from the list</p>
             </>
           )}
         </div>
       </div>
 
       {schoolId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+          <p className="text-emerald-800 dark:text-emerald-300 text-sm">
             <strong>Ready to submit:</strong> Admin report for{" "}
             <strong>{schoolName}</strong> - {monthYear}
           </p>
           {reportId && (
-            <p className="text-green-700 text-xs mt-1">
+            <p className="text-emerald-700 dark:text-emerald-400 text-xs mt-1">
               ✅ Report started - ID: {reportId}
             </p>
           )}
@@ -1896,100 +2116,85 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderStudentEnrolment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700 flex items-center gap-2">
-        Section 1: Student Enrolment
-        {savedSections.has(1) && (
-          <span className="text-green-600 text-sm font-normal">✅ Completed</span>
-        )}
-        {progressState.sectionProgress[1] && progressState.sectionProgress[1] < 100 && (
-          <span className="text-blue-600 text-sm font-normal">📝 In Progress ({progressState.sectionProgress[1]}%)</span>
-        )}
-      </h3>
-      
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving student enrollment data.
-          </p>
-        </div>
-      )}
+      {/* Enrollment Numbers Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Enrollment Numbers</h3>
 
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Student enrollment data will be saved to report ID: {reportId}
-            {savedSections.has(1) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Students Enrolled <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalStudentsEnrolled}
+              onChange={(e) => updateFormData("totalStudentsEnrolled", e.target.value)}
+              placeholder="0"
+              min="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Transferred In <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsTransferredIn}
+              onChange={(e) => updateFormData("studentsTransferredIn", e.target.value)}
+              placeholder="0"
+              min="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Transferred Out <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsTransferredOut}
+              onChange={(e) => updateFormData("studentsTransferredOut", e.target.value)}
+              placeholder="0"
+              min="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
         </div>
-      )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Total number of students enrolled this month
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.totalStudentsEnrolled}
-            onChange={(e) => updateFormData("totalStudentsEnrolled", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Total number of Students transferred in
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.studentsTransferredIn}
-            onChange={(e) => updateFormData("studentsTransferredIn", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Total number of Students transferred out
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.studentsTransferredOut}
-            onChange={(e) => updateFormData("studentsTransferredOut", e.target.value)}
-            placeholder="0"
-            min="0"
-            required
-          />
-        </div>
+        {/* Required Notice */}
+        {currentSection === 1 && (
+          (!formData.totalStudentsEnrolled.trim() ||
+           !formData.studentsTransferredIn.trim() ||
+           !formData.studentsTransferredOut.trim()) && (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">Please fill in all enrollment fields to continue</p>
+            </div>
+          )
+        )}
       </div>
 
-      {currentSection === 1 && (
-        (!formData.totalStudentsEnrolled.trim() || 
-         !formData.studentsTransferredIn.trim() || 
-         !formData.studentsTransferredOut.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All three enrollment fields must be filled to continue.
-              </p>
-            </div>
+      {/* Summary Card */}
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <FileTextIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <h4 className="font-semibold text-slate-900 dark:text-white">Summary</h4>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Total Enrolled</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{formData.totalStudentsEnrolled || 0}</p>
           </div>
-        )
-      )}
-
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Summary</h4>
-        <div className="text-sm text-gray-700">
-          <p><strong>Total Enrolled:</strong> {formData.totalStudentsEnrolled || 0}</p>
-          <p><strong>Net Transfer:</strong> {(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0))}</p>
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Net Transfer</p>
+            <p className={`text-2xl font-bold ${(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0)) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+              {(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0)) >= 0 ? '+' : ''}{(Number(formData.studentsTransferredIn || 0) - Number(formData.studentsTransferredOut || 0))}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -1997,34 +2202,13 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderAttendance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 2: Attendance</h3>
-
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving attendance data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Attendance data will be saved to report ID: {reportId}
-            {savedSections.has(2) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
+      {/* Student Attendance Section */}
       <div className="space-y-4">
-        <h4 className="font-medium text-primary-600">Students</h4>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Student Attendance</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What percentage of students were present this month?
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Attendance Rate (%) <span className="text-red-500">*</span>
             </Label>
             <Input
               type="number"
@@ -2034,12 +2218,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => updateFormData("studentAttendanceRate", e.target.value)}
               placeholder="85"
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What percentage arrived on time?
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Punctuality Rate (%) <span className="text-red-500">*</span>
             </Label>
             <Input
               type="number"
@@ -2049,18 +2233,19 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => updateFormData("studentPunctualityRate", e.target.value)}
               placeholder="90"
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
         </div>
       </div>
 
+      {/* Teacher Attendance Section */}
       <div className="space-y-4">
-        <h4 className="font-medium text-primary-600">Teachers</h4>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Teacher Attendance</h3>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What percentage of teachers were present this month?
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Attendance Rate (%) <span className="text-red-500">*</span>
             </Label>
             <Input
               type="number"
@@ -2070,12 +2255,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => updateFormData("teacherAttendanceRate", e.target.value)}
               placeholder="95"
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What percentage arrived on time?
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Punctuality Rate (%) <span className="text-red-500">*</span>
             </Label>
             <Input
               type="number"
@@ -2085,32 +2270,42 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => updateFormData("teacherPunctualityRate", e.target.value)}
               placeholder="98"
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
         </div>
       </div>
 
+      {/* Required Notice */}
       {currentSection === 2 && (
-        (!formData.studentAttendanceRate.trim() || 
-         !formData.studentPunctualityRate.trim() || 
-         !formData.teacherAttendanceRate.trim() || 
+        (!formData.studentAttendanceRate.trim() ||
+         !formData.studentPunctualityRate.trim() ||
+         !formData.teacherAttendanceRate.trim() ||
          !formData.teacherPunctualityRate.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All four attendance fields must be filled to continue.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">Please fill in all attendance fields to continue</p>
           </div>
         )
       )}
 
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Summary</h4>
-        <div className="text-sm text-gray-700 space-y-1">
-          <p><strong>Student Attendance:</strong> {formData.studentAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.studentPunctualityRate || 0}%</p>
-          <p><strong>Teacher Attendance:</strong> {formData.teacherAttendanceRate || 0}% | <strong>Punctuality:</strong> {formData.teacherPunctualityRate || 0}%</p>
+      {/* Summary Card */}
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <FileTextIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <h4 className="font-semibold text-slate-900 dark:text-white">Summary</h4>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Student Attendance</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{formData.studentAttendanceRate || 0}%</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Punctuality: {formData.studentPunctualityRate || 0}%</p>
+          </div>
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Teacher Attendance</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">{formData.teacherAttendanceRate || 0}%</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Punctuality: {formData.teacherPunctualityRate || 0}%</p>
+          </div>
         </div>
       </div>
     </div>
@@ -2118,85 +2313,87 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderStaffing = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 3: Staffing and Vacancies</h3>
-
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <p className="text-amber-800 dark:text-amber-300 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving staffing data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+          <p className="text-emerald-800 dark:text-emerald-300 text-sm">
             <strong>Report Started:</strong> Staffing data will be saved to report ID: {reportId}
             {savedSections.has(3) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
+              <span className="ml-2 text-emerald-600 dark:text-emerald-400">✅ Section saved</span>
             )}
           </p>
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Total number of staff entitlement
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.totalStaffEntitlement}
-            onChange={(e) => updateFormData("totalStaffEntitlement", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Current Number of Teachers
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.currentTeachersOnStaff}
-            onChange={(e) => updateFormData("currentTeachersOnStaff", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Under-staffed by (Number of Teachers)
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.underStaffedBy}
-            onChange={(e) => updateFormData("underStaffedBy", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            Over-staffed by (Number of Teachers)
-            <span className="text-red-500 ml-1">*</span>
-          </Label>
-          <Input
-            type="number"
-            value={formData.overStaffedBy}
-            onChange={(e) => updateFormData("overStaffedBy", e.target.value)}
-            placeholder="0"
-            required
-          />
+      {/* Staff Numbers Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Staff Numbers</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Staff Entitlement <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalStaffEntitlement}
+              onChange={(e) => updateFormData("totalStaffEntitlement", e.target.value)}
+              placeholder="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Current Teachers <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.currentTeachersOnStaff}
+              onChange={(e) => updateFormData("currentTeachersOnStaff", e.target.value)}
+              placeholder="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Under-staffed By <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.underStaffedBy}
+              onChange={(e) => updateFormData("underStaffedBy", e.target.value)}
+              placeholder="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Over-staffed By <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.overStaffedBy}
+              onChange={(e) => updateFormData("overStaffedBy", e.target.value)}
+              placeholder="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-primary-700 font-medium">
-          Were secondment attendance certificates prepared? *
+        <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Secondment Certificates Prepared? <span className="text-red-500">*</span>
         </Label>
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
@@ -2207,9 +2404,9 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => {
                 updateFormData("secondmentCertificatesPrepared", e.target.checked ? true : null)
               }}
-              className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
             />
-            <Label htmlFor="secondment-yes" className="text-sm font-normal cursor-pointer">
+            <Label htmlFor="secondment-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               Yes
             </Label>
           </div>
@@ -2221,39 +2418,36 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => {
                 updateFormData("secondmentCertificatesPrepared", e.target.checked ? false : null)
               }}
-              className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
             />
-            <Label htmlFor="secondment-no" className="text-sm font-normal cursor-pointer">
+            <Label htmlFor="secondment-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               No
             </Label>
           </div>
         </div>
       </div>
 
+      {/* Required Notice */}
       {currentSection === 3 && (
-        (!formData.totalStaffEntitlement.trim() || 
-         !formData.currentTeachersOnStaff.trim() || 
-         !formData.underStaffedBy.trim() || 
-         !formData.overStaffedBy.trim() || 
+        (!formData.totalStaffEntitlement.trim() ||
+         !formData.currentTeachersOnStaff.trim() ||
+         !formData.underStaffedBy.trim() ||
+         !formData.overStaffedBy.trim() ||
          formData.secondmentCertificatesPrepared === null) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All five staffing fields must be filled to continue.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">Please fill in all staffing fields to continue</p>
           </div>
         )
       )}
 
       {/* Teachers who left the school */}
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">
+          <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">
             Teacher Status Reports
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Please report any changes in teacher status for the current month
           </p>
         </div>
@@ -2261,7 +2455,7 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         {/* Teachers who left the school */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
               <span className="inline-block w-2 h-2 bg-red-500 rounded-full mr-2"></span>
               Teachers who left the school
             </h4>
@@ -2270,13 +2464,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersWhoLeft", { name: "", status: "", reason: "" })}
+              className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More
             </Button>
           </div>
           {formData.teachersWhoLeft.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
+          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
             <Input
               placeholder="Name"
               value={teacher.name}
@@ -2334,12 +2529,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Special Leave (Disciplinary) – With Pay */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
               <span className="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
               Teachers on Special Leave (Disciplinary) With Pay
             </h4>
@@ -2348,13 +2543,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               variant="outline"
               size="sm"
               onClick={() => addToArray("specialLeave", { name: "", status: "", offence: "" })}
+              className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More
             </Button>
           </div>
         {formData.specialLeave.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
+          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
             <Input
               placeholder="Name"
               value={teacher.name}
@@ -2399,12 +2595,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Teachers Assumed Duty */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
               <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Teachers who Assumed Duty
             </h4>
@@ -2413,13 +2609,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersAssumedDuty", { name: "", status: "" })}
+              className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More
             </Button>
           </div>
         {formData.teachersAssumedDuty.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
+          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
             <Input
               placeholder="Name"
               value={teacher.name}
@@ -2460,12 +2657,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Teachers Not Reported for Duty */}
         <div className="space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
               <span className="inline-block w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
               Teachers Not Reported for Duty
             </h4>
@@ -2476,13 +2673,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onClick={() =>
                 addToArray("teachersNotReported", { name: "", status: "", reason: "", daysAbsent: "", actionTaken: "" })
               }
+              className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More
             </Button>
           </div>
         {formData.teachersNotReported.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
+          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
             <Input
               placeholder="Name"
               value={teacher.name}
@@ -2563,12 +2761,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Teachers Without Salary */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600 flex items-center">
+            <h4 className="font-medium text-slate-700 dark:text-slate-300 flex items-center">
               <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
               Teachers who did not receieve salary for current month
             </h4>
@@ -2577,13 +2775,14 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               variant="outline"
               size="sm"
               onClick={() => addToArray("teachersWithoutSalary", { name: "", status: "", reason: "" })}
+              className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add More
             </Button>
           </div>
         {formData.teachersWithoutSalary.map((teacher, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border rounded-lg">
+          <div key={index} className="grid gap-4 md:grid-cols-4 p-4 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800">
             <Input
               placeholder="Name"
               value={teacher.name}
@@ -2638,12 +2837,9 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderStaffDevelopment = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 4: Staff Development</h3>
-
       <div className="space-y-4">
-        <Label className="text-primary-700 font-medium">
-          Was a whole school PD session held?
-          <span className="text-red-500 ml-1">*</span>
+        <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Whole School PD Session Held? <span className="text-red-500">*</span>
         </Label>
         <div className="flex gap-6">
           <div className="flex items-center space-x-2">
@@ -2663,9 +2859,9 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   updateFormData("pdOutcomes", "");
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
             />
-            <Label htmlFor="pd-yes" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="pd-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               Yes
             </Label>
           </div>
@@ -2686,61 +2882,61 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   updateFormData("wholeschoolPDHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
             />
-            <Label htmlFor="pd-no" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="pd-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               No
             </Label>
           </div>
         </div>
       </div>
 
-      {/* Show validation message if first question not answered */}
+      {/* Required Notice */}
       {currentSection === 4 && formData.wholeschoolPDHeld === null && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <p className="text-red-700 text-sm">
-              <strong>Required:</strong> Please answer whether a whole school PD session was held.
-            </p>
-          </div>
+        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+          <AlertCircle className="h-4 w-4" />
+          <p className="text-sm">Please answer whether a PD session was held</p>
         </div>
       )}
 
       {/* Show additional fields only when Yes is selected */}
       {formData.wholeschoolPDHeld === true && (
         <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What percentage of teachers attended this session?
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={formData.teachersAttendedPD}
-              onChange={(e) => updateFormData("teachersAttendedPD", e.target.value)}
-              placeholder="85"
-              required
-            />
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">PD Session Details</h3>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Teachers Attended (%) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.teachersAttendedPD}
+                onChange={(e) => updateFormData("teachersAttendedPD", e.target.value)}
+                placeholder="85"
+                required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                PD Topic <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={formData.pdTopic}
+                onChange={(e) => updateFormData("pdTopic", e.target.value)}
+                placeholder="Enter PD topic"
+                required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
           </div>
+
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              Topic of PD session
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <Input
-              value={formData.pdTopic}
-              onChange={(e) => updateFormData("pdTopic", e.target.value)}
-              placeholder="Enter PD topic"
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              Reason for choosing the topic
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Reason for Topic <span className="text-red-500">*</span>
             </Label>
             <Textarea
               value={formData.pdTopicReason}
@@ -2748,12 +2944,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               placeholder="Explain why this topic was chosen"
               rows={3}
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-primary-700 font-medium">
-              What were the outcomes achieved?
-              <span className="text-red-500 ml-1">*</span>
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Outcomes Achieved <span className="text-red-500">*</span>
             </Label>
             <Textarea
               value={formData.pdOutcomes}
@@ -2761,21 +2957,18 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               placeholder="Describe the outcomes and impact"
               rows={3}
               required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
             />
           </div>
-          
-          {/* Show validation message for required fields when Yes is selected */}
-          {(!formData.teachersAttendedPD.trim() || 
-            !formData.pdTopic.trim() || 
-            !formData.pdTopicReason.trim() || 
+
+          {/* Required Notice */}
+          {(!formData.teachersAttendedPD.trim() ||
+            !formData.pdTopic.trim() ||
+            !formData.pdTopicReason.trim() ||
             !formData.pdOutcomes.trim()) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <p className="text-red-700 text-sm">
-                  <strong>Required:</strong> All PD session fields must be filled to continue.
-                </p>
-              </div>
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">Please fill in all PD session fields to continue</p>
             </div>
           )}
         </div>
@@ -2785,48 +2978,33 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderSupervision = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 5: Supervision</h3>
-
       {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <p className="text-amber-800 dark:text-amber-300 text-sm">
             <strong>Note:</strong> Please complete the Basic Information section first to enable saving supervision data.
           </p>
         </div>
       )}
 
       {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+          <p className="text-emerald-800 dark:text-emerald-300 text-sm">
             <strong>Report Started:</strong> Supervision data will be saved to report ID: {reportId}
             {savedSections.has(5) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
+              <span className="ml-2 text-emerald-600 dark:text-emerald-400">✅ Section saved</span>
             )}
           </p>
         </div>
       )}
 
-      <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-primary-700 border-b border-primary-200 pb-2 mb-4">
-            Supervision Reports
-          </h3>
-          <p className="text-sm text-gray-600">
-            Report on lesson observations conducted by different supervisory personnel
-          </p>
-        </div>
-
+      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
         {/* Head Master (HM) */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
-            <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-            Head Master (HM)
-          </h4>
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Head Master (HM)</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Lessons Observed <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="number"
@@ -2834,12 +3012,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 onChange={(e) => updateFormData("hmLessonsObserved", e.target.value)}
                 placeholder="0"
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Positive Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmPositiveFindings}
@@ -2847,12 +3025,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe positive observations"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Negative Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmNegativeFindings}
@@ -2860,12 +3038,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe areas for improvement"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Follow-up Actions <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hmFollowUpActions}
@@ -2873,42 +3051,35 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe follow-up actions taken"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-          
-          {/* Validation message for HM fields */}
+
+          {/* Required Notice */}
           {currentSection === 5 && (
-            (!formData.hmLessonsObserved.trim() || 
-             !formData.hmPositiveFindings.trim() || 
-             !formData.hmNegativeFindings.trim() || 
+            (!formData.hmLessonsObserved.trim() ||
+             !formData.hmPositiveFindings.trim() ||
+             !formData.hmNegativeFindings.trim() ||
              !formData.hmFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Head Master supervision fields must be filled to continue.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-sm">Please fill in all Head Master supervision fields</p>
               </div>
             )
           )}
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Deputy HM (DHM) */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
-            <span className="inline-block w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-            Deputy Head Master (DHM)
-          </h4>
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Deputy Head Master (DHM)</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Lessons Observed <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="number"
@@ -2916,12 +3087,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 onChange={(e) => updateFormData("dhmLessonsObserved", e.target.value)}
                 placeholder="0"
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Positive Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmPositiveFindings}
@@ -2929,12 +3100,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe positive observations"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Negative Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmNegativeFindings}
@@ -2942,12 +3113,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe areas for improvement"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Follow-up Actions <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.dhmFollowUpActions}
@@ -2955,42 +3126,35 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe follow-up actions taken"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-          
-          {/* Validation message for DHM fields */}
+
+          {/* Required Notice */}
           {currentSection === 5 && (
-            (!formData.dhmLessonsObserved.trim() || 
-             !formData.dhmPositiveFindings.trim() || 
-             !formData.dhmNegativeFindings.trim() || 
+            (!formData.dhmLessonsObserved.trim() ||
+             !formData.dhmPositiveFindings.trim() ||
+             !formData.dhmNegativeFindings.trim() ||
              !formData.dhmFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Deputy Head Master supervision fields must be filled to continue.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-sm">Please fill in all Deputy Head Master supervision fields</p>
               </div>
             )
           )}
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Year Group Head / SM / Divisional Head */}
-        <div className="space-y-4 mb-8">
-          <h4 className="font-medium text-primary-600 flex items-center">
-            <span className="inline-block w-2 h-2 bg-orange-600 rounded-full mr-2"></span>
-            Year Group Head / Senior Master / Divisional Head
-          </h4>
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Year Group Head / Senior Master / Divisional Head</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Lessons Observed <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="number"
@@ -2998,12 +3162,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 onChange={(e) => updateFormData("groupHeadLessonsObserved", e.target.value)}
                 placeholder="0"
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Positive Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadPositiveFindings}
@@ -3011,12 +3175,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe positive observations"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Negative Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadNegativeFindings}
@@ -3024,12 +3188,12 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe areas for improvement"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Follow-up Actions <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.groupHeadFollowUpActions}
@@ -3037,105 +3201,95 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 placeholder="Describe follow-up actions taken"
                 rows={2}
                 required
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
-          
-          {/* Validation message for Group Head fields */}
+
+          {/* Required Notice */}
           {currentSection === 5 && (
-            (!formData.groupHeadLessonsObserved.trim() || 
-             !formData.groupHeadPositiveFindings.trim() || 
-             !formData.groupHeadNegativeFindings.trim() || 
+            (!formData.groupHeadLessonsObserved.trim() ||
+             !formData.groupHeadPositiveFindings.trim() ||
+             !formData.groupHeadNegativeFindings.trim() ||
              !formData.groupHeadFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Year Group Head supervision fields must be filled to continue.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-sm">Please fill in all Year Group Head supervision fields</p>
               </div>
             )
           )}
         </div>
 
         {/* Separator */}
-        <div className="border-t border-gray-300 my-6"></div>
+        <div className="border-t border-slate-200 dark:border-slate-700 my-6"></div>
 
         {/* Head of Department (HOD) */}
         <div className="space-y-4">
-          <h4 className="font-medium text-primary-600 flex items-center">
-            <span className="inline-block w-2 h-2 bg-purple-600 rounded-full mr-2"></span>
-            Head of Department (HOD)
-          </h4>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Head of Department (HOD)</h3>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Number of lessons observed
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Number of Lessons Observed <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="number"
                 value={formData.hodLessonsObserved}
                 onChange={(e) => updateFormData("hodLessonsObserved", e.target.value)}
                 placeholder="0"
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Positive findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Positive Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodPositiveFindings}
                 onChange={(e) => updateFormData("hodPositiveFindings", e.target.value)}
                 placeholder="Describe positive observations"
                 rows={2}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Negative findings
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Negative Findings <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodNegativeFindings}
                 onChange={(e) => updateFormData("hodNegativeFindings", e.target.value)}
                 placeholder="Describe areas for improvement"
                 rows={2}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Follow-up actions
-                <span className="text-red-500 ml-1">*</span>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Follow-up Actions <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 value={formData.hodFollowUpActions}
                 onChange={(e) => updateFormData("hodFollowUpActions", e.target.value)}
                 placeholder="Describe follow-up actions taken"
                 rows={2}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 required
               />
             </div>
           </div>
-          
+
           {/* Validation message for HOD fields */}
           {currentSection === 5 && (
-            (!formData.hodLessonsObserved.trim() || 
-             !formData.hodPositiveFindings.trim() || 
-             !formData.hodNegativeFindings.trim() || 
+            (!formData.hodLessonsObserved.trim() ||
+             !formData.hodPositiveFindings.trim() ||
+             !formData.hodNegativeFindings.trim() ||
              !formData.hodFollowUpActions.trim()) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All Head of Department supervision fields must be filled to continue.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4" />
+                <p className="text-sm">Please fill in all Head of Department supervision fields to continue</p>
               </div>
             )
           )}
@@ -3146,60 +3300,45 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderCurriculum = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 6: Curriculum Monitoring</h3>
-
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving curriculum data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Curriculum data will be saved to report ID: {reportId}
-            {savedSections.has(6) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Number of teachers who did not submit lesson plans <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.teachersNoLessonPlans}
-            onChange={(e) => updateFormData("teachersNoLessonPlans", e.target.value)}
-            placeholder="0"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">What actions were taken? <span className="text-red-500">*</span></Label>
-          <Textarea
-            value={formData.curriculumActionsTaken}
-            onChange={(e) => updateFormData("curriculumActionsTaken", e.target.value)}
-            placeholder="Describe actions taken"
-            rows={3}
-            required
-          />
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Lesson Plan Monitoring</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Teachers Without Lesson Plans <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.teachersNoLessonPlans}
+              onChange={(e) => updateFormData("teachersNoLessonPlans", e.target.value)}
+              placeholder="0"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Actions Taken <span className="text-red-500">*</span>
+            </Label>
+            <Textarea
+              value={formData.curriculumActionsTaken}
+              onChange={(e) => updateFormData("curriculumActionsTaken", e.target.value)}
+              placeholder="Describe actions taken"
+              rows={3}
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
         </div>
       </div>
 
+      {/* Required Notice */}
       {currentSection === 6 && (
-        (!formData.teachersNoLessonPlans.trim() || 
+        (!formData.teachersNoLessonPlans.trim() ||
          !formData.curriculumActionsTaken.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All curriculum monitoring fields must be filled to continue.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">Please fill in all curriculum monitoring fields to continue</p>
           </div>
         )
       )}
@@ -3208,94 +3347,100 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderFinance = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 7: Finance</h3>
-
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving finance data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Finance data will be saved to report ID: {reportId}
-            {savedSections.has(7) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Opening Balance (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.openingBalance}
-            onChange={(e) => updateFormData("openingBalance", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Total Income (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.totalIncome}
-            onChange={(e) => updateFormData("totalIncome", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Total Expenditure (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.totalExpenditure}
-            onChange={(e) => updateFormData("totalExpenditure", e.target.value)}
-            placeholder="0.00"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Closing Balance (GYD) <span className="text-red-500">*</span></Label>
-          <Input
-            type="number"
-            value={formData.closingBalance}
-            onChange={(e) => updateFormData("closingBalance", e.target.value)}
-            placeholder="0.00"
-            required
-          />
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Financial Overview</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Opening Balance (GYD) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.openingBalance}
+              onChange={(e) => updateFormData("openingBalance", e.target.value)}
+              placeholder="0.00"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Income (GYD) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalIncome}
+              onChange={(e) => updateFormData("totalIncome", e.target.value)}
+              placeholder="0.00"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Expenditure (GYD) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.totalExpenditure}
+              onChange={(e) => updateFormData("totalExpenditure", e.target.value)}
+              placeholder="0.00"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Closing Balance (GYD) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.closingBalance}
+              onChange={(e) => updateFormData("closingBalance", e.target.value)}
+              placeholder="0.00"
+              required
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
         </div>
       </div>
 
+      {/* Required Notice */}
       {currentSection === 7 && (
-        (!formData.openingBalance.trim() || 
-         !formData.totalIncome.trim() || 
-         !formData.totalExpenditure.trim() || 
+        (!formData.openingBalance.trim() ||
+         !formData.totalIncome.trim() ||
+         !formData.totalExpenditure.trim() ||
          !formData.closingBalance.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> All finance fields must be filled to continue.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">Please fill in all finance fields to continue</p>
           </div>
         )
       )}
 
-      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 className="font-medium text-primary-600 mb-2">Financial Summary</h4>
-        <div className="text-sm text-gray-700 space-y-1">
-          <p><strong>Opening Balance:</strong> GYD {formData.openingBalance || "0.00"}</p>
-          <p><strong>Total Income:</strong> GYD {formData.totalIncome || "0.00"}</p>
-          <p><strong>Total Expenditure:</strong> GYD {formData.totalExpenditure || "0.00"}</p>
-          <p><strong>Closing Balance:</strong> GYD {formData.closingBalance || "0.00"}</p>
-          <p className="border-t pt-1 mt-2"><strong>Net Change:</strong> GYD {((Number(formData.openingBalance || 0) + Number(formData.totalIncome || 0)) - Number(formData.totalExpenditure || 0) - Number(formData.closingBalance || 0)) || "0.00"}</p>
+      {/* Summary Card */}
+      <div className="p-4 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <FileTextIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <h4 className="font-semibold text-slate-900 dark:text-white">Financial Summary</h4>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Opening</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">GYD {formData.openingBalance || "0"}</p>
+          </div>
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Income</p>
+            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+{formData.totalIncome || "0"}</p>
+          </div>
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Expenditure</p>
+            <p className="text-lg font-bold text-red-600 dark:text-red-400">-{formData.totalExpenditure || "0"}</p>
+          </div>
+          <div className="p-3 bg-white dark:bg-slate-700/50 rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Closing</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">GYD {formData.closingBalance || "0"}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -3303,64 +3448,58 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderIncome = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 8: Income Sources</h3>
-
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving income data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Income sources data will be saved to report ID: {reportId}
-            {savedSections.has(8) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-primary-600">Income Sources</h4>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Income Sources</h3>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => addToArray("incomeSources", { source: "", amount: "" })}
+            className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Add More
+            Add Source
           </Button>
         </div>
         {formData.incomeSources.map((income, index) => (
-          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
-            <Input
-              placeholder="Source"
-              value={income.source}
-              onChange={(e) => {
-                const updated = [...formData.incomeSources]
-                updated[index].source = e.target.value
-                updateFormData("incomeSources", updated)
-              }}
-            />
-            <Input
-              placeholder="Amount (GYD)"
-              type="number"
-              value={income.amount}
-              onChange={(e) => {
-                const updated = [...formData.incomeSources]
-                updated[index].amount = e.target.value
-                updateFormData("incomeSources", updated)
-              }}
-            />
-            <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("incomeSources", index)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800/50">
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Source
+              </Label>
+              <Input
+                placeholder="Enter source"
+                value={income.source}
+                onChange={(e) => {
+                  const updated = [...formData.incomeSources]
+                  updated[index].source = e.target.value
+                  updateFormData("incomeSources", updated)
+                }}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Amount (GYD)
+              </Label>
+              <Input
+                placeholder="0.00"
+                type="number"
+                value={income.amount}
+                onChange={(e) => {
+                  const updated = [...formData.incomeSources]
+                  updated[index].amount = e.target.value
+                  updateFormData("incomeSources", updated)
+                }}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("incomeSources", index)} className="border-slate-200 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-800">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -3369,30 +3508,13 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
 
   const renderSafety = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">Section 9: Accident & Safety</h3>
-
-      {!reportId && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            <strong>Note:</strong> Please complete the Basic Information section first to enable saving accident & safety data.
-          </p>
-        </div>
-      )}
-
-      {reportId && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">
-            <strong>Report Started:</strong> Accident & Safety data will be saved to report ID: {reportId}
-            {savedSections.has(9) && (
-              <span className="ml-2 text-green-600">✅ Section saved</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-6">
+      {/* Evacuation Drill Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Evacuation Drill</h3>
         <div className="space-y-4">
-          <Label className="text-primary-700 font-medium">Was an evacuation drill conducted this month? <span className="text-red-500">*</span></Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Drill Conducted This Month? <span className="text-red-500">*</span>
+          </Label>
           <div className="flex gap-6">
             <div className="flex items-center space-x-2">
               <input
@@ -3406,10 +3528,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("evacuationDrillHeld", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
                 required
               />
-              <Label htmlFor="evacuation-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="evacuation-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 Yes
               </Label>
             </div>
@@ -3421,7 +3543,6 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 onChange={(e) => {
                   if (e.target.checked) {
                     updateFormData("evacuationDrillHeld", false);
-                    // Clear the other fields when "No" is selected
                     updateFormData("personsInvolved", "");
                     updateFormData("timeTaken", "");
                     updateFormData("drillObservations", "");
@@ -3429,70 +3550,71 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("evacuationDrillHeld", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
               />
-              <Label htmlFor="evacuation-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="evacuation-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 No
               </Label>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Persons involved
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              <Input
-                type="number"
-                value={formData.personsInvolved}
-                onChange={(e) => updateFormData("personsInvolved", e.target.value)}
-                placeholder="Enter number of persons"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
-              />
+          {formData.evacuationDrillHeld === true && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Persons Involved <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="number"
+                  value={formData.personsInvolved}
+                  onChange={(e) => updateFormData("personsInvolved", e.target.value)}
+                  placeholder="Enter number"
+                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Time Taken (Minutes) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  type="number"
+                  value={formData.timeTaken}
+                  onChange={(e) => updateFormData("timeTaken", e.target.value)}
+                  placeholder="Enter time"
+                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+              <div className="grid gap-2 md:col-span-2">
+                <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Drill Observations <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  value={formData.drillObservations}
+                  onChange={(e) => updateFormData("drillObservations", e.target.value)}
+                  placeholder="Describe observations from the evacuation drill"
+                  rows={3}
+                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">
-                Time taken (minutes)
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              <Input
-                type="number"
-                value={formData.timeTaken}
-                onChange={(e) => updateFormData("timeTaken", e.target.value)}
-                placeholder="Enter time in minutes"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
-              />
-            </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label className="text-primary-700 font-medium">
-                Observations from drill
-                {formData.evacuationDrillHeld === true && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              <Textarea
-                value={formData.drillObservations}
-                onChange={(e) => updateFormData("drillObservations", e.target.value)}
-                placeholder="Describe observations from the evacuation drill"
-                rows={3}
-                disabled={formData.evacuationDrillHeld !== true}
-                required={formData.evacuationDrillHeld === true}
-              />
-            </div>
-          </div>
-
+          )}
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <Label className="text-primary-700 font-medium">Are fire buckets available in classrooms? <span className="text-red-500">*</span></Label>
-          <div className="flex gap-6">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="firebuckets-yes"
+      {/* Fire Safety Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Fire Safety</h3>
+        <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Fire Buckets Available? <span className="text-red-500">*</span>
+        </Label>
+        <div className="flex gap-6">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="firebuckets-yes"
                 checked={formData.classroomsHaveFireBuckets === true}
                 onChange={(e) => {
                   if (e.target.checked) {
@@ -3501,10 +3623,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("classroomsHaveFireBuckets", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
                 required
               />
-              <Label htmlFor="firebuckets-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="firebuckets-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 Yes
               </Label>
             </div>
@@ -3520,15 +3642,17 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("classroomsHaveFireBuckets", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
               />
-              <Label htmlFor="firebuckets-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="firebuckets-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 No
               </Label>
             </div>
           </div>
 
-          <Label className="text-primary-700 font-medium"> Are fire extinguishers in working condition and sufficient? <span className="text-red-500">*</span></Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Fire Extinguishers Functional? <span className="text-red-500">*</span>
+          </Label>
           <div className="flex gap-6">
             <div className="flex items-center space-x-2">
               <input
@@ -3542,10 +3666,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("fireExtinguishersFunctional", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
                 required
               />
-              <Label htmlFor="extinguishers-yes" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="extinguishers-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 Yes
               </Label>
             </div>
@@ -3561,102 +3685,103 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                     updateFormData("fireExtinguishersFunctional", null);
                   }
                 }}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
               />
-              <Label htmlFor="extinguishers-no" className="text-primary-700 font-medium cursor-pointer">
+              <Label htmlFor="extinguishers-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
                 No
               </Label>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-primary-600"> Incident Report Summary</h4>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium"> Total number of reported incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.numberOfIncidents}
-                onChange={(e) => updateFormData("numberOfIncidents", e.target.value)}
-                placeholder="Enter number of incidents"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Number of students involved in incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.studentsInvolved}
-                onChange={(e) => updateFormData("studentsInvolved", e.target.value)}
-                placeholder="Enter number of students"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Number of teachers involved in incidents <span className="text-red-500">*</span></Label>
-              <Input
-                type="number"
-                value={formData.teachersInvolvedIncidents}
-                onChange={(e) => updateFormData("teachersInvolvedIncidents", e.target.value)}
-                placeholder="Enter number of teachers"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">Describe actions taken to prevent future incidents <span className="text-red-500">*</span></Label>
-              <Textarea
-                value={formData.preventionActions}
-                onChange={(e) => updateFormData("preventionActions", e.target.value)}
-                placeholder="Describe actions taken to prevent incidents"
-                rows={3}
-                required
-              />
-            </div>
+      {/* Incident Report Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Incident Report Summary</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Incidents <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.numberOfIncidents}
+              onChange={(e) => updateFormData("numberOfIncidents", e.target.value)}
+              placeholder="0"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
           </div>
-
-          {currentSection === 9 && (
-            (formData.evacuationDrillHeld === null || 
-             formData.classroomsHaveFireBuckets === null ||
-             formData.fireExtinguishersFunctional === null ||
-             !formData.numberOfIncidents.trim() ||
-             !formData.studentsInvolved.trim() ||
-             !formData.teachersInvolvedIncidents.trim() ||
-             !formData.preventionActions.trim() ||
-             (formData.evacuationDrillHeld === true && (
-               !formData.personsInvolved.trim() || 
-               !formData.timeTaken.trim() || 
-               !formData.drillObservations.trim()
-             ))) && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
-                  <p className="text-red-700 text-sm">
-                    <strong>Required:</strong> All accident & safety fields must be completed to continue.
-                  </p>
-                </div>
-              </div>
-            )
-          )}
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Students Involved <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.studentsInvolved}
+              onChange={(e) => updateFormData("studentsInvolved", e.target.value)}
+              placeholder="0"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Teachers Involved <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              value={formData.teachersInvolvedIncidents}
+              onChange={(e) => updateFormData("teachersInvolvedIncidents", e.target.value)}
+              placeholder="0"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Prevention Actions <span className="text-red-500">*</span>
+            </Label>
+            <Textarea
+              value={formData.preventionActions}
+              onChange={(e) => updateFormData("preventionActions", e.target.value)}
+              placeholder="Describe actions taken"
+              rows={3}
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
         </div>
+
+        {/* Required Notice */}
+        {currentSection === 9 && (
+          (formData.evacuationDrillHeld === null ||
+           formData.classroomsHaveFireBuckets === null ||
+           formData.fireExtinguishersFunctional === null ||
+           !formData.numberOfIncidents.trim() ||
+           !formData.studentsInvolved.trim() ||
+           !formData.teachersInvolvedIncidents.trim() ||
+           !formData.preventionActions.trim() ||
+           (formData.evacuationDrillHeld === true && (
+             !formData.personsInvolved.trim() ||
+             !formData.timeTaken.trim() ||
+             !formData.drillObservations.trim()
+           ))) && (
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <AlertCircle className="h-4 w-4" />
+              <p className="text-sm">Please fill in all safety fields to continue</p>
+            </div>
+          )
+        )}
       </div>
     </div>
   )
 
   const renderMeetings = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
-        Section 10: Staff Meetings
-        {savedSections.has(10) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
-
       <div className="space-y-4">
-        <Label className="text-primary-700 font-medium">Was a general staff meeting held this month? <span className="text-red-500">*</span></Label>
+        <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Staff Meeting Held? <span className="text-red-500">*</span>
+        </Label>
         <div className="flex gap-6">
           <div className="flex items-center space-x-2">
             <input
@@ -3670,10 +3795,10 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   updateFormData("generalStaffMeetingHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
               required
             />
-            <Label htmlFor="meeting-yes" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="meeting-yes" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               Yes
             </Label>
           </div>
@@ -3685,102 +3810,96 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
               onChange={(e) => {
                 if (e.target.checked) {
                   updateFormData("generalStaffMeetingHeld", false);
-                  // Clear the other fields when "No" is selected
                   updateFormData("keyIssuesDiscussed", "");
                   updateFormData("decisionsImplemented", "");
                 } else {
                   updateFormData("generalStaffMeetingHeld", null);
                 }
               }}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 dark:text-blue-500 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 dark:bg-slate-800"
             />
-            <Label htmlFor="meeting-no" className="text-primary-700 font-medium cursor-pointer">
+            <Label htmlFor="meeting-no" className="text-sm font-normal cursor-pointer text-slate-700 dark:text-slate-300">
               No
             </Label>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            What were the key issues discussed
-            {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Textarea
-            value={formData.keyIssuesDiscussed}
-            onChange={(e) => updateFormData("keyIssuesDiscussed", e.target.value)}
-            placeholder="Describe the key issues discussed in the meeting"
-            rows={4}
-            disabled={formData.generalStaffMeetingHeld !== true}
-            required={formData.generalStaffMeetingHeld === true}
-          />
+      {formData.generalStaffMeetingHeld === true && (
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Meeting Details</h3>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Key Issues Discussed <span className="text-red-500">*</span>
+            </Label>
+            <Textarea
+              value={formData.keyIssuesDiscussed}
+              onChange={(e) => updateFormData("keyIssuesDiscussed", e.target.value)}
+              placeholder="Describe the key issues discussed"
+              rows={4}
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Decisions Implemented (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.decisionsImplemented}
+              onChange={(e) => updateFormData("decisionsImplemented", e.target.value)}
+              placeholder="0-100"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+              required
+            />
+          </div>
         </div>
-        <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">
-            What Percentage of decisions were implemented
-            {formData.generalStaffMeetingHeld === true && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            value={formData.decisionsImplemented}
-            onChange={(e) => updateFormData("decisionsImplemented", e.target.value)}
-            placeholder="Enter percentage (0-100)"
-            className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            disabled={formData.generalStaffMeetingHeld !== true}
-            required={formData.generalStaffMeetingHeld === true}
-          />
-        </div>
+      )}
 
-        {currentSection === 10 && (
-          (formData.generalStaffMeetingHeld === null || 
-           (formData.generalStaffMeetingHeld === true && (
-             !formData.keyIssuesDiscussed.trim() || 
-             !formData.decisionsImplemented.trim()
-           ))) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <p className="text-red-700 text-sm">
-                  <strong>Required:</strong> {formData.generalStaffMeetingHeld === null 
-                    ? "Please select whether a staff meeting was held." 
-                    : "All staff meeting fields must be filled when 'Yes' is selected."}
-                </p>
-              </div>
-            </div>
-          )
-        )}
-      </div>
+      {/* Required Notice */}
+      {currentSection === 10 && (
+        (formData.generalStaffMeetingHeld === null ||
+         (formData.generalStaffMeetingHeld === true && (
+           !formData.keyIssuesDiscussed.trim() ||
+           !formData.decisionsImplemented.trim()
+         ))) && (
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-sm">
+              {formData.generalStaffMeetingHeld === null
+                ? "Please select whether a staff meeting was held"
+                : "Please fill in all meeting details"}
+            </p>
+          </div>
+        )
+      )}
     </div>
   )
 
   const renderFacilities = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
-        Section 11: Physical Facilities
-        {savedSections.has(11) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
-
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-primary-600">In Need of Repairs</h4>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addToArray("repairsNeeded", { area: "", details: "" })}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More
-            </Button>
-          </div>
-          {formData.repairsNeeded.map((repair, index) => (
-            <div key={index} className="grid gap-4 md:grid-cols-3 p-4 border rounded-lg">
+      {/* Repairs Needed Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Repairs Needed</h3>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => addToArray("repairsNeeded", { area: "", details: "" })}
+            className="border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Repair
+          </Button>
+        </div>
+        {formData.repairsNeeded.map((repair, index) => (
+          <div key={index} className="flex flex-col md:flex-row gap-4 p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800/50">
+            <div className="grid gap-2 md:w-48 flex-shrink-0">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Area</Label>
               <Select
                 value={repair.area}
                 onValueChange={(value) => {
@@ -3789,8 +3908,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   updateFormData("repairsNeeded", updated)
                 }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Repair Area" />
+                <SelectTrigger className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                  <SelectValue placeholder="Select area" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="school-walls">School Walls</SelectItem>
@@ -3803,8 +3922,11 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   <SelectItem value="compound">School Compound</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2 flex-1">
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Details</Label>
               <Textarea
-                placeholder="Details of repairs needed"
+                placeholder="Details of repairs"
                 value={repair.details}
                 onChange={(e) => {
                   const updated = [...formData.repairsNeeded]
@@ -3812,85 +3934,103 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                   updateFormData("repairsNeeded", updated)
                 }}
                 rows={2}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
-              <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("repairsNeeded", index)}>
+            </div>
+            <div className="flex items-end flex-shrink-0">
+              <Button type="button" variant="outline" size="sm" onClick={() => removeFromArray("repairsNeeded", index)} className="border-slate-200 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Teachers</h4>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of functional toilets *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.teacherToiletsFunctional}
-                onChange={(e) => updateFormData("teacherToiletsFunctional", e.target.value)}
-                placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working sinks *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.teacherSinksFunctional}
-                onChange={(e) => updateFormData("teacherSinksFunctional", e.target.value)}
-                placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working taps *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.teacherTapsFunctional}
-                onChange={(e) => updateFormData("teacherTapsFunctional", e.target.value)}
-                placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
+      {/* Teacher Facilities Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Teacher Facilities</h3>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Toilets Functional (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.teacherToiletsFunctional}
+              onChange={(e) => updateFormData("teacherToiletsFunctional", e.target.value)}
+              placeholder="100"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Sinks Functional (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.teacherSinksFunctional}
+              onChange={(e) => updateFormData("teacherSinksFunctional", e.target.value)}
+              placeholder="100"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Taps Functional (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.teacherTapsFunctional}
+              onChange={(e) => updateFormData("teacherTapsFunctional", e.target.value)}
+              placeholder="100"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
           </div>
         </div>
+      </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Students</h4>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of functional toilets *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.studentToiletsFunctional}
-                onChange={(e) => updateFormData("studentToiletsFunctional", e.target.value)}
-                placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working taps *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.studentTapsFunctional}
+      {/* Student Facilities Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Student Facilities</h3>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Toilets Functional (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.studentToiletsFunctional}
+              onChange={(e) => updateFormData("studentToiletsFunctional", e.target.value)}
+              placeholder="100"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Taps Functional (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.studentTapsFunctional}
                 onChange={(e) => updateFormData("studentTapsFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of working sinks *</Label>
+              <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Sinks Functional (%) <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="number"
                 min="0"
@@ -3898,89 +4038,197 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
                 value={formData.studentSinksFunctional}
                 onChange={(e) => updateFormData("studentSinksFunctional", e.target.value)}
                 placeholder="100"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
               />
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h4 className="font-medium text-primary-600">Facilities Status: Classrooms</h4>
-          <div className="grid gap-4 md:grid-cols-1">
-            <div className="grid gap-2">
-              <Label className="text-primary-700 font-medium">What is the percentage of overcrowded classrooms *</Label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                value={formData.overcrowdedClassrooms || ""}
-                onChange={(e) => updateFormData("overcrowdedClassrooms", e.target.value)}
-                placeholder="0"
-                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            </div>
+      {/* Classroom Status Section */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Classroom Status</h3>
+        <div className="grid gap-4 md:grid-cols-1">
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Overcrowded Classrooms (%) <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={formData.overcrowdedClassrooms || ""}
+              onChange={(e) => updateFormData("overcrowdedClassrooms", e.target.value)}
+              placeholder="0"
+              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+            />
           </div>
         </div>
-
-        {/* Validation message for facilities status */}
-        {(!formData.teacherToiletsFunctional.trim() ||
-          !formData.teacherSinksFunctional.trim() ||
-          !formData.teacherTapsFunctional.trim() ||
-          !formData.studentToiletsFunctional.trim() ||
-          !formData.studentTapsFunctional.trim() ||
-          !formData.studentSinksFunctional.trim() ||
-          !formData.overcrowdedClassrooms.trim()) && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-red-500" />
-              <p className="text-red-700 text-sm">
-                <strong>Required:</strong> Please fill in all facility percentage fields to continue.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Required Notice */}
+      {(!formData.teacherToiletsFunctional.trim() ||
+        !formData.teacherSinksFunctional.trim() ||
+        !formData.teacherTapsFunctional.trim() ||
+        !formData.studentToiletsFunctional.trim() ||
+        !formData.studentTapsFunctional.trim() ||
+        !formData.studentSinksFunctional.trim() ||
+        !formData.overcrowdedClassrooms.trim()) && (
+        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+          <AlertCircle className="h-4 w-4" />
+          <p className="text-sm">Please fill in all facility percentage fields to continue</p>
+        </div>
+      )}
     </div>
   )
 
   const renderResources = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-primary-700">
-        Section 12: Resources Needed
-        {savedSections.has(12) && (
-          <span className="ml-2 text-green-600">✅ Section saved</span>
-        )}
-      </h3>
-
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Curriculum resources needed</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Curriculum Resources Needed
+          </Label>
           <Textarea
             value={formData.curriculumResources}
             onChange={(e) => updateFormData("curriculumResources", e.target.value)}
             placeholder="List textbooks, teaching aids, or subject-specific materials required."
             rows={4}
+            className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Janitorial supplies needed</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Janitorial Supplies Needed
+          </Label>
           <Textarea
             value={formData.janitorialSupplies}
             onChange={(e) => updateFormData("janitorialSupplies", e.target.value)}
             placeholder="Specify cleaning products, equipment, or hygiene materials required."
             rows={4}
+            className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
           />
         </div>
         <div className="grid gap-2">
-          <Label className="text-primary-700 font-medium">Additional Issues Affecting the School</Label>
+          <Label className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Additional Issues Affecting the School
+          </Label>
           <Textarea
             value={formData.otherIssues}
             onChange={(e) => updateFormData("otherIssues", e.target.value)}
             placeholder="Mention any other challenges impacting school operations."
             rows={4}
+            className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
           />
         </div>
       </div>
+    </div>
+  )
+
+  const renderPhysicalEducation = () => (
+    <div className="space-y-6">
+      {/* Physical Education Activities */}
+      <Card className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Physical Education Activities</CardTitle>
+          <CardDescription>List the physical education activities conducted this month</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {formData.physicalEducationActivities.map((item, index) => (
+            <div key={index} className="flex gap-3">
+              <div className="flex-1">
+                <Textarea
+                  value={item.activity}
+                  onChange={(e) => {
+                    const updated = [...formData.physicalEducationActivities]
+                    updated[index] = { activity: e.target.value }
+                    updateFormData("physicalEducationActivities", updated)
+                  }}
+                  placeholder="Describe the physical education activity (e.g., Football training, Athletics, Basketball)"
+                  rows={2}
+                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const updated = formData.physicalEducationActivities.filter((_, i) => i !== index)
+                  updateFormData("physicalEducationActivities", updated.length > 0 ? updated : [{ activity: "" }])
+                }}
+                disabled={formData.physicalEducationActivities.length === 1}
+                className="flex-shrink-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              updateFormData("physicalEducationActivities", [...formData.physicalEducationActivities, { activity: "" }])
+            }}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Activity
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Physical Education Challenges */}
+      <Card className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Physical Education Challenges</CardTitle>
+          <CardDescription>Describe any challenges faced in conducting physical education</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {formData.physicalEducationChallenges.map((item, index) => (
+            <div key={index} className="flex gap-3">
+              <div className="flex-1">
+                <Textarea
+                  value={item.challenge}
+                  onChange={(e) => {
+                    const updated = [...formData.physicalEducationChallenges]
+                    updated[index] = { challenge: e.target.value }
+                    updateFormData("physicalEducationChallenges", updated)
+                  }}
+                  placeholder="Describe the challenge (e.g., Lack of equipment, Limited space, Weather conditions)"
+                  rows={2}
+                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const updated = formData.physicalEducationChallenges.filter((_, i) => i !== index)
+                  updateFormData("physicalEducationChallenges", updated.length > 0 ? updated : [{ challenge: "" }])
+                }}
+                disabled={formData.physicalEducationChallenges.length === 1}
+                className="flex-shrink-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              updateFormData("physicalEducationChallenges", [...formData.physicalEducationChallenges, { challenge: "" }])
+            }}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Challenge
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 
@@ -4012,6 +4260,8 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
         return renderFacilities()
       case 12:
         return renderResources()
+      case 13:
+        return renderPhysicalEducation()
       default:
         return renderBasicInfo()
     }
@@ -4020,487 +4270,497 @@ export function AdminReportForm({ schoolId, schoolName, schoolDetails, monthYear
   // Show loading screen while checking for existing reports to prevent glitches
   if (isInitialLoading) {
     return (
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="gradient-header text-white rounded-t-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <FileTextIcon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-xl">Monthly School Report</CardTitle>
-              <CardDescription className="text-blue-100">
-                Loading report status...
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-8">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl p-8">
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
-              <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Checking Report Status
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                Loading Report
               </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                Please wait while we check if you have already submitted a report for this month...
+              <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                Please wait while we load the report data...
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // For admin forms, allow submitting even if current month was submitted (since they can submit for any school/month)
-  if (false) { // Disable this check for admin users
-    return (
-      <Card className="gradient-card border-0 shadow-lg">
-        <CardHeader className="gradient-header text-white rounded-t-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <FileTextIcon className="h-6 w-6" />
-            </div>
-            <div className="flex-1">
-              <CardTitle className="text-xl">Monthly School Report</CardTitle>
-              <CardDescription className="text-blue-100">
-                Current Month Report Status
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Current Month Report Already Submitted
-              </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-                You have already submitted your monthly report for this month. 
-                Only one report can be submitted per month.
-              </p>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-md mx-auto">
-              <div className="flex items-center gap-2 text-green-800">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <span className="font-medium text-sm">Report Status: Submitted</span>
-              </div>
-              <p className="text-green-700 text-sm mt-1">
-                Your report is complete and has been successfully submitted to the system.
-              </p>
-            </div>
-            
-            {/* View Report Button */}
-            <div className="mt-6 flex justify-center">
-              <Button 
-                onClick={handleViewSubmittedReport}
-                className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                View Report
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className="gradient-card border-0 shadow-lg">
-      <CardHeader className="gradient-header text-white rounded-t-lg p-4 sm:p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
-            <FileTextIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg sm:text-xl">
-              Admin Report Submission
-            </CardTitle>
-            <CardDescription className="text-blue-100 text-sm sm:text-base">
-              Submit report for {schoolName} - {monthYear} (Section {currentSection + 1} of {SECTIONS.length}: {SECTIONS[currentSection]})
-            </CardDescription>
-          </div>
-          
-          {/* Auto-save status indicator */}
-          {reportStatus !== 'submitted' && (
-            <div className="flex flex-col items-end text-white/80 text-xs">
-              {isAutoSavingCombined && (
-                <div className="flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Saving...</span>
-                </div>
-              )}
-              {lastSaved && !isAutoSavingCombined && !hasUnsavedChanges && (
-                <div className="flex items-center gap-1 text-green-200">
-                  <Save className="h-3 w-3" />
-                  <span>Saved</span>
-                </div>
-              )}
-              {hasUnsavedChanges && !isAutoSavingCombined && (
-                <div className="flex items-center gap-1 text-yellow-200">
-                  <AlertCircle className="h-3 w-3" />
-                  <span>Editing...</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mt-4 space-y-2">
-          <div className="flex justify-between text-xs sm:text-sm text-blue-100">
-            <span>Progress</span>
-            <div className="flex items-center gap-2">
-              <span>{getOverallProgress()}% Complete</span>
-              {progressState.completedSections.length > 0 && (
-                <span className="text-green-200">
-                  ({progressState.completedSections.length}/{SECTIONS.length} sections)
-                </span>
-              )}
-            </div>
-          </div>
-          <Progress value={getOverallProgress()} className="h-2 bg-white/20" />
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-4 sm:p-6">
-        <div 
-          className={`min-h-[400px] sm:min-h-[500px] ${reportStatus === 'submitted' ? 'pointer-events-none opacity-75' : ''}`}
-          style={reportStatus === 'submitted' ? { filter: 'none' } : {}}
-        >
-          {renderCurrentSection()}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={prevSection}
-            disabled={currentSection === 0 || reportStatus === 'submitted'}
-            className="order-2 sm:order-1 w-full sm:w-auto flex items-center gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Previous</span>
-            <span className="sm:hidden">Prev</span>
-          </Button>
-
-          <div className="text-center order-1 sm:order-2 flex flex-col items-center gap-2">
-            <div className="text-sm text-muted-foreground">
-              {currentSection + 1} of {SECTIONS.length}
-            </div>
-            {reportStatus === 'submitted' && (
-              <div className="text-xs text-green-600 font-medium">
-                ✅ Report Submitted - Read Only
+    <div className="flex flex-row gap-4 h-[calc(100vh-180px)] min-h-[600px]">
+      {/* Sidebar Navigation - Hidden on mobile */}
+      <div className="hidden lg:block lg:w-64 flex-shrink-0 h-full">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl p-4 h-full flex flex-col">
+          {/* Header */}
+          <div className="mb-4 pb-4 border-b border-slate-200/50 dark:border-slate-700/50">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Admin Report
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {schoolName} - {monthYear}
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                  style={{ width: `${getOverallProgress()}%` }}
+                />
               </div>
-            )}
-            {/* Continue Later Button */}
-            {reportStatus !== 'submitted' && reportId && currentSection > 0 && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  toast({
-                    title: "Progress saved",
-                    description: "You can continue this report later from the Head Teacher dashboard.",
-                    duration: 3000,
-                  })
-                  router.push('/dashboard/head-teacher?tab=current-report')
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Continue Later
-              </Button>
-            )}
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {getOverallProgress()}%
+              </span>
+            </div>
           </div>
 
-          {reportStatus === 'submitted' ? (
-            <div className="text-sm text-green-600 font-medium order-3 text-center sm:text-right">
-              Report Submitted
-            </div>
-          ) : currentSection === SECTIONS.length - 1 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Report"}
-            </Button>
-          ) : currentSection === 0 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !formData.schoolName || 
-                !formData.educationDistrict || 
-                !schoolId
-              }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 1 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                !formData.totalStudentsEnrolled.trim() ||
-                !formData.studentsTransferredIn.trim() ||
-                !formData.studentsTransferredOut.trim()
-              }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 2 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                !formData.studentAttendanceRate.trim() ||
-                !formData.studentPunctualityRate.trim() ||
-                !formData.teacherAttendanceRate.trim() ||
-                !formData.teacherPunctualityRate.trim()
-              }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 3 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                !formData.totalStaffEntitlement.trim() ||
-                !formData.currentTeachersOnStaff.trim() ||
-                !formData.underStaffedBy.trim() ||
-                !formData.overStaffedBy.trim() ||
-                formData.secondmentCertificatesPrepared === null
-              }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 4 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                formData.wholeschoolPDHeld === null ||
-                (formData.wholeschoolPDHeld === true && (
-                  !formData.teachersAttendedPD.trim() ||
-                  !formData.pdTopic.trim() ||
-                  !formData.pdTopicReason.trim() ||
-                  !formData.pdOutcomes.trim()
-                ))
-              }
-              className="order-3 w-full sm:w-auto gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 5 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                !formData.hmLessonsObserved.trim() ||
-                !formData.hmPositiveFindings.trim() ||
-                !formData.hmNegativeFindings.trim() ||
-                !formData.hmFollowUpActions.trim() ||
-                !formData.dhmLessonsObserved.trim() ||
-                !formData.dhmPositiveFindings.trim() ||
-                !formData.dhmNegativeFindings.trim() ||
-                !formData.dhmFollowUpActions.trim() ||
-                !formData.groupHeadLessonsObserved.trim() ||
-                !formData.groupHeadPositiveFindings.trim() ||
-                !formData.groupHeadNegativeFindings.trim() ||
-                !formData.groupHeadFollowUpActions.trim() ||
-                !formData.hodLessonsObserved.trim() ||
-                !formData.hodPositiveFindings.trim() ||
-                !formData.hodNegativeFindings.trim() ||
-                !formData.hodFollowUpActions.trim()
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 6 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId || 
-                !formData.teachersNoLessonPlans.trim() || 
-                !formData.curriculumActionsTaken.trim()
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 7 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId || 
-                !formData.openingBalance.trim() || 
-                !formData.totalIncome.trim() || 
-                !formData.totalExpenditure.trim() || 
-                !formData.closingBalance.trim()
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 8 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting || !reportId}
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 9 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId || 
-                formData.evacuationDrillHeld === null ||
-                formData.classroomsHaveFireBuckets === null ||
-                formData.fireExtinguishersFunctional === null ||
-                !formData.numberOfIncidents.trim() ||
-                !formData.studentsInvolved.trim() ||
-                !formData.teachersInvolvedIncidents.trim() ||
-                !formData.preventionActions.trim() ||
-                (formData.evacuationDrillHeld === true && (
-                  !formData.personsInvolved.trim() || 
-                  !formData.timeTaken.trim() || 
-                  !formData.drillObservations.trim()
-                ))
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 10 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId || 
-                formData.generalStaffMeetingHeld === null ||
-                (formData.generalStaffMeetingHeld === true && (
-                  !formData.keyIssuesDiscussed.trim() || 
-                  !formData.decisionsImplemented.trim()
-                ))
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 11 ? (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting || 
-                !reportId ||
-                !formData.teacherToiletsFunctional.trim() ||
-                !formData.teacherSinksFunctional.trim() ||
-                !formData.teacherTapsFunctional.trim() ||
-                !formData.studentToiletsFunctional.trim() ||
-                !formData.studentTapsFunctional.trim() ||
-                !formData.studentSinksFunctional.trim() ||
-                !formData.overcrowdedClassrooms.trim()
-              }
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              {isSubmitting ? "Saving..." : "Save & Continue"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : currentSection === 12 ? (
-            justSubmittedReport ? (
-              // Show View Report button after successful submission
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <Button
-                  type="button"
-                  onClick={handleViewSubmittedReport}
-                  className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+          {/* Section List */}
+          <nav className="space-y-1 flex-1 overflow-y-auto pr-1">
+            {SECTIONS.map((section, index) => {
+              const isCompleted = savedSections.has(index)
+              const isCurrent = index === currentSection
+
+              return (
+                <div
+                  key={index}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200
+                    ${isCurrent
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
+                      : ''
+                    }
+                    ${reportStatus === 'submitted' ? 'opacity-60' : ''}
+                  `}
                 >
-                  <Eye className="h-4 w-4" />
-                  View Report
-                </Button>
+                  <span className={`
+                    w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+                    ${isCurrent
+                      ? 'bg-blue-600 text-white'
+                      : isCompleted
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    }
+                  `}>
+                    {isCompleted ? '✓' : index + 1}
+                  </span>
+                  <span className={`text-sm truncate ${
+                    isCurrent
+                      ? 'font-medium text-blue-700 dark:text-blue-300'
+                      : isCompleted
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-slate-600 dark:text-slate-400'
+                  }`}>
+                    {section}
+                  </span>
+                </div>
+              )
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 h-full flex flex-col">
+        <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-xl overflow-hidden flex-1 flex flex-col">
+          {/* Section Header */}
+          <div className="px-4 sm:px-6 py-4 border-b border-slate-200/50 dark:border-slate-700/50">
+            {/* Mobile Progress Bar - Only visible on mobile */}
+            <div className="lg:hidden mb-3">
+              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <span>Step {currentSection + 1} of {SECTIONS.length}</span>
+                <span>{getOverallProgress()}%</span>
+              </div>
+              <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-300"
+                  style={{ width: `${getOverallProgress()}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+                  {currentSection + 1}
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
+                    {SECTIONS[currentSection]}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    {reportStatus === 'submitted' ? 'View only mode' : 'Complete all required fields'}
+                  </p>
+                </div>
+              </div>
+              {savedSections.has(currentSection) && !hasUnsavedChanges && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-full">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Saved</span>
+                </div>
+              )}
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 rounded-full">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Unsaved</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Form Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div
+              className={`${reportStatus === 'submitted' ? 'pointer-events-none opacity-75' : ''}`}
+              style={reportStatus === 'submitted' ? { filter: 'none' } : {}}
+            >
+              {renderCurrentSection()}
+            </div>
+          </div>
+
+          {/* Navigation Footer - Fixed at bottom */}
+          <div className="flex-shrink-0 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/80 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-3 order-2 sm:order-1">
                 <Button
                   type="button"
-                  onClick={() => {
-                    // Refresh the form to start a new report (next month)
-                    window.location.reload()
-                  }}
                   variant="outline"
-                  className="border-primary-300 text-primary-700 hover:bg-primary-50"
+                  onClick={prevSection}
+                  disabled={currentSection === 0 || reportStatus === 'submitted'}
+                  className="flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
-                  Create New Report
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Previous</span>
                 </Button>
+
+                {/* Continue Later Button */}
+                {reportStatus !== 'submitted' && reportId && currentSection > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      toast({
+                        title: "Progress saved",
+                        description: "You can continue this report later from the Admin dashboard.",
+                        duration: 3000,
+                      })
+                      router.push('/dashboard/admin/submit-report')
+                    }}
+                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  >
+                    Save & Exit
+                  </Button>
+                )}
               </div>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !reportId}
-                className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-              >
-                {isSubmitting ? "Saving..." : "Complete Report"}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )
-          ) : (
-            <Button
-              type="button"
-              onClick={nextSection}
-              className="gradient-button text-white hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
+
+              <div className="text-center order-1 sm:order-2 sm:hidden">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Step {currentSection + 1} of {SECTIONS.length}
+                </span>
+              </div>
+
+              {reportStatus === 'submitted' ? (
+                <div className="text-sm text-green-600 font-medium order-3 text-center sm:text-right">
+                  Report Submitted
+                </div>
+              ) : currentSection === SECTIONS.length - 1 ? (
+                <div className="flex flex-col sm:flex-row gap-3 order-3">
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      const success = await handleSectionSave(currentSection, formData, false)
+                      if (success) {
+                        toast({
+                          title: "Section saved",
+                          description: "You can review your report or submit it now.",
+                          duration: 3000,
+                        })
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto border border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all duration-200 flex items-center gap-2"
+                    variant="outline"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save & Preview
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center gap-2"
+                  >
+                    {isSubmitting ? "Submitting..." : "Submit Report"}
+                  </Button>
+                </div>
+              ) : currentSection === 0 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !formData.schoolName ||
+                    !formData.educationDistrict ||
+                    !schoolId
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 1 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.totalStudentsEnrolled.trim() ||
+                    !formData.studentsTransferredIn.trim() ||
+                    !formData.studentsTransferredOut.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 2 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.studentAttendanceRate.trim() ||
+                    !formData.studentPunctualityRate.trim() ||
+                    !formData.teacherAttendanceRate.trim() ||
+                    !formData.teacherPunctualityRate.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 3 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.totalStaffEntitlement.trim() ||
+                    !formData.currentTeachersOnStaff.trim() ||
+                    !formData.underStaffedBy.trim() ||
+                    !formData.overStaffedBy.trim() ||
+                    formData.secondmentCertificatesPrepared === null
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 4 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    formData.wholeschoolPDHeld === null ||
+                    (formData.wholeschoolPDHeld === true && (
+                      !formData.teachersAttendedPD.trim() ||
+                      !formData.pdTopic.trim() ||
+                      !formData.pdTopicReason.trim() ||
+                      !formData.pdOutcomes.trim()
+                    ))
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 5 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.hmLessonsObserved.trim() ||
+                    !formData.hmPositiveFindings.trim() ||
+                    !formData.hmNegativeFindings.trim() ||
+                    !formData.hmFollowUpActions.trim() ||
+                    !formData.dhmLessonsObserved.trim() ||
+                    !formData.dhmPositiveFindings.trim() ||
+                    !formData.dhmNegativeFindings.trim() ||
+                    !formData.dhmFollowUpActions.trim() ||
+                    !formData.groupHeadLessonsObserved.trim() ||
+                    !formData.groupHeadPositiveFindings.trim() ||
+                    !formData.groupHeadNegativeFindings.trim() ||
+                    !formData.groupHeadFollowUpActions.trim() ||
+                    !formData.hodLessonsObserved.trim() ||
+                    !formData.hodPositiveFindings.trim() ||
+                    !formData.hodNegativeFindings.trim() ||
+                    !formData.hodFollowUpActions.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 6 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.teachersNoLessonPlans.trim() ||
+                    !formData.curriculumActionsTaken.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 7 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.openingBalance.trim() ||
+                    !formData.totalIncome.trim() ||
+                    !formData.totalExpenditure.trim() ||
+                    !formData.closingBalance.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 8 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !reportId}
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 9 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    formData.evacuationDrillHeld === null ||
+                    formData.classroomsHaveFireBuckets === null ||
+                    formData.fireExtinguishersFunctional === null ||
+                    !formData.numberOfIncidents.trim() ||
+                    !formData.studentsInvolved.trim() ||
+                    !formData.teachersInvolvedIncidents.trim() ||
+                    !formData.preventionActions.trim() ||
+                    (formData.evacuationDrillHeld === true && (
+                      !formData.personsInvolved.trim() ||
+                      !formData.timeTaken.trim() ||
+                      !formData.drillObservations.trim()
+                    ))
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 10 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    formData.generalStaffMeetingHeld === null ||
+                    (formData.generalStaffMeetingHeld === true && (
+                      !formData.keyIssuesDiscussed.trim() ||
+                      !formData.decisionsImplemented.trim()
+                    ))
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 11 ? (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    !reportId ||
+                    !formData.teacherToiletsFunctional.trim() ||
+                    !formData.teacherSinksFunctional.trim() ||
+                    !formData.teacherTapsFunctional.trim() ||
+                    !formData.studentToiletsFunctional.trim() ||
+                    !formData.studentTapsFunctional.trim() ||
+                    !formData.studentSinksFunctional.trim() ||
+                    !formData.overcrowdedClassrooms.trim()
+                  }
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : currentSection === 13 ? (
+                justSubmittedReport ? (
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center order-3">
+                    <Button
+                      type="button"
+                      onClick={handleViewSubmittedReport}
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Report
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        window.location.reload()
+                      }}
+                      variant="outline"
+                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
+                      Create New Report
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !reportId}
+                    className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                  >
+                    {isSubmitting ? "Saving..." : "Complete Report"}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )
+              ) : (
+                <Button
+                  type="button"
+                  onClick={nextSection}
+                  className="order-3 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

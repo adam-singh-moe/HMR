@@ -90,7 +90,6 @@ function DeleteNotificationButton({
         console.error('Delete failed:', result.error)
         alert('Failed to delete notification: ' + result.error)
       } else {
-        console.log('Delete successful')
         setShowDeleteModal(false)
         onDelete()
       }

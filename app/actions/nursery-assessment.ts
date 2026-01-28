@@ -243,11 +243,7 @@ export async function inspectTableStructure() {
     // console.log('Number of records found:', existingRecords?.length || 0)
     
     if (existingRecords && existingRecords.length > 0) {
-     // console.log('Available columns from existing data:')
-      const columns = Object.keys(existingRecords[0])
-      columns.forEach((col, index) => {
-        console.log(`${index + 1}. ${col} = ${existingRecords[0][col]}`)
-      })
+      // Columns available in existing data
     }
     
     const testColumns = ['id', 'school_id', 'headteacher_id', 'assessment_type', 'status', 'created_at', 'updated_at', 'updated_by', 'enrollment', 'form_data']
@@ -262,7 +258,7 @@ export async function inspectTableStructure() {
         
        // console.log(`Column '${column}': ${colError ? 'ERROR - ' + colError.message : 'OK'}`)
       } catch (colErr) {
-        console.log(`Column '${column}': ERROR - ${colErr instanceof Error ? colErr.message : 'Unknown error'}`)
+        // Column test error
       }
     }
     

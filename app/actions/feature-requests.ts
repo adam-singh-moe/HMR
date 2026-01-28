@@ -297,8 +297,6 @@ export async function updateFeatureRequestStatus(
       updateData.admin_comment = adminComment
     }
 
-    console.log('Updating feature request:', requestId, 'with data:', updateData)
-
     const { error } = await supabase
       .from("hmr_feature_requests")
       .update(updateData)
@@ -308,8 +306,6 @@ export async function updateFeatureRequestStatus(
       console.error("Error updating feature request status:", error)
       return { success: false, error: "Failed to update request status." }
     }
-
-    console.log('Feature request updated successfully')
 
     revalidatePath("/dashboard/feature-requests")
     revalidatePath("/dashboard/admin/feature-requests")

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,28 @@ import { PasswordChangeForm } from "./password-change-form"
 import { SchoolConfirmationForm } from "./school-confirmation-form"
 import { AccountSetupFlow } from "./account-setup-flow"
 import { Loader2, Eye, EyeOff } from "lucide-react"
+
+// Submit button component that uses useFormStatus for loading state
+function SubmitButton({ isForgotPassword, isSignUp }: { isForgotPassword: boolean; isSignUp: boolean }) {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+    >
+      {pending ? (
+        <span className="flex items-center justify-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          {isForgotPassword ? "Sending..." : isSignUp ? "Creating Account..." : "Signing In..."}
+        </span>
+      ) : (
+        isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"
+      )}
+    </Button>
+  )
+}
 
 function AuthFormContent() {
   const router = useRouter()
@@ -953,20 +976,7 @@ function AuthFormContent() {
             )}
             
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  {isForgotPassword ? "Sending..." : isSignUp ? "Creating Account..." : "Signing In..."}
-                </span>
-              ) : (
-                isForgotPassword ? "Send Reset Code" : isSignUp ? "Create Account" : "Sign In"
-              )}
-            </Button>
+            <SubmitButton isForgotPassword={isForgotPassword} isSignUp={isSignUp} />
           </form>
           
           {!isForgotPassword && !isSignUp && (

@@ -22,14 +22,9 @@ export async function getAllNurseryAssessments() {
       return { assessments: [], error: null }
     }
 
-    console.log('Raw assessments:', assessments.slice(0, 2)) // Debug log
-
     // Get unique school IDs and user IDs, filtering out nulls
     const schoolIds = [...new Set(assessments.map(a => a.school_id).filter(Boolean))]
     const userIds = [...new Set(assessments.map(a => a.headteacher_id).filter(Boolean))]
-
-    console.log('School IDs to fetch:', schoolIds.slice(0, 5)) // Debug log
-    console.log('User IDs to fetch:', userIds.slice(0, 5)) // Debug log
 
     // Fetch schools and users separately if we have IDs
     let schools: any[] = []
@@ -37,13 +32,11 @@ export async function getAllNurseryAssessments() {
 
     if (schoolIds.length > 0) {
       const schoolsResult = await supabase.from('sms_schools').select('id, name, region_id').in('id', schoolIds)
-      console.log('Schools query result:', schoolsResult.error ? schoolsResult.error : `Found ${schoolsResult.data?.length || 0} schools`)
       schools = schoolsResult.data || []
     }
 
     if (userIds.length > 0) {
       const usersResult = await supabase.from('hmr_users').select('id, name, email').in('id', userIds)
-      console.log('Users query result:', usersResult.error ? usersResult.error : `Found ${usersResult.data?.length || 0} users`)
       users = usersResult.data || []
     }
 
@@ -53,13 +46,8 @@ export async function getAllNurseryAssessments() {
 
     if (regionIds.length > 0) {
       const regionsResult = await supabase.from('sms_regions').select('id, name').in('id', regionIds)
-      console.log('Regions query result:', regionsResult.error ? regionsResult.error : `Found ${regionsResult.data?.length || 0} regions`)
       regions = regionsResult.data || []
     }
-
-    console.log('Sample school data:', schools.slice(0, 2)) // Debug log
-    console.log('Sample user data:', users.slice(0, 2)) // Debug log
-    console.log('Sample region data:', regions.slice(0, 2)) // Debug log
 
     // Create lookup maps
     const schoolsMap = schools.reduce((acc, school) => {
@@ -91,8 +79,6 @@ export async function getAllNurseryAssessments() {
         users: usersMap[assessment.headteacher_id] || null
       }
     })
-
-    console.log('Sample combined assessment:', combinedAssessments[0]) // Debug log
 
     return { assessments: combinedAssessments, error: null }
   } catch (err) {

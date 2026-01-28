@@ -213,9 +213,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   // Helper function to map loaded responses to form state
   const mapResponsestoFormData = (responses: any[]) => {
-    console.log("=== MAPPING RESPONSES ===")
-    console.log("Total responses to map:", responses.length)
-    
     const responseMap: any = {
       autobiographicalResponses: {},
       alphabetResponses: {},
@@ -225,19 +222,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       motorSkillsResponses: {},
       grossMotorSkillsResponses: {}
     }
-
-    // Filter Section 8 responses for debugging
-    const section8Responses = responses.filter(r => {
-      const isSection8 = ['62b6e481-811e-43ee-88a3-0a1d8f53aa12', 'e3e921e1-5296-4c15-bce8-72289447df1e', 
-                         '0f460701-938e-4c32-97aa-1ad7b35499cc', '46e086cf-f773-4578-aa07-ad694a6a91c7',
-                         'cfbbace8-c1b2-4d17-aefd-657736332adb', '339fb99d-50ad-4eac-b3af-b69ed44605fc',
-                         '5f106448-51de-47a2-a7ce-edf46884aaef', '3d09727b-88af-46fa-a1b6-e474e09cfaea',
-                         '6dff252d-bf88-4300-ab4f-ec32891b979a'].includes(r.option_id)
-      return isSection8
-    })
-    console.log("Section 8 responses found:", section8Responses.length, section8Responses)
-
-   // console.log('Processing responses for mapping:', responses.length)
 
     // Map responses by question_id and option_id
     responses.forEach(response => {
@@ -542,9 +526,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
         responseMap.grossMotorSkillsResponses[questionId].unableToRespond = answer
       }
     })
-
-    console.log("=== MAPPING COMPLETE ===")
-    console.log("Mapped grossMotorSkillsResponses:", responseMap.grossMotorSkillsResponses)
 
     return responseMap
   }
@@ -1097,9 +1078,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
 
   // Function to save Section 8 responses to database
   const saveSection8Responses = async () => {
-    console.log("=== SAVING SECTION 8 ===")
-    console.log("Current formData.grossMotorSkillsResponses:", formData.grossMotorSkillsResponses)
-    
     if (!currentAssessmentId) {
       toast({
         title: "Please Save Section 1",
@@ -1332,10 +1310,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
       // Wait for auth to load and prevent multiple simultaneous loads
       if (authLoading || !user || isInitialLoading || hasLoadedInitialData) return
       setIsInitialLoading(true)
-      
-      console.log("=== LOADING USER INFO FROM SESSION ===")
-      console.log("User from session:", user)
-      
       try {
         // Set user info from session (no API call needed)
         if (isMounted) {
@@ -1367,7 +1341,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
             setSchoolInfo(schoolData)
           } else {
             // Need to get full school info if not in session
-            console.log("Getting full school info from API...")
             const schoolResult = await getUserSchoolInfo()
             if (schoolResult.school) {
               // Apply smart detection here too
@@ -1468,7 +1441,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     
     const loadQuestions = async () => {
       if (isMounted && !allQuestionsLoaded && !questionsLoading) {
-        console.log("=== TRIGGERING QUESTIONS LOAD ===")
         await loadAllQuestions()
       }
     }
@@ -1496,7 +1468,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     
     const section = sectionMap[currentSection]
     if (section && questionsCache[section]) {
-      console.log(`Loading section ${currentSection}: ${section} from cache`)
       loadQuestionsFromCache(section)
     }
   }, [currentSection, allQuestionsLoaded])
@@ -1511,8 +1482,7 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   // Load all questions once at startup to cache them
   const loadAllQuestions = async () => {
     if (allQuestionsLoaded || questionsLoading) return // Already loaded or loading
-    
-    console.log("=== LOADING ALL QUESTIONS (ONE TIME ONLY) ===")
+
     setQuestionsLoading(true)
     const sections = [
       "Autobiographical Knowledge",
@@ -1565,7 +1535,6 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
   // Get questions from cache instead of making API calls
   const loadQuestionsFromCache = (section: string) => {
     if (questionsCache[section]) {
-      console.log(`Loading questions for section "${section}":`, questionsCache[section].length, 'questions found')
       setQuestions(questionsCache[section])
     } else {
       console.warn(`Questions for section "${section}" not found in cache`)
@@ -2427,52 +2396,42 @@ export function NurseryAssessmentForm({ onSuccess }: NurseryAssessmentFormProps)
     
     const enrollment = parseInt(formData.enrollment) || 0
     if (enrollment === 0) return false
-    
+
     // Wait for questions cache to be loaded before validation
     if (!allQuestionsLoaded) {
-      console.log("Section 8 validation: Questions not yet loaded")
       return false
     }
-    
+
     // Get Section 8 questions from cache
     const grossMotorQuestions = questionsCache["Gross Motor Skills"] || []
     if (grossMotorQuestions.length === 0) {
-      console.log("Section 8 validation: No Gross Motor Skills questions found in cache")
       return false
     }
-    
-    console.log(`Section 8 validation: Found ${grossMotorQuestions.length} questions, checking responses...`)
-    
+
     // Check each question in Section 8
     for (const question of grossMotorQuestions) {
       const responses = formData.grossMotorSkillsResponses[question.id] || {}
-      
+
       let total = 0
       if (question.questions.toLowerCase().includes('throw') || question.questions.toLowerCase().includes('catch')) {
         // Throw and Catch: 1-5 Times + Unable to Respond
         total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.threeTimes || 0) + (responses.fourTimes || 0) + (responses.fiveTimes || 0) + (responses.unableToRespond || 0)
-        console.log(`Question "${question.questions}" (Throw/Catch): total=${total}, responses=`, responses)
       } else if (question.questions.toLowerCase().includes('hop')) {
-        // Hop activities: 1-3 Times + Unable to Respond  
+        // Hop activities: 1-3 Times + Unable to Respond
         total = (responses.oneLegOneTime || 0) + (responses.oneLegTwoTimes || 0) + (responses.oneLegThreeTimes || 0) + (responses.unableToRespond || 0)
-        console.log(`Question "${question.questions}" (Hop): total=${total}, responses=`, responses)
       } else if (question.questions.toLowerCase().includes('stand')) {
         // Stand on One Leg: Left + Right + Both + Unable to Respond
         total = (responses.left || 0) + (responses.right || 0) + (responses.both || 0) + (responses.unableToRespond || 0)
-        console.log(`Question "${question.questions}" (Stand): total=${total}, responses=`, responses)
       } else {
         // Default: Simple counting for other types
         total = (responses.oneTime || 0) + (responses.twoTimes || 0) + (responses.unableToRespond || 0)
-        console.log(`Question "${question.questions}" (Default): total=${total}, responses=`, responses)
       }
-      
+
       if (total !== enrollment) {
-        console.log(`Section 8 validation failed for question ${question.id} ("${question.questions}"): total=${total}, enrollment=${enrollment}`)
         return false
       }
     }
-    
-    console.log("Section 8 validation passed for all questions")
+
     return true
   }
 
