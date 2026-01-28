@@ -216,7 +216,19 @@ function EducationOfficialAIInsightsContent() {
         year: selectedYear !== "all" ? selectedYear : undefined,
         region: selectedRegion !== "all" ? selectedRegion : undefined, // Optional region filter
       }
-      const result = await generateAIInsight(customPrompt, selectedReportType, filters)
+
+      // Use API route instead of server action for better timeout handling on Netlify
+      const response = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: customPrompt,
+          reportType: selectedReportType,
+          filters
+        })
+      })
+
+      const result = await response.json()
 
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" })

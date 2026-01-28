@@ -40,10 +40,10 @@ export class AIService {
     
     while (attempt < maxRetries) {
       try {
-        // Netlify/Vercel serverless functions can time out quickly; default to a fail-fast timeout.
-        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "6000", 10)
+        // Increased timeout for AI API calls - 55 seconds to stay within Netlify's 60s limit
+        const timeoutMs = Number.parseInt(process.env.AI_REQUEST_TIMEOUT_MS || "55000", 10)
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 6000)
+        const timeoutId = setTimeout(() => controller.abort(), Number.isFinite(timeoutMs) ? timeoutMs : 55000)
 
         const response = await fetch(
           this.apiUrl,
@@ -67,7 +67,7 @@ export class AIService {
                 }
               ],
               temperature: 0.5,
-              max_tokens: 2000,
+              max_tokens: 1500, // Reduced for faster response
             })
           }
         )
@@ -178,7 +178,28 @@ Begin your analysis:
       return "No report data available."
     }
 
-    return reports.map((report, index) => {
+    // Limit data to prevent timeouts - max 30 records, summarize if more
+    const MAX_RECORDS = 30
+    const totalRecords = reports.length
+    const limitedReports = reports.slice(0, MAX_RECORDS)
+
+    let summary = `Total Records: ${totalRecords}${totalRecords > MAX_RECORDS ? ` (showing first ${MAX_RECORDS})` : ''}\n`
+
+    // Add aggregate statistics if we have numeric data
+    const numericFields = ['attendance_rate', 'punctuality_rate', 'total_enrollment', 'transferred_in', 'transferred_out']
+    numericFields.forEach(field => {
+      const values = reports.filter(r => r[field] !== undefined && r[field] !== null).map(r => Number(r[field]))
+      if (values.length > 0) {
+        const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
+        const min = Math.min(...values)
+        const max = Math.max(...values)
+        summary += `${field.replace(/_/g, ' ')}: avg=${avg}, min=${min}, max=${max}\n`
+      }
+    })
+
+    summary += '\nDetailed Records:\n'
+
+    return summary + limitedReports.map((report, index) => {
       let reportText = `
 Report ${index + 1}:
 - School: ${report.school_name || 'Unknown'}

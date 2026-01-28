@@ -202,7 +202,19 @@ function RegionalAIInsightsContent() {
         year: selectedYear !== "all" ? selectedYear : undefined,
         region: user?.region_name,
       }
-      const result = await generateAIInsight(customPrompt, selectedReportType, filters)
+
+      // Use API route instead of server action for better timeout handling on Netlify
+      const response = await fetch("/api/ai-insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: customPrompt,
+          reportType: selectedReportType,
+          filters
+        })
+      })
+
+      const result = await response.json()
 
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" })
@@ -215,7 +227,8 @@ function RegionalAIInsightsContent() {
         toast({ title: "No Results", description: "No insights could be generated.", variant: "destructive" })
       }
     } catch (error) {
-      toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" })
+      console.error("AI Insight error:", error)
+      toast({ title: "Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" })
     } finally {
       setIsGenerating(false)
     }
