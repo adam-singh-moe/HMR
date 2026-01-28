@@ -135,17 +135,41 @@ function RegionalAIInsightsContent() {
   const extractVisualizationData = (insightText: string) => {
     const data = { charts: [] as any[], tables: [] as any[] }
     try {
-      const tableRegex = /\|(.*?)\|\s*\n\|([-\s:|]+)\|\s*\n((\|.*?\|\s*\n)*)/gm
+      // Try multiple table regex patterns
+      // Pattern 1: Standard markdown table with separator row
+      const tableRegex1 = /\|(.*?)\|\s*\n\|([-\s:|]+)\|\s*\n((?:\|.*?\|\s*\n?)*)/gm
+      // Pattern 2: Table on single line (pipe-separated values)
+      const tableRegex2 = /\|\s*([^|\n]+(?:\|[^|\n]+)+)\s*\|/g
+
       let tableMatch
-      while ((tableMatch = tableRegex.exec(insightText)) !== null) {
-        const headers = tableMatch[1].split('|').map(h => h.trim()).filter(h => h)
+      while ((tableMatch = tableRegex1.exec(insightText)) !== null) {
+        const headers = tableMatch[1].split('|').map(h => h.trim()).filter(h => h && !h.match(/^[-:\s]+$/))
         const rows = tableMatch[3].split('\n').filter(row => row.trim() && row.includes('|'))
-          .map(row => row.split('|').map(cell => cell.trim()).filter(cell => cell))
+          .map(row => row.split('|').map(cell => cell.trim()).filter(cell => cell && !cell.match(/^[-:\s]+$/)))
           .filter(row => row.length > 0)
         if (headers.length > 0 && rows.length > 0) {
           data.tables.push({ headers, rows })
         }
       }
+
+      // If no tables found with first pattern, try second pattern
+      if (data.tables.length === 0) {
+        const lines = insightText.split('\n').filter(line => line.includes('|'))
+        if (lines.length >= 2) {
+          // First line with pipes could be headers
+          const potentialHeaders = lines[0].split('|').map(h => h.trim()).filter(h => h && !h.match(/^[-:\s]+$/))
+          // Skip separator line and get data rows
+          const dataLines = lines.slice(1).filter(line => !line.match(/^\|[\s:-]+\|/))
+          const rows = dataLines
+            .map(line => line.split('|').map(cell => cell.trim()).filter(cell => cell && !cell.match(/^[-:\s]+$/)))
+            .filter(row => row.length > 0 && row.length === potentialHeaders.length)
+
+          if (potentialHeaders.length >= 2 && rows.length > 0) {
+            data.tables.push({ headers: potentialHeaders, rows })
+          }
+        }
+      }
+
       const numberPatterns = [/([^:,\n]+):\s*(\d+(?:\.\d+)?%?)/g]
       for (const pattern of numberPatterns) {
         const matches = [...insightText.matchAll(pattern)]
@@ -247,47 +271,133 @@ function RegionalAIInsightsContent() {
 
   const formatAIInsight = (text: string) => {
     if (!text) return text
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-white">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+
+    // First, remove any markdown table syntax that wasn't extracted
+    let formatted = text
+      // Remove table separator rows (|---|---|)
+      .replace(/\|[\s:-]+\|[\s:-]+\|[\s:-]*\|?/g, '')
+      // Remove table rows and convert to readable format
+      .replace(/\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]*)\s*\|?/g, (match, col1, col2, col3) => {
+        const c1 = col1.trim()
+        const c2 = col2.trim()
+        const c3 = col3?.trim() || ''
+        // Skip header-like rows
+        if (c1.includes('---') || c1.toLowerCase() === 'metric' || c1.toLowerCase() === 'category') return ''
+        return c3 ? `• ${c1}: ${c2} (${c3})\n` : `• ${c1}: ${c2}\n`
+      })
+
+    // Handle headers first (before other replacements)
+    formatted = formatted
       .replace(/^## (.*?)$/gm, '<h3 class="text-base font-bold text-slate-900 dark:text-white mt-5 mb-2">$1</h3>')
       .replace(/^### (.*?)$/gm, '<h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-1.5">$1</h4>')
-      .replace(/^\* (.*?)$/gm, '<li class="ml-4 mb-1 text-slate-700 dark:text-slate-300 text-sm">$1</li>')
-      .replace(/^(\d+)\. (.*?)$/gm, '<li class="ml-4 mb-1 list-decimal text-slate-700 dark:text-slate-300 text-sm">$2</li>')
-      .replace(/(<li.*?>.*?<\/li>\s*)+/gs, '<ul class="list-disc space-y-0.5 my-2 pl-4">$&</ul>')
+
+    // Handle bold text (before italic to avoid conflicts)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900 dark:text-white">$1</strong>')
+
+    // Handle bullet points - both at line start and inline (* item)
+    // First convert line-start bullets
+    formatted = formatted.replace(/^[\*\-]\s+(.+)$/gm, '<li class="ml-4 mb-1 text-slate-700 dark:text-slate-300 text-sm">$1</li>')
+    // Convert inline bullets (text * item) - split by " * " pattern
+    formatted = formatted.replace(/\s\*\s+([^*\n]+?)(?=\s\*\s|$|\n)/g, '</p><li class="ml-4 mb-1 text-slate-700 dark:text-slate-300 text-sm">$1</li><p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">')
+
+    // Handle italic (single asterisk with content)
+    formatted = formatted.replace(/\*([^*\s][^*]*[^*\s])\*/g, '<em>$1</em>')
+    // Clean up any remaining standalone asterisks
+    formatted = formatted.replace(/(?<!\w)\*(?!\w)/g, '')
+
+    // Handle numbered lists
+    formatted = formatted.replace(/^(\d+)\.\s+(.+)$/gm, '<li class="ml-4 mb-1 list-decimal text-slate-700 dark:text-slate-300 text-sm">$2</li>')
+
+    // Wrap consecutive list items in ul
+    formatted = formatted.replace(/(<li.*?>.*?<\/li>\s*)+/gs, '<ul class="list-disc space-y-0.5 my-2 pl-4">$&</ul>')
+
+    // Handle paragraphs
+    formatted = formatted
       .replace(/\n\n/g, '</p><p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">')
       .replace(/\n/g, ' ')
       .replace(/^/, '<p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">')
       .replace(/$/, '</p>')
+      // Clean up empty paragraphs
       .replace(/<p class="mb-2 text-slate-700 dark:text-slate-300 text-sm"><\/p>/g, '')
+      .replace(/<p class="mb-2 text-slate-700 dark:text-slate-300 text-sm">\s*<\/p>/g, '')
+
+    return formatted
+  }
+
+  // Strip markdown formatting from text
+  const stripMarkdown = (text: string) => {
+    if (!text) return text
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+      .replace(/\*(.*?)\*/g, '$1')     // Remove italic *text*
+      .replace(/`(.*?)`/g, '$1')       // Remove code `text`
+      .replace(/~~(.*?)~~/g, '$1')     // Remove strikethrough
+      .trim()
+  }
+
+  // Get chart title based on selected report type
+  const getChartTitle = () => {
+    const type = reportTypes.find(r => r.value === selectedReportType)
+    return type ? `${type.label} Analysis` : 'Data Analysis'
   }
 
   const renderChart = (chart: any, index: number) => {
+    const chartTitle = getChartTitle()
+
     if (chart.type === 'pie') {
       return (
-        <div key={index} className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={chart.data} cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({name, percent}) => `${(percent * 100).toFixed(0)}%`} fontSize={10}>
-                {chart.data.map((entry: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Pie>
-              <Tooltip contentStyle={{ backgroundColor: 'hsl(222, 47%, 11%)', border: '1px solid hsl(222, 47%, 20%)', borderRadius: '6px', fontSize: '11px' }} />
-            </PieChart>
-          </ResponsiveContainer>
+        <div key={index}>
+          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{chartTitle}</h4>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chart.data.map((d: any) => ({ ...d, name: stripMarkdown(d.name) }))}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  dataKey="value"
+                  label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  fontSize={10}
+                >
+                  {chart.data.map((entry: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '11px', color: '#334155' }}
+                  formatter={(value: any, name: any) => [value, stripMarkdown(name)]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Legend */}
+          <div className="flex flex-wrap gap-2 mt-2 justify-center">
+            {chart.data.slice(0, 6).map((entry: any, i: number) => (
+              <div key={i} className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                <span>{stripMarkdown(entry.name)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )
     }
     return (
-      <div key={index} className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chart.data}>
-            <CartesianGrid strokeDasharray="3 3" className="text-slate-700" />
-            <XAxis dataKey="name" fontSize={10} />
-            <YAxis fontSize={10} />
-            <Tooltip contentStyle={{ backgroundColor: 'hsl(222, 47%, 11%)', border: '1px solid hsl(222, 47%, 20%)', borderRadius: '6px', fontSize: '11px' }} />
-            <Bar dataKey="value" fill="#6366f1" radius={[3, 3, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div key={index}>
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{chartTitle}</h4>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chart.data.map((d: any) => ({ ...d, name: stripMarkdown(d.name) }))}>
+              <CartesianGrid strokeDasharray="3 3" className="text-slate-700" />
+              <XAxis dataKey="name" fontSize={10} />
+              <YAxis fontSize={10} />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '11px', color: '#334155' }}
+                formatter={(value: any, name: any) => [value, stripMarkdown(name)]}
+              />
+              <Bar dataKey="value" fill="#6366f1" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     )
   }
@@ -533,7 +643,7 @@ function RegionalAIInsightsContent() {
                       <TableHeader className="bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
                         <TableRow>
                           {table.headers.map((h: string, j: number) => (
-                            <TableHead key={j} className="text-[11px] uppercase tracking-wider font-semibold">{h}</TableHead>
+                            <TableHead key={j} className="text-[11px] uppercase tracking-wider font-semibold">{stripMarkdown(h)}</TableHead>
                           ))}
                         </TableRow>
                       </TableHeader>
@@ -541,7 +651,7 @@ function RegionalAIInsightsContent() {
                         {table.rows.map((row: string[], j: number) => (
                           <TableRow key={j}>
                             {row.map((cell: string, k: number) => (
-                              <TableCell key={k} className="text-xs">{cell}</TableCell>
+                              <TableCell key={k} className="text-xs">{stripMarkdown(cell)}</TableCell>
                             ))}
                           </TableRow>
                         ))}
