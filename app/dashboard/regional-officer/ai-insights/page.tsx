@@ -214,6 +214,17 @@ function RegionalAIInsightsContent() {
         })
       })
 
+      // Handle timeout/gateway errors (Netlify returns HTML on timeout)
+      const contentType = response.headers.get("content-type")
+      if (!contentType?.includes("application/json")) {
+        if (response.status === 504) {
+          toast({ title: "Timeout", description: "The request took too long. Try a simpler query or smaller date range.", variant: "destructive" })
+          return
+        }
+        toast({ title: "Error", description: "Server error. Please try again.", variant: "destructive" })
+        return
+      }
+
       const result = await response.json()
 
       if (result.error) {
