@@ -2,6 +2,7 @@ import { getUsers, getSchoolsForFilter } from "@/app/actions/admin"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { UserPlus, MoreHorizontal, Pencil, Users, Mail, Building2, Calendar, Shield, GraduationCap, MapPin, Briefcase } from "lucide-react"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { DeleteUserDialog } from "@/components/admin/delete-user-dialog"
@@ -9,6 +10,7 @@ import { GenerateAccessTokenDialog } from "@/components/admin/generate-access-to
 import { PaginationControls } from "@/components/admin/pagination-controls"
 import { SearchInput } from "@/components/admin/search-input"
 import { UserFilters } from "@/components/admin/user-filters"
+import { checkPermission } from "@/lib/permissions"
 
 interface UsersPageProps {
   searchParams: Promise<{
@@ -66,6 +68,20 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   const school = schoolParam || ""
   const limit = 10
 
+  // Check permissions - using actual permission keys from database
+  const [canView, canCreate, canEdit, canDelete, canGenerateToken] = await Promise.all([
+    checkPermission("users.view"),
+    checkPermission("users.create"),
+    checkPermission("users.edit_all"),
+    checkPermission("users.delete"),
+    checkPermission("users.access_token"),
+  ])
+
+  // If user can't view users at all, redirect to dashboard
+  if (!canView) {
+    redirect("/dashboard/admin")
+  }
+
   // Fetch users and filter options in parallel
   const [usersResult, schoolsResult] = await Promise.all([
     getUsers(page, limit, search, "", school),
@@ -80,12 +96,14 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Users</h2>
-          <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
-            <Link href="/dashboard/admin/users/new" className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              <span>Add User</span>
-            </Link>
-          </Button>
+          {canCreate && (
+            <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
+              <Link href="/dashboard/admin/users/new" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                <span>Add User</span>
+              </Link>
+            </Button>
+          )}
         </div>
         <div className="text-center py-8 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
           Error loading users: {error}
@@ -110,12 +128,14 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             Manage all system users and their permissions
           </p>
         </div>
-        <Button asChild size="sm" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
-          <Link href="/dashboard/admin/users/new" className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            <span>Add User</span>
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild size="sm" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
+            <Link href="/dashboard/admin/users/new" className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              <span>Add User</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -171,16 +191,18 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                     Created
                   </div>
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-[80px]">
-                  Actions
-                </th>
+                {(canEdit || canDelete || canGenerateToken) && (
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-[80px]">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             {/* Body */}
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <td colSpan={(canEdit || canDelete || canGenerateToken) ? 6 : 5} className="text-center py-12 text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="h-8 w-8 text-slate-300 dark:text-slate-600" />
                       <span>
@@ -246,35 +268,41 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                         </span>
                       </td>
                       {/* Actions */}
-                      <td className="px-4 py-3 text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                            >
-                              <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/admin/users/${user.id}`} className="flex items-center">
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit User
-                              </Link>
-                            </DropdownMenuItem>
-                            <GenerateAccessTokenDialog
-                              userId={user.id}
-                              userName={user.name}
-                              userEmail={user.email}
-                            />
-                            <DropdownMenuSeparator />
-                            <DeleteUserDialog userId={user.id} userName={user.name} />
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
+                      {(canEdit || canDelete || canGenerateToken) && (
+                        <td className="px-4 py-3 text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                <span className="sr-only">Actions</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                              {canEdit && (
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/admin/users/${user.id}`} className="flex items-center">
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit User
+                                  </Link>
+                                </DropdownMenuItem>
+                              )}
+                              {canGenerateToken && (
+                                <GenerateAccessTokenDialog
+                                  userId={user.id}
+                                  userName={user.name}
+                                  userEmail={user.email}
+                                />
+                              )}
+                              {(canEdit || canGenerateToken) && canDelete && <DropdownMenuSeparator />}
+                              {canDelete && <DeleteUserDialog userId={user.id} userName={user.name} />}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
                     </tr>
                   )
                 })

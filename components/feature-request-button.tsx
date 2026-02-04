@@ -4,26 +4,39 @@ import { Lightbulb, Plus } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { getPendingFeatureRequestsCount } from "@/app/actions/feature-requests"
+import { usePermissions } from "@/hooks/use-permissions"
 
 export function FeatureRequestButton() {
   const [count, setCount] = useState(0)
+  const { hasPermission, isLoading } = usePermissions()
+
+  // Check if user has permission to view feature requests
+  const canView = hasPermission("feature_request.view")
 
   useEffect(() => {
+    // Only fetch count if user has permission to view
+    if (!canView) return
+
     const fetchCount = async () => {
       const { count } = await getPendingFeatureRequestsCount()
       setCount(count)
     }
-    
+
     fetchCount()
-    
+
     // Refresh count every 30 seconds
     const interval = setInterval(fetchCount, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [canView])
+
+  // Don't render if loading or user doesn't have permission
+  if (isLoading || !canView) {
+    return null
+  }
 
   return (
-    <Link 
-      href="/dashboard/feature-requests" 
+    <Link
+      href="/dashboard/feature-requests"
       className="relative p-2 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 transition-all duration-300 border border-slate-200 dark:border-slate-600/50 shadow-sm dark:shadow-slate-900/20 flex items-center justify-center"
       title="Feature Requests"
     >

@@ -2,6 +2,7 @@
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "@/app/actions/auth"
+import { checkPermission } from "@/lib/permissions"
 import { revalidatePath } from "next/cache"
 import { isSubmissionOpen, isSubmissionWindowOpen, getActiveTermWindow } from "./assessment-periods"
 import { 
@@ -64,8 +65,14 @@ import {
 export async function deleteAssessmentReport(reportId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const user = await getUser()
-    if (!user || user.role !== 'Admin') {
-      return { success: false, error: 'Unauthorized' }
+    if (!user) {
+      return { success: false, error: 'You must be logged in.' }
+    }
+
+    // Check if user has settings permission (admin function)
+    const canManageSettings = await checkPermission("school_assessments.settings")
+    if (!canManageSettings) {
+      return { success: false, error: 'You do not have permission to delete assessment reports.' }
     }
 
     if (!reportId) {
@@ -412,9 +419,15 @@ function mapDbRowToReportSummary(row: any): ReportSummary {
 export async function createAssessmentReport(periodId?: string) {
   try {
     const user = await getUser()
-    
-    if (!user || user.role !== 'Head Teacher') {
-      return { error: 'Only Head Teachers can create assessment reports.' }
+
+    if (!user) {
+      return { error: 'You must be logged in to create assessment reports.' }
+    }
+
+    // Check if user has permission to create school assessments
+    const canCreate = await checkPermission("school_assessments.create")
+    if (!canCreate) {
+      return { error: 'You do not have permission to create assessment reports.' }
     }
     
     // Check if submission window is open using new term window system
@@ -731,9 +744,15 @@ export async function saveSectionData(
 export async function submitReport(reportId: string) {
   try {
     const user = await getUser()
-    
-    if (!user || user.role !== 'Head Teacher') {
-      return { error: 'Only Head Teachers can submit reports.' }
+
+    if (!user) {
+      return { error: 'You must be logged in to submit reports.' }
+    }
+
+    // Check if user has permission to create/submit school assessments
+    const canCreate = await checkPermission("school_assessments.create")
+    if (!canCreate) {
+      return { error: 'You do not have permission to submit reports.' }
     }
     
     const supabase = createServiceRoleSupabaseClient()
@@ -962,19 +981,33 @@ export async function getReport(reportId: string) {
       return { report: null, error: 'Failed to fetch report.' }
     }
     
-    // Check permissions based on role
-    if (user.role === 'Head Teacher') {
-      if (data.headteacher_id !== user.id) {
-        return { report: null, error: 'You do not have permission to view this report.' }
-      }
-    } else if (user.role === 'Regional Officer') {
-      // user.region is the region ID, compare with school's region_id
+    // Check permissions
+    const canViewAll = await checkPermission("school_assessments.view_all")
+    const canViewRegional = await checkPermission("school_assessments.view_regional")
+    const canViewOwn = await checkPermission("school_assessments.view_own")
+
+    // If user can view all, allow access
+    if (canViewAll) {
+      return { report: mapDbRowToReportWithDetails(data), error: null }
+    }
+
+    // If user can view regional, check if school is in their region
+    if (canViewRegional) {
       const schoolRegionId = data.sms_schools?.region_id
-      if (schoolRegionId !== user.region) {
-        return { report: null, error: 'You do not have permission to view this report.' }
+      if (schoolRegionId === user.region) {
+        return { report: mapDbRowToReportWithDetails(data), error: null }
       }
     }
-    // Education Officials and Admins can view all reports
+
+    // If user can view own, check if they own the report
+    if (canViewOwn) {
+      if (data.headteacher_id === user.id) {
+        return { report: mapDbRowToReportWithDetails(data), error: null }
+      }
+    }
+
+    // No permission to view this report
+    return { report: null, error: 'You do not have permission to view this report.' }
     
     return { report: mapDbRowToReportWithDetails(data), error: null }
   } catch (error) {
@@ -1172,17 +1205,25 @@ export async function getMySchoolReport(periodId: string) {
 export async function getRegionalReports(regionId?: string, periodId?: string) {
   try {
     const user = await getUser()
-    
+
     if (!user) {
       return { reports: [], error: 'You must be logged in.' }
     }
-    
+
+    // Check if user has permission to view regional or all school assessments
+    const canViewAll = await checkPermission("school_assessments.view_all")
+    const canViewRegional = await checkPermission("school_assessments.view_regional")
+
+    if (!canViewAll && !canViewRegional) {
+      return { reports: [], error: 'You do not have permission to view regional reports.' }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
-    
-    // For Regional Officers, use their assigned region
+
+    // For users with regional permission only, use their assigned region
     let targetRegionId = regionId
-    if (user.role === 'Regional Officer' && !regionId) {
-      // user.region is already the region ID
+    // If user only has regional permission (not view_all) and no region specified, use their assigned region
+    if (!canViewAll && canViewRegional && !regionId) {
       targetRegionId = user.region
     }
     
@@ -1250,8 +1291,14 @@ export async function getRegionalReports(regionId?: string, periodId?: string) {
 export async function getNationalReports(filters?: ReportFilters) {
   try {
     const user = await getUser()
-    
-    if (!user || (user.role !== 'Education Official' && user.role !== 'Admin')) {
+
+    if (!user) {
+      return { reports: [], error: 'You must be logged in.' }
+    }
+
+    // Check if user has permission to view all school assessments
+    const canViewAll = await checkPermission("school_assessments.view_all")
+    if (!canViewAll) {
       return { reports: [], error: 'You do not have permission to view national reports.' }
     }
     

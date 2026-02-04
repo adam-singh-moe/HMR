@@ -1497,19 +1497,19 @@ interface EnhancedStatCardProps {
 }
 
 const VARIANT_STYLES = {
-  default: 'bg-white border',
-  success: 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200',
-  warning: 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200',
-  danger: 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200',
-  info: 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200',
+  default: 'bg-white dark:bg-[hsl(222,47%,11%)] border border-slate-200 dark:border-slate-700/50',
+  success: 'bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20 border-emerald-200 dark:border-emerald-700/50',
+  warning: 'bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 border-amber-200 dark:border-amber-700/50',
+  danger: 'bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/20 border-red-200 dark:border-red-700/50',
+  info: 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 border-blue-200 dark:border-blue-700/50',
 }
 
-export function EnhancedStatCard({ 
-  title, 
-  value, 
+export function EnhancedStatCard({
+  title,
+  value,
   subtitle,
-  description, 
-  icon, 
+  description,
+  icon,
   trend,
   progress,
   variant = 'default'
@@ -1517,34 +1517,34 @@ export function EnhancedStatCard({
   return (
     <Card className={VARIANT_STYLES[variant]}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">{title}</CardTitle>
         {icon}
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
-          <div className="text-3xl font-bold">{value}</div>
-          {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
+          <div className="text-3xl font-bold text-slate-900 dark:text-white">{value}</div>
+          {subtitle && <span className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</span>}
         </div>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{description}</p>
         )}
         {trend && (
           <div className={`flex items-center gap-1 mt-2 text-xs ${
-            trend.isPositive === undefined ? 'text-muted-foreground' :
-            trend.isPositive ? 'text-green-600' : 'text-red-600'
+            trend.isPositive === undefined ? 'text-slate-500 dark:text-slate-400' :
+            trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
           }`}>
             {trend.isPositive !== undefined && (
               trend.isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />
             )}
             <span>{trend.isPositive && trend.value > 0 ? '+' : ''}{trend.value}%</span>
-            {trend.label && <span className="text-muted-foreground ml-1">{trend.label}</span>}
+            {trend.label && <span className="text-slate-500 dark:text-slate-400 ml-1">{trend.label}</span>}
           </div>
         )}
         {progress && (
           <div className="mt-3">
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-muted-foreground">{progress.label || 'Progress'}</span>
-              <span>{Math.round((progress.value / progress.max) * 100)}%</span>
+              <span className="text-slate-500 dark:text-slate-400">{progress.label || 'Progress'}</span>
+              <span className="text-slate-700 dark:text-slate-300">{Math.round((progress.value / progress.max) * 100)}%</span>
             </div>
             <Progress value={(progress.value / progress.max) * 100} className="h-1.5" />
           </div>
@@ -1642,10 +1642,10 @@ export function MilestoneTracker({ currentScore, reports, title = "Achievement P
             const firstAchieved = milestoneHistory[milestone.score]
             
             return (
-              <div 
+              <div
                 key={milestone.score}
                 className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-                  isAchieved ? 'bg-muted/50' : 'opacity-50'
+                  isAchieved ? 'bg-slate-100 dark:bg-[hsl(222,47%,13%)]' : 'opacity-50'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -1669,7 +1669,7 @@ export function MilestoneTracker({ currentScore, reports, title = "Achievement P
                   </div>
                 </div>
                 {isAchieved && (
-                  <Badge variant="outline" className="bg-white">✓ Achieved</Badge>
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30">Achieved</Badge>
                 )}
               </div>
             )
@@ -1678,15 +1678,15 @@ export function MilestoneTracker({ currentScore, reports, title = "Achievement P
 
         {/* Next Target */}
         {nextMilestone && (
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-            <p className="text-sm font-medium text-blue-800">Next Target: {nextMilestone.label}</p>
-            <p className="text-xs text-blue-600 mt-1">
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Next Target: {nextMilestone.label}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
               {nextMilestone.score - currentScore} more points to reach {nextMilestone.score} points
             </p>
-            <Progress 
-              value={((currentScore - (milestones[milestones.indexOf(nextMilestone) - 1]?.score || 0)) / 
-                (nextMilestone.score - (milestones[milestones.indexOf(nextMilestone) - 1]?.score || 0))) * 100} 
-              className="mt-2 h-2 [&>div]:bg-blue-500"
+            <Progress
+              value={((currentScore - (milestones[milestones.indexOf(nextMilestone) - 1]?.score || 0)) /
+                (nextMilestone.score - (milestones[milestones.indexOf(nextMilestone) - 1]?.score || 0))) * 100}
+              className="mt-2 h-2 bg-blue-100 dark:bg-blue-500/20 [&>div]:bg-blue-500"
             />
           </div>
         )}
@@ -2250,7 +2250,7 @@ export function CategoryStrengthCard({
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">💪</span>
+                  <Trophy className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 uppercase">Strongest Area</p>
                 </div>
                 <p className="text-lg font-bold text-emerald-800 dark:text-emerald-300">{strongest.label}</p>
@@ -2275,7 +2275,7 @@ export function CategoryStrengthCard({
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">🎯</span>
+                  <Target className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   <p className="text-xs font-medium text-orange-700 dark:text-orange-400 uppercase">Needs Improvement</p>
                 </div>
                 <p className="text-lg font-bold text-orange-800 dark:text-orange-300">{weakest.label}</p>

@@ -1,8 +1,17 @@
 import { getRoles, getRegions, getSchools } from "@/app/actions/admin"
 import { UserForm } from "@/components/admin/user-form"
 import { UserPlus } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
+import { redirect } from "next/navigation"
 
 export default async function NewUserPage() {
+  // Check create permission first
+  const canCreate = await checkPermission("users.create")
+
+  if (!canCreate) {
+    redirect("/dashboard/admin/users")
+  }
+
   const [roles, regionsResult, schoolsResult] = await Promise.all([
     getRoles(),
     getRegions(1, 50),

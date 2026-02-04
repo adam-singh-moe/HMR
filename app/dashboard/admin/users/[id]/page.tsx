@@ -1,7 +1,8 @@
 import { getUserById, getRoles, getRegions, getSchools } from "@/app/actions/admin"
 import { UserForm } from "@/components/admin/user-form"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { UserCog } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
 
 interface EditUserPageProps {
   params: Promise<{
@@ -10,6 +11,13 @@ interface EditUserPageProps {
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
+  // Check edit permission first (using actual permission key from database)
+  const canEdit = await checkPermission("users.edit_all")
+
+  if (!canEdit) {
+    redirect("/dashboard/admin/users")
+  }
+
   const { id } = await params
   const [user, roles, regionsResult, schoolsResult] = await Promise.all([
     getUserById(id),

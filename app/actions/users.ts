@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import { createServerSupabaseClient } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 import { revalidatePath } from "next/cache"
+import { checkPermission } from "@/lib/permissions"
 
 export async function getUserDetails() {
   const cookieStore = await cookies()
@@ -31,6 +32,13 @@ export async function updateUserProfile(formData: FormData) {
 
   try {
     const user = JSON.parse(userSession.value)
+
+    // Check if user has permission to edit their name
+    const canEditName = await checkPermission("users.edit_name")
+    if (!canEditName) {
+      return { error: "You don't have permission to edit your name." }
+    }
+
     const newName = formData.get("name") as string
 
     if (!newName || newName.trim().length === 0) {
@@ -80,6 +88,13 @@ export async function updateUserPassword(formData: FormData) {
 
   try {
     const user = JSON.parse(userSession.value)
+
+    // Check if user has permission to update their password
+    const canUpdatePassword = await checkPermission("users.update_password")
+    if (!canUpdatePassword) {
+      return { error: "You don't have permission to update your password." }
+    }
+
     const currentPassword = formData.get("current_password") as string
     const newPassword = formData.get("new_password") as string
     const confirmPassword = formData.get("confirm_password") as string

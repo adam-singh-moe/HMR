@@ -3,6 +3,7 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
 import { revalidatePath } from "next/cache"
+import { checkPermission } from "@/lib/permissions"
 
 export async function getFeatureRequests(filters?: {
   status?: string
@@ -13,6 +14,12 @@ export async function getFeatureRequests(filters?: {
     const user = await getUser()
     if (!user) {
       return { requests: [], error: "Unauthorized access." }
+    }
+
+    // Check if user has permission to view feature requests
+    const canView = await checkPermission("feature_request.view")
+    if (!canView) {
+      return { requests: [], error: "You don't have permission to view feature requests." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -97,11 +104,12 @@ export async function createFeatureRequest(formData: FormData) {
       return { success: false, error: "Unauthorized access." }
     }
 
-    // Check if user is Regional Officer or Education Official
-    if (user.role !== "Regional Officer" && user.role !== "Education Official") {
-      return { 
-        success: false, 
-        error: "Only Regional Officers and Education Officials can create feature requests." 
+    // Check if user has permission to create feature requests
+    const canCreate = await checkPermission("feature_request.create")
+    if (!canCreate) {
+      return {
+        success: false,
+        error: "You don't have permission to create feature requests."
       }
     }
 
@@ -141,6 +149,12 @@ export async function upvoteFeatureRequest(requestId: string) {
     const user = await getUser()
     if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    // Check if user has permission to upvote feature requests
+    const canUpvote = await checkPermission("feature_request.upvote")
+    if (!canUpvote) {
+      return { success: false, error: "You don't have permission to upvote feature requests." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -198,6 +212,12 @@ export async function addFeatureRequestComment(requestId: string, comment: strin
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check if user has permission to create comments
+    const canComment = await checkPermission("feature_request.create_comments")
+    if (!canComment) {
+      return { success: false, error: "You don't have permission to add comments." }
+    }
+
     if (!comment || comment.trim() === "") {
       return { success: false, error: "Comment cannot be empty." }
     }
@@ -230,6 +250,12 @@ export async function getFeatureRequestComments(requestId: string) {
     const user = await getUser()
     if (!user) {
       return { comments: [], error: "Unauthorized access." }
+    }
+
+    // Check if user has permission to view comments
+    const canViewComments = await checkPermission("feature_request.view_comments")
+    if (!canViewComments) {
+      return { comments: [], error: "You don't have permission to view comments." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -279,9 +305,10 @@ export async function updateFeatureRequestStatus(
       return { success: false, error: "Unauthorized access." }
     }
 
-    // Check if user is Admin
-    if (user.role !== "Admin" && user.role !== "Super Admin") {
-      return { success: false, error: "Only admins can update request status." }
+    // Check if user has permission to update status
+    const canUpdateStatus = await checkPermission("feature_request.status_update")
+    if (!canUpdateStatus) {
+      return { success: false, error: "You don't have permission to update request status." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -323,9 +350,15 @@ export async function deleteFeatureRequest(requestId: string) {
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check if user has permission to delete feature requests
+    const canDelete = await checkPermission("feature_request.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to delete feature requests." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
-    // Check if user is the creator or an admin
+    // Verify the feature request exists
     const { data: request } = await supabase
       .from("hmr_feature_requests")
       .select("created_by")
@@ -334,16 +367,6 @@ export async function deleteFeatureRequest(requestId: string) {
 
     if (!request) {
       return { success: false, error: "Feature request not found." }
-    }
-
-    const isCreator = request.created_by === user.id
-    const isAdmin = user.role === "Admin" || user.role === "Super Admin"
-
-    if (!isCreator && !isAdmin) {
-      return { 
-        success: false, 
-        error: "You can only delete your own feature requests." 
-      }
     }
 
     const { error } = await supabase
@@ -373,6 +396,12 @@ export async function getFeatureRequestById(requestId: string) {
     const user = await getUser()
     if (!user) {
       return { request: null, error: "Unauthorized access." }
+    }
+
+    // Check if user has permission to view feature requests
+    const canView = await checkPermission("feature_request.view")
+    if (!canView) {
+      return { request: null, error: "You don't have permission to view feature requests." }
     }
 
     const supabase = createServiceRoleSupabaseClient()

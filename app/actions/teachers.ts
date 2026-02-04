@@ -3,6 +3,7 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser, getUserSchoolInfo } from "./auth"
 import { revalidatePath } from "next/cache"
+import { checkPermission } from "@/lib/permissions"
 
 export type Teacher = {
   id: string
@@ -42,6 +43,12 @@ export async function getTeachers() {
       return { teachers: [], error: "Unauthorized access." }
     }
 
+    // Check permissions - view_own requires a school association
+    const canViewOwn = await checkPermission("teacher_details.view_own")
+    if (!canViewOwn) {
+      return { teachers: [], error: "You don't have permission to view teachers." }
+    }
+
     const schoolInfo = await getUserSchoolInfo()
     if (!schoolInfo.school?.id) {
       return { teachers: [], error: "No school associated with this user." }
@@ -49,7 +56,7 @@ export async function getTeachers() {
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Fetch teachers
+    // Fetch teachers for user's own school
     const { data: teachers, error } = await supabase
       .from("hmr_teacher_details")
       .select("*")
@@ -87,6 +94,12 @@ export async function addTeacher(formData: FormData) {
     const user = await getUser()
     if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    // Check create permission
+    const canCreate = await checkPermission("teacher_details.create")
+    if (!canCreate) {
+      return { success: false, error: "You don't have permission to create teachers." }
     }
 
     const schoolInfo = await getUserSchoolInfo()
@@ -172,6 +185,12 @@ export async function updateTeacher(teacherId: string, formData: FormData) {
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check edit permission
+    const canEdit = await checkPermission("teacher_details.edit")
+    if (!canEdit) {
+      return { success: false, error: "You don't have permission to edit teachers." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     const firstName = formData.get("first_name") as string
@@ -247,6 +266,12 @@ export async function deleteTeacher(teacherId: string) {
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check delete permission
+    const canDelete = await checkPermission("teacher_details.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to delete teachers." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     // Soft delete
@@ -309,6 +334,12 @@ export async function getDeletedTeachers() {
       return { teachers: [], error: "Unauthorized access." }
     }
 
+    // Check delete permission (need delete to manage deleted teachers)
+    const canDelete = await checkPermission("teacher_details.delete")
+    if (!canDelete) {
+      return { teachers: [], error: "You don't have permission to view deleted teachers." }
+    }
+
     const schoolInfo = await getUserSchoolInfo()
     if (!schoolInfo.school?.id) {
       return { teachers: [], error: "No school associated with this user." }
@@ -356,6 +387,12 @@ export async function restoreTeacher(teacherId: string) {
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check delete permission (same permission for restore)
+    const canDelete = await checkPermission("teacher_details.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to restore teachers." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     const { error } = await supabase
@@ -386,6 +423,12 @@ export async function permanentlyDeleteTeacher(teacherId: string) {
       return { success: false, error: "Unauthorized access." }
     }
 
+    // Check delete permission
+    const canDelete = await checkPermission("teacher_details.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to permanently delete teachers." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     const { error } = await supabase
@@ -406,7 +449,7 @@ export async function permanentlyDeleteTeacher(teacherId: string) {
   }
 }
 
-// Education Official functions - view teachers across schools
+// View teachers across schools - permission-based
 export async function getTeachersForEducationOfficial(schoolId?: string) {
   try {
     const user = await getUser()
@@ -414,26 +457,41 @@ export async function getTeachersForEducationOfficial(schoolId?: string) {
       return { teachers: [], schools: [], error: "Unauthorized access." }
     }
 
-    // Check if user is an education official or admin
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { teachers: [], schools: [], error: "Access denied. Education officials only." }
+    // Check permissions
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("teacher_details.view_all"),
+      checkPermission("teacher_details.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { teachers: [], schools: [], error: "You don't have permission to view teachers." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Fetch all schools for the dropdown
-    const { data: schoolsData, error: schoolsError } = await supabase
+    // Fetch schools - filter by region if user only has view_regional permission
+    let schoolsQuery = supabase
       .from("sms_schools")
       .select("id, name, region_id")
       .order("name", { ascending: true })
 
+    // If user only has view_regional permission, filter schools by their region
+    if (!canViewAll && canViewRegional && user.region_id) {
+      schoolsQuery = schoolsQuery.eq("region_id", user.region_id)
+    }
+
+    const { data: schoolsData, error: schoolsError } = await schoolsQuery
+
     if (schoolsError) {
       console.error("Error fetching schools:", schoolsError)
     }
-    
+
     const schools = schoolsData || []
 
-    // Fetch teachers - all or by school
+    // Get the list of school IDs that user can access
+    const accessibleSchoolIds = schools.map((s: any) => s.id)
+
+    // Fetch teachers - filtered by accessible schools
     let teachersQuery = supabase
       .from("hmr_teacher_details")
       .select("*")
@@ -441,7 +499,14 @@ export async function getTeachersForEducationOfficial(schoolId?: string) {
       .order("last_name", { ascending: true })
 
     if (schoolId) {
+      // If a specific school is requested, verify user has access to it
+      if (!canViewAll && canViewRegional && !accessibleSchoolIds.includes(schoolId)) {
+        return { teachers: [], schools, error: "You don't have access to this school." }
+      }
       teachersQuery = teachersQuery.eq("school_id", schoolId)
+    } else if (!canViewAll && canViewRegional) {
+      // If view_regional only, filter to accessible schools
+      teachersQuery = teachersQuery.in("school_id", accessibleSchoolIds)
     }
 
     const { data: teachers, error } = await teachersQuery
@@ -486,28 +551,48 @@ export async function getSchoolsWithTeacherCount() {
       return { schools: [], error: "Unauthorized access." }
     }
 
-    // Check if user is an education official or admin
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { schools: [], error: "Access denied. Education officials only." }
+    // Check permissions
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("teacher_details.view_all"),
+      checkPermission("teacher_details.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { schools: [], error: "You don't have permission to view teachers." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Fetch all schools
-    const { data: schoolsData } = await supabase
+    // Fetch schools - filter by region if user only has view_regional permission
+    let schoolsQuery = supabase
       .from("sms_schools")
       .select("id, name, region_id")
       .order("name", { ascending: true })
+
+    if (!canViewAll && canViewRegional && user.region_id) {
+      schoolsQuery = schoolsQuery.eq("region_id", user.region_id)
+    }
+
+    const { data: schoolsData } = await schoolsQuery
 
     if (!schoolsData) {
       return { schools: [], error: null }
     }
 
-    // Fetch teacher counts per school
-    const { data: teacherCounts } = await supabase
+    // Get the list of school IDs that user can access
+    const accessibleSchoolIds = schoolsData.map((s: any) => s.id)
+
+    // Fetch teacher counts - filter by accessible schools if view_regional
+    let teacherCountsQuery = supabase
       .from("hmr_teacher_details")
       .select("school_id")
       .is("deleted_at", null)
+
+    if (!canViewAll && canViewRegional) {
+      teacherCountsQuery = teacherCountsQuery.in("school_id", accessibleSchoolIds)
+    }
+
+    const { data: teacherCounts } = await teacherCountsQuery
 
     // Count teachers per school
     const countMap = new Map<string, number>()
@@ -554,16 +639,28 @@ export async function getTeacherStatistics(filters?: {
       return { stats: null, error: "Unauthorized access." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { stats: null, error: "Access denied. Education officials only." }
+    // Check permissions
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("teacher_details.view_all"),
+      checkPermission("teacher_details.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { stats: null, error: "You don't have permission to view teacher statistics." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Fetch schools first to get level and region info
-    const { data: schools, error: schoolsError } = await supabase
+    // Fetch schools - filter by region if user only has view_regional permission
+    let schoolsQuery = supabase
       .from("sms_schools")
       .select("id, school_level_id, region_id")
+
+    if (!canViewAll && canViewRegional && user.region_id) {
+      schoolsQuery = schoolsQuery.eq("region_id", user.region_id)
+    }
+
+    const { data: schools, error: schoolsError } = await schoolsQuery
 
     if (schoolsError) {
       console.error("Error fetching schools:", schoolsError)
@@ -573,6 +670,9 @@ export async function getTeacherStatistics(filters?: {
     // Create school lookup map
     const schoolMap = new Map((schools || []).map((s: any) => [String(s.id), s]))
 
+    // Get accessible school IDs
+    const accessibleSchoolIds = (schools || []).map((s: any) => s.id)
+
     // Build query with filters
     let query = supabase
       .from("hmr_teacher_details")
@@ -580,7 +680,14 @@ export async function getTeacherStatistics(filters?: {
       .is("deleted_at", null)
 
     if (filters?.schoolId) {
+      // Verify user has access to this school
+      if (!canViewAll && canViewRegional && !accessibleSchoolIds.includes(filters.schoolId)) {
+        return { stats: null, error: "You don't have access to this school." }
+      }
       query = query.eq("school_id", filters.schoolId)
+    } else if (!canViewAll && canViewRegional) {
+      // Filter to accessible schools only
+      query = query.in("school_id", accessibleSchoolIds)
     }
 
     const { data: allTeachers, error } = await query

@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Sparkles, Brain, TrendingUp, AlertCircle, Lightbulb, FileText, Download, Send, RotateCcw, Copy, Check } from "lucide-react"
+import { Loader2, Sparkles, Brain, TrendingUp, AlertCircle, Lightbulb, FileText, Download, Send, RotateCcw, Copy, Check, ShieldX } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { generateAIInsight, getAISuggestedPrompts, getAvailableSchools } from "@/app/actions/ai-insights"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { usePermissions } from "@/hooks/use-permissions"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -29,6 +30,8 @@ export default function EducationOfficialAIInsightsPage() {
 
 function EducationOfficialAIInsightsContent() {
   const { user } = useAuth()
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions()
+  const canViewAll = hasPermission("ai_insights.View")
   const [selectedReportType, setSelectedReportType] = useState("")
   const [selectedMonth, setSelectedMonth] = useState("")
   const [selectedYear, setSelectedYear] = useState("")
@@ -350,6 +353,35 @@ function EducationOfficialAIInsightsContent() {
   }
 
   const allFiltersSelected = selectedReportType && selectedMonth && selectedYear
+
+  // Show loading state while checking permissions
+  if (permissionsLoading) {
+    return (
+      <div className="h-[calc(100vh-120px)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show access denied if user doesn't have permission
+  if (!canViewAll) {
+    return (
+      <div className="h-[calc(100vh-120px)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <ShieldX className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Access Denied</h2>
+          <p className="text-slate-500 dark:text-slate-400">
+            You don't have permission to access AI Insights. Please contact your administrator if you believe this is an error.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col">

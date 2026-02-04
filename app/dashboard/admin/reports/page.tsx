@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
 import { FileText, Download, TrendingUp, Calendar } from "lucide-react"
 import { AdminReportsClient } from "./components/AdminReportsClient"
+import { ExportAllButton } from "./components/ExportAllButton"
 import { getSubmittedReportsWithSearchAndPagination, getReportCounts, getRegionsForFilter } from "@/app/actions/education-official-reports"
 
 interface PageProps {
@@ -114,10 +114,7 @@ export default async function AdminReportsPage({ searchParams }: PageProps) {
             <div>
               <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Actions</p>
               <div className="mt-3">
-                <Button variant="outline" size="sm" className="text-xs border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20">
-                  <Download className="h-3 w-3 mr-1" />
-                  Export All
-                </Button>
+                <ExportAllButton />
               </div>
             </div>
             <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-500/20">

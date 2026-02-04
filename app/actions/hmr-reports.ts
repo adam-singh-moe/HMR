@@ -3,13 +3,24 @@
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
 import { revalidatePath } from "next/cache"
+import { checkPermission } from "@/lib/permissions"
 
 export async function createHmrReport(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can submit reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check permissions: create_own (for own school) or create_all (for any school)
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to create monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -104,21 +115,31 @@ export async function updateHmrReport(reportId: string, formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check permissions: create_own (for own reports) or create_all (for any report)
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user (or user is admin)
+    // Verify the report belongs to the current user (or user has create_all permission)
     let reportQuery = supabase
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
       .is("deleted_on", null)
 
-    // Only filter by headteacher_id for head teachers, admins can update any report
-    if (user.role !== "Admin") {
+    // Only filter by headteacher_id if user doesn't have create_all permission
+    if (!canCreateAll) {
       reportQuery = reportQuery.eq("headteacher_id", user.id)
     }
 
@@ -156,15 +177,26 @@ export async function getHmrReports() {
     if (!user) {
       return { reports: [], error: "User not authenticated." }
     }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional) {
+      return { reports: [], error: "You do not have permission to view monthly reports." }
+    }
+
     // Use service role client to ensure we can read all data
     const supabase = createServiceRoleSupabaseClient()
 
-    // For Head Teachers, get all reports for their school
-    if (user.role === "Head Teacher") {
-      // First check if user has a school_id
+    // For users with view_own permission (typically Head Teachers), get reports for their school
+    if (canViewOwn && !canViewAll && !canViewRegional) {
       if (!user.school_id) {
-        console.error("Head Teacher does not have a school_id assigned")
-        return { reports: [], error: "No school assigned to this Head Teacher." }
+        console.error("User does not have a school_id assigned")
+        return { reports: [], error: "No school assigned to this user." }
       }
 
       const { data: reports, error } = await supabase
@@ -184,7 +216,7 @@ export async function getHmrReports() {
       return { reports: reports || [], error: null }
     }
 
-    // For other roles (Regional Officer, Admin), use different logic
+    // Build query based on permissions
     let query = supabase
       .from("hmr_report")
       .select(`
@@ -194,10 +226,11 @@ export async function getHmrReports() {
       .is("deleted_on", null)
       .order("created_at", { ascending: false })
 
-    if (user.role === "Regional Officer" && user.region) {
+    // For view_regional, filter by user's region
+    if (canViewRegional && !canViewAll && user.region) {
       query = query.eq("region_id", user.region)
     }
-    // Admins can see all reports (no additional filter)
+    // For view_all, no additional filter needed
 
     const { data: reports, error } = await query
 
@@ -217,8 +250,18 @@ export async function deleteHmrReport(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can delete reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions (delete requires create permission)
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to delete monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -261,8 +304,18 @@ export async function deleteHmrReport(reportId: string) {
 export async function saveStudentEnrollment(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -334,24 +387,44 @@ export async function getStudentEnrollment(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can view reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user's school
-    if (!user.school_id) {
-      return { error: "No school assigned to this Head Teacher." }
+    // Build query based on permissions
+    let reportQuery = supabase
+      .from("hmr_report")
+      .select("id, school_id, region_id")
+      .eq("id", reportId)
+      .is("deleted_on", null)
+
+    // Apply access restrictions based on permissions
+    if (!canViewAll) {
+      if (canViewOwn || canDraftOwn) {
+        if (!user.school_id) {
+          return { error: "No school assigned to this user." }
+        }
+        reportQuery = reportQuery.eq("school_id", user.school_id)
+      } else if (canViewRegional && user.region) {
+        reportQuery = reportQuery.eq("region_id", user.region)
+      }
     }
 
-    const { data: report, error: reportError } = await supabase
-      .from("hmr_report")
-      .select("id, school_id")
-      .eq("id", reportId)
-      .eq("school_id", user.school_id)
-      .is("deleted_on", null)
-      .single()
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to view it." }
@@ -379,8 +452,18 @@ export async function getStudentEnrollment(reportId: string) {
 export async function saveAttendance(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -460,24 +543,44 @@ export async function getAttendance(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can view reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user's school
-    if (!user.school_id) {
-      return { error: "No school assigned to this Head Teacher." }
+    // Build query based on permissions
+    let reportQuery = supabase
+      .from("hmr_report")
+      .select("id, school_id, region_id")
+      .eq("id", reportId)
+      .is("deleted_on", null)
+
+    // Apply access restrictions based on permissions
+    if (!canViewAll) {
+      if (canViewOwn || canDraftOwn) {
+        if (!user.school_id) {
+          return { error: "No school assigned to this user." }
+        }
+        reportQuery = reportQuery.eq("school_id", user.school_id)
+      } else if (canViewRegional && user.region) {
+        reportQuery = reportQuery.eq("region_id", user.region)
+      }
     }
 
-    const { data: report, error: reportError } = await supabase
-      .from("hmr_report")
-      .select("id, school_id")
-      .eq("id", reportId)
-      .eq("school_id", user.school_id)
-      .is("deleted_on", null)
-      .single()
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to view it." }
@@ -514,8 +617,18 @@ export async function getAttendance(reportId: string) {
 export async function saveStaffing(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -622,27 +735,43 @@ export async function getStaffing(reportId: string) {
       return { error: "User not authenticated." }
     }
 
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
+    }
+
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // For Head Teachers, verify the report belongs to their school
-    if (user.role === "Head Teacher") {
-      if (!user.school_id) {
-        return { error: "No school assigned to this Head Teacher." }
-      }
+    // Build query based on permissions
+    let reportQuery = supabase
+      .from("hmr_report")
+      .select("id, school_id, region_id")
+      .eq("id", reportId)
+      .is("deleted_on", null)
 
-      const { data: report, error: reportError } = await supabase
-        .from("hmr_report")
-        .select("id, school_id")
-        .eq("id", reportId)
-        .eq("school_id", user.school_id)
-        .is("deleted_on", null)
-        .single()
-
-      if (reportError || !report) {
-        return { error: "Report not found or you don't have permission to view it." }
+    // Apply access restrictions based on permissions
+    if (!canViewAll) {
+      if (canViewOwn || canDraftOwn) {
+        if (!user.school_id) {
+          return { error: "No school assigned to this user." }
+        }
+        reportQuery = reportQuery.eq("school_id", user.school_id)
+      } else if (canViewRegional && user.region) {
+        reportQuery = reportQuery.eq("region_id", user.region)
       }
-    } else if (!["Admin", "Super Admin", "Regional Officer", "Education Official"].includes(user.role)) {
-      return { error: "You don't have permission to view this report." }
+    }
+
+    const { data: report, error: reportError } = await reportQuery.single()
+
+    if (reportError || !report) {
+      return { error: "Report not found or you don't have permission to view it." }
     }
 
     // Get staffing data
@@ -714,8 +843,18 @@ export async function saveStaffDevelopment(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -797,24 +936,44 @@ export async function getStaffDevelopment(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can view reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user's school
-    if (!user.school_id) {
-      return { error: "No school assigned to this Head Teacher." }
+    // Build query based on permissions
+    let reportQuery = supabase
+      .from("hmr_report")
+      .select("id, school_id, region_id")
+      .eq("id", reportId)
+      .is("deleted_on", null)
+
+    // Apply access restrictions based on permissions
+    if (!canViewAll) {
+      if (canViewOwn || canDraftOwn) {
+        if (!user.school_id) {
+          return { error: "No school assigned to this user." }
+        }
+        reportQuery = reportQuery.eq("school_id", user.school_id)
+      } else if (canViewRegional && user.region) {
+        reportQuery = reportQuery.eq("region_id", user.region)
+      }
     }
 
-    const { data: report, error: reportError } = await supabase
-      .from("hmr_report")
-      .select("id, school_id")
-      .eq("id", reportId)
-      .eq("school_id", user.school_id)
-      .is("deleted_on", null)
-      .single()
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to view it." }
@@ -843,8 +1002,18 @@ export async function saveSupervision(formData: FormData) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can update reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -949,24 +1118,44 @@ export async function getSupervision(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can view reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
 
-    // Verify the report belongs to the current user's school
-    if (!user.school_id) {
-      return { error: "No school assigned to this Head Teacher." }
+    // Build query based on permissions
+    let reportQuery = supabase
+      .from("hmr_report")
+      .select("id, school_id, region_id")
+      .eq("id", reportId)
+      .is("deleted_on", null)
+
+    // Apply access restrictions based on permissions
+    if (!canViewAll) {
+      if (canViewOwn || canDraftOwn) {
+        if (!user.school_id) {
+          return { error: "No school assigned to this user." }
+        }
+        reportQuery = reportQuery.eq("school_id", user.school_id)
+      } else if (canViewRegional && user.region) {
+        reportQuery = reportQuery.eq("region_id", user.region)
+      }
     }
 
-    const { data: report, error: reportError } = await supabase
-      .from("hmr_report")
-      .select("id, school_id")
-      .eq("id", reportId)
-      .eq("school_id", user.school_id)
-      .is("deleted_on", null)
-      .single()
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to view it." }
@@ -1019,8 +1208,19 @@ export async function getCurrentMonthReport() {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can access reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check permissions - need either create or draft permissions
+    const [canCreateOwn, canCreateAll, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll && !canDraftOwn) {
+      return { error: "You do not have permission to access monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1031,7 +1231,7 @@ export async function getCurrentMonthReport() {
     const reportMonth = previousMonth.getMonth() + 1 // JavaScript months are 0-indexed
     const reportYear = previousMonth.getFullYear()
 
-    // Build query - filter by school for head teachers, no filter for admins
+    // Build query - filter by school for users without create_all, no filter for those with create_all
     let query = supabase
       .from("hmr_report")
       .select("*")
@@ -1039,8 +1239,8 @@ export async function getCurrentMonthReport() {
       .eq("year", reportYear)
       .is("deleted_on", null)
 
-    // Head teachers can only see reports for their school
-    if (user.role === "Head Teacher") {
+    // Users without create_all can only see reports they created
+    if (!canCreateAll) {
       query = query.eq("headteacher_id", user.id)
     }
 
@@ -1068,20 +1268,36 @@ export async function getReportProgress(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can access reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check permissions - need either create or draft permissions
+    const [canCreateOwn, canCreateAll, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll && !canDraftOwn) {
+      return { error: "You do not have permission to access monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
 
-    // Verify the report belongs to the current user
-    const { data: report, error: reportError } = await supabase
+    // Build query based on permissions
+    let reportQuery = supabase
       .from("hmr_report")
       .select("id, headteacher_id")
       .eq("id", reportId)
-      
       .is("deleted_on", null)
-      .single()
+
+    // Only filter by headteacher_id if user doesn't have create_all permission
+    if (!canCreateAll) {
+      reportQuery = reportQuery.eq("headteacher_id", user.id)
+    }
+
+    const { data: report, error: reportError } = await reportQuery.single()
 
     if (reportError || !report) {
       return { error: "Report not found or you don't have permission to view it." }
@@ -1600,8 +1816,18 @@ export async function saveStaffMeetings(
 ) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can save staff meetings data." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1725,8 +1951,18 @@ export async function savePhysicalFacilities(
 ) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can save physical facilities data." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1818,8 +2054,20 @@ export async function getPhysicalFacilities(reportId: string) {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can view reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional && !canDraftOwn) {
+      return { error: "You do not have permission to view monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient() // Use service role to bypass RLS
@@ -1889,8 +2137,18 @@ export async function saveResourcesNeeded(
 ) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can save resources needed data." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -2010,8 +2268,18 @@ export async function getResourcesNeeded(reportId: string) {
 export async function savePhysicalEducation(formData: FormData) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can save physical education data." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to update monthly reports." }
     }
 
     const reportId = formData.get("reportId") as string
@@ -2138,8 +2406,18 @@ export async function getPhysicalEducation(reportId: string) {
 export async function submitReport(reportId: string) {
   try {
     const user = await getUser()
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { error: "Only Head Teachers and Admins can submit reports." }
+    if (!user) {
+      return { error: "User not authenticated." }
+    }
+
+    // Check create permissions
+    const [canCreateOwn, canCreateAll] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll) {
+      return { error: "You do not have permission to submit monthly reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -2150,8 +2428,8 @@ export async function submitReport(reportId: string) {
       .select("id, status")
       .eq("id", reportId)
 
-    // Only filter by headteacher_id for head teachers, admins can access any report
-    if (user.role === "Head Teacher") {
+    // Only filter by headteacher_id for users without create_all permission
+    if (!canCreateAll) {
       query = query.eq("headteacher_id", user.id)
     }
 
@@ -2222,6 +2500,17 @@ export async function getSubmittedReports() {
       return { reports: [], error: "User not authenticated." }
     }
 
+    // Check view permissions
+    const [canViewOwn, canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("monthly_report.view_own"),
+      checkPermission("monthly_report.view_all"),
+      checkPermission("monthly_report.view_regional"),
+    ])
+
+    if (!canViewOwn && !canViewAll && !canViewRegional) {
+      return { reports: [], error: "You do not have permission to view submitted reports." }
+    }
+
     // Use service role client to bypass RLS for this query
     const supabase = createServiceRoleSupabaseClient()
 
@@ -2240,20 +2529,19 @@ export async function getSubmittedReports() {
       .is("deleted_on", null)
       .order("updated_on", { ascending: false })
 
-    // Filter based on user role
-    if (user.role === "Head Teacher") {
-      query = query
-    } else if (user.role === "Regional Officer") {
-      // For Regional Officers, filter by the region_id which represents the school's region
-      // The user.region should match the region_id in the hmr_report table
-      if (user.region) {
-        query = query.eq("region_id", user.region)
-      } else {
-        console.warn("Regional Officer user has no region assigned")
-        return { reports: [], error: "Regional Officer has no region assigned." }
-      }
+    // Filter based on permissions
+    if (canViewAll) {
+      // Can see all reports, no additional filter
+    } else if (canViewRegional && user.region) {
+      // For view_regional, filter by the region_id
+      query = query.eq("region_id", user.region)
+    } else if (canViewOwn && user.school_id) {
+      // For view_own, filter by school_id
+      query = query.eq("school_id", user.school_id)
+    } else {
+      // No applicable filter - return empty if no school/region assigned
+      return { reports: [], error: "No school or region assigned to this user." }
     }
-    // Admins can see all reports (no additional filter)
 
     const { data: reports, error } = await query
 
@@ -2534,12 +2822,23 @@ export async function getMissingMonthsForSchool() {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { missingMonths: [], error: "Only Head Teachers and Admins can check missing reports." }
+    if (!user) {
+      return { missingMonths: [], error: "User not authenticated." }
+    }
+
+    // Check permissions - need either create or draft permissions
+    const [canCreateOwn, canCreateAll, canDraftOwn] = await Promise.all([
+      checkPermission("monthly_report.create_own"),
+      checkPermission("monthly_report.create_all"),
+      checkPermission("monthly_report.draft_own"),
+    ])
+
+    if (!canCreateOwn && !canCreateAll && !canDraftOwn) {
+      return { missingMonths: [], error: "You do not have permission to check missing reports." }
     }
 
     if (!user.school_id) {
-      return { missingMonths: [], error: "No school assigned to this Head Teacher." }
+      return { missingMonths: [], error: "No school assigned to this user." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -2606,12 +2905,19 @@ export async function getDraftReports() {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Head Teacher" && user.role !== "Admin")) {
-      return { draftReports: [], error: "Only Head Teachers and Admins can check draft reports." }
+    if (!user) {
+      return { draftReports: [], error: "User not authenticated." }
+    }
+
+    // Check permissions - need draft_own permission
+    const canDraftOwn = await checkPermission("monthly_report.draft_own")
+
+    if (!canDraftOwn) {
+      return { draftReports: [], error: "You do not have permission to view draft reports." }
     }
 
     if (!user.school_id) {
-      return { draftReports: [], error: "No school assigned to this Head Teacher." }
+      return { draftReports: [], error: "No school assigned to this user." }
     }
 
     const supabase = createServiceRoleSupabaseClient()

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { usePermissions } from "@/hooks/use-permissions"
 import { 
   FileTextIcon, 
   TrendingUpIcon, 
@@ -137,7 +138,7 @@ const REGIONS = [
 
 export default function AdminAssessmentPage() {
   return (
-    <AuthWrapper requiredRole={["Admin", "Education Official"]}>
+    <AuthWrapper>
       <AdminAssessmentContent />
     </AuthWrapper>
   )
@@ -148,6 +149,7 @@ function AdminAssessmentContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { user } = useAuth()
+  const { hasPermission } = usePermissions()
   
   const currentTab = searchParams.get('tab') || 'overview'
   
@@ -206,7 +208,8 @@ function AdminAssessmentContent() {
     ? (recommendationsByReportId[selectedReport.id] ?? [])
     : []
 
-  const isAdmin = user?.role === 'Admin'
+  // Check if user has permission to access settings
+  const canAccessSettings = hasPermission("school_assessments.settings")
 
   const loadSchoolOverview = async (schoolId: string, periodId?: string) => {
     const seq = ++overviewSeq.current
@@ -322,7 +325,7 @@ function AdminAssessmentContent() {
   }
 
   const handleDeleteReport = async (reportId: string, report?: any) => {
-    if (!isAdmin) {
+    if (!canAccessSettings) {
       toast({
         title: "Not allowed",
         description: "Only Admin users can delete assessment reports.",
@@ -343,7 +346,7 @@ function AdminAssessmentContent() {
 
   const confirmDeleteReport = async () => {
     if (!pendingDelete) return
-    if (!isAdmin) return
+    if (!canAccessSettings) return
     if (isDeletingReport) return
 
     setIsDeletingReport(true)
@@ -581,7 +584,7 @@ function AdminAssessmentContent() {
                            report.attendanceScores?.total === undefined ||
                            report.infrastructureScores?.total === undefined
         
-        if (needsRecalc && isAdmin) {
+        if (needsRecalc && canAccessSettings) {
           // Recalculate and save category totals
           await recalculateReportCategoryTotals(reportId)
           // Re-fetch the report with updated totals
@@ -706,7 +709,7 @@ function AdminAssessmentContent() {
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <BarChart3 className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600 dark:text-blue-400" />
-            {isAdmin ? 'Assessment Administration' : 'National Assessment Dashboard'}
+            {canAccessSettings ? 'Assessment Administration' : 'National Assessment Dashboard'}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5 flex items-center gap-1.5">
             <Globe className="h-4 w-4" />
@@ -764,7 +767,7 @@ function AdminAssessmentContent() {
             <FileTextIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
-          {isAdmin && (
+          {canAccessSettings && (
             <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm rounded-lg">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
@@ -1210,7 +1213,7 @@ function AdminAssessmentContent() {
           <ReportsList
             reports={reports}
             onViewReport={handleViewReport}
-            onDeleteReport={isAdmin ? handleDeleteReport : undefined}
+            onDeleteReport={canAccessSettings ? handleDeleteReport : undefined}
             showSchoolColumn={true}
             showRegionColumn={true}
             emptyMessage="No assessment reports found for the selected period."
@@ -1218,7 +1221,7 @@ function AdminAssessmentContent() {
         </TabsContent>
 
         {/* Settings Tab (Admin only) */}
-        {isAdmin && (
+        {canAccessSettings && (
           <TabsContent value="settings">
             <div className="space-y-6">
               <Card>

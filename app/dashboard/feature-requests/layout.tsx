@@ -1,11 +1,13 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { ReactNode, useState, useRef, useEffect } from "react"
 import { useAuth } from "@/components/auth-wrapper"
-import { RegionalOfficerSidebar } from "@/components/regional-officer-sidebar"
-import { HeadTeacherSidebar } from "@/components/head-teacher-sidebar"
+import { useTheme } from "next-themes"
+import { DynamicSidebar, DynamicSidebarRef } from "@/components/dynamic-sidebar"
 import { HelpDeskButton } from "@/components/help-desk-button"
-import { Menu, X } from "lucide-react"
+import { NotificationBell } from "@/components/notification-bell"
+import { FeatureRequestButton } from "@/components/feature-request-button"
+import { Menu, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface FeatureRequestsLayoutProps {
@@ -13,8 +15,18 @@ interface FeatureRequestsLayoutProps {
 }
 
 export default function FeatureRequestsLayout({ children }: FeatureRequestsLayoutProps) {
+  const sidebarRef = useRef<DynamicSidebarRef>(null)
   const { user, isLoading } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleMobileMenuToggle = () => {
+    sidebarRef.current?.toggleMobileMenu()
+  }
 
   // Check if user has a sidebar layout
   const isRegionalOfficer = user?.role === "Regional Officer"
@@ -55,7 +67,7 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
           }}
         />
 
-        {/* Floating bubbles - more visible */}
+        {/* Floating bubbles */}
         <div className="absolute top-[10%] right-[20%] w-5 h-5 rounded-full bg-cyan-400/50 dark:bg-cyan-400/35 animate-float-slow" style={{ animationDelay: '0s' }} />
         <div className="absolute top-[25%] right-[10%] w-3 h-3 rounded-full bg-blue-400/55 dark:bg-blue-400/40 animate-float-slow" style={{ animationDelay: '0.5s' }} />
         <div className="absolute bottom-[20%] left-[35%] w-4 h-4 rounded-full bg-purple-400/50 dark:bg-purple-400/35 animate-float-slow" style={{ animationDelay: '1s' }} />
@@ -64,61 +76,19 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
         <div className="absolute top-[65%] right-[15%] w-3 h-3 rounded-full bg-blue-300/55 dark:bg-blue-300/40 animate-float-slow" style={{ animationDelay: '2.5s' }} />
         <div className="absolute top-[15%] left-[40%] w-3 h-3 rounded-full bg-purple-300/55 dark:bg-purple-300/40 animate-float-slow" style={{ animationDelay: '3s' }} />
         <div className="absolute bottom-[40%] left-[45%] w-4 h-4 rounded-full bg-cyan-400/45 dark:bg-cyan-400/30 animate-float-slow" style={{ animationDelay: '3.5s' }} />
-        {/* Additional bubbles */}
-        <div className="absolute top-[35%] left-[50%] w-2 h-2 rounded-full bg-blue-500/50 dark:bg-blue-500/35 animate-float-slow" style={{ animationDelay: '0.3s' }} />
-        <div className="absolute top-[55%] right-[25%] w-5 h-5 rounded-full bg-indigo-300/45 dark:bg-indigo-300/30 animate-float-slow" style={{ animationDelay: '1.2s' }} />
-        <div className="absolute bottom-[15%] right-[45%] w-3 h-3 rounded-full bg-purple-500/50 dark:bg-purple-500/35 animate-float-slow" style={{ animationDelay: '2.2s' }} />
-        <div className="absolute top-[75%] left-[55%] w-4 h-4 rounded-full bg-cyan-500/45 dark:bg-cyan-500/30 animate-float-slow" style={{ animationDelay: '0.8s' }} />
-        <div className="absolute top-[5%] right-[35%] w-2 h-2 rounded-full bg-blue-400/55 dark:bg-blue-400/40 animate-float-slow" style={{ animationDelay: '1.8s' }} />
-        <div className="absolute bottom-[50%] left-[60%] w-3 h-3 rounded-full bg-indigo-400/50 dark:bg-indigo-400/35 animate-float-slow" style={{ animationDelay: '2.8s' }} />
-        <div className="absolute top-[85%] right-[50%] w-4 h-4 rounded-full bg-purple-400/45 dark:bg-purple-400/30 animate-float-slow" style={{ animationDelay: '3.2s' }} />
-        <div className="absolute top-[40%] left-[35%] w-2 h-2 rounded-full bg-cyan-400/55 dark:bg-cyan-400/40 animate-float-slow" style={{ animationDelay: '0.6s' }} />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
-      <aside className={`
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-        fixed top-0 bottom-0 left-0 z-50
-        w-[300px]
-        bg-white/95 dark:bg-[hsl(222,47%,7%)]/95
-        backdrop-blur-xl
-        border-r border-slate-200/80 dark:border-slate-700/50
-        transition-transform duration-300 ease-in-out
-        flex flex-col
-        shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50
-      `}>
-        {/* Close button for mobile */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSidebarOpen(false)}
-          className="lg:hidden absolute top-4 right-4 h-8 w-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 z-10"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-
-        {isRegionalOfficer ? (
-          <RegionalOfficerSidebar onNavigate={() => setSidebarOpen(false)} />
-        ) : (
-          <HeadTeacherSidebar onNavigate={() => setSidebarOpen(false)} />
-        )}
+      <aside className="fixed top-0 bottom-0 left-0 z-40">
+        <DynamicSidebar ref={sidebarRef} />
       </aside>
 
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-40">
+      <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setSidebarOpen(true)}
+          onClick={handleMobileMenuToggle}
           className="h-10 w-10 p-0 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-lg"
         >
           <Menu className="h-5 w-5" />
@@ -126,8 +96,36 @@ export default function FeatureRequestsLayout({ children }: FeatureRequestsLayou
       </div>
 
       {/* Main Content Area */}
-      <main className="lg:ml-[300px] min-h-screen relative">
-        {children}
+      <main className="lg:ml-[240px] 2xl:ml-[280px] min-h-screen relative">
+        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+          {/* Action Icons - Top right */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                title={mounted ? (theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : 'Toggle theme'}
+              >
+                {mounted ? (
+                  theme === 'dark' ? (
+                    <Sun className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-slate-600" />
+                  )
+                ) : (
+                  <div className="h-4 w-4" />
+                )}
+              </Button>
+              <NotificationBell />
+              <FeatureRequestButton />
+            </div>
+          </div>
+
+          {/* Page Content */}
+          {children}
+        </div>
       </main>
 
       {/* Help Desk Button */}

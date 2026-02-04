@@ -1,7 +1,8 @@
 import { getSchoolById, getRegions, getSchoolLevels } from "@/app/actions/admin"
 import { SchoolForm } from "@/components/admin/school-form"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { School } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
 
 interface EditSchoolPageProps {
   params: Promise<{
@@ -10,6 +11,13 @@ interface EditSchoolPageProps {
 }
 
 export default async function EditSchoolPage({ params }: EditSchoolPageProps) {
+  // Check edit permission first (using actual permission key from database)
+  const canEdit = await checkPermission("permissions.edit")
+
+  if (!canEdit) {
+    redirect("/dashboard/admin/schools")
+  }
+
   const { id } = await params
   const [school, regionsResult, schoolLevels] = await Promise.all([
     getSchoolById(id),

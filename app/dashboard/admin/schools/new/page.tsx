@@ -1,8 +1,17 @@
 import { getRegions, getSchoolLevels } from "@/app/actions/admin"
 import { SchoolForm } from "@/components/admin/school-form"
 import { School } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
+import { redirect } from "next/navigation"
 
 export default async function NewSchoolPage() {
+  // Check create permission first
+  const canCreate = await checkPermission("permissions.create")
+
+  if (!canCreate) {
+    redirect("/dashboard/admin/schools")
+  }
+
   const [regionsResult, schoolLevels] = await Promise.all([
     getRegions(1, 50),
     getSchoolLevels()

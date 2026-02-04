@@ -5,6 +5,7 @@ import type { Notification } from "@/types"
 import { getUserDetails } from "./users"
 import { getUser as getCurrentUser } from "./auth"
 import { revalidatePath } from "next/cache"
+import { checkPermission } from "@/lib/permissions"
 
 export interface CreateNotificationData {
   title: string
@@ -23,10 +24,16 @@ export interface CreateNotificationData {
 
 export async function createNotification(data: CreateNotificationData) {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can create notifications." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to create notifications
+    const canCreate = await checkPermission("notifications.create")
+    if (!canCreate) {
+      return { error: "You don't have permission to create notifications." }
     }
 
     const supabase = await createServerSupabaseClient()
@@ -766,10 +773,16 @@ export async function getUserNotifications(page: number = 1, limit: number = 20)
 // Admin-only actions
 export async function getAllNotifications(page: number = 1, limit: number = 20) {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can view all notifications." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to view notifications
+    const canView = await checkPermission("notifications.view")
+    if (!canView) {
+      return { error: "You don't have permission to view all notifications." }
     }
 
     const supabase = await createServerSupabaseClient()
@@ -802,10 +815,16 @@ export async function getAllNotifications(page: number = 1, limit: number = 20) 
 
 export async function deleteNotification(notificationId: string) {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can delete notifications." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to delete notifications
+    const canDelete = await checkPermission("notifications.delete")
+    if (!canDelete) {
+      return { error: "You don't have permission to delete notifications." }
     }
 
     const supabase = await createServerSupabaseClient()
@@ -830,10 +849,16 @@ export async function deleteNotification(notificationId: string) {
 // Helper function to get available targeting options
 export async function getNotificationTargetingOptions() {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can access targeting options." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to create notifications (needed to access targeting options)
+    const canCreate = await checkPermission("notifications.create")
+    if (!canCreate) {
+      return { error: "You don't have permission to access targeting options." }
     }
 
     const supabase = await createServerSupabaseClient()
@@ -887,10 +912,16 @@ export async function getNotificationTargetingOptions() {
 
 export async function restoreNotification(notificationId: string) {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can restore notifications." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to delete (restore is part of delete management)
+    const canDelete = await checkPermission("notifications.delete")
+    if (!canDelete) {
+      return { error: "You don't have permission to restore notifications." }
     }
 
     const supabase = await createServerSupabaseClient()
@@ -917,10 +948,16 @@ export async function restoreNotification(notificationId: string) {
 
 export async function permanentDeleteNotification(notificationId: string) {
   try {
-    const { user, role, error: authError } = await getUserDetails()
+    const { user, error: authError } = await getUserDetails()
 
-    if (authError || !user || role !== "Admin") {
-      return { error: "Unauthorized. Only admins can permanently delete notifications." }
+    if (authError || !user) {
+      return { error: "Unauthorized. User not authenticated." }
+    }
+
+    // Check if user has permission to delete notifications
+    const canDelete = await checkPermission("notifications.delete")
+    if (!canDelete) {
+      return { error: "You don't have permission to permanently delete notifications." }
     }
 
     const supabase = await createServerSupabaseClient()

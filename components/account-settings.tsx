@@ -32,6 +32,11 @@ function SubmitButton({ text, icon: Icon }: { text: string; icon?: React.Element
   )
 }
 
+interface ProfilePermissions {
+  canEditName: boolean
+  canUpdatePassword: boolean
+}
+
 interface AccountSettingsProps {
   user: {
     id: string
@@ -40,16 +45,19 @@ interface AccountSettingsProps {
     role: string
     region_name?: string
   }
+  permissions: ProfilePermissions
 }
 
-export function AccountSettings({ user }: AccountSettingsProps) {
+export function AccountSettings({ user, permissions }: AccountSettingsProps) {
   const [profileMessage, setProfileMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [newPassword, setNewPassword] = useState("")
-  const [activeSection, setActiveSection] = useState<"profile" | "security">("profile")
+  // Set default active section based on permissions
+  const defaultSection = permissions.canEditName ? "profile" : "security"
+  const [activeSection, setActiveSection] = useState<"profile" | "security">(defaultSection)
 
   const handleProfileUpdate = async (formData: FormData) => {
     setProfileMessage(null)
@@ -155,45 +163,59 @@ export function AccountSettings({ user }: AccountSettingsProps) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-slate-200/80 dark:border-slate-700/50">
-          <button
-            onClick={() => setActiveSection("profile")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-              activeSection === "profile"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <User className="w-4 h-4" />
-              Profile
-            </div>
-            {activeSection === "profile" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+        {/* Tabs - Only show if user has at least one permission */}
+        {(permissions.canEditName || permissions.canUpdatePassword) && (
+          <div className="flex border-b border-slate-200/80 dark:border-slate-700/50">
+            {permissions.canEditName && (
+              <button
+                onClick={() => setActiveSection("profile")}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                  activeSection === "profile"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <User className="w-4 h-4" />
+                  Profile
+                </div>
+                {activeSection === "profile" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                )}
+              </button>
             )}
-          </button>
-          <button
-            onClick={() => setActiveSection("security")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
-              activeSection === "security"
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-            }`}
-          >
-            <div className="flex items-center justify-center gap-2">
-              <KeyRound className="w-4 h-4" />
-              Security
-            </div>
-            {activeSection === "security" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+            {permissions.canUpdatePassword && (
+              <button
+                onClick={() => setActiveSection("security")}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${
+                  activeSection === "security"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  Security
+                </div>
+                {activeSection === "security" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
+                )}
+              </button>
             )}
-          </button>
-        </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-6">
-          {activeSection === "profile" ? (
+          {/* Show message if user has no permissions to edit anything */}
+          {!permissions.canEditName && !permissions.canUpdatePassword ? (
+            <div className="text-center py-8">
+              <Lock className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-500 dark:text-slate-400">
+                You can view your profile information but don't have permission to make changes.
+              </p>
+            </div>
+          ) : activeSection === "profile" && permissions.canEditName ? (
             <div>
               {profileMessage && (
                 <div className={`mb-5 p-3.5 rounded-xl flex items-start gap-2.5 ${
@@ -276,7 +298,7 @@ export function AccountSettings({ user }: AccountSettingsProps) {
                 </div>
               </form>
             </div>
-          ) : (
+          ) : activeSection === "security" && permissions.canUpdatePassword ? (
             <div>
               {passwordMessage && (
                 <div className={`mb-5 p-3.5 rounded-xl flex items-start gap-2.5 ${
@@ -403,7 +425,7 @@ export function AccountSettings({ user }: AccountSettingsProps) {
                 </div>
               </form>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
