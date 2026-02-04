@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
@@ -48,7 +49,8 @@ import {
 } from "@/features/school-assessment-reports/components"
 import { 
   getActiveTermWindow,
-  isSubmissionWindowOpen 
+  isSubmissionWindowOpen,
+  getAllPeriods,
 } from "@/features/school-assessment-reports/actions/assessment-periods"
 import {
   getSchoolReports,
@@ -114,6 +116,7 @@ interface ReportData {
   submittedAt: string | null
   createdAt: string
   updatedAt: string
+  periodId?: string
   categoryScores?: any
 }
 
@@ -155,6 +158,8 @@ function HeadTeacherAssessmentContent() {
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
   const [trends, setTrends] = useState<any[]>([])
+  const [allPeriods, setAllPeriods] = useState<any[]>([])
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('latest')
 
   const recommendations = selectedReport?.id
     ? (recommendationsByReportId[selectedReport.id] ?? [])
@@ -228,6 +233,12 @@ function HeadTeacherAssessmentContent() {
         }
       }
       
+      // Get all periods for selector
+      const allPeriodsResult = await getAllPeriods()
+      if (allPeriodsResult.periods) {
+        setAllPeriods(allPeriodsResult.periods)
+      }
+
       // Get reports for this school
       const reportsResult = await getSchoolReports(school.id)
       if (reportsResult.reports) {
@@ -242,8 +253,10 @@ function HeadTeacherAssessmentContent() {
           totalScore: r.totalScore,
           ratingLevel: r.ratingLevel,
           submittedAt: r.submittedAt,
+          submittedAt: r.submittedAt,
           createdAt: r.createdAt || '',
           updatedAt: r.updatedAt || '',
+          periodId: r.periodId,
         }))
         setReports(mappedReports)
           
@@ -513,7 +526,26 @@ function HeadTeacherAssessmentContent() {
       return aTime - bTime
     })
 
-  const latestReport = latestReportCandidates.length > 0 ? latestReportCandidates[latestReportCandidates.length - 1] : undefined
+  const globalLatestReport = latestReportCandidates.length > 0 ? latestReportCandidates[latestReportCandidates.length - 1] : undefined
+
+  // Determine which report to show stats for based on selection
+  let displayedReport = globalLatestReport
+  
+  if (selectedPeriodId && selectedPeriodId !== 'latest') {
+     // Find report matching this period
+     // If periodId exists on report, use it. If not, match by year/term from period object.
+     const periodObj = allPeriods.find(p => p.id === selectedPeriodId)
+     if (periodObj) {
+        displayedReport = reports.find(r => 
+           (r.periodId === selectedPeriodId) || 
+           (r.academicYear === periodObj.academicYear && r.termName === periodObj.termName && r.status === 'submitted')
+        ) || undefined
+     }
+  }
+
+  // If we selected a period but found no report, displayedReport is undefined -> cards show '-'
+  // Rename for clarity in usage below
+  const latestReport = displayedReport
 
   const reportLooksLikeTAPS = (report: any): boolean => {
     if (!report) return false
@@ -646,6 +678,26 @@ function HeadTeacherAssessmentContent() {
             </Badge>
           </div>
         )}
+      </div>
+      
+      {/* Period Selector */}
+      <div className="flex justify-end">
+         <Select 
+            value={selectedPeriodId} 
+            onValueChange={setSelectedPeriodId}
+          >
+            <SelectTrigger className="w-[200px] h-9 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700">
+              <SelectValue placeholder="Select Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Latest Report</SelectItem>
+              {allPeriods.map((period) => (
+                <SelectItem key={period.id} value={period.id}>
+                  {period.academicYear} - {period.termName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
       </div>
 
       {/* Tabs */}

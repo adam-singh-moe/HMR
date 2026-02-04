@@ -45,6 +45,7 @@ import {
 import { 
   getActiveTermWindow,
   getAcademicYearPeriods,
+  getAllPeriods,
 } from "@/features/school-assessment-reports/actions/assessment-periods"
 import {
   getRegionalReports,
@@ -137,6 +138,8 @@ function RegionalOfficerAssessmentContent() {
   const recGenerationInFlight = useRef<Set<string>>(new Set())
   const recLoadSeq = useRef(0)
   const [isExporting, setIsExporting] = useState(false)
+  const [allPeriods, setAllPeriods] = useState<any[]>([])
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('all')
 
   const recommendations = selectedReport?.id
     ? (recommendationsByReportId[selectedReport.id] ?? [])
@@ -159,6 +162,12 @@ function RegionalOfficerAssessmentContent() {
         setRegionId(userData.region)
         setRegionName(userData.region_name || '')
 
+        // Get all periods for selector
+        const allPeriodsResult = await getAllPeriods()
+        if (allPeriodsResult.periods) {
+          setAllPeriods(allPeriodsResult.periods)
+        }
+
         // Get active term window
         const windowResult = await getActiveTermWindow()
         let periodId: string | undefined = undefined
@@ -166,14 +175,26 @@ function RegionalOfficerAssessmentContent() {
         if (windowResult.window) {
           setActiveWindow(windowResult.window)
 
-          // Get the period ID for the active term window
-          const { periods } = await getAcademicYearPeriods(windowResult.window.academicYear)
-          if (periods) {
-            const period = periods.find((p: any) => p.termName === windowResult.window!.termName)
-            if (period) {
-              periodId = period.id
-            }
+          // Try to match active window to a period in our list
+          // Match by academicYear and termName
+          const activePeriod = allPeriodsResult.periods.find(
+            (p) => p.academicYear === windowResult.window!.academicYear && p.termName === windowResult.window!.termName
+          )
+          
+          if (activePeriod) {
+            periodId = activePeriod.id
+            setSelectedPeriodId(activePeriod.id)
+          } else if (allPeriodsResult.periods.length > 0) {
+            // Fallback to first period if no active match
+             // But prefer the one that matches synthesis ID style if possible? No, just picked first.
+             // Actually, if we have synthetic periods, they should match.
+             // If we rely on synthetic periods, id will be `term-window-...`
+             // If the active window returns 'First Term', and synthetic generates 'First Term', they match.
           }
+        } else if (allPeriodsResult.periods.length > 0) {
+           // Default to most recent period if no active window
+           periodId = allPeriodsResult.periods[0].id
+           setSelectedPeriodId(allPeriodsResult.periods[0].id)
         }
 
         // Load regional data with the resolved period ID
@@ -433,6 +454,26 @@ function RegionalOfficerAssessmentContent() {
             )}
             Export CSV
           </Button>
+          
+          <Select 
+            value={selectedPeriodId} 
+            onValueChange={(value) => {
+              setSelectedPeriodId(value)
+              loadRegionalData(regionId!, value === 'all' ? undefined : value)
+            }}
+          >
+            <SelectTrigger className="w-[180px] h-9 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700">
+              <SelectValue placeholder="Select Period" />
+            </SelectTrigger>
+            <SelectContent>
+              {allPeriods.map((period) => (
+                <SelectItem key={period.id} value={period.id}>
+                  {period.academicYear} - {period.termName}
+                </SelectItem>
+              ))}
+              {allPeriods.length === 0 && <SelectItem value="all" disabled>No periods available</SelectItem>}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
