@@ -8,8 +8,11 @@ import { TopSchoolsCarousel } from "@/components/landing/top-schools-carousel"
 import {
   ArrowRight,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Moon,
+  Sun
 } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export default function HomePage() {
   const router = useRouter()
@@ -17,6 +20,7 @@ export default function HomePage() {
   const [progress, setProgress] = useState(0)
   const [loadingComplete, setLoadingComplete] = useState(false)
   const [showLanding, setShowLanding] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
@@ -43,17 +47,36 @@ export default function HomePage() {
     document.getElementById('rankings')?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 overflow-x-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 overflow-x-hidden transition-colors duration-300">
+      {/* Theme Toggle Button */}
+      <button
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 z-[60] p-3 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all duration-300 shadow-lg hover:shadow-xl border border-slate-300 dark:border-slate-700"
+        aria-label="Toggle theme"
+      >
+        {mounted && (
+          theme === "dark" ? (
+            <Sun className="h-5 w-5 text-amber-500" />
+          ) : (
+            <Moon className="h-5 w-5 text-slate-700" />
+          )
+        )}
+      </button>
+
       {/* Loading Screen */}
       <div
-        className={`fixed inset-0 z-50 bg-slate-950 transition-opacity duration-500 ${
+        className={`fixed inset-0 z-50 bg-white dark:bg-slate-950 transition-opacity duration-500 ${
           loadingComplete ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         {/* Animated gradient mesh background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/50 to-slate-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-blue-100 to-slate-100 dark:from-slate-900 dark:via-blue-950/50 dark:to-slate-900" />
 
           {/* Animated orbs */}
           <div
@@ -127,7 +150,7 @@ export default function HomePage() {
                   }}
                 />
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-1 shadow-2xl shadow-blue-500/30">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
                     <Image
                       src="/images/moe-logo.png"
                       alt="Ministry of Education Logo"
@@ -143,14 +166,14 @@ export default function HomePage() {
 
             {/* Text Content */}
             <div className={`space-y-4 transition-all duration-1000 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 dark:from-white dark:via-blue-100 dark:to-cyan-200 bg-clip-text text-transparent">
                 Ministry of Education
               </h1>
               <div className="h-1 w-20 mx-auto bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 rounded-full" />
-              <h2 className="text-xl md:text-2xl text-blue-300/90 font-medium">
+              <h2 className="text-xl md:text-2xl text-blue-700 dark:text-blue-300/90 font-medium">
                 Headteacher Reporting Portal
               </h2>
-              <p className="text-slate-400">
+              <p className="text-slate-600 dark:text-slate-400">
                 Republic of Guyana
               </p>
             </div>
@@ -158,7 +181,7 @@ export default function HomePage() {
             {/* Progress Section */}
             <div className={`space-y-6 transition-all duration-1000 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <div className="relative max-w-sm mx-auto">
-                <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 rounded-full transition-all duration-300 ease-out relative"
                     style={{ width: `${progress}%` }}
@@ -172,8 +195,8 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex justify-between items-center mt-4">
-                  <span className="text-sm text-slate-500">Initializing secure connection...</span>
-                  <span className="text-sm font-mono font-semibold text-blue-400">{Math.round(progress)}%</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-500">Initializing secure connection...</span>
+                  <span className="text-sm font-mono font-semibold text-blue-600 dark:text-blue-400">{Math.round(progress)}%</span>
                 </div>
               </div>
 
@@ -196,7 +219,7 @@ export default function HomePage() {
               {['Secure', 'Real-time', 'Analytics'].map((feature) => (
                 <span
                   key={feature}
-                  className="px-4 py-1.5 text-xs font-medium text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full"
+                  className="px-4 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full"
                 >
                   {feature}
                 </span>
@@ -212,7 +235,7 @@ export default function HomePage() {
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
           {/* Animated gradient mesh background */}
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950/50 to-slate-900" />
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-blue-100 to-slate-100 dark:from-slate-900 dark:via-blue-950/50 dark:to-slate-900 transition-colors duration-300" />
 
             {/* Animated orbs */}
             <div
@@ -279,7 +302,7 @@ export default function HomePage() {
                   }}
                 />
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-1 shadow-2xl shadow-blue-500/30">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden">
                     <Image
                       src="/images/moe-logo.png"
                       alt="Ministry of Education Logo"
@@ -295,14 +318,14 @@ export default function HomePage() {
 
             {/* Text Content */}
             <div className={`space-y-4 transition-all duration-1000 delay-200 ${showLanding ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 dark:from-white dark:via-blue-100 dark:to-cyan-200 bg-clip-text text-transparent leading-tight">
                 Ministry of Education
               </h1>
               <div className="h-1 w-20 mx-auto bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 rounded-full" />
-              <h2 className="text-xl sm:text-2xl md:text-3xl text-blue-300/90 font-medium">
+              <h2 className="text-xl sm:text-2xl md:text-3xl text-blue-700 dark:text-blue-300/90 font-medium">
                 Headteacher Reporting Portal
               </h2>
-              <p className="text-slate-400 text-lg">
+              <p className="text-slate-600 dark:text-slate-400 text-lg">
                 Republic of Guyana
               </p>
             </div>
@@ -321,7 +344,7 @@ export default function HomePage() {
                 size="lg"
                 variant="outline"
                 onClick={scrollToRankings}
-                className="px-8 py-6 text-lg border-slate-700 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 hover:text-white"
+                className="px-8 py-6 text-lg border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
                 View Rankings
                 <ChevronDown className="ml-2 h-5 w-5" />
@@ -333,7 +356,7 @@ export default function HomePage() {
               {['Secure', 'Real-time Analytics', 'AI-Powered Insights'].map((feature) => (
                 <span
                   key={feature}
-                  className="px-4 py-1.5 text-xs font-medium text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full flex items-center gap-2"
+                  className="px-4 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full flex items-center gap-2"
                 >
                   {feature === 'AI-Powered Insights' && <Sparkles className="h-3 w-3" />}
                   {feature}
@@ -346,7 +369,7 @@ export default function HomePage() {
           <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 transition-all duration-1000 delay-800 ${showLanding ? 'opacity-100' : 'opacity-0'}`}>
             <button
               onClick={scrollToRankings}
-              className="flex flex-col items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors"
+              className="flex flex-col items-center gap-2 text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
             >
               <span className="text-xs uppercase tracking-wider">Scroll to explore</span>
               <ChevronDown className="h-5 w-5 animate-bounce" />
@@ -356,7 +379,7 @@ export default function HomePage() {
 
         {/* Rankings Section */}
         <section id="rankings" className="relative py-20">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/10 to-slate-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-100 via-blue-50/50 to-slate-100 dark:from-slate-950 dark:via-blue-950/10 dark:to-slate-950 transition-colors duration-300" />
 
           {/* Decorative elements */}
           <div className="absolute top-0 left-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl" />
@@ -368,13 +391,13 @@ export default function HomePage() {
         </section>
 
         {/* Footer CTA Section */}
-        <section className="relative py-20 border-t border-slate-800/50">
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-950/20 to-transparent" />
+        <section className="relative py-20 border-t border-slate-200 dark:border-slate-800/50">
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-100/50 dark:from-blue-950/20 to-transparent transition-colors duration-300" />
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-8 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
               Ready to Access the Portal?
             </h2>
-            <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
               Sign in to submit reports, view detailed analytics, and track your school's performance over time.
             </p>
             <Button
@@ -389,9 +412,9 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="relative py-8 border-t border-slate-800/50">
+        <footer className="relative py-8 border-t border-slate-200 dark:border-slate-800/50">
           <div className="max-w-6xl mx-auto px-4 sm:px-8 text-center">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600 dark:text-slate-500">
               &copy; {new Date().getFullYear()} Ministry of Education, Republic of Guyana. All rights reserved.
             </p>
           </div>
