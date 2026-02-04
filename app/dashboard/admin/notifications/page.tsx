@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -18,10 +18,10 @@ import {
   restoreNotification,
   permanentDeleteNotification,
 } from "@/app/actions/notifications"
-import { Bell, Plus, Trash2, MessageSquare, Users, X, RotateCcw, Loader2, AlertCircle, Megaphone } from "lucide-react"
+import { Bell, Plus, Trash2, MessageSquare, Users, X, RotateCcw, Loader2, AlertCircle, Megaphone, ShieldAlert } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { CreateNotificationForm } from "@/components/admin/create-notification-form"
-import { useEffect } from "react"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface NotificationsPageProps {
   searchParams: Promise<{ page?: string; tab?: string }>
@@ -264,6 +264,12 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
   const [activeTab, setActiveTab] = useState("broadcast")
   const [showTrash, setShowTrash] = useState(false)
 
+  // Check permissions
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions()
+  const canCreate = hasPermission("notifications.create")
+  const canView = hasPermission("notifications.view")
+  const canDelete = hasPermission("notifications.delete")
+
   useEffect(() => {
     async function fetchNotifications() {
       setLoading(true)
@@ -286,10 +292,11 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
       }
     }
 
-    if (activeTab === "manage") {
+    // Only fetch if user has view permission and is on manage tab
+    if (activeTab === "manage" && canView) {
       fetchNotifications()
     }
-  }, [activeTab, showTrash])
+  }, [activeTab, showTrash, canView])
 
   const refreshNotifications = async () => {
     setLoading(true)
@@ -312,6 +319,33 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
     }
   }
 
+  // Show loading state while permissions are loading
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+
+  // Show access denied if user has no permissions
+  if (!canCreate && !canView) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <ShieldAlert className="h-8 w-8 text-red-600 dark:text-red-400" />
+        </div>
+        <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Access Denied</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-center max-w-md">
+          You don't have permission to access the notification center.
+        </p>
+      </div>
+    )
+  }
+
+  // Determine which tab to show by default based on permissions
+  const defaultTab = canCreate ? "broadcast" : "manage"
+
   return (
     <div className="space-y-4 lg:space-y-6">
       {/* Header */}
@@ -321,64 +355,78 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
           Notification Center
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Broadcast messages and manage notifications
+          {canCreate && canView
+            ? "Broadcast messages and manage notifications"
+            : canCreate
+              ? "Create and broadcast notifications"
+              : "View and manage notifications"
+          }
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          <TabsTrigger
-            value="broadcast"
-            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Broadcast
-          </TabsTrigger>
-          <TabsTrigger
-            value="manage"
-            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Manage Notifications
-          </TabsTrigger>
+      <Tabs value={activeTab || defaultTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className={`grid w-full ${canCreate && canView ? 'grid-cols-2' : 'grid-cols-1'} bg-slate-100 dark:bg-slate-800 p-1 rounded-xl`}>
+          {canCreate && (
+            <TabsTrigger
+              value="broadcast"
+              className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Broadcast
+            </TabsTrigger>
+          )}
+          {canView && (
+            <TabsTrigger
+              value="manage"
+              className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Manage Notifications
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="broadcast" className="space-y-4 mt-4">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
-            <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                Create New Broadcast
-              </h3>
-            </div>
-            <div className="p-4 lg:p-6">
-              <CreateNotificationForm />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="manage" className="space-y-4 mt-4">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
-            <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
-              <div className="flex items-center justify-between">
+        {canCreate && (
+          <TabsContent value="broadcast" className="space-y-4 mt-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
                 <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  {showTrash ? "Trash" : "Recent Broadcasts"}
+                  <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  Create New Broadcast
                 </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTrash(!showTrash)}
-                  className={showTrash
-                    ? "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/20"
-                    : "text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {showTrash ? "Show Active" : "Show Trash"}
-                </Button>
+              </div>
+              <div className="p-4 lg:p-6">
+                <CreateNotificationForm />
               </div>
             </div>
+          </TabsContent>
+        )}
+
+        {canView && (
+          <TabsContent value="manage" className="space-y-4 mt-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-slate-200 dark:border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+                    <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    {showTrash ? "Trash" : "Recent Broadcasts"}
+                  </h3>
+                  {canDelete && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTrash(!showTrash)}
+                      className={showTrash
+                        ? "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/20"
+                        : "text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      }
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {showTrash ? "Show Active" : "Show Trash"}
+                    </Button>
+                  )}
+                </div>
+              </div>
 
             <div className="p-4 lg:p-6">
               {loading && (
@@ -413,7 +461,7 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
               )}
 
               {/* Empty State - Trash empty */}
-              {!loading && showTrash && !trashedNotifications.length && !error && (
+              {!loading && showTrash && canDelete && !trashedNotifications.length && !error && (
                 <div className="flex flex-col items-center justify-center py-12 lg:py-16">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center mb-4 shadow-lg shadow-slate-500/20">
                     <Trash2 className="h-8 w-8 text-white" />
@@ -490,20 +538,22 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
                           </div>
                         </div>
 
-                        <div className="flex-shrink-0">
-                          <DeleteNotificationButton
-                            notificationId={notification.id}
-                            onDelete={refreshNotifications}
-                          />
-                        </div>
+                        {canDelete && (
+                          <div className="flex-shrink-0">
+                            <DeleteNotificationButton
+                              notificationId={notification.id}
+                              onDelete={refreshNotifications}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Trashed Notifications List */}
-              {!loading && showTrash && trashedNotifications.length > 0 && (
+              {/* Trashed Notifications List - Only show if user can delete */}
+              {!loading && showTrash && canDelete && trashedNotifications.length > 0 && (
                 <div className="space-y-4">
                   {trashedNotifications.map((notification) => (
                     <div
@@ -557,6 +607,7 @@ export default function NotificationsPage({ searchParams }: NotificationsPagePro
             </div>
           </div>
         </TabsContent>
+        )}
       </Tabs>
     </div>
   )

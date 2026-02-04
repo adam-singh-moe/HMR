@@ -1,6 +1,6 @@
 "use server"
 
-import { getSubmittedReportsForEducationOfficial, getSubmittedReportsWithSearchAndPagination } from "./education-official-reports"
+import { getSubmittedReportsWithSearchAndPagination } from "./education-official-reports"
 
 export async function generateReportsPDF(filters?: {
   searchTerm?: string
@@ -10,29 +10,21 @@ export async function generateReportsPDF(filters?: {
   selectedYear?: string
 }) {
   try {
-    let reports: any[] = []
-    let error: string | null = null
+    // Always use the paginated function which does efficient joins
+    // Limit to 10000 reports to avoid memory issues
+    const result = await getSubmittedReportsWithSearchAndPagination({
+      searchTerm: filters?.searchTerm || "",
+      page: 1,
+      pageSize: 10000, // Reasonable limit for export
+      selectedRegionId: filters?.selectedRegionId || "",
+      selectedSchoolLevel: filters?.selectedSchoolLevel || "",
+      selectedMonth: filters?.selectedMonth || "",
+      selectedYear: filters?.selectedYear || "",
+      selectedStatus: "" // All statuses
+    })
 
-    if (filters && (filters.searchTerm || filters.selectedRegionId || filters.selectedSchoolLevel || filters.selectedMonth || filters.selectedYear)) {
-      // Use filtered reports with a very high limit to get all results
-      const result = await getSubmittedReportsWithSearchAndPagination({
-        searchTerm: filters.searchTerm || "",
-        page: 1,
-        pageSize: 999999, // Very high limit to get all results
-        selectedRegionId: filters.selectedRegionId || "",
-        selectedSchoolLevel: filters.selectedSchoolLevel || "",
-        selectedMonth: filters.selectedMonth || "",
-        selectedYear: filters.selectedYear || ""
-      })
-      reports = result.reports
-      error = result.error
-    } else {
-      // Use unfiltered reports
-      const result = await getSubmittedReportsForEducationOfficial()
-      reports = result.reports
-      error = result.error
-    }
-    
+    const { reports, error } = result
+
     if (error) {
       return { success: false, error }
     }
@@ -222,20 +214,22 @@ function generatePDFHTML(reports: any[], filters?: {
         <tbody>
           ${reports.map((report) => {
             const reportPeriod = `${monthNames[report.month - 1]} ${report.year}`
-            const dateSubmitted = new Date(report.updated_at).toLocaleDateString()
-            const schoolName = report.sms_schools?.name || "Unknown School"
-            const headTeacher = report.hmr_users?.name || "Unknown"
-            
-            // Handle region - it could be nested or flat
-            let regionName = "Unknown Region"
-            if (report.sms_schools?.sms_regions) {
+            const dateSubmitted = new Date(report.updated_at || report.submitted_at).toLocaleDateString()
+
+            // Handle both flat and nested data formats
+            const schoolName = report.school_name || report.sms_schools?.name || "Unknown School"
+            const headTeacher = report.head_teacher_name || report.hmr_users?.name || "Unknown"
+
+            // Handle region - could be flat string or nested object
+            let regionName = report.region || "Unknown Region"
+            if (regionName === "Unknown Region" && report.sms_schools?.sms_regions) {
               if (Array.isArray(report.sms_schools.sms_regions)) {
                 regionName = report.sms_schools.sms_regions[0]?.name || regionName
               } else {
                 regionName = report.sms_schools.sms_regions.name || regionName
               }
             }
-            
+
             return `
               <tr>
                 <td>${schoolName}</td>
@@ -243,7 +237,7 @@ function generatePDFHTML(reports: any[], filters?: {
                 <td>${regionName}</td>
                 <td>${reportPeriod}</td>
                 <td>${dateSubmitted}</td>
-                <td><span class="status-badge">${report.status.toUpperCase()}</span></td>
+                <td><span class="status-badge">${(report.status || 'unknown').toUpperCase()}</span></td>
               </tr>
             `
           }).join('')}

@@ -53,10 +53,17 @@ type FeatureRequest = {
   reviewer_name?: string
 }
 
+type AdminPermissions = {
+  canUpdateStatus: boolean
+  canDelete: boolean
+}
+
 export function FeatureRequestsAdminView({
-  initialRequests
+  initialRequests,
+  permissions
 }: {
   initialRequests: FeatureRequest[]
+  permissions: AdminPermissions
 }) {
   const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
@@ -366,70 +373,78 @@ export function FeatureRequestsAdminView({
                 </div>
               )}
 
-              {/* Admin Comment */}
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                <Label htmlFor="admin-comment" className="text-slate-700 dark:text-slate-300">Admin Comment</Label>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">This comment will be saved when you update the status</p>
-                <Textarea
-                  id="admin-comment"
-                  value={adminComment}
-                  onChange={(e) => setAdminComment(e.target.value)}
-                  placeholder="Add a comment for the requester..."
-                  rows={4}
-                  className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <Button
-                    onClick={() => initiateStatusChange("under_review")}
-                    disabled={isUpdating}
-                    variant="outline"
-                    className="border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Under Review
-                  </Button>
-                  <Button
-                    onClick={() => initiateStatusChange("approved")}
-                    disabled={isUpdating}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                  <Button
-                    onClick={() => initiateStatusChange("rejected")}
-                    disabled={isUpdating}
-                    variant="destructive"
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button
-                    onClick={() => initiateStatusChange("implemented")}
-                    disabled={isUpdating}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Implemented
-                  </Button>
+              {/* Admin Comment - Only show if user can update status */}
+              {permissions.canUpdateStatus && (
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <Label htmlFor="admin-comment" className="text-slate-700 dark:text-slate-300">Admin Comment</Label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">This comment will be saved when you update the status</p>
+                  <Textarea
+                    id="admin-comment"
+                    value={adminComment}
+                    onChange={(e) => setAdminComment(e.target.value)}
+                    placeholder="Add a comment for the requester..."
+                    rows={4}
+                    className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  />
                 </div>
+              )}
 
-                {/* Delete Button */}
-                <Button
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={isUpdating || isDeleting}
-                  variant="outline"
-                  className="w-full border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Feature Request
-                </Button>
-              </div>
+              {/* Action Buttons - Only show if user has permissions */}
+              {(permissions.canUpdateStatus || permissions.canDelete) && (
+                <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  {permissions.canUpdateStatus && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <Button
+                        onClick={() => initiateStatusChange("under_review")}
+                        disabled={isUpdating}
+                        variant="outline"
+                        className="border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        Under Review
+                      </Button>
+                      <Button
+                        onClick={() => initiateStatusChange("approved")}
+                        disabled={isUpdating}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => initiateStatusChange("rejected")}
+                        disabled={isUpdating}
+                        variant="destructive"
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject
+                      </Button>
+                      <Button
+                        onClick={() => initiateStatusChange("implemented")}
+                        disabled={isUpdating}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Implemented
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Delete Button - Only show if user can delete */}
+                  {permissions.canDelete && (
+                    <Button
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isUpdating || isDeleting}
+                      variant="outline"
+                      className="w-full border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Feature Request
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

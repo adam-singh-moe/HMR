@@ -3,10 +3,12 @@
 import { AuthForm } from "@/components/auth-form"
 import { useEffect, useState } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, ArrowLeft } from "lucide-react"
 
 export default function AuthPage() {
+  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
@@ -20,6 +22,15 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-slate-950 transition-colors duration-300">
+      {/* Back Button */}
+      <button
+        onClick={() => router.push('/')}
+        className="fixed top-4 left-4 z-50 p-3 rounded-full bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all duration-300 shadow-lg hover:shadow-xl border border-slate-300 dark:border-slate-700 flex items-center gap-2"
+        aria-label="Back to landing"
+      >
+        <ArrowLeft className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+      </button>
+
       {/* Theme Toggle Button */}
       <button
         onClick={toggleTheme}

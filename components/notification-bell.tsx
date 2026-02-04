@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { getUserNotifications } from "@/app/actions/notifications"
 import { formatDistanceToNow } from "date-fns"
+import { usePermissions } from "@/hooks/use-permissions"
 
 type Notification = {
   id: string
@@ -47,7 +48,16 @@ export function NotificationBell() {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  // Check if user has permission to view notifications
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions()
+  const canView = hasPermission("notifications.view")
+
   const fetchNotifications = async () => {
+    // Only fetch if user has permission
+    if (!canView) {
+      setIsLoading(false)
+      return
+    }
     try {
       const result = await getUserNotifications(1, 10) // Get first 10 notifications
 
@@ -96,19 +106,22 @@ export function NotificationBell() {
   }
 
   useEffect(() => {
+    // Don't fetch if user doesn't have permission
+    if (!canView || permissionsLoading) return
+
     // Initialize last read time from localStorage
     const storedLastRead = localStorage.getItem('notifications_last_read')
     if (storedLastRead) {
       setLastReadTime(storedLastRead)
     }
-    
+
     fetchNotifications()
-    
+
     // Set up polling for real-time updates every 30 seconds
     const interval = setInterval(fetchNotifications, 30000)
-    
+
     return () => clearInterval(interval)
-  }, [])
+  }, [canView, permissionsLoading])
 
   const getTypeDisplay = (type: string) => {
     switch (type) {
@@ -163,6 +176,11 @@ export function NotificationBell() {
           badge: "bg-slate-100 dark:bg-slate-800/50 text-slate-800 dark:text-slate-300"
         }
     }
+  }
+
+  // Don't render if loading permissions or user doesn't have permission
+  if (permissionsLoading || !canView) {
+    return null
   }
 
   return (

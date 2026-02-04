@@ -4,6 +4,7 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
+import { checkPermission, checkAnyPermission } from "@/lib/permissions"
 
 // Browser-compatible UUID generator
 function generateUUID(): string {
@@ -17,17 +18,17 @@ function generateUUID(): string {
 export async function getUserCounts() {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
-      return { 
-        totalUsers: 0, 
-        headTeachers: 0, 
-        regionalOfficers: 0, 
-        educationOfficials: 0, 
-        error: "Unauthorized access." 
+    if (!user) {
+      return {
+        totalUsers: 0,
+        headTeachers: 0,
+        regionalOfficers: 0,
+        educationOfficials: 0,
+        error: "Unauthorized access."
       }
     }
 
+    // Dashboard stats are available to any authenticated user (each role has their own dashboard)
     const supabase = createServiceRoleSupabaseClient()
 
     // Get counts for each user role
@@ -90,9 +91,13 @@ export async function getUserCounts() {
 export async function getPendingVerifications() {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { verifications: [], error: "Unauthorized access." }
+    }
+
+    const canView = await checkPermission("verifications.view")
+    if (!canView) {
+      return { verifications: [], error: "You don't have permission to view verifications." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -139,9 +144,13 @@ export async function getPendingVerifications() {
 export async function verifyUser(userId: string) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canVerify = await checkPermission("verifications.approve")
+    if (!canVerify) {
+      return { success: false, error: "You don't have permission to verify users." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -200,9 +209,13 @@ export async function verifyUser(userId: string) {
 export async function rejectUser(userId: string) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canReject = await checkPermission("verifications.reject")
+    if (!canReject) {
+      return { success: false, error: "You don't have permission to reject users." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -277,9 +290,13 @@ export async function rejectUserAction(formData: FormData) {
 export async function getUsers(page = 1, limit = 10, search = "", role = "", schoolId = "") {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return { users: [], total: 0, error: "Unauthorized access." }
+    }
+
+    const canView = await checkPermission("users.view")
+    if (!canView) {
+      return { users: [], total: 0, error: "You don't have permission to view users." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -353,9 +370,17 @@ export async function getUsers(page = 1, limit = 10, search = "", role = "", sch
 export async function getUserRoles() {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return { roles: [], error: "Unauthorized access." }
+    }
+
+    // This is typically needed when creating/editing users
+    const canManageUsers = await checkPermission("users.create")
+    if (!canManageUsers) {
+      const canEditUsers = await checkPermission("users.edit_all")
+      if (!canEditUsers) {
+        return { roles: [], error: "You don't have permission to manage users." }
+      }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -380,9 +405,17 @@ export async function getUserRoles() {
 export async function getSchoolsForFilter() {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return { schools: [], error: "Unauthorized access." }
+    }
+
+    // Check for school view permission
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("schools.view_all"),
+      checkPermission("schools.view_regional"),
+    ])
+    if (!canViewAll && !canViewRegional) {
+      return { schools: [], error: "You don't have permission to view schools." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -407,8 +440,12 @@ export async function getSchoolsForFilter() {
 export async function getUserById(userId: string) {
   try {
     const user = await getUser()
+    if (!user) {
+      return null
+    }
 
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    const canView = await checkPermission("users.view")
+    if (!canView) {
       return null
     }
 
@@ -461,8 +498,15 @@ export async function getUserById(userId: string) {
 export async function getSchoolById(schoolId: string) {
   try {
     const user = await getUser()
+    if (!user) {
+      return null
+    }
 
-    if (!user || user.role !== "Admin") {
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("schools.view_all"),
+      checkPermission("schools.view_regional"),
+    ])
+    if (!canViewAll && !canViewRegional) {
       return null
     }
 
@@ -500,9 +544,13 @@ export async function getSchoolById(schoolId: string) {
 export async function createUser(formData: FormData) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canCreate = await checkPermission("users.create")
+    if (!canCreate) {
+      return { success: false, error: "You don't have permission to create users." }
     }
 
     const name = formData.get("name") as string
@@ -627,9 +675,13 @@ export async function createUser(formData: FormData) {
 export async function updateUser(userId: string, formData: FormData) {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canEdit = await checkPermission("users.edit_all")
+    if (!canEdit) {
+      return { success: false, error: "You don't have permission to edit users." }
     }
 
     const name = formData.get("name") as string
@@ -711,9 +763,13 @@ export async function updateUser(userId: string, formData: FormData) {
 export async function deleteUser(userId: string) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canDelete = await checkPermission("users.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to delete users." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -743,9 +799,17 @@ export async function deleteUser(userId: string) {
 export async function getRoles() {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return []
+    }
+
+    // Roles are needed for user management
+    const canManageUsers = await checkPermission("users.create")
+    if (!canManageUsers) {
+      const canEditUsers = await checkPermission("users.edit_all")
+      if (!canEditUsers) {
+        return []
+      }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -769,19 +833,27 @@ export async function getRoles() {
 }
 
 export async function getSchools(
-  page = 1, 
-  limit = 10, 
-  search = "", 
-  regionId = "", 
-  schoolLevelId = "", 
-  sortBy = "created_at", 
+  page = 1,
+  limit = 10,
+  search = "",
+  regionId = "",
+  schoolLevelId = "",
+  sortBy = "created_at",
   sortOrder = "desc"
 ) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { schools: [], total: 0, error: "Unauthorized access." }
+    }
+
+    // Check for either "View All Schools" or "View Regional Schools" permission
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("schools.view_all"),
+      checkPermission("schools.view_regional"),
+    ])
+    if (!canViewAll && !canViewRegional) {
+      return { schools: [], total: 0, error: "You don't have permission to view schools." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -845,8 +917,17 @@ export async function getSchools(
 export async function getSchoolLevels() {
   try {
     const user = await getUser()
+    if (!user) {
+      return []
+    }
 
-    if (!user || user.role !== "Admin") {
+    // School levels are needed for school management
+    const [canViewAll, canViewRegional, canCreate] = await Promise.all([
+      checkPermission("schools.view_all"),
+      checkPermission("schools.view_regional"),
+      checkPermission("schools.create"),
+    ])
+    if (!canViewAll && !canViewRegional && !canCreate) {
       return []
     }
 
@@ -911,9 +992,13 @@ export async function getSchoolLevels() {
 export async function createSchool(formData: FormData) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canCreate = await checkPermission("schools.create")
+    if (!canCreate) {
+      return { success: false, error: "You don't have permission to create schools." }
     }
 
     const name = formData.get("name") as string
@@ -953,9 +1038,13 @@ export async function createSchool(formData: FormData) {
 export async function updateSchool(schoolId: string, formData: FormData) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canEdit = await checkPermission("schools.edit")
+    if (!canEdit) {
+      return { success: false, error: "You don't have permission to edit schools." }
     }
 
     const name = formData.get("name") as string
@@ -1000,9 +1089,13 @@ export async function updateSchool(schoolId: string, formData: FormData) {
 export async function deleteSchool(schoolId: string) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { success: false, error: "Unauthorized access." }
+    }
+
+    const canDelete = await checkPermission("schools.delete")
+    if (!canDelete) {
+      return { success: false, error: "You don't have permission to delete schools." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1032,9 +1125,13 @@ export async function deleteSchool(schoolId: string) {
 export async function getRegions(page = 1, limit = 10, search = "") {
   try {
     const user = await getUser()
-
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
+    if (!user) {
       return { regions: [], total: 0, error: "Unauthorized access." }
+    }
+
+    const canView = await checkPermission("regions.view_all")
+    if (!canView) {
+      return { regions: [], total: 0, error: "You don't have permission to view regions." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1068,11 +1165,11 @@ export async function getRegions(page = 1, limit = 10, search = "") {
 export async function getSchoolCount() {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return 0
     }
 
+    // Dashboard stats are available to any authenticated user
     const supabase = createServiceRoleSupabaseClient()
 
     const { count, error } = await supabase
@@ -1095,11 +1192,11 @@ export async function getSchoolCount() {
 export async function getRegionCount() {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return 0
     }
 
+    // Dashboard stats are available to any authenticated user
     const supabase = createServiceRoleSupabaseClient()
 
     const { count, error } = await supabase
@@ -1122,9 +1219,18 @@ export async function getRegionCount() {
 export async function getSchoolsWithRegions() {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { schools: [], error: "Unauthorized access." }
+    }
+
+    const [canViewAll, canViewRegional, canCreateAllReports] = await Promise.all([
+      checkPermission("schools.view_all"),
+      checkPermission("schools.view_regional"),
+      checkPermission("monthly_report.create_all"),
+    ])
+    // Allow access if user can view schools OR if they can create reports for any school
+    if (!canViewAll && !canViewRegional && !canCreateAllReports) {
+      return { schools: [], error: "You don't have permission to view schools." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1172,11 +1278,11 @@ export async function getSchoolsWithRegions() {
 export async function getUserRegistrationData() {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { data: [], error: "Unauthorized access." }
     }
 
+    // Dashboard stats are available to any authenticated user
     const supabase = createServiceRoleSupabaseClient()
 
     const { data: users, error } = await supabase
@@ -1387,9 +1493,14 @@ export async function getAvailableReportYears() {
 export async function getMissingMonthsForSchool(schoolId: string) {
   try {
     const user = await getUser()
-
-    if (!user || user.role !== "Admin") {
+    if (!user) {
       return { missingMonths: [], error: "Unauthorized access." }
+    }
+
+    // Allow access if user can create reports for any school
+    const canCreateAllReports = await checkPermission("monthly_report.create_all")
+    if (!canCreateAllReports) {
+      return { missingMonths: [], error: "You don't have permission to view missing months." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1469,6 +1580,20 @@ export async function getMissingMonthsForSchool(schoolId: string) {
 // Get complete school details with joined data for auto-filling admin form
 export async function getSchoolDetails(schoolId: string) {
   try {
+    const user = await getUser()
+    if (!user) {
+      return null
+    }
+
+    // Allow access if user can create reports for any school OR view schools
+    const [canCreateAllReports, canViewSchools] = await Promise.all([
+      checkPermission("monthly_report.create_all"),
+      checkPermission("schools.view_all"),
+    ])
+    if (!canCreateAllReports && !canViewSchools) {
+      return null
+    }
+
     const supabase = createServiceRoleSupabaseClient()
     const { data: school, error } = await supabase
       .from("sms_schools")
@@ -1510,6 +1635,12 @@ export async function createAdminHmrReport(formData: FormData) {
     const user = await getUser()
     if (!user) {
       return { error: "Authentication required. Please log in." }
+    }
+
+    // Check permission to create reports for any school
+    const canCreateAllReports = await checkPermission("monthly_report.create_all")
+    if (!canCreateAllReports) {
+      return { error: "You don't have permission to create reports for other schools." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1909,8 +2040,14 @@ export async function getNurserySchools() {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
-      return { success: false, error: "Unauthorized access.", schools: [] }
+    if (!user) {
+      return { success: false, error: "User not authenticated.", schools: [] }
+    }
+
+    // Check if user has permission to view nursery classes (check both cases since database might use "View")
+    const canView = await checkAnyPermission(["nursery_class.view", "nursery_class.View"])
+    if (!canView) {
+      return { success: false, error: "You don't have permission to view nursery classes.", schools: [] }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1952,8 +2089,14 @@ export async function getSchoolsForNurseryAssignment() {
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
-      return { success: false, error: "Unauthorized access.", schools: [] }
+    if (!user) {
+      return { success: false, error: "User not authenticated.", schools: [] }
+    }
+
+    // Check if user has permission to create nursery classes (needed to view schools for assignment)
+    const canCreate = await checkPermission("nursery_class.create")
+    if (!canCreate) {
+      return { success: false, error: "You don't have permission to assign nursery classes.", schools: [] }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1994,8 +2137,21 @@ export async function updateSchoolNurseryStatus(schoolId: string, hasNursery: bo
   try {
     const user = await getUser()
 
-    if (!user || (user.role !== "Super Admin" && user.role !== "Admin")) {
-      return { success: false, error: "Unauthorized access." }
+    if (!user) {
+      return { success: false, error: "User not authenticated." }
+    }
+
+    // Check permission based on action: create or delete
+    if (hasNursery) {
+      const canCreate = await checkPermission("nursery_class.create")
+      if (!canCreate) {
+        return { success: false, error: "You don't have permission to create nursery classes." }
+      }
+    } else {
+      const canDelete = await checkPermission("nursery_class.delete")
+      if (!canDelete) {
+        return { success: false, error: "You don't have permission to remove nursery classes." }
+      }
     }
 
     if (!schoolId) {
@@ -2014,6 +2170,7 @@ export async function updateSchoolNurseryStatus(schoolId: string, hasNursery: bo
     }
 
     revalidatePath("/dashboard/admin/nursery-schools")
+    revalidatePath("/dashboard/nursery-classes")
     return { success: true }
   } catch (error) {
     return { success: false, error: "An unexpected error occurred." }

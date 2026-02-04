@@ -1894,13 +1894,11 @@ export function AIInsightCard({
       <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-purple-200/50 dark:border-purple-500/20 h-full flex flex-col ${className}`}>
         <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-500/5 dark:to-blue-500/5 border-b border-purple-200/30 dark:border-purple-500/10">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                {title}
-              </CardTitle>
-              <CardDescription>{description}</CardDescription>
-            </div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              {title}
+              {description && <span className="text-sm font-normal text-muted-foreground">{description}</span>}
+            </CardTitle>
             <div className="flex items-center gap-2">
               {hasGenerated && (
                 <>
@@ -2319,8 +2317,9 @@ export function AIRecommendationPanel({
   }, [autoGenerate])
 
   return (
-    <Card className={`border-blue-200 dark:border-blue-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
+    <div className="h-full">
+      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-blue-200/50 dark:border-blue-500/20 h-full flex flex-col ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-500/5 dark:to-cyan-500/5 border-b border-blue-200/30 dark:border-blue-500/10">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Lightbulb className="h-5 w-5 text-blue-600" />
@@ -2431,7 +2430,8 @@ export function AIRecommendationPanel({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }
 
@@ -2870,8 +2870,9 @@ export function AIActionPlanCard({
   }
 
   return (
-    <Card className={`border-green-200 dark:border-green-800 ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
+    <div className="h-full">
+      <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-green-200/50 dark:border-green-500/20 h-full flex flex-col ${className}`}>
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-500/5 dark:to-emerald-500/5 border-b border-green-200/30 dark:border-green-500/10">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <BookOpen className="h-5 w-5 text-green-600" />
@@ -2940,9 +2941,9 @@ export function AIActionPlanCard({
             <div className="max-h-[400px] overflow-y-auto rounded-xl border border-slate-200/80 dark:border-slate-700/50 p-4 bg-white dark:bg-[hsl(222,47%,11%)]">
               <MarkdownRenderer content={plan} />
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={generatePlan}
               className="gap-2"
             >
@@ -2952,6 +2953,7 @@ export function AIActionPlanCard({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   )
 }

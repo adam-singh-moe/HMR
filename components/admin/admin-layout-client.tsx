@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useTheme } from "next-themes"
-import { AdminSidebarClient, AdminSidebarRef } from "./admin-sidebar-client"
+import { DynamicSidebar, DynamicSidebarRef } from "@/components/dynamic-sidebar"
 import { NotificationBell } from "@/components/notification-bell"
 import { FeatureRequestButton } from "@/components/feature-request-button"
 import { Menu, Sun, Moon } from "lucide-react"
@@ -12,12 +12,18 @@ import { Button } from "@/components/ui/button"
 interface AdminLayoutClientProps {
   children: React.ReactNode
   pendingCount: number
+  userPermissions?: string[]
 }
 
-export function AdminLayoutClient({ children, pendingCount }: AdminLayoutClientProps) {
-  const sidebarRef = useRef<AdminSidebarRef>(null)
-  const { theme, setTheme } = useTheme()
+export function AdminLayoutClient({ children, pendingCount, userPermissions = [] }: AdminLayoutClientProps) {
+  const sidebarRef = useRef<DynamicSidebarRef>(null)
+  const { theme, setTheme, resolvedTheme } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleMobileMenuToggle = () => {
     sidebarRef.current?.toggleMobileMenu()
@@ -55,7 +61,7 @@ export function AdminLayoutClient({ children, pendingCount }: AdminLayoutClientP
 
       {/* Sidebar */}
       <aside className="fixed top-0 bottom-0 left-0 z-40">
-        <AdminSidebarClient ref={sidebarRef} pendingCount={pendingCount} onNavigate={() => setSidebarOpen(false)} />
+        <DynamicSidebar ref={sidebarRef} pendingCount={pendingCount} onNavigate={() => setSidebarOpen(false)} />
       </aside>
 
       {/* Mobile Menu Button - Fixed in top-left */}
@@ -80,14 +86,18 @@ export function AdminLayoutClient({ children, pendingCount }: AdminLayoutClientP
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                title={mounted ? (resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : 'Toggle theme'}
               >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-amber-500" />
+                {mounted ? (
+                  resolvedTheme === 'dark' ? (
+                    <Sun className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-slate-600" />
+                  )
                 ) : (
-                  <Moon className="h-4 w-4 text-slate-600" />
+                  <div className="h-4 w-4" />
                 )}
               </Button>
               <NotificationBell />

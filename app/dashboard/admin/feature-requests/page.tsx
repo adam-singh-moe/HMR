@@ -1,9 +1,29 @@
 import { getFeatureRequests } from "@/app/actions/feature-requests"
 import { FeatureRequestsAdminView } from "@/components/feature-requests/admin-view"
 import { Lightbulb } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
+import { redirect } from "next/navigation"
 
 export default async function AdminFeatureRequestsPage() {
+  // Check permissions for admin feature request management
+  const [canView, canUpdateStatus, canDelete] = await Promise.all([
+    checkPermission("feature_request.view"),
+    checkPermission("feature_request.status_update"),
+    checkPermission("feature_request.delete"),
+  ])
+
+  // If user can't view feature requests, redirect to dashboard
+  if (!canView) {
+    redirect("/dashboard/admin")
+  }
+
   const { requests, error } = await getFeatureRequests()
+
+  // Pass permissions to client component
+  const permissions = {
+    canUpdateStatus,
+    canDelete,
+  }
 
   return (
     <div className="space-y-6">
@@ -23,7 +43,7 @@ export default async function AdminFeatureRequestsPage() {
           {error}
         </div>
       ) : (
-        <FeatureRequestsAdminView initialRequests={requests} />
+        <FeatureRequestsAdminView initialRequests={requests} permissions={permissions} />
       )}
     </div>
   )

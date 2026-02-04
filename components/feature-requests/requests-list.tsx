@@ -51,14 +51,23 @@ type FeatureRequest = {
   reviewer_name?: string
 }
 
-export function FeatureRequestsList({ 
+type FeatureRequestPermissions = {
+  canCreate: boolean
+  canUpvote: boolean
+  canComment: boolean
+  canViewComments: boolean
+}
+
+export function FeatureRequestsList({
   initialRequests,
   userRole,
-  userId
-}: { 
+  userId,
+  permissions
+}: {
   initialRequests: FeatureRequest[]
   userRole: string
   userId: string
+  permissions: FeatureRequestPermissions
 }) {
   const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
@@ -239,16 +248,23 @@ export function FeatureRequestsList({
                         <Calendar className="h-4 w-4" />
                         <span>{formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}</span>
                       </div>
-                      <Button
-                        variant={request.has_upvoted ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleUpvote(request.id)}
-                        className="h-8"
-                      >
-                        <ThumbsUp className={`h-4 w-4 mr-1.5 ${request.has_upvoted ? 'fill-current' : ''}`} />
-                        <span className="font-medium">{request.upvote_count}</span>
-                        <span className="ml-1 hidden sm:inline">Upvote{request.upvote_count !== 1 ? 's' : ''}</span>
-                      </Button>
+                      {permissions.canUpvote ? (
+                        <Button
+                          variant={request.has_upvoted ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleUpvote(request.id)}
+                          className="h-8"
+                        >
+                          <ThumbsUp className={`h-4 w-4 mr-1.5 ${request.has_upvoted ? 'fill-current' : ''}`} />
+                          <span className="font-medium">{request.upvote_count}</span>
+                          <span className="ml-1 hidden sm:inline">Upvote{request.upvote_count !== 1 ? 's' : ''}</span>
+                        </Button>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                          <ThumbsUp className="h-4 w-4" />
+                          <span className="font-medium">{request.upvote_count}</span>
+                        </div>
+                      )}
                       <button
                         onClick={() => handleViewDetails(request)}
                         className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -336,8 +352,8 @@ export function FeatureRequestsList({
                   </div>
                 )}
 
-                {/* Add Comment - Only for Regional Officers, Education Officials, and Admins */}
-                {(userRole === "Regional Officer" || userRole === "Education Official" || userRole === "Admin") && (
+                {/* Add Comment - Only if user has permission */}
+                {permissions.canComment && (
                   <div className="space-y-2">
                     <Label className="text-slate-700 dark:text-slate-300">Add a comment</Label>
                     <Textarea

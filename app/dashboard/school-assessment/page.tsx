@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
-import { 
-  FileTextIcon, 
-  TrendingUpIcon, 
-  Loader2, 
+import { usePermissions } from "@/hooks/use-permissions"
+import {
+  FileTextIcon,
+  TrendingUpIcon,
+  Loader2,
   PlusCircleIcon,
   ClockIcon,
   CheckCircle2,
@@ -26,6 +27,19 @@ import {
   School,
 } from "lucide-react"
 import { getUserSchoolInfo } from "@/app/actions/auth"
+import dynamic from "next/dynamic"
+
+// Dynamically import the national dashboard for Admin/Education Official
+const NationalAssessmentDashboard = dynamic(
+  () => import("./national-dashboard"),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+)
 import { 
   AssessmentReportForm, 
   ReportView, 
@@ -124,12 +138,41 @@ interface ReportData {
 // MAIN COMPONENT
 // ============================================================================
 
-export default function HeadTeacherAssessmentPage() {
+export default function SchoolAssessmentPage() {
   return (
-    <AuthWrapper requiredRole="Head Teacher">
-      <HeadTeacherAssessmentContent />
+    <AuthWrapper>
+      <SchoolAssessmentRouter />
     </AuthWrapper>
   )
+}
+
+// Router component that decides which view to show based on role/permissions
+function SchoolAssessmentRouter() {
+  const { user } = useAuth()
+  const { hasPermission, hasAnyPermission, isLoading: permissionsLoading } = usePermissions()
+
+  // Check if user has view_all or view_regional permission (Admin/Education Official)
+  const canViewAll = hasAnyPermission([
+    "school_assessments.view_all",
+    "school_assessments.view_regional"
+  ])
+
+  // Show loading while checking permissions
+  if (permissionsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  // For Admin or users with view_all/view_regional permission, show national dashboard
+  if (user?.role === "Admin" || user?.role === "Education Official" || canViewAll) {
+    return <NationalAssessmentDashboard />
+  }
+
+  // For Head Teachers (or anyone without view_all permission), show school submission view
+  return <HeadTeacherAssessmentContent />
 }
 
 function HeadTeacherAssessmentContent() {
@@ -702,20 +745,20 @@ function HeadTeacherAssessmentContent() {
 
       {/* Tabs */}
       <Tabs value={currentTab} onValueChange={setCurrentTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-          <TabsTrigger value="overview" className="gap-2">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-slate-200 dark:border-slate-700/50 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 rounded-lg">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="submit" className="gap-2">
+          <TabsTrigger value="submit" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 rounded-lg">
             <PlusCircleIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Submit Report</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
+          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 rounded-lg">
             <FileTextIcon className="h-4 w-4" />
             <span className="hidden sm:inline">History</span>
           </TabsTrigger>
-          <TabsTrigger value="view" className="gap-2" disabled={!selectedReport}>
+          <TabsTrigger value="view" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white text-slate-600 dark:text-slate-400 rounded-lg" disabled={!selectedReport}>
             <TrendingUpIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Details</span>
           </TabsTrigger>
@@ -735,10 +778,10 @@ function HeadTeacherAssessmentContent() {
           )}
 
           {submissionOpen && !currentReport && (
-            <Alert className="border-blue-200 bg-blue-50">
-              <PlusCircleIcon className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="text-blue-800">Report Required</AlertTitle>
-              <AlertDescription className="text-blue-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <Alert className="border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-950/30">
+              <PlusCircleIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertTitle className="text-blue-800 dark:text-blue-300">Report Required</AlertTitle>
+              <AlertDescription className="text-blue-700 dark:text-blue-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <span>You haven't started your assessment report for this term.</span>
                 <Button size="sm" onClick={() => setCurrentTab('submit')} className="bg-blue-600 hover:bg-blue-700">
                   Start Report
@@ -748,10 +791,10 @@ function HeadTeacherAssessmentContent() {
           )}
 
           {currentReport?.status === 'draft' && submissionOpen && (
-            <Alert className="border-amber-200 bg-amber-50">
-              <ClockIcon className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800">Draft In Progress</AlertTitle>
-              <AlertDescription className="text-amber-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <Alert className="border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-950/30">
+              <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertTitle className="text-amber-800 dark:text-amber-300">Draft In Progress</AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <span>You have an unsubmitted draft report.</span>
                 <Button size="sm" onClick={() => setCurrentTab('submit')} className="bg-amber-600 hover:bg-amber-700">
                   Continue Editing
@@ -761,15 +804,15 @@ function HeadTeacherAssessmentContent() {
           )}
 
           {currentReport?.status === 'submitted' && (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">Report Submitted</AlertTitle>
-              <AlertDescription className="text-green-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <Alert className="border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-950/30">
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertTitle className="text-green-800 dark:text-green-300">Report Submitted</AlertTitle>
+              <AlertDescription className="text-green-700 dark:text-green-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <span>Your assessment report for this term has been submitted.</span>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
-                  className="border-green-600 text-green-700 hover:bg-green-100"
+                  className="border-green-600 dark:border-green-500 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/50"
                   onClick={() => handleViewReport(currentReport.id)}
                 >
                   View Report
@@ -859,18 +902,45 @@ function HeadTeacherAssessmentContent() {
             />
           </div>
 
+          {/* AI Insights Section - 3 columns */}
+          {latestReport && selectedReport && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <AIInsightCard
+                type="overview"
+                title="AI Performance Analysis"
+                description={`for ${schoolInfo?.name || 'Your School'}`}
+                filters={{
+                  schoolId: schoolInfo?.id,
+                  periodId: selectedReport?.periodId
+                }}
+                autoGenerate={false}
+              />
+              <AIRecommendationPanel
+                schoolId={schoolInfo?.id}
+                reportId={selectedReport.id}
+                schoolName={schoolInfo?.name || 'Your School'}
+                autoGenerate={false}
+              />
+              <AIActionPlanCard
+                schoolId={schoolInfo?.id || ''}
+                reportId={selectedReport.id}
+                schoolName={schoolInfo?.name || 'Your School'}
+              />
+            </div>
+          )}
+
           {/* Main Charts Section */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Performance Trend Chart */}
-            <EnhancedTrendChart 
-              data={trends} 
+            <EnhancedTrendChart
+              data={trends}
               title="Performance Progress"
               description="Track your school's assessment scores over time"
               showTarget={true}
               targetScore={isTAPS ? TAPS_RATING_THRESHOLDS.B.min : 700}
               variant={isTAPS ? 'taps' : 'demo'}
             />
-            
+
             {/* Category Radar Chart */}
             {latestReport && (
               isTAPS && tapsCategoryScores ? (
@@ -880,7 +950,7 @@ function HeadTeacherAssessmentContent() {
                   description="Category breakdown from your latest assessment"
                 />
               ) : (
-                <CategoryRadarChart 
+                <CategoryRadarChart
                   scores={categoryScores}
                   title="Performance Profile"
                   description="Category breakdown from your latest assessment"
@@ -904,7 +974,7 @@ function HeadTeacherAssessmentContent() {
                   title="Your Ranking"
                 />
               )}
-              
+
               {/* Category Strength Analysis */}
               {(isTAPS ? tapsStrength : categoryStrength) && (
                 <CategoryStrengthCard
@@ -926,13 +996,13 @@ function HeadTeacherAssessmentContent() {
                   description="Detailed breakdown by assessment category (sorted by lowest to highest)"
                 />
               ) : (
-                <CategoryProgressCards 
+                <CategoryProgressCards
                   scores={categoryScores}
                   title="Category Performance"
                   description="Detailed breakdown by assessment category (sorted by lowest to highest)"
                 />
               )}
-              
+
               {/* Milestone Tracker */}
               <MilestoneTracker
                 currentScore={latestReport.totalScore || 0}
@@ -948,40 +1018,6 @@ function HeadTeacherAssessmentContent() {
                 maxScore={totalMaxScore}
               />
             </div>
-          )}
-
-          {/* AI Insights Section */}
-          {latestReport && selectedReport && (
-            <div className="flex flex-col gap-6">
-              {/* AI Performance Insight */}
-              <AIInsightCard
-                type="overview"
-                title="AI Performance Analysis"
-                description="Get AI-powered insights about your school's assessment"
-                filters={{ 
-                  schoolId: schoolInfo?.id,
-                  periodId: selectedReport?.periodId 
-                }}
-                autoGenerate={false}
-              />
-              
-              {/* AI Recommendations */}
-              <AIRecommendationPanel
-                schoolId={schoolInfo?.id}
-                reportId={selectedReport.id}
-                schoolName={schoolInfo?.name || 'Your School'}
-                autoGenerate={false}
-              />
-            </div>
-          )}
-
-          {/* AI Action Plan - Full Width */}
-          {latestReport && selectedReport && (
-            <AIActionPlanCard
-              schoolId={schoolInfo?.id || ''}
-              reportId={selectedReport.id}
-              schoolName={schoolInfo?.name || 'Your School'}
-            />
           )}
 
           {/* No Data State */}

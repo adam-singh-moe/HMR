@@ -1,12 +1,23 @@
 "use server"
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { checkPermission } from "@/lib/permissions"
+import { getUser } from "@/app/actions/auth"
 
 // Get all nursery assessments for admin management
 export async function getAllNurseryAssessments() {
   try {
+    // Check permissions
+    const canViewAll = await checkPermission("nursery_assessment.view_all")
+    const canViewRegional = await checkPermission("nursery_assessment.view_regional")
+
+    if (!canViewAll && !canViewRegional) {
+      return { assessments: [], error: "You do not have permission to view nursery assessments" }
+    }
+
+    const user = await getUser()
     const supabase = createServiceRoleSupabaseClient()
-    
+
     // First get all assessments
     const { data: assessments, error: assessmentsError } = await supabase
       .from('hmr_nursery_assessment')
@@ -69,7 +80,7 @@ export async function getAllNurseryAssessments() {
     const combinedAssessments = assessments.map(assessment => {
       const school = schoolsMap[assessment.school_id] || null
       const region = school ? regionsMap[school.region_id] || null : null
-      
+
       return {
         ...assessment,
         sms_schools: school ? {
@@ -80,7 +91,15 @@ export async function getAllNurseryAssessments() {
       }
     })
 
-    return { assessments: combinedAssessments, error: null }
+    // Filter by region if user only has view_regional permission
+    let filteredAssessments = combinedAssessments
+    if (!canViewAll && canViewRegional && user?.region_name) {
+      filteredAssessments = combinedAssessments.filter(assessment =>
+        assessment.sms_schools?.region_name === user.region_name
+      )
+    }
+
+    return { assessments: filteredAssessments, error: null }
   } catch (err) {
     console.error('Error in getAllNurseryAssessments:', err)
     return { assessments: [], error: "An unexpected error occurred" }

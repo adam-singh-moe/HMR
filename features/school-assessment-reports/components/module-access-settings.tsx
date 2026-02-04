@@ -62,7 +62,9 @@ export function ModuleAccessSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="p-4 rounded-full bg-blue-50 dark:bg-blue-500/10">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        </div>
       </div>
     )
   }
@@ -71,41 +73,41 @@ export function ModuleAccessSettings() {
     <div className="space-y-6">
       <div className="grid gap-4">
         {configs.map((config) => (
-          <div 
-            key={config.id} 
-            className="flex items-center justify-between p-4 border rounded-lg bg-card shadow-sm"
+          <div
+            key={config.id}
+            className="flex items-center justify-between p-4 border rounded-xl bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200/80 dark:border-slate-700/50 shadow-sm"
           >
             <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${config.isEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+              <div className={`p-2 rounded-full ${config.isEnabled ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
                 <School className="h-5 w-5" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor={`toggle-${config.schoolType}`} className="text-base font-semibold capitalize cursor-pointer">
+                  <Label htmlFor={`toggle-${config.schoolType}`} className="text-base font-semibold capitalize cursor-pointer text-slate-900 dark:text-white">
                     {config.schoolType} Schools
                   </Label>
                   {config.isEnabled ? (
-                    <Badge variant="outline" className="text-[10px] uppercase bg-green-50 text-green-700 border-green-200">
+                    <Badge variant="outline" className="text-[10px] uppercase bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30">
                       Enabled
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[10px] uppercase bg-red-50 text-red-700 border-red-200">
+                    <Badge variant="outline" className="text-[10px] uppercase bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30">
                       Disabled
                     </Badge>
                   ) }
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {config.isEnabled 
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {config.isEnabled
                     ? `Head teachers of ${config.schoolType} schools can access and submit assessment reports.`
                     : `Access to assessment reports is currently restricted for ${config.schoolType} schools.`
                   }
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {updatingType === config.schoolType && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="h-4 w-4 animate-spin text-slate-500 dark:text-slate-400" />
               )}
               <Switch
                 id={`toggle-${config.schoolType}`}
@@ -117,23 +119,23 @@ export function ModuleAccessSettings() {
           </div>
         ))}
       </div>
-      
+
       {!configs.some(c => c.isEnabled) && (
-        <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 flex gap-3 text-yellow-800">
-          <ShieldAlert className="h-5 w-5 shrink-0" />
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 flex gap-3">
+          <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="text-sm">
-            <p className="font-semibold">Warning: All School Types Disabled</p>
-            <p>The entire School Assessment module is currently inaccessible to all head teachers.</p>
+            <p className="font-semibold text-amber-700 dark:text-amber-400">Warning: All School Types Disabled</p>
+            <p className="text-amber-600/80 dark:text-amber-400/70">The entire School Assessment module is currently inaccessible to all head teachers.</p>
           </div>
         </div>
       )}
-      
+
       {configs.every(c => c.isEnabled) && (
-        <div className="p-4 rounded-lg bg-green-50 border border-green-200 flex gap-3 text-green-800">
-          <ShieldCheck className="h-5 w-5 shrink-0" />
+        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20 flex gap-3">
+          <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div className="text-sm">
-            <p className="font-semibold">Full Access Enabled</p>
-            <p>All school types have full access to the School Assessment module.</p>
+            <p className="font-semibold text-emerald-700 dark:text-emerald-400">Full Access Enabled</p>
+            <p className="text-emerald-600/80 dark:text-emerald-400/70">All school types have full access to the School Assessment module.</p>
           </div>
         </div>
       )}

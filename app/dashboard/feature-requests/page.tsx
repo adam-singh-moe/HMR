@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Lightbulb } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
 
 // Helper function to get the correct dashboard URL based on user role
 function getDashboardUrl(role: string): string {
@@ -28,11 +29,33 @@ export default async function FeatureRequestsPage() {
     redirect("/auth/signin")
   }
 
+  // Check feature request permissions
+  const [canView, canCreate, canUpvote, canComment, canViewComments] = await Promise.all([
+    checkPermission("feature_request.view"),
+    checkPermission("feature_request.create"),
+    checkPermission("feature_request.upvote"),
+    checkPermission("feature_request.create_comments"),
+    checkPermission("feature_request.view_comments"),
+  ])
+
+  // If user can't view feature requests, redirect to dashboard
+  if (!canView) {
+    const dashboardUrl = getDashboardUrl(user.role)
+    redirect(dashboardUrl)
+  }
+
   const { requests, error } = await getFeatureRequests()
 
-  const canCreate = user.role === "Regional Officer" || user.role === "Education Official"
   const dashboardUrl = getDashboardUrl(user.role)
   const isRegionalOfficer = user.role === "Regional Officer"
+
+  // Pass permissions to client component
+  const permissions = {
+    canCreate,
+    canUpvote,
+    canComment,
+    canViewComments,
+  }
 
   return (
     <div className={`${isRegionalOfficer ? 'p-4 lg:p-6 mx-auto max-w-6xl' : 'container mx-auto py-8 px-4 max-w-7xl'}`}>
@@ -74,7 +97,12 @@ export default async function FeatureRequestsPage() {
           {error}
         </div>
       ) : (
-        <FeatureRequestsList initialRequests={requests} userRole={user.role} userId={user.id} />
+        <FeatureRequestsList
+          initialRequests={requests}
+          userRole={user.role}
+          userId={user.id}
+          permissions={permissions}
+        />
       )}
     </div>
   )

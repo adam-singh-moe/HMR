@@ -1,6 +1,8 @@
 "use server"
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { checkPermission } from "@/lib/permissions"
+import { getUser } from "@/app/actions/auth"
 
 export async function getNurseryAssessmentQuestions(section: string) {
   try {
@@ -126,6 +128,12 @@ export async function saveNurseryAssessment(assessmentData: {
   enrollment: number
 }) {
   try {
+    // Check if user has permission to create nursery assessments
+    const canCreate = await checkPermission("nursery_assessment.create_own")
+    if (!canCreate) {
+      return { assessment: null, error: "You do not have permission to create nursery assessments" }
+    }
+
    // console.log('Saving nursery assessment:', assessmentData)
     const supabase = createServiceRoleSupabaseClient()
     
@@ -697,8 +705,14 @@ export async function loadSavedResponses(assessmentId: string) {
 // Function to fetch submitted nursery assessments for a user
 export async function getSubmittedNurseryAssessments(userId: string) {
   try {
+    // Check if user has permission to view their own nursery assessments
+    const canViewOwn = await checkPermission("nursery_assessment.view_own")
+    if (!canViewOwn) {
+      return { assessments: [], error: "You do not have permission to view nursery assessments" }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
-    
+
     // First get assessments without foreign key joins to test basic query
     const { data: assessments, error } = await supabase
       .from('hmr_nursery_assessment')
@@ -918,8 +932,19 @@ export async function checkYearlyAssessmentLimits(headteacherId: string, schoolI
 // Function to get all nursery assessments for education officials
 export async function getAllNurseryAssessments(regionName?: string) {
   try {
+    // Check permissions - need either view_all or view_regional
+    const canViewAll = await checkPermission("nursery_assessment.view_all")
+    const canViewRegional = await checkPermission("nursery_assessment.view_regional")
+
+    if (!canViewAll && !canViewRegional) {
+      return { assessments: [], error: "You do not have permission to view nursery assessments" }
+    }
+
+    // Get current user for regional filtering
+    const user = await getUser()
+
     const supabase = createServiceRoleSupabaseClient()
-    
+
     // Get all submitted assessments - keep it simple
     const { data: assessments, error } = await supabase
       .from('hmr_nursery_assessment')
@@ -974,12 +999,20 @@ export async function getAllNurseryAssessments(regionName?: string) {
       }
     })
 
-    // Filter by region if provided
-    const filteredAssessments = regionName 
-      ? assessmentsWithDetails.filter(assessment => 
-          assessment.schools?.region === regionName
-        )
-      : assessmentsWithDetails
+    // Filter by region - either from parameter or based on permissions
+    let filteredAssessments = assessmentsWithDetails
+
+    // If user only has view_regional permission, filter to their region
+    if (!canViewAll && canViewRegional && user?.region_name) {
+      filteredAssessments = assessmentsWithDetails.filter(assessment =>
+        assessment.schools?.region === user.region_name
+      )
+    } else if (regionName) {
+      // If regionName parameter is provided, filter by it
+      filteredAssessments = assessmentsWithDetails.filter(assessment =>
+        assessment.schools?.region === regionName
+      )
+    }
 
     return { assessments: filteredAssessments, error: null }
   } catch (err) {

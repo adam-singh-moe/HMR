@@ -1,8 +1,8 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { ReactNode, useState, useEffect, useRef } from "react"
 import { useTheme } from "next-themes"
-import { EducationOfficialSidebar } from "@/components/education-official-sidebar"
+import { DynamicSidebar, DynamicSidebarRef } from "@/components/dynamic-sidebar"
 import { NotificationBell } from "@/components/notification-bell"
 import { FeatureRequestButton } from "@/components/feature-request-button"
 import { Menu, Sun, Moon } from "lucide-react"
@@ -13,8 +13,19 @@ interface EducationOfficialLayoutClientProps {
 }
 
 export function EducationOfficialLayoutClient({ children }: EducationOfficialLayoutClientProps) {
+  const sidebarRef = useRef<DynamicSidebarRef>(null)
   const { theme, setTheme } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch by only rendering theme-dependent UI after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const handleMobileMenuToggle = () => {
+    sidebarRef.current?.toggleMobileMenu()
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[hsl(222,47%,6%)]">
@@ -46,25 +57,17 @@ export function EducationOfficialLayoutClient({ children }: EducationOfficialLay
         <div className="absolute bottom-[40%] left-[45%] w-4 h-4 rounded-full bg-emerald-400/45 dark:bg-emerald-400/30 animate-float-slow" style={{ animationDelay: '3.5s' }} />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed top-0 bottom-0 left-0 z-40 w-[280px] bg-white/95 dark:bg-[hsl(222,47%,7%)]/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-700/50 transition-transform duration-300 ease-in-out flex flex-col shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50`}>
-        <EducationOfficialSidebar onNavigate={() => setSidebarOpen(false)} />
+      <aside className="fixed top-0 bottom-0 left-0 z-40">
+        <DynamicSidebar ref={sidebarRef} onNavigate={() => setSidebarOpen(false)} />
       </aside>
 
       {/* Mobile Menu Button - Fixed in top-left */}
-      <div className="lg:hidden fixed top-4 left-4 z-40">
+      <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setSidebarOpen(true)}
+          onClick={handleMobileMenuToggle}
           className="h-10 w-10 p-0 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-lg"
         >
           <Menu className="h-5 w-5" />
@@ -72,7 +75,7 @@ export function EducationOfficialLayoutClient({ children }: EducationOfficialLay
       </div>
 
       {/* Main Content Area */}
-      <main className="lg:ml-[280px] min-h-screen relative">
+      <main className="lg:ml-[240px] 2xl:ml-[280px] min-h-screen relative">
         {/* Page Content with Action Icons */}
         <div className="p-4 lg:p-6 max-w-7xl mx-auto">
           {/* Action Icons - Top right of content area */}
@@ -83,12 +86,16 @@ export function EducationOfficialLayoutClient({ children }: EducationOfficialLay
                 size="sm"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className="h-9 w-9 p-0 rounded-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                title={mounted ? (theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : 'Toggle Theme'}
               >
-                {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-amber-500" />
+                {mounted ? (
+                  theme === 'dark' ? (
+                    <Sun className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-slate-600" />
+                  )
                 ) : (
-                  <Moon className="h-4 w-4 text-slate-600" />
+                  <Sun className="h-4 w-4 text-slate-400" />
                 )}
               </Button>
               <NotificationBell />
