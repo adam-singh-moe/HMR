@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+// import { useRouter } from "next/navigation" // Removed unused import
+import { getPublicTopSchools } from "@/app/actions/public-reports"
 import {
   ChevronLeft,
   ChevronRight,
@@ -89,36 +91,73 @@ export function TopSchoolsCarousel({
   const [currentRegionIndex, setCurrentRegionIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const [direction, setDirection] = useState<'left' | 'right'>('right')
+  const [data, setData] = useState<Record<string, any>>(SAMPLE_TOP_SCHOOLS)
+  const [regions, setRegions] = useState<string[]>(Object.keys(SAMPLE_TOP_SCHOOLS))
+  const [isLoading, setIsLoading] = useState(true)
+  // const router = useRouter() // Removed unused hook
 
-  const currentRegion = REGIONS[currentRegionIndex]
-  const schools = SAMPLE_TOP_SCHOOLS[currentRegion as keyof typeof SAMPLE_TOP_SCHOOLS]
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const result = await getPublicTopSchools()
+        if (result.regions.length > 0) {
+          setData(result.data)
+          setRegions(result.regions)
+        }
+      } catch (error) {
+        console.error("Failed to fetch public rankings:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const currentRegion = regions[currentRegionIndex] || ""
+  const schools = data[currentRegion] || []
+
+  // Fill with placeholders if less than 3 schools
+  const displaySchools = [...schools]
+  if (schools.length < 3) {
+     // logic to add empty placeholders if needed, or handle gracefully
+     // For now we just render what we have, but the layout expects 3 grid columns
+     // We can just pad with nulls/placeholders
+  }
 
   const goToNext = useCallback(() => {
-    if (isAnimating) return
+    if (isAnimating || regions.length === 0) return
     setDirection('right')
     setIsAnimating(true)
     setTimeout(() => {
-      setCurrentRegionIndex((prev) => (prev + 1) % REGIONS.length)
+      setCurrentRegionIndex((prev) => (prev + 1) % regions.length)
       setIsAnimating(false)
     }, 300)
-  }, [isAnimating])
+  }, [isAnimating, regions.length])
 
   const goToPrev = useCallback(() => {
-    if (isAnimating) return
+    if (isAnimating || regions.length === 0) return
     setDirection('left')
     setIsAnimating(true)
     setTimeout(() => {
-      setCurrentRegionIndex((prev) => (prev - 1 + REGIONS.length) % REGIONS.length)
+      setCurrentRegionIndex((prev) => (prev - 1 + regions.length) % regions.length)
       setIsAnimating(false)
     }, 300)
-  }, [isAnimating])
+  }, [isAnimating, regions.length])
 
   // Auto-play functionality
   useEffect(() => {
-    if (!autoPlay) return
+    if (!autoPlay || regions.length === 0) return
     const interval = setInterval(goToNext, autoPlayInterval)
     return () => clearInterval(interval)
-  }, [autoPlay, autoPlayInterval, goToNext])
+  }, [autoPlay, autoPlayInterval, goToNext, regions.length])
+
+  if (isLoading) {
+    return <div className="w-full text-center py-20 text-slate-500">Loading rankings...</div>
+  }
+  
+  if (regions.length === 0) {
+    return <div className="w-full text-center py-20 text-slate-500">No rankings available for this term yet.</div>
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -166,7 +205,7 @@ export function TopSchoolsCarousel({
 
       {/* Region Dots */}
       <div className="flex justify-center gap-2 mb-8">
-        {REGIONS.map((region, index) => (
+        {regions.map((region, index) => (
           <button
             key={region}
             onClick={() => {
@@ -185,19 +224,22 @@ export function TopSchoolsCarousel({
 
       {/* Schools Cards - Display order: 2nd, 1st, 3rd (1st in middle) */}
       <div
-        className={`grid gap-6 md:grid-cols-3 transition-all duration-300 ${
-          isAnimating
+        className={`grid gap-6 md:grid-cols-3 transition-all duration-300 ${isAnimating
             ? direction === 'right'
               ? 'opacity-0 translate-x-8'
               : 'opacity-0 -translate-x-8'
             : 'opacity-100 translate-x-0'
         }`}
       >
+        {/* We map the indices to the desired visual order: 1 (2nd place), 0 (1st place), 2 (3rd place) */}
         {[1, 0, 2].map((originalIndex) => {
+          // Guard against fewer than 3 schools
           const school = schools[originalIndex]
+          if (!school) return <div key={`empty-${originalIndex}`} className="hidden md:block" />
+
           const RankIcon = RANK_ICONS[originalIndex]
-          const rankColor = RANK_COLORS[originalIndex]
-          const ratingGradient = RATING_COLORS[school.rating as keyof typeof RATING_COLORS]
+          // const rankColor = RANK_COLORS[originalIndex] // Unused variable
+          const ratingGradient = RATING_COLORS[school.rating as keyof typeof RATING_COLORS] || RATING_COLORS.A
 
           // Background colors based on rank position - light and dark mode
           const cardBg = originalIndex === 0
@@ -209,7 +251,7 @@ export function TopSchoolsCarousel({
           return (
             <Card
               key={school.id}
-              className={`relative overflow-hidden ${cardBg} backdrop-blur-sm hover:border-slate-400 dark:hover:border-slate-600/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10`}
+              className={`relative overflow-hidden ${cardBg} backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10`}
             >
               {/* Rank Badge */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
@@ -241,12 +283,12 @@ export function TopSchoolsCarousel({
 
               <CardContent className="pt-16 pb-6">
                 {/* School Name */}
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 pr-12">{school.name}</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 pr-12 line-clamp-2 min-h-[3.5rem]">{school.name}</h3>
 
                 {/* School Level */}
                 <div className="flex items-center gap-2 mb-4">
                   <GraduationCap className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  <span className="text-sm text-slate-500 dark:text-slate-400">{school.level} School</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{school.level}</span>
                 </div>
 
                 {/* Score Section */}
@@ -292,16 +334,7 @@ export function TopSchoolsCarousel({
         })}
       </div>
 
-      {/* View All Button */}
-      <div className="text-center mt-8">
-        <Button
-          variant="outline"
-          className="border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-        >
-          <Star className="h-4 w-4 mr-2" />
-          View All Rankings
-        </Button>
-      </div>
+
 
       {/* Animation keyframes */}
       <style jsx>{`

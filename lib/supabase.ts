@@ -29,11 +29,21 @@ export async function createServerSupabaseClient() {
   )
 }
 
-// Server-side Supabase client with service role (bypasses RLS)
 export function createServiceRoleSupabaseClient() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE environment variable.")
+  }
+
+  // Warn if using the exposed key
+  if (!process.env.SUPABASE_SERVICE_ROLE && process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE) {
+    console.warn("SECURITY WARNING: Using NEXT_PUBLIC_SUPABASE_SERVICE_ROLE. This key is exposed to the browser. Please rename to SUPABASE_SERVICE_ROLE.")
+  }
+
   return createClient(
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("NEXT_PUBLIC_SUPABASE_SERVICE_ROLE"),
+    serviceRoleKey,
     {
       auth: {
         autoRefreshToken: false,

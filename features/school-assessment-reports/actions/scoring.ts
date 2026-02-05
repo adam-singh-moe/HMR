@@ -11,6 +11,7 @@ import {
   TAPS_COUNT_BANDS,
   TAPS_RATIO_BANDS,
   type RatingLevel,
+  TAPS_METRIC_WEIGHTS,
   type TAPSRatingGrade,
   type CategoryName,
   type TAPSCategoryName,
@@ -866,45 +867,46 @@ function getPointsFromSelectValue(
  */
 export function calculateTAPSSchoolInputsScore(data: Partial<TAPSSchoolInputsScores>): number {
   let score = 0
+  const weights = TAPS_METRIC_WEIGHTS
   
-  // Metric 1: Trained Teachers' Rate (*** - 10 points)
+  // Metric 1: Trained Teachers' Rate (** - 9 points)
   if (data.trainedTeachersRate !== undefined) {
-    score += getPointsFromPercentageBand(data.trainedTeachersRate, 'TRAINED_TEACHERS', 10)
+    score += getPointsFromPercentageBand(data.trainedTeachersRate, 'TRAINED_TEACHERS', weights.STAR_2)
   }
   
-  // Metric 2: Teacher/Learner Ratio (** - 10 points)
+  // Metric 2: Teacher/Learner Ratio (** - 9 points)
   if (data.teacherLearnerRatio !== undefined) {
-    score += getPointsFromRatio(data.teacherLearnerRatio, 10)
+    score += getPointsFromRatio(data.teacherLearnerRatio, weights.STAR_2)
   }
   
   // Metric 3: Teacher Attendance Rate (*** - 10 points)
   if (data.teacherAttendanceRate !== undefined) {
-    score += getPointsFromPercentageBand(data.teacherAttendanceRate, 'ATTENDANCE', 10)
+    score += getPointsFromPercentageBand(data.teacherAttendanceRate, 'ATTENDANCE', weights.STAR_3)
   }
   
-  // Metric 4: Increase in Teacher Attendance (** - 10 points)
+  // Metric 4: Increase in Teacher Attendance (** - 9 points)
   if (data.teacherAttendanceIncrease !== undefined) {
-    score += getPointsFromPercentageBand(data.teacherAttendanceIncrease, 'INCREASE', 10)
+    score += getPointsFromPercentageBand(data.teacherAttendanceIncrease, 'INCREASE', weights.STAR_2)
   }
   
-  // Metric 5: Teachers Late (** - 10 points)
+  // Metric 5: Teachers Late (** - 9 points)
   if (data.teachersLatePercentage !== undefined) {
-    score += getPointsFromPercentageBand(data.teachersLatePercentage, 'LATE_PERCENTAGE', 10)
+    score += getPointsFromPercentageBand(data.teachersLatePercentage, 'LATE_PERCENTAGE', weights.STAR_2)
   }
   
-  // Metric 6: Sweeper/Cleaner Attendance (* - 10 points)
+  // Metric 6: Sweeper/Cleaner Attendance (* - 6 points)
   if (data.sweeperCleanerAttendance !== undefined) {
-    score += getPointsFromPercentageBand(data.sweeperCleanerAttendance, 'ATTENDANCE', 10)
+    score += getPointsFromPercentageBand(data.sweeperCleanerAttendance, 'ATTENDANCE', weights.STAR_1)
   }
   
   // Metric 7: Learners' Attendance Rate (*** - 10 points)
   if (data.learnersAttendanceRate !== undefined) {
-    score += getPointsFromPercentageBand(data.learnersAttendanceRate, 'ATTENDANCE', 10)
+    score += getPointsFromPercentageBand(data.learnersAttendanceRate, 'ATTENDANCE', weights.STAR_3)
   }
   
-  // Metric 8: Increase in Learners' Attendance (** - 10 points)
+  // Metric 8: Increase in Learners' Attendance (** - 9 points)
   if (data.learnersAttendanceIncrease !== undefined) {
-    score += getPointsFromPercentageBand(data.learnersAttendanceIncrease, 'INCREASE', 10)
+    score += getPointsFromPercentageBand(data.learnersAttendanceIncrease, 'INCREASE', weights.STAR_2)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.SCHOOL_INPUTS_OPERATIONS)
@@ -916,20 +918,28 @@ export function calculateTAPSSchoolInputsScore(data: Partial<TAPSSchoolInputsSco
  */
 export function calculateTAPSLeadershipScore(data: Partial<TAPSLeadershipScores>): number {
   let score = 0
+  const weights = TAPS_METRIC_WEIGHTS
   
-  // Metric 9: Quarterly Project Plan Progress (** - 10 points)
+  // Metric 9: Quarterly Project Plan Progress (** - 9 points)
   if (data.projectPlanProgress) {
-    score += getPointsFromSelectValue(data.projectPlanProgress, 10)
+    score += getPointsFromSelectValue(data.projectPlanProgress, weights.STAR_2)
   }
   
   // Metric 10: HM Attendance Rate (*** - 10 points)
   if (data.hmAttendanceRate !== undefined) {
-    score += getPointsFromPercentageBand(data.hmAttendanceRate, 'ATTENDANCE', 10)
+    score += getPointsFromPercentageBand(data.hmAttendanceRate, 'ATTENDANCE', weights.STAR_3)
   }
   
-  // Metric 11: Leadership Team Attendance (** - 10 points)
+  // Metric 11: Leadership Team Attendance (** - 9 points)
   if (data.leadershipTeamAttendance !== undefined) {
-    score += getPointsFromPercentageBand(data.leadershipTeamAttendance, 'ATTENDANCE', 10)
+    score += getPointsFromPercentageBand(data.leadershipTeamAttendance, 'ATTENDANCE', weights.STAR_2)
+  }
+
+  // Metric 12: Quarterly Projection Plan (** - 9 points)
+  if (data.quarterlyProjectionPlan) {
+    // Assuming same scale as projectPlanProgress or just existence/value? 
+    // Using select value logic as it's likely a dropdown in form.
+    score += getPointsFromSelectValue(data.quarterlyProjectionPlan, weights.STAR_2)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.LEADERSHIP)
@@ -948,101 +958,104 @@ export function calculateTAPSAcademicsScore(data: Partial<TAPSAcademicsScores>):
   const normalized = normalizeTAPSAcademicsScores(data)
 
   let score = 0
-  const pointsPerMetric = 8
+  const weights = TAPS_METRIC_WEIGHTS
   
-  // Grade 7 (40 points max)
+  // Grade 7 (29 points max)
+  // Metrics: Overall (**), English (***), Math (***), High Achievers (**)
+  // Note: STEM is NOT in G7 docs
   if (normalized.grade7) {
     if (normalized.grade7.overallPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade7.overallPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade7.overallPassRate, 'PASS_RATE', weights.STAR_2)
     }
     if (normalized.grade7.englishPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade7.englishPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade7.englishPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade7.mathPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade7.mathPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade7.mathPassRate, 'PASS_RATE', weights.STAR_3)
     }
-    if (normalized.grade7.stemPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade7.stemPassRate, 'PASS_RATE', pointsPerMetric)
-    }
+    // STEM removed for G7
     if (normalized.grade7.learnersAbove70Percent !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade7.learnersAbove70Percent, 'HIGH_ACHIEVERS', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade7.learnersAbove70Percent, 'HIGH_ACHIEVERS', weights.STAR_2)
     }
   }
   
-  // Grade 8 (40 points max)
+  // Grade 8 (29 points max)
+  // Metrics: Overall (**), English (***), Math (***), High Achievers (**)
   if (normalized.grade8) {
     if (normalized.grade8.overallPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade8.overallPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade8.overallPassRate, 'PASS_RATE', weights.STAR_2)
     }
     if (normalized.grade8.englishPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade8.englishPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade8.englishPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade8.mathPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade8.mathPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade8.mathPassRate, 'PASS_RATE', weights.STAR_3)
     }
-    if (normalized.grade8.stemPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade8.stemPassRate, 'PASS_RATE', pointsPerMetric)
-    }
+    // STEM removed for G8
     if (normalized.grade8.learnersAbove70Percent !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade8.learnersAbove70Percent, 'HIGH_ACHIEVERS', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade8.learnersAbove70Percent, 'HIGH_ACHIEVERS', weights.STAR_2)
     }
   }
   
-  // Grade 9 (40 points max)
+  // Grade 9 (29 points max)
+  // Metrics: Overall (**), English (***), Math (***), High Achievers (**)
   if (normalized.grade9) {
     if (normalized.grade9.overallPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade9.overallPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade9.overallPassRate, 'PASS_RATE', weights.STAR_2)
     }
     if (normalized.grade9.englishPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade9.englishPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade9.englishPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade9.mathPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade9.mathPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade9.mathPassRate, 'PASS_RATE', weights.STAR_3)
     }
-    if (normalized.grade9.stemPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade9.stemPassRate, 'PASS_RATE', pointsPerMetric)
-    }
+    // STEM removed for G9
     if (normalized.grade9.learnersAbove70Percent !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade9.learnersAbove70Percent, 'HIGH_ACHIEVERS', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade9.learnersAbove70Percent, 'HIGH_ACHIEVERS', weights.STAR_2)
     }
   }
   
-  // Grade 10 (40 points max)
+  // Grade 10 (30 points max + High Achievers 9 = 39)
+  // Metrics: English (***), Math (***), STEM (***), High Achievers (**)
+  // Note: Overall is NOT in G10 docs
   if (normalized.grade10) {
-    if (normalized.grade10.overallPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade10.overallPassRate, 'PASS_RATE', pointsPerMetric)
-    }
+    // Overall removed for G10
     if (normalized.grade10.englishPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade10.englishPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade10.englishPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade10.mathPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade10.mathPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade10.mathPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade10.stemPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade10.stemPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade10.stemPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade10.learnersAbove70Percent !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade10.learnersAbove70Percent, 'HIGH_ACHIEVERS', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade10.learnersAbove70Percent, 'HIGH_ACHIEVERS', weights.STAR_2)
     }
   }
   
-  // Grade 11 (40 points max)
+  // Grade 11 (30 points max + High Achievers 9 = 39)
+  // Metrics: English (***), Math (***), STEM (***), High Achievers (**)
   if (normalized.grade11) {
-    if (normalized.grade11.overallPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade11.overallPassRate, 'PASS_RATE', pointsPerMetric)
-    }
+    // Overall removed for G11
     if (normalized.grade11.englishPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade11.englishPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade11.englishPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade11.mathPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade11.mathPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade11.mathPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade11.stemPassRate !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade11.stemPassRate, 'PASS_RATE', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade11.stemPassRate, 'PASS_RATE', weights.STAR_3)
     }
     if (normalized.grade11.learnersAbove70Percent !== undefined) {
-      score += getPointsFromPercentageBand(normalized.grade11.learnersAbove70Percent, 'HIGH_ACHIEVERS', pointsPerMetric)
+      score += getPointsFromPercentageBand(normalized.grade11.learnersAbove70Percent, 'HIGH_ACHIEVERS', weights.STAR_2)
     }
+  }
+
+  // Metric 33: SBA Completion (** - 9 points)
+  // It might be in normalized data if passed as top-level or in data object
+  if (normalized.sbaCompletion !== undefined) {
+    score += getPointsFromPercentageBand(normalized.sbaCompletion, 'PASS_RATE', weights.STAR_2)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.ACADEMICS)
@@ -1077,6 +1090,15 @@ function normalizeTAPSAcademicsScores(
 
   // Flat form ids: `grade7OverallPassRate`, `grade7EnglishPassRate`, etc.
   for (const [key, value] of Object.entries(flat)) {
+    // Handle SBA Completion (flat key: sbaCompletion)
+    if (key === 'sbaCompletion') {
+      const n = coerceNumber(value)
+      if (n !== undefined) {
+        out.sbaCompletion = n
+      }
+      continue
+    }
+
     const match = key.match(/^(grade(7|8|9|10|11))(OverallPassRate|EnglishPassRate|MathPassRate|StemPassRate|Above70Percent)$/)
     if (!match) continue
 
@@ -1117,15 +1139,16 @@ function coerceNumber(value: unknown): number | undefined {
  */
 export function calculateTAPSTeacherDevelopmentScore(data: Partial<TAPSTeacherDevelopmentScores>): number {
   let score = 0
+  const weights = TAPS_METRIC_WEIGHTS
   
-  // Metric 34: PD/Training Sessions (** - 10 points)
+  // Metric 34: PD/Training Sessions (** - 9 points)
   if (data.pdTrainingSessions !== undefined) {
-    score += getPointsFromCountBand(data.pdTrainingSessions, 'SESSIONS', 10)
+    score += getPointsFromCountBand(data.pdTrainingSessions, 'SESSIONS', weights.STAR_2)
   }
   
-  // Metric 35: Classroom Supervisory Visits (** - 10 points)
+  // Metric 35: Classroom Supervisory Visits (** - 9 points)
   if (data.classroomSupervisoryVisits !== undefined) {
-    score += getPointsFromCountBand(data.classroomSupervisoryVisits, 'SESSIONS', 10)
+    score += getPointsFromCountBand(data.classroomSupervisoryVisits, 'SESSIONS', weights.STAR_2)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.TEACHER_DEVELOPMENT)
@@ -1137,30 +1160,31 @@ export function calculateTAPSTeacherDevelopmentScore(data: Partial<TAPSTeacherDe
  */
 export function calculateTAPSHealthSafetyScore(data: Partial<TAPSHealthSafetyScores>): number {
   let score = 0
+  const weights = TAPS_METRIC_WEIGHTS
   
   // Metric 36: Student Incidences (*** - 10 points)
   if (data.studentIncidenceRate !== undefined) {
-    score += getPointsFromPercentageBand(data.studentIncidenceRate, 'INCIDENTS', 10)
+    score += getPointsFromPercentageBand(data.studentIncidenceRate, 'INCIDENTS', weights.STAR_3)
   }
   
-  // Metric 37: Teacher Disciplinary Entries (** - 10 points)
+  // Metric 37: Teacher Disciplinary Entries (** - 9 points)
   if (data.teacherDisciplinaryRate !== undefined) {
-    score += getPointsFromPercentageBand(data.teacherDisciplinaryRate, 'INCIDENTS', 10)
+    score += getPointsFromPercentageBand(data.teacherDisciplinaryRate, 'INCIDENTS', weights.STAR_2)
   }
   
-  // Metric 38: Fire & Sand Buckets (** - 10 points)
+  // Metric 38: Fire & Sand Buckets (** - 9 points)
   if (data.fireSafetyLevel) {
-    score += getPointsFromSelectValue(data.fireSafetyLevel, 10)
+    score += getPointsFromSelectValue(data.fireSafetyLevel, weights.STAR_2)
   }
   
-  // Metric 39: Emergency/Evacuation Drills (* - 10 points)
+  // Metric 39: Emergency/Evacuation Drills (* - 6 points)
   if (data.evacuationDrillFrequency) {
-    score += getPointsFromSelectValue(data.evacuationDrillFrequency, 10)
+    score += getPointsFromSelectValue(data.evacuationDrillFrequency, weights.STAR_1)
   }
   
-  // Metric 40: Access to Potable Water (* - 10 points)
+  // Metric 40: Access to Potable Water (* - 6 points)
   if (data.potableWaterAccess) {
-    score += getPointsFromSelectValue(data.potableWaterAccess, 10)
+    score += getPointsFromSelectValue(data.potableWaterAccess, weights.STAR_1)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.HEALTH_SAFETY)
@@ -1172,40 +1196,41 @@ export function calculateTAPSHealthSafetyScore(data: Partial<TAPSHealthSafetySco
  */
 export function calculateTAPSSchoolCultureScore(data: Partial<TAPSSchoolCultureScores>): number {
   let score = 0
+  const weights = TAPS_METRIC_WEIGHTS
   
-  // Metric 41: Extracurricular Clubs (* - 10 points)
+  // Metric 41: Extracurricular Clubs (* - 6 points)
   if (data.extracurricularClubs !== undefined) {
-    score += getPointsFromCountBand(data.extracurricularClubs, 'CLUBS', 10)
+    score += getPointsFromCountBand(data.extracurricularClubs, 'CLUBS', weights.STAR_1)
   }
   
-  // Metric 42: Learners in Clubs (* - 10 points)
+  // Metric 42: Learners in Clubs (* - 6 points)
   if (data.learnersInClubsPercentage !== undefined) {
-    score += getPointsFromPercentageBand(data.learnersInClubsPercentage, 'CLUB_PARTICIPATION', 10)
+    score += getPointsFromPercentageBand(data.learnersInClubsPercentage, 'CLUB_PARTICIPATION', weights.STAR_1)
   }
   
   // Metric 43: Remediation Sessions (*** - 10 points)
   if (data.remediationLevel) {
-    score += getPointsFromSelectValue(data.remediationLevel, 10)
+    score += getPointsFromSelectValue(data.remediationLevel, weights.STAR_3)
   }
   
-  // Metric 44: Parent Participation (PTA) (** - 10 points)
+  // Metric 44: Parent Participation (PTA) (** - 9 points)
   if (data.ptaParticipationRate !== undefined) {
-    score += getPointsFromPercentageBand(data.ptaParticipationRate, 'PTA_PARTICIPATION', 10)
+    score += getPointsFromPercentageBand(data.ptaParticipationRate, 'PTA_PARTICIPATION', weights.STAR_2)
   }
   
-  // Metric 45: PTA-Initiated Activities (* - 10 points)
+  // Metric 45: PTA-Initiated Activities (* - 6 points)
   if (data.ptaInitiatedActivities !== undefined) {
-    score += getPointsFromCountBand(data.ptaInitiatedActivities, 'PTA_ACTIVITIES', 10)
+    score += getPointsFromCountBand(data.ptaInitiatedActivities, 'PTA_ACTIVITIES', weights.STAR_1)
   }
   
-  // Metric 46: PTA General Meetings (* - 10 points)
+  // Metric 46: PTA General Meetings (* - 6 points)
   if (data.ptaGeneralMeetings !== undefined) {
-    score += getPointsFromCountBand(data.ptaGeneralMeetings, 'PTA_MEETINGS', 10)
+    score += getPointsFromCountBand(data.ptaGeneralMeetings, 'PTA_MEETINGS', weights.STAR_1)
   }
   
-  // Metric 47: Parents Collecting Report Cards (** - 10 points)
+  // Metric 47: Parents Collecting Report Cards (** - 9 points)
   if (data.parentsCollectingReportCards !== undefined) {
-    score += getPointsFromPercentageBand(data.parentsCollectingReportCards, 'REPORT_CARDS', 10)
+    score += getPointsFromPercentageBand(data.parentsCollectingReportCards, 'REPORT_CARDS', weights.STAR_2)
   }
   
   return Math.min(Math.round(score), TAPS_SCORING_WEIGHTS.SCHOOL_CULTURE)

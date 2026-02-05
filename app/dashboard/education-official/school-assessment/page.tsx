@@ -18,7 +18,7 @@ import {
   BarChart3,
   MapPin,
   School,
-  Download,
+
   Globe,
   AlertTriangle,
   Search,
@@ -129,12 +129,7 @@ async function fetchReport(reportId: string) {
   )
 }
 
-async function fetchBulkExportCsv(periodId: string) {
-  return postJson<{ csv: string | null; error: string | null }>(
-    "/api/school-assessment/education-official/export-csv",
-    { periodId }
-  )
-}
+
 
 // ============================================================================
 // MAIN COMPONENT
@@ -171,9 +166,9 @@ function EducationOfficialAssessmentContent() {
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
   const recLoadSeq = useRef(0)
-  const [isExporting, setIsExporting] = useState(false)
+
   const [underperformingSchools, setUnderperformingSchools] = useState<any[]>([])
-  const [scoreThreshold, setScoreThreshold] = useState<number>(400)
+  const [scoreThreshold, setScoreThreshold] = useState<number>(215)
   const [searchQuery, setSearchQuery] = useState("")
   const [regionFilter, setRegionFilter] = useState<string>("all")
   const [scoreDistribution, setScoreDistribution] = useState<any[] | null>(null)
@@ -254,9 +249,12 @@ function EducationOfficialAssessmentContent() {
       if (statsResult.stats) setStats(statsResult.stats)
       if (reportsResult.reports) {
         setReports(reportsResult.reports)
-        // Filter underperforming schools
+        // Filter underperforming schools (adjust for TAPS scale)
         const underperforming = reportsResult.reports.filter(
-          (r: any) => r.totalScore !== null && r.totalScore < scoreThreshold
+          (r: any) => {
+            const score = getNormalizedScore(r)
+            return score !== null && score < scoreThreshold
+          }
         )
         setUnderperformingSchools(underperforming)
       }
@@ -287,7 +285,10 @@ function EducationOfficialAssessmentContent() {
   // Update underperforming schools when threshold changes
   useEffect(() => {
     const underperforming = reports.filter(
-      (r: any) => r.totalScore !== null && r.totalScore < scoreThreshold
+      (r: any) => {
+        const score = getNormalizedScore(r)
+        return score !== null && score < scoreThreshold
+      }
     )
     setUnderperformingSchools(underperforming)
   }, [scoreThreshold, reports])
@@ -348,41 +349,7 @@ function EducationOfficialAssessmentContent() {
     }
   }
 
-  async function handleExportCSV() {
-    if (!selectedPeriodId) return
-    
-    setIsExporting(true)
-    try {
-      const result = await fetchBulkExportCsv(selectedPeriodId)
-      if (result.csv) {
-        // Create and download CSV
-        const blob = new Blob([result.csv], { type: 'text/csv' })
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `national-assessment-export-${new Date().toISOString().split('T')[0]}.csv`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        window.URL.revokeObjectURL(url)
-        
-        toast({
-          title: "Export Successful",
-          description: "Assessment data has been exported to CSV.",
-        })
-      } else {
-        toast({
-          title: "Export Failed",
-          description: result.error || "Failed to export data.",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Error exporting:', error)
-    } finally {
-      setIsExporting(false)
-    }
-  }
+
 
   function handleTabChange(value: string) {
     router.push(`/dashboard/education-official/school-assessment?tab=${value}`)
@@ -788,19 +755,7 @@ function EducationOfficialAssessmentContent() {
                   {filteredReports.length} of {reports.length} reports
                 </CardDescription>
               </div>
-              <Button
-                size="sm"
-                onClick={handleExportCSV}
-                disabled={isExporting || !reports.length}
-                className="gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Export All (CSV)
-              </Button>
+
             </CardHeader>
             <CardContent>
               {/* Filters */}
@@ -933,10 +888,10 @@ function EducationOfficialAssessmentContent() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
-                      <SelectItem value="400">400 (Satisfactory)</SelectItem>
-                      <SelectItem value="550">550 (Good)</SelectItem>
-                      <SelectItem value="700">700 (Very Good)</SelectItem>
-                      <SelectItem value="850">850 (Outstanding)</SelectItem>
+                      <SelectItem value="86">86 (Struggling)</SelectItem>
+                      <SelectItem value="215">215 (Standard)</SelectItem>
+                      <SelectItem value="300">300 (High Achieving)</SelectItem>
+                      <SelectItem value="365">365 (Outstanding)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -952,10 +907,10 @@ function EducationOfficialAssessmentContent() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-red-700 dark:text-red-400">
-                        {reports.filter((r: any) => r.totalScore && r.totalScore < 400).length}
+                        {reports.filter((r: any) => getNormalizedScore(r) < 215).length}
                       </p>
                       <p className="text-xs text-red-600/70 dark:text-red-400/70 font-medium">Needs Improvement</p>
-                      <p className="text-[10px] text-red-500/60 dark:text-red-400/50">Score below 400</p>
+                      <p className="text-[10px] text-red-500/60 dark:text-red-400/50">Score below 215 (Normalized)</p>
                     </div>
                   </div>
                 </div>
@@ -966,10 +921,13 @@ function EducationOfficialAssessmentContent() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">
-                        {reports.filter((r: any) => r.totalScore && r.totalScore >= 400 && r.totalScore < 550).length}
+                        {reports.filter((r: any) => {
+                          const s = getNormalizedScore(r)
+                          return s >= 215 && s < 300
+                        }).length}
                       </p>
                       <p className="text-xs text-amber-600/70 dark:text-amber-400/70 font-medium">Satisfactory</p>
-                      <p className="text-[10px] text-amber-500/60 dark:text-amber-400/50">Score 400-549</p>
+                      <p className="text-[10px] text-amber-500/60 dark:text-amber-400/50">Score 215-299 (Normalized)</p>
                     </div>
                   </div>
                 </div>
@@ -980,10 +938,10 @@ function EducationOfficialAssessmentContent() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                        {reports.filter((r: any) => r.totalScore && r.totalScore >= scoreThreshold).length}
+                        {reports.filter((r: any) => getNormalizedScore(r) >= scoreThreshold).length}
                       </p>
                       <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 font-medium">Above Threshold</p>
-                      <p className="text-[10px] text-emerald-500/60 dark:text-emerald-400/50">Score {scoreThreshold}+</p>
+                      <p className="text-[10px] text-emerald-500/60 dark:text-emerald-400/50">Score {scoreThreshold}+ (Normalized)</p>
                     </div>
                   </div>
                 </div>
@@ -1054,7 +1012,7 @@ function EducationOfficialAssessmentContent() {
                         <TableCell>
                           <div className="flex items-center gap-1 text-red-600 dark:text-red-400">
                             <ArrowDownRight className="h-4 w-4" />
-                            {scoreThreshold - (report.totalScore || 0)} points
+                            {scoreThreshold - getNormalizedScore(report)} points
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1106,6 +1064,7 @@ function EducationOfficialAssessmentContent() {
                   teacher_development: selectedReport.tapsTeacherDevelopmentScores?.total || 0,
                   health_safety: selectedReport.tapsHealthSafetyScores?.total || 0,
                   school_culture: selectedReport.tapsSchoolCultureScores?.total || 0,
+                  bullying: selectedReport.tapsBullyingScores?.total || 0,
                 } : undefined,
                 // Demo category scores
                 categoryScores: calculateAllCategoryScores({
@@ -1179,4 +1138,11 @@ function formatRating(rating: string): string {
     default:
       return rating
   }
+}
+
+function getNormalizedScore(report: any): number {
+  if (report.totalScore === null || report.totalScore === undefined) return 0
+  if (report.isTAPS) return report.totalScore || 0
+  // Normalize 1000-point scale to 429-point scale
+  return Math.round((report.totalScore / 1000) * 429)
 }

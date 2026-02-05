@@ -659,6 +659,7 @@ export async function getAllPeriods() {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
+    // 1. Fetch real periods from DB
     const { data, error } = await supabase
       .from('hmr_school_assessment_periods')
       .select('*')
@@ -670,8 +671,60 @@ export async function getAllPeriods() {
       return { periods: [], error: 'Failed to fetch periods.' }
     }
     
+    const dbPeriods = data.map(mapDbRowToPeriod)
+
+    // 2. Generate Synthetic Periods for 2025-2026 if they don't exist
+    // This ensures the UI works even if the DB table is empty (due to constraints/migrations issues)
+    // Analytics backend ALREADY supports `term-window-{year}-{order}` format!
+    const syntheticYear = '2025-2026'
+    const syntheticPeriods: AssessmentPeriod[] = []
+
+    const hasYearInDb = dbPeriods.some(p => p.academicYear === syntheticYear)
+
+    if (!hasYearInDb) {
+      TERM_SEQUENCE.forEach(term => {
+        // Rough dates for 2025-2026
+        let start = new Date()
+        let end = new Date()
+        
+        if (term.order === 1) { // Sept - Dec
+          start = new Date('2025-09-01')
+          end = new Date('2025-12-15')
+        } else if (term.order === 2) { // Jan - April
+          start = new Date('2026-01-05')
+          end = new Date('2026-04-10')
+        } else { // April - July
+          start = new Date('2026-04-20')
+          end = new Date('2026-07-10')
+        }
+
+        // Check if this specific term is current/active (roughly)
+        const now = new Date()
+        const isActive = now >= start && now <= end
+
+        syntheticPeriods.push({
+          id: `term-window-${syntheticYear}-${term.order}`, // Special format recognized by resolvePeriodFilter
+          academicYear: syntheticYear,
+          termName: term.name,
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+          sequenceOrder: term.order,
+          isActive: isActive,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system'
+        })
+      })
+    }
+    
+    // Combine and sort
+    const allPeriods = [...dbPeriods, ...syntheticPeriods].sort((a, b) => {
+      if (a.academicYear !== b.academicYear) return b.academicYear.localeCompare(a.academicYear)
+      return a.sequenceOrder - b.sequenceOrder
+    })
+
     return { 
-      periods: data.map(mapDbRowToPeriod), 
+      periods: allPeriods, 
       error: null 
     }
   } catch (error) {
