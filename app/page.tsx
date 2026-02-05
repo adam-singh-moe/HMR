@@ -340,15 +340,6 @@ export default function HomePage() {
                 Access Portal
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={scrollToRankings}
-                className="px-8 py-6 text-lg border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              >
-                View Rankings
-                <ChevronDown className="ml-2 h-5 w-5" />
-              </Button>
             </div>
 
             {/* Feature pills */}

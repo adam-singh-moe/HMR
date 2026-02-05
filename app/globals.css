@@ -95,7 +95,9 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 
   /* Custom Scrollbar Styles */
@@ -174,7 +176,11 @@
 
 /* Dark mode support for gradient classes */
 .dark .gradient-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.9) 0%,
+    rgba(15, 23, 42, 0.95) 100%
+  );
   border: 1px solid rgba(71, 85, 105, 0.5);
 }
 
@@ -301,9 +307,16 @@
 
 /* Floating bubble animation */
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  33% { transform: translateY(-15px) translateX(8px); }
-  66% { transform: translateY(8px) translateX(-8px); }
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+  33% {
+    transform: translateY(-15px) translateX(8px);
+  }
+  66% {
+    transform: translateY(8px) translateX(-8px);
+  }
 }
 
 .animate-float-slow {
@@ -312,7 +325,8 @@
 
 /* Flashing animation for important notices */
 @keyframes flash {
-  0%, 100% {
+  0%,
+  100% {
     background-color: rgb(239 68 68 / 0.1);
     border-color: rgb(239 68 68 / 0.3);
   }
@@ -323,7 +337,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 5px rgb(239 68 68 / 0.3);
   }
   50% {
@@ -332,7 +347,9 @@
 }
 
 .flash-red {
-  animation: flash 2s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
+  animation:
+    flash 2s ease-in-out infinite,
+    pulse-glow 2s ease-in-out infinite;
 }
 
 @layer utilities {
@@ -347,7 +364,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -409,42 +426,42 @@
       margin: 1in;
       size: A4;
     }
-    
+
     body {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
-    
-    .print\\:hidden {
+
+    .print\:hidden {
       display: none !important;
     }
-    
-    .print\\:block {
+
+    .print\:block {
       display: block !important;
     }
-    
-    .print\\:max-w-full {
+
+    .print\:max-w-full {
       max-width: 100% !important;
     }
-    
-    .print\\:max-h-full {
+
+    .print\:max-h-full {
       max-height: 100% !important;
     }
-    
-    .print\\:overflow-visible {
+
+    .print\:overflow-visible {
       overflow: visible !important;
     }
-    
-    .print\\:space-y-4 > * + * {
+
+    .print\:space-y-4 > * + * {
       margin-top: 1rem !important;
     }
-    
+
     /* Hide dialog overlay and make content full width */
     [data-radix-popper-content-wrapper] {
       position: static !important;
       transform: none !important;
     }
-    
+
     [role="dialog"] {
       position: static !important;
       transform: none !important;
@@ -455,13 +472,14 @@
       box-shadow: none !important;
       border: none !important;
     }
-    
+
     /* Ensure proper page breaks */
     .space-y-6 > * {
       page-break-inside: avoid;
     }
-    
-    h3, h4 {
+
+    h3,
+    h4 {
       page-break-after: avoid;
     }
   }

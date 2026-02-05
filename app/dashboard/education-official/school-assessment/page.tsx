@@ -18,7 +18,7 @@ import {
   BarChart3,
   MapPin,
   School,
-  Download,
+
   Globe,
   AlertTriangle,
   Search,
@@ -129,12 +129,7 @@ async function fetchReport(reportId: string) {
   )
 }
 
-async function fetchBulkExportCsv(periodId: string) {
-  return postJson<{ csv: string | null; error: string | null }>(
-    "/api/school-assessment/education-official/export-csv",
-    { periodId }
-  )
-}
+
 
 // ============================================================================
 // MAIN COMPONENT
@@ -171,7 +166,7 @@ function EducationOfficialAssessmentContent() {
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false)
   const recGenerationInFlight = useRef<Set<string>>(new Set())
   const recLoadSeq = useRef(0)
-  const [isExporting, setIsExporting] = useState(false)
+
   const [underperformingSchools, setUnderperformingSchools] = useState<any[]>([])
   const [scoreThreshold, setScoreThreshold] = useState<number>(215)
   const [searchQuery, setSearchQuery] = useState("")
@@ -354,41 +349,7 @@ function EducationOfficialAssessmentContent() {
     }
   }
 
-  async function handleExportCSV() {
-    if (!selectedPeriodId) return
-    
-    setIsExporting(true)
-    try {
-      const result = await fetchBulkExportCsv(selectedPeriodId)
-      if (result.csv) {
-        // Create and download CSV
-        const blob = new Blob([result.csv], { type: 'text/csv' })
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `national-assessment-export-${new Date().toISOString().split('T')[0]}.csv`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        window.URL.revokeObjectURL(url)
-        
-        toast({
-          title: "Export Successful",
-          description: "Assessment data has been exported to CSV.",
-        })
-      } else {
-        toast({
-          title: "Export Failed",
-          description: result.error || "Failed to export data.",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Error exporting:', error)
-    } finally {
-      setIsExporting(false)
-    }
-  }
+
 
   function handleTabChange(value: string) {
     router.push(`/dashboard/education-official/school-assessment?tab=${value}`)
@@ -794,19 +755,7 @@ function EducationOfficialAssessmentContent() {
                   {filteredReports.length} of {reports.length} reports
                 </CardDescription>
               </div>
-              <Button
-                size="sm"
-                onClick={handleExportCSV}
-                disabled={isExporting || !reports.length}
-                className="gap-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Export All (CSV)
-              </Button>
+
             </CardHeader>
             <CardContent>
               {/* Filters */}
