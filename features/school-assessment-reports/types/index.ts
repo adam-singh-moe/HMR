@@ -69,16 +69,15 @@ export const RATING_THRESHOLDS = {
  * Based on official TAPS document metrics with Star Weights (*=6, **=9, ***=10)
  */
 export const TAPS_SCORING_WEIGHTS = {
-  SCHOOL_INPUTS_OPERATIONS: 71, // Metrics 1-8
-  LEADERSHIP: 37, // Metrics 9-11 + 12
-  ACADEMICS: 201, // Metrics 13-33
-  TEACHER_DEVELOPMENT: 18, // Metrics 34-35
-  HEALTH_SAFETY: 40, // Metrics 36-40
-  SCHOOL_CULTURE: 52, // Metrics 41-47
-  BULLYING: 10, // Metric 48
+  SCHOOL_INPUTS_OPERATIONS: 80, // Metrics 1-8
+  LEADERSHIP: 30, // Metrics 9-11 + 12
+  ACADEMICS: 200, // Metrics 13-33
+  TEACHER_DEVELOPMENT: 20, // Metrics 34-35
+  HEALTH_SAFETY: 50, // Metrics 36-40
+  SCHOOL_CULTURE: 70, // Metrics 41-47
 } as const;
 
-export const TAPS_TOTAL_MAX_SCORE = 429;
+export const TAPS_TOTAL_MAX_SCORE = 450;
 
 /**
  * TAPS Metric Weights based on importance stars
@@ -142,7 +141,6 @@ export const TAPS_CATEGORY_NAMES = {
   TEACHER_DEVELOPMENT: "teacher_development",
   HEALTH_SAFETY: "health_safety",
   SCHOOL_CULTURE: "school_culture",
-  BULLYING: "bullying",
 } as const;
 
 export type TAPSCategoryName =

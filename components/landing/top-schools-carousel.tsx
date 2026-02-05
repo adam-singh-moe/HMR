@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 // import { useRouter } from "next/navigation" // Removed unused import
+import Link from "next/link"
 import { getPublicTopSchools } from "@/app/actions/public-reports"
 import {
   ChevronLeft,
@@ -15,7 +16,9 @@ import {
   MapPin,
   GraduationCap,
   TrendingUp,
-  Star
+  Star,
+  ArrowRight,
+  Search
 } from "lucide-react"
 
 // Sample data for top schools by region
@@ -79,15 +82,43 @@ const RANK_COLORS = [
   "text-amber-600"
 ]
 
+const RATING_LABELS: Record<string, string> = {
+  outstanding: "A",
+  very_good: "B",
+  good: "C",
+  satisfactory: "D",
+  needs_improvement: "E",
+}
+
+
+interface SearchResult {
+  schoolId: string
+  schoolName: string
+  regionName: string
+  reportId: string
+  totalScore: number
+  ratingLevel: string
+  academicYear: string
+  termName: string
+}
+
 interface TopSchoolsCarouselProps {
   autoPlay?: boolean
   autoPlayInterval?: number
+  searchResults?: SearchResult[]
+  isSearchActive?: boolean
 }
 
 export function TopSchoolsCarousel({
   autoPlay = true,
-  autoPlayInterval = 8000
+  autoPlayInterval = 8000,
+  searchResults = [],
+  isSearchActive = false
 }: TopSchoolsCarouselProps) {
+  // Ensure isSearchActive is always a boolean
+  const searchActive = isSearchActive ?? false
+  
+  // State management
   const [currentRegionIndex, setCurrentRegionIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const [direction, setDirection] = useState<'left' | 'right'>('right')
@@ -113,8 +144,19 @@ export function TopSchoolsCarousel({
     fetchData()
   }, [])
 
-  const currentRegion = regions[currentRegionIndex] || ""
-  const schools = data[currentRegion] || []
+  // When search is active, transform search results into carousel format
+  const transformedSearchResults = searchActive ? searchResults.map((result, index) => ({
+    id: result.reportId,
+    name: result.schoolName,
+    score: result.totalScore,
+    rating: RATING_LABELS[result.ratingLevel] || 'A',
+    level: `${result.academicYear} - ${result.termName}`,
+    trend: '+0',
+    reportId: result.reportId,
+  })) : []
+
+  const currentRegion = searchActive ? 'Search Results' : (regions[currentRegionIndex] || "")
+  const schools = searchActive ? transformedSearchResults : (data[currentRegion] || [])
 
   // Fill with placeholders if less than 3 schools
   const displaySchools = [...schools]
@@ -125,31 +167,31 @@ export function TopSchoolsCarousel({
   }
 
   const goToNext = useCallback(() => {
-    if (isAnimating || regions.length === 0) return
+    if (isAnimating || regions.length === 0 || searchActive) return
     setDirection('right')
     setIsAnimating(true)
     setTimeout(() => {
       setCurrentRegionIndex((prev) => (prev + 1) % regions.length)
       setIsAnimating(false)
     }, 300)
-  }, [isAnimating, regions.length])
+  }, [isAnimating, regions.length, searchActive])
 
   const goToPrev = useCallback(() => {
-    if (isAnimating || regions.length === 0) return
+    if (isAnimating || regions.length === 0 || searchActive) return
     setDirection('left')
     setIsAnimating(true)
     setTimeout(() => {
       setCurrentRegionIndex((prev) => (prev - 1 + regions.length) % regions.length)
       setIsAnimating(false)
     }, 300)
-  }, [isAnimating, regions.length])
+  }, [isAnimating, regions.length, searchActive])
 
-  // Auto-play functionality
+  // Auto-play functionality (disabled during search)
   useEffect(() => {
-    if (!autoPlay || regions.length === 0) return
+    if (!autoPlay || regions.length === 0 || searchActive) return
     const interval = setInterval(goToNext, autoPlayInterval)
     return () => clearInterval(interval)
-  }, [autoPlay, autoPlayInterval, goToNext, regions.length])
+  }, [autoPlay, autoPlayInterval, goToNext, regions.length, searchActive])
 
   if (isLoading) {
     return <div className="w-full text-center py-20 text-slate-500">Loading rankings...</div>
@@ -175,52 +217,68 @@ export function TopSchoolsCarousel({
         </p>
       </div>
 
-      {/* Region Selector */}
-      <div className="flex items-center justify-center gap-4 mb-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToPrev}
-          className="h-10 w-10 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-300 dark:border-slate-700/50"
-        >
-          <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-        </Button>
+      {/* Region Selector - Hidden when searching */}
+      {!searchActive && (
+        <>
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToPrev}
+              className="h-10 w-10 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-300 dark:border-slate-700/50"
+            >
+              <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+            </Button>
 
-        <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-gradient-to-r dark:from-slate-800/80 dark:to-slate-900/80 border border-slate-200 dark:border-slate-700/50 backdrop-blur-sm shadow-sm">
-          <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <span className="text-lg font-semibold text-slate-900 dark:text-white min-w-[120px] text-center">
-            {currentRegion}
-          </span>
+            <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-gradient-to-r dark:from-slate-800/80 dark:to-slate-900/80 border border-slate-200 dark:border-slate-700/50 backdrop-blur-sm shadow-sm">
+              <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <span className="text-lg font-semibold text-slate-900 dark:text-white min-w-[120px] text-center">
+                {currentRegion}
+              </span>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={goToNext}
+              className="h-10 w-10 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-300 dark:border-slate-700/50"
+            >
+              <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+            </Button>
+          </div>
+
+          {/* Region Dots */}
+          <div className="flex justify-center gap-2 mb-8">
+            {regions.map((region, index) => (
+              <button
+                key={region}
+                onClick={() => {
+                  setDirection(index > currentRegionIndex ? 'right' : 'left')
+                  setCurrentRegionIndex(index)
+                }}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentRegionIndex
+                    ? 'w-8 bg-gradient-to-r from-blue-500 to-cyan-400'
+                    : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500'
+                }`}
+                aria-label={`Go to ${region}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Search Mode Indicator */}
+      {searchActive && (
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 backdrop-blur-sm">
+            <Search className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <span className="text-lg font-semibold text-purple-900 dark:text-purple-100">
+              Search Results {schools.length > 0 ? `(${schools.length})` : ''}
+            </span>
+          </div>
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToNext}
-          className="h-10 w-10 rounded-full bg-white/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-slate-300 dark:border-slate-700/50"
-        >
-          <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" />
-        </Button>
-      </div>
-
-      {/* Region Dots */}
-      <div className="flex justify-center gap-2 mb-8">
-        {regions.map((region, index) => (
-          <button
-            key={region}
-            onClick={() => {
-              setDirection(index > currentRegionIndex ? 'right' : 'left')
-              setCurrentRegionIndex(index)
-            }}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentRegionIndex
-                ? 'w-8 bg-gradient-to-r from-blue-500 to-cyan-400'
-                : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500'
-            }`}
-            aria-label={`Go to ${region}`}
-          />
-        ))}
-      </div>
+      )}
 
       {/* Schools Cards - Display order: 2nd, 1st, 3rd (1st in middle) */}
       <div
@@ -248,10 +306,9 @@ export function TopSchoolsCarousel({
             ? 'bg-gradient-to-br from-orange-100/80 via-white to-white dark:from-orange-950/40 dark:via-slate-900/90 dark:to-slate-900/90 border-orange-400/50 dark:border-orange-500/30'
             : 'bg-gradient-to-br from-slate-100/80 via-white to-white dark:from-slate-800/90 dark:to-slate-900/90 border-slate-300 dark:border-slate-700/50'
 
-          return (
+          const cardContent = (
             <Card
-              key={school.id}
-              className={`relative overflow-hidden ${cardBg} backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10`}
+              className={`relative overflow-hidden ${cardBg} backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10 h-full`}
             >
               {/* Rank Badge */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
@@ -323,6 +380,13 @@ export function TopSchoolsCarousel({
                     />
                   </div>
                 </div>
+
+                {/* View Report Call to Action */}
+                {school.reportId && (
+                  <div className="mt-4 pt-4 flex items-center justify-end text-sm font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                    View Full Report <ArrowRight className="ml-1 h-4 w-4" />
+                  </div>
+                )}
               </CardContent>
 
               {/* Shine effect for top school */}
@@ -330,6 +394,18 @@ export function TopSchoolsCarousel({
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shine pointer-events-none" />
               )}
             </Card>
+          )
+
+          return (
+            <div key={school.id} className="h-full">
+              {school.reportId ? (
+                <Link href={`/public/reports/${school.reportId}`} className="block h-full hover:no-underline group">
+                  {cardContent}
+                </Link>
+              ) : (
+                cardContent
+              )}
+            </div>
           )
         })}
       </div>

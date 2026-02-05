@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { TopSchoolsCarousel } from "@/components/landing/top-schools-carousel"
+import { SchoolSearch } from "@/components/landing/school-search"
 import {
   ArrowRight,
   ChevronDown,
@@ -21,6 +22,18 @@ export default function HomePage() {
   const [loadingComplete, setLoadingComplete] = useState(false)
   const [showLanding, setShowLanding] = useState(false)
   const { theme, setTheme } = useTheme()
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearchActive, setIsSearchActive] = useState(false)
+
+  const handleSearchResults = (results: any[]) => {
+    setSearchResults(results)
+    setIsSearchActive(results.length > 0)
+  }
+
+  const handleSearchClear = () => {
+    setSearchResults([])
+    setIsSearchActive(false)
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -340,6 +353,15 @@ export default function HomePage() {
                 Access Portal
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={scrollToRankings}
+                className="group px-8 py-6 text-lg border-2 border-slate-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all duration-300"
+              >
+                View Rankings
+                <ChevronDown className="ml-2 h-5 w-5 group-hover:translate-y-1 transition-transform" />
+              </Button>
             </div>
 
             {/* Feature pills */}
@@ -377,7 +399,16 @@ export default function HomePage() {
           <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
 
           <div className="relative z-10 px-4 sm:px-8">
-            <TopSchoolsCarousel />
+            <TopSchoolsCarousel 
+              searchResults={searchResults}
+              isSearchActive={isSearchActive}
+            />
+            <div className="mt-12">
+              <SchoolSearch 
+                onSearchResults={handleSearchResults}
+                onSearchClear={handleSearchClear}
+              />
+            </div>
           </div>
         </section>
 
