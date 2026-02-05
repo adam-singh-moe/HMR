@@ -2,11 +2,13 @@ import { getSchools, getRegions, getSchoolLevels } from "@/app/actions/admin"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { School, MoreHorizontal, Pencil, ArrowUpDown, ArrowUp, ArrowDown, MapPin, GraduationCap, Calendar } from "lucide-react"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { DeleteSchoolDialog } from "@/components/admin/delete-school-dialog"
 import { PaginationControls } from "@/components/admin/pagination-controls"
 import { SearchInput } from "@/components/admin/search-input"
 import { SchoolFilters } from "@/components/admin/school-filters"
+import { checkPermission, checkAnyPermission } from "@/lib/permissions"
 
 interface SchoolsPageProps {
   searchParams: Promise<{
@@ -58,6 +60,22 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
   const sortOrder = sortOrderParam || "desc"
   const limit = 10
 
+  // Check permissions - use actual permission keys from the database
+  const [canViewAll, canCreate, canEdit, canDelete] = await Promise.all([
+    checkPermission("school_assessments.view_all"),
+    checkPermission("permissions.create"),
+    checkPermission("permissions.edit"),
+    checkPermission("permissions.delete"),
+  ])
+  const canViewRegional = false // Will add regional permission check if needed
+
+  const canView = canViewAll || canViewRegional
+
+  // If user can't view schools at all, redirect to dashboard
+  if (!canView) {
+    redirect("/dashboard/admin")
+  }
+
   const [schoolsResult, regionsResult, schoolLevels] = await Promise.all([
     getSchools(page, limit, search, selectedRegion, selectedSchoolLevel, sortBy, sortOrder),
     getRegions(1, 50),
@@ -72,12 +90,14 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Schools</h2>
-          <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
-            <Link href="/dashboard/admin/schools/new" className="flex items-center gap-2">
-              <School className="h-4 w-4" />
-              <span>Add School</span>
-            </Link>
-          </Button>
+          {canCreate && (
+            <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
+              <Link href="/dashboard/admin/schools/new" className="flex items-center gap-2">
+                <School className="h-4 w-4" />
+                <span>Add School</span>
+              </Link>
+            </Button>
+          )}
         </div>
         <div className="text-center py-8 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
           Error loading schools: {error}
@@ -120,12 +140,14 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
             Manage all schools in the system
           </p>
         </div>
-        <Button asChild size="sm" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
-          <Link href="/dashboard/admin/schools/new" className="flex items-center gap-2">
-            <School className="h-4 w-4" />
-            <span>Add School</span>
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild size="sm" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25">
+            <Link href="/dashboard/admin/schools/new" className="flex items-center gap-2">
+              <School className="h-4 w-4" />
+              <span>Add School</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -186,16 +208,18 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
                     {getSortIcon("created_at")}
                   </Link>
                 </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-[80px]">
-                  Actions
-                </th>
+                {(canEdit || canDelete) && (
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-[80px]">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             {/* Body */}
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {schools.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-slate-500 dark:text-slate-400">
+                  <td colSpan={(canEdit || canDelete) ? 5 : 4} className="text-center py-12 text-slate-500 dark:text-slate-400">
                     <div className="flex flex-col items-center gap-2">
                       <School className="h-8 w-8 text-slate-300 dark:text-slate-600" />
                       <span>
@@ -250,30 +274,34 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
                         </span>
                       </td>
                       {/* Actions */}
-                      <td className="px-4 py-3 text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                            >
-                              <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                            <DropdownMenuItem asChild>
-                              <Link href={`/dashboard/admin/schools/${school.id}`} className="flex items-center">
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Edit School
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DeleteSchoolDialog schoolId={school.id} schoolName={school.name} />
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
+                      {(canEdit || canDelete) && (
+                        <td className="px-4 py-3 text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                                <span className="sr-only">Actions</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                              {canEdit && (
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/dashboard/admin/schools/${school.id}`} className="flex items-center">
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit School
+                                  </Link>
+                                </DropdownMenuItem>
+                              )}
+                              {canEdit && canDelete && <DropdownMenuSeparator />}
+                              {canDelete && <DeleteSchoolDialog schoolId={school.id} schoolName={school.name} />}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
                     </tr>
                   )
                 })

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getUser } from "@/app/actions/auth"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { checkPermission } from "@/lib/permissions"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -143,9 +144,15 @@ export async function POST(req: Request) {
       )
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
+    // Check if user has permission to view AI insights (either full or regional)
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("ai_insights.View"),
+      checkPermission("ai_insights.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
       return NextResponse.json(
-        { insight: null, error: "Only Education Officials, Regional Officers, and Admins can access AI insights." },
+        { insight: null, error: "You don't have permission to access AI insights." },
         { status: 403 }
       )
     }

@@ -59,20 +59,30 @@ export function middleware(request: NextRequest) {
       const user = JSON.parse(userSession.value)
       const role = user.role
 
-      // Check role-based access control
+      // Check role-based access control for role-specific dashboard routes
       if (pathname.startsWith('/dashboard/admin') && role !== "Admin") {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
-      
+
       if (pathname.startsWith('/dashboard/education-official') && role !== "Education Official") {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
-      
+
       if (pathname.startsWith('/dashboard/regional-officer') && role !== "Regional Officer") {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
-      
+
       if (pathname.startsWith('/dashboard/head-teacher') && role !== "Head Teacher") {
+        return NextResponse.redirect(new URL('/auth', request.url))
+      }
+
+      // Check role-based access for feature-specific admin routes
+      // These routes use admin layouts but are not under /dashboard/admin
+      if (pathname.startsWith('/dashboard/school-assessment/admin') && role !== "Admin") {
+        return NextResponse.redirect(new URL('/auth', request.url))
+      }
+
+      if (pathname.startsWith('/dashboard/school-assessment/regional') && role !== "Regional Officer") {
         return NextResponse.redirect(new URL('/auth', request.url))
       }
 

@@ -56,9 +56,9 @@ const MONTHS = [
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
 
 const TERM_COLORS = {
-  1: { bg: "bg-blue-500", light: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
-  2: { bg: "bg-emerald-500", light: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700" },
-  3: { bg: "bg-violet-500", light: "bg-violet-50", border: "border-violet-200", text: "text-violet-700" },
+  1: { bg: "bg-blue-500", light: "bg-blue-50 dark:bg-blue-500/10", border: "border-blue-200/80 dark:border-blue-500/20", text: "text-blue-700 dark:text-blue-400", subtext: "text-blue-600/70 dark:text-blue-400/70" },
+  2: { bg: "bg-emerald-500", light: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-200/80 dark:border-emerald-500/20", text: "text-emerald-700 dark:text-emerald-400", subtext: "text-emerald-600/70 dark:text-emerald-400/70" },
+  3: { bg: "bg-violet-500", light: "bg-violet-50 dark:bg-violet-500/10", border: "border-violet-200/80 dark:border-violet-500/20", text: "text-violet-700 dark:text-violet-400", subtext: "text-violet-600/70 dark:text-violet-400/70" },
 } as const
 
 // ============================================================================
@@ -108,7 +108,7 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
   const isCurrentlyOpen = currentWindow?.isOpen
 
   return (
-    <div className={`rounded-lg border ${colors.border} ${colors.light} p-4 transition-opacity ${!config.isEnabled ? 'opacity-50' : ''}`}>
+    <div className={`rounded-xl border ${colors.border} ${colors.light} p-4 transition-opacity ${!config.isEnabled ? 'opacity-50' : ''}`}>
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         {/* Term Info */}
         <div className="flex items-center gap-3 lg:w-48 flex-shrink-0">
@@ -116,17 +116,17 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
             {config.termNumber}
           </div>
           <div>
-            <div className="font-semibold text-gray-900">
+            <div className="font-semibold text-slate-900 dark:text-white">
               {config.termNumber === 1 ? 'First' : config.termNumber === 2 ? 'Second' : 'Third'} Term
             </div>
-            <div className="text-xs text-gray-500">{termInfo.months}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">{termInfo.months}</div>
           </div>
         </div>
 
         {/* Status Badge */}
         <div className="lg:w-36 flex-shrink-0">
           {isCurrentlyOpen ? (
-            <Badge className="bg-green-100 text-green-800 border border-green-300 gap-1">
+            <Badge className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30 gap-1">
               <CheckCircle2 className="h-3 w-3" />
               Open
               {currentWindow?.daysRemaining !== undefined && (
@@ -134,7 +134,7 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
               )}
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-gray-500 gap-1">
+            <Badge variant="outline" className="text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600 gap-1">
               <Clock className="h-3 w-3" />
               Closed
             </Badge>
@@ -145,30 +145,30 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
         <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {/* Opens */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 w-12">Opens:</span>
-            <Select 
-              value={String(startMonth)} 
+            <span className="text-xs text-slate-500 dark:text-slate-400 w-12">Opens:</span>
+            <Select
+              value={String(startMonth)}
               onValueChange={(v) => setStartMonth(Number(v))}
               disabled={!config.isEnabled || isUpdating}
             >
-              <SelectTrigger className="w-20 h-8 text-sm bg-white">
+              <SelectTrigger className="w-20 h-8 text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                 {MONTHS.map((m) => (
                   <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select 
-              value={String(startDay)} 
+            <Select
+              value={String(startDay)}
               onValueChange={(v) => setStartDay(Number(v))}
               disabled={!config.isEnabled || isUpdating}
             >
-              <SelectTrigger className="w-16 h-8 text-sm bg-white">
+              <SelectTrigger className="w-16 h-8 text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                 {DAYS.map((d) => (
                   <SelectItem key={d} value={String(d)}>{d}</SelectItem>
                 ))}
@@ -178,30 +178,30 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
 
           {/* Closes */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 w-12">Closes:</span>
-            <Select 
-              value={String(endMonth)} 
+            <span className="text-xs text-slate-500 dark:text-slate-400 w-12">Closes:</span>
+            <Select
+              value={String(endMonth)}
               onValueChange={(v) => setEndMonth(Number(v))}
               disabled={!config.isEnabled || isUpdating}
             >
-              <SelectTrigger className="w-20 h-8 text-sm bg-white">
+              <SelectTrigger className="w-20 h-8 text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                 {MONTHS.map((m) => (
                   <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select 
-              value={String(endDay)} 
+            <Select
+              value={String(endDay)}
               onValueChange={(v) => setEndDay(Number(v))}
               disabled={!config.isEnabled || isUpdating}
             >
-              <SelectTrigger className="w-16 h-8 text-sm bg-white">
+              <SelectTrigger className="w-16 h-8 text-sm bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
                 {DAYS.map((d) => (
                   <SelectItem key={d} value={String(d)}>{d}</SelectItem>
                 ))}
@@ -214,18 +214,18 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
         <div className="flex items-center gap-3 lg:w-40 flex-shrink-0 justify-end">
           {hasChanges && (
             <div className="flex gap-1">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="ghost"
-                className="h-8 px-2"
+                className="h-8 px-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 onClick={handleReset}
                 disabled={isUpdating}
               >
                 <RotateCcw className="h-3 w-3" />
               </Button>
-              <Button 
-                size="sm" 
-                className="h-8 px-3"
+              <Button
+                size="sm"
+                className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleSave}
                 disabled={isUpdating}
               >
@@ -235,7 +235,7 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Label htmlFor={`term-${config.termNumber}-enabled`} className="text-xs text-gray-500">
+            <Label htmlFor={`term-${config.termNumber}-enabled`} className="text-xs text-slate-500 dark:text-slate-400">
               {config.isEnabled ? 'On' : 'Off'}
             </Label>
             <Switch
@@ -250,11 +250,11 @@ function TermRow({ config, currentWindow, onUpdate, onToggleEnabled, isUpdating 
 
       {/* Current Year Window Info */}
       {currentWindow && config.isEnabled && (
-        <div className="mt-3 pt-3 border-t border-gray-200/50 flex items-center gap-2 text-xs text-gray-500">
+        <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Calendar className="h-3 w-3" />
           <span>
             {currentWindow.academicYear}: {' '}
-            {new Date(currentWindow.submissionStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} 
+            {new Date(currentWindow.submissionStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             {' → '}
             {new Date(currentWindow.submissionEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
@@ -360,7 +360,9 @@ export function PeriodManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <div className="p-4 rounded-full bg-blue-50 dark:bg-blue-500/10">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        </div>
       </div>
     )
   }
@@ -374,12 +376,12 @@ export function PeriodManagement() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Submission Windows</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Submission Windows</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Configure when schools can submit assessment reports for each term
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
@@ -387,9 +389,9 @@ export function PeriodManagement() {
 
       {/* Active Status Banner */}
       {activeWindow ? (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800 ml-2">
+        <Alert className="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200/80 dark:border-emerald-500/20">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-emerald-700 dark:text-emerald-400 ml-2">
             <span className="font-medium">Submissions are open</span> for{' '}
             <span className="font-semibold">
               {activeWindow.termNumber === 1 ? 'First' : activeWindow.termNumber === 2 ? 'Second' : 'Third'} Term
@@ -401,9 +403,9 @@ export function PeriodManagement() {
           </AlertDescription>
         </Alert>
       ) : (
-        <Alert className="bg-gray-50 border-gray-200">
-          <Clock className="h-4 w-4 text-gray-500" />
-          <AlertDescription className="text-gray-600 ml-2">
+        <Alert className="bg-slate-50 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/50">
+          <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <AlertDescription className="text-slate-600 dark:text-slate-400 ml-2">
             <span className="font-medium">Submissions are currently closed.</span>
             {' '}The next window will open automatically based on the dates configured below.
           </AlertDescription>
@@ -411,16 +413,16 @@ export function PeriodManagement() {
       )}
 
       {/* Term Configuration Card */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
+      <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+        <CardHeader className="pb-4 border-b border-slate-200/80 dark:border-slate-700/50 bg-slate-50 dark:bg-[hsl(222,47%,8%)]">
+          <CardTitle className="text-base font-medium flex items-center gap-2 text-slate-900 dark:text-white">
+            <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             Term Schedule
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 pt-4">
           {termConfigs.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <p>No term configurations found.</p>
               <p className="text-sm mt-1">Run the database migration to set up default configurations.</p>
             </div>
@@ -440,12 +442,12 @@ export function PeriodManagement() {
       </Card>
 
       {/* Info Note */}
-      <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
-        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div className="text-sm text-blue-800">
-          <p className="font-medium">How it works</p>
-          <p className="mt-1 text-blue-700">
-            These dates repeat automatically every academic year. When you change a date, 
+      <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20">
+        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+        <div className="text-sm">
+          <p className="font-medium text-blue-700 dark:text-blue-400">How it works</p>
+          <p className="mt-1 text-blue-600/80 dark:text-blue-400/70">
+            These dates repeat automatically every academic year. When you change a date,
             it will take effect on the next occurrence of that term's window.
           </p>
         </div>

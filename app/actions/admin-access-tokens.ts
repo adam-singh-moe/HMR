@@ -3,12 +3,19 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { sign, verify } from "jsonwebtoken"
 import { cookies } from "next/headers"
+import { checkPermission } from "@/lib/permissions"
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production"
 
 // Generate access token for a user (30 minutes expiration)
 export async function generateUserAccessToken(userId: string, adminId: string) {
   try {
+    // Check if user has permission to generate access tokens
+    const canGenerateToken = await checkPermission("users.access_token")
+    if (!canGenerateToken) {
+      return { token: null, error: "You don't have permission to generate access tokens." }
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     // Verify the user exists

@@ -97,6 +97,69 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Custom Scrollbar Styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(214 32% 80%) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: hsl(217 33% 25%) transparent;
+  }
+
+  /* WebKit Scrollbar (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(214 32% 80%);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(214 32% 70%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: hsl(221 83% 53%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(217 33% 25%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(217 33% 35%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:active {
+    background: hsl(217 91% 60%);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
 }
 
 /* Custom gradient backgrounds */
@@ -287,6 +350,57 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Thin scrollbar variant */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Styled scrollbar for sidebars and panels */
+  .scrollbar-styled {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(214 32% 75%) hsl(214 32% 95%);
+  }
+
+  .dark .scrollbar-styled {
+    scrollbar-color: hsl(217 33% 30%) hsl(222 47% 10%);
+  }
+
+  .scrollbar-styled::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-track {
+    background: hsl(214 32% 95%);
+    border-radius: 10px;
+  }
+
+  .dark .scrollbar-styled::-webkit-scrollbar-track {
+    background: hsl(222 47% 10%);
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb {
+    background: hsl(214 32% 75%);
+    border-radius: 10px;
+  }
+
+  .dark .scrollbar-styled::-webkit-scrollbar-thumb {
+    background: hsl(217 33% 30%);
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+    background: hsl(221 83% 53%);
+  }
+
+  .dark .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+    background: hsl(217 91% 60%);
   }
 
   /* Print styles for nursery assessment reports */

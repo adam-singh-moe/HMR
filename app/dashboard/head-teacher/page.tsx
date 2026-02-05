@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { usePermissions } from "@/hooks/use-permissions"
 
 type HmrReport = {
   id: string
@@ -69,20 +70,30 @@ function HeadTeacherDashboardContent() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { hasPermission } = usePermissions()
   const [mounted, setMounted] = useState(false)
+
+  // Monthly Report permissions
+  const canCreateReport = hasPermission("monthly_report.create_own") || hasPermission("monthly_report.create_all")
+  const canViewDrafts = hasPermission("monthly_report.draft_own")
+  const canViewReports = hasPermission("monthly_report.view_own") || hasPermission("monthly_report.view_all") || hasPermission("monthly_report.view_regional")
 
   // Mount effect for theme toggle
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Get tab from URL params, with fallback based on main tab
+  // Get tab from URL params, with fallback based on main tab and permissions
   const currentMainTab = searchParams.get('mainTab') || 'dashboard'
   const getDefaultTab = () => {
     if (currentMainTab === 'nursery-assessment') {
       return 'submit-assessment'
     } else if (currentMainTab === 'monthly-reports') {
-      return 'current-report'
+      // Default to first available tab based on permissions
+      if (canCreateReport) return 'current-report'
+      if (canViewDrafts) return 'previous-report'
+      if (canViewReports) return 'view-reports'
+      return 'view-reports' // Fallback
     }
     return 'current-report'
   }
@@ -596,42 +607,6 @@ function HeadTeacherDashboardContent() {
       {isNurserySchool ? (
         /* Nursery School: Content based on selected tab */
         <div className="space-y-6">
-          {/* Action Icons - Top Right */}
-          <div className="flex justify-end">
-            <div className="flex items-center gap-2">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
-                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {mounted && (theme === 'dark' ? (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                ) : (
-                  <Moon className="h-5 w-5 text-slate-600" />
-                ))}
-              </button>
-
-              {/* Notifications */}
-              <button
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300 relative"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
-
-              {/* Feature Requests */}
-              <Link href="/dashboard/feature-requests">
-                <button
-                  className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
-                  title="Feature Requests"
-                >
-                  <Lightbulb className="h-5 w-5" />
-                </button>
-              </Link>
-            </div>
-          </div>
-
           {/* Dashboard Tab Content */}
           {currentMainTab === 'dashboard' && (
             <div className="space-y-6">
@@ -950,59 +925,77 @@ function HeadTeacherDashboardContent() {
                 </div>
               </div>
 
-              {/* Sub-navigation */}
+              {/* Sub-navigation - Show tabs based on permissions */}
               <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl w-fit border border-slate-200/50 dark:border-slate-700/50">
-                <button
-                  onClick={() => updateURL('current-report')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'current-report'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  Current Report
-                </button>
-                <button
-                  onClick={() => updateURL('previous-report')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'previous-report'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  Previous Report
-                </button>
-                <button
-                  onClick={() => updateURL('view-reports')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'view-reports'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  View Reports
-                </button>
+                {canCreateReport && (
+                  <button
+                    onClick={() => updateURL('current-report')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'current-report'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Current Report
+                  </button>
+                )}
+                {canViewDrafts && (
+                  <button
+                    onClick={() => updateURL('previous-report')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'previous-report'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Previous Report
+                  </button>
+                )}
+                {canViewReports && (
+                  <button
+                    onClick={() => updateURL('view-reports')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'view-reports'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    View Reports
+                  </button>
+                )}
               </div>
 
               {/* Content Area - Glass Morphism */}
               <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
-                {currentTab === 'current-report' && (
+                {currentTab === 'current-report' && canCreateReport && (
                   <div>
-                    <MonthlyReportForm 
+                    <MonthlyReportForm
                       onSuccess={handleReportSuccess}
                       cachedReportStatus={cachedReportStatus}
                       onReportStatusLoaded={handleReportStatusLoaded}
                     />
                   </div>
                 )}
-                {currentTab === 'previous-report' && (
+                {currentTab === 'previous-report' && canViewDrafts && (
                   <div>
                     <PreviousReportForm onSuccess={handleReportSuccess} />
                   </div>
                 )}
-                {currentTab === 'view-reports' && (
+                {currentTab === 'view-reports' && canViewReports && (
                   <div>
                     {renderViewReportsContent()}
+                  </div>
+                )}
+                {/* Show message if user doesn't have permission for selected tab */}
+                {((currentTab === 'current-report' && !canCreateReport) ||
+                  (currentTab === 'previous-report' && !canViewDrafts) ||
+                  (currentTab === 'view-reports' && !canViewReports)) && (
+                  <div className="text-center py-12">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-full w-fit mx-auto mb-4">
+                      <FileTextIcon className="h-12 w-12 text-amber-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Access Restricted</h3>
+                    <p className="text-slate-600 dark:text-slate-400">You don't have permission to access this section.</p>
                   </div>
                 )}
               </div>
@@ -1103,42 +1096,6 @@ function HeadTeacherDashboardContent() {
       ) : (
         /* Non-Nursery Schools: Clean structure with sidebar navigation */
         <div className="space-y-4 sm:space-y-6">
-          {/* Action Icons - Top Right */}
-          <div className="flex justify-end">
-            <div className="flex items-center gap-2">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
-                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                {mounted && (theme === 'dark' ? (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                ) : (
-                  <Moon className="h-5 w-5 text-slate-600" />
-                ))}
-              </button>
-
-              {/* Notifications */}
-              <button
-                className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300 relative"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-              </button>
-
-              {/* Feature Requests */}
-              <Link href="/dashboard/feature-requests">
-                <button
-                  className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-slate-600 dark:text-slate-300"
-                  title="Feature Requests"
-                >
-                  <Lightbulb className="h-5 w-5" />
-                </button>
-              </Link>
-            </div>
-          </div>
-
           {/* Dashboard Tab Content */}
           {currentMainTab === 'dashboard' && (
             <div className="space-y-6">
@@ -1452,7 +1409,7 @@ function HeadTeacherDashboardContent() {
             </div>
           )}
 
-          {/* Monthly Reports Tab Content */}
+          {/* Monthly Reports Tab Content - Desktop 2XL View */}
           {currentMainTab === 'monthly-reports' && (
             <div className="space-y-6">
               {/* Simple Header */}
@@ -1464,64 +1421,70 @@ function HeadTeacherDashboardContent() {
                 </div>
               </div>
 
-              {/* Sub-navigation */}
+              {/* Sub-navigation - Show tabs based on permissions */}
               <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl w-fit border border-slate-200/50 dark:border-slate-700/50">
-                <button
-                  onClick={() => updateURL('current-report')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'current-report'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  Current Report
-                </button>
-                <button
-                  onClick={() => updateURL('previous-report')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'previous-report'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  Previous Report
-                </button>
-                <button
-                  onClick={() => updateURL('view-reports')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    currentTab === 'view-reports'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
-                  }`}
-                >
-                  View Reports
-                </button>
+                {canCreateReport && (
+                  <button
+                    onClick={() => updateURL('current-report')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'current-report'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Current Report
+                  </button>
+                )}
+                {canViewDrafts && (
+                  <button
+                    onClick={() => updateURL('previous-report')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'previous-report'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    Previous Report
+                  </button>
+                )}
+                {canViewReports && (
+                  <button
+                    onClick={() => updateURL('view-reports')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      currentTab === 'view-reports'
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    View Reports
+                  </button>
+                )}
               </div>
 
               {/* Content Area */}
               <div className="bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6">
-                {currentTab === 'current-report' && (
+                {currentTab === 'current-report' && canCreateReport && (
                   <div>
-                    {/* Header Band */}
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-xl mb-6 shadow-lg shadow-blue-500/20">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/20 rounded-lg">
-                          <FileTextIcon className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-semibold mb-1">Submit Current Period Report</h2>
-                          <p className="text-blue-100">Complete and submit your monthly report for the current reporting period.</p>
-                        </div>
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-6">
+                      <FileTextIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                          Submit Current Period Report
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Complete and submit your monthly report for the current reporting period
+                        </p>
                       </div>
                     </div>
-                    <MonthlyReportForm 
+                    <MonthlyReportForm
                       onSuccess={handleReportSuccess}
                       cachedReportStatus={cachedReportStatus}
                       onReportStatusLoaded={handleReportStatusLoaded}
                     />
                   </div>
                 )}
-                {currentTab === 'previous-report' && (
+                {currentTab === 'previous-report' && canViewDrafts && (
                   <div>
                     <div className="mb-6">
                       <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Submit Previous Report</h2>
@@ -1530,9 +1493,21 @@ function HeadTeacherDashboardContent() {
                     <PreviousReportForm onSuccess={handleReportSuccess} />
                   </div>
                 )}
-                {currentTab === 'view-reports' && (
+                {currentTab === 'view-reports' && canViewReports && (
                   <div>
                     {renderViewReportsContent()}
+                  </div>
+                )}
+                {/* Show message if user doesn't have permission for selected tab */}
+                {((currentTab === 'current-report' && !canCreateReport) ||
+                  (currentTab === 'previous-report' && !canViewDrafts) ||
+                  (currentTab === 'view-reports' && !canViewReports)) && (
+                  <div className="text-center py-12">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-full w-fit mx-auto mb-4">
+                      <FileTextIcon className="h-12 w-12 text-amber-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Access Restricted</h3>
+                    <p className="text-slate-600 dark:text-slate-400">You don't have permission to access this section.</p>
                   </div>
                 )}
               </div>

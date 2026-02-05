@@ -3,6 +3,7 @@
 import { AIService } from "@/lib/ai-service"
 import { getUser } from "./auth"
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
+import { checkPermission } from "@/lib/permissions"
 
 export async function generateAIInsight(prompt: string, reportType: string, filters?: {
   month?: string
@@ -17,8 +18,14 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
       return { insight: null, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
-      return { insight: null, error: "Only Education Officials, Regional Officers, and Admins can access AI insights." }
+    // Check if user has permission to view AI insights (either full or regional)
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("ai_insights.View"),
+      checkPermission("ai_insights.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { insight: null, error: "You don't have permission to access AI insights." }
     }
 
     // Fetch relevant report data based on reportType and filters
@@ -59,8 +66,14 @@ export async function generateAIInsight(prompt: string, reportType: string, filt
 export async function getRegionalAIInsights(timeframe: string) {
   try {
     const user = await getUser()
-    if (!user || user.role !== "Regional Officer") {
-      return { data: null, error: "Unauthorized" }
+    if (!user) {
+      return { data: null, error: "User not authenticated." }
+    }
+
+    // Check if user has permission to view regional AI insights
+    const canViewRegional = await checkPermission("ai_insights.view_regional")
+    if (!canViewRegional) {
+      return { data: null, error: "You don't have permission to view regional AI insights." }
     }
 
     // Mock data for now to resolve build errors
@@ -450,8 +463,14 @@ export async function getAISuggestedPrompts(category: string) {
       return { prompts: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
-      return { prompts: [], error: "Only Education Officials, Regional Officers, and Admins can access AI features." }
+    // Check if user has permission to view AI insights (either full or regional)
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("ai_insights.View"),
+      checkPermission("ai_insights.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { prompts: [], error: "You don't have permission to access AI features." }
     }
 
     const prompts = AIService.getSuggestedPrompts(category as any)
@@ -474,8 +493,14 @@ export async function getAvailableSchools() {
       return { schools: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin" && user.role !== "Regional Officer") {
-      return { schools: [], error: "Only Education Officials, Regional Officers, and Admins can access this data." }
+    // Check if user has permission to view AI insights (either full or regional)
+    const [canViewAll, canViewRegional] = await Promise.all([
+      checkPermission("ai_insights.View"),
+      checkPermission("ai_insights.view_regional"),
+    ])
+
+    if (!canViewAll && !canViewRegional) {
+      return { schools: [], error: "You don't have permission to access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()

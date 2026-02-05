@@ -2,6 +2,7 @@
 
 import { createServiceRoleSupabaseClient } from "@/lib/supabase"
 import { getUser } from "./auth"
+import { checkPermission, checkAnyPermission } from "@/lib/permissions"
 
 export async function getSubmittedReportsForEducationOfficial() {
   try {
@@ -11,7 +12,9 @@ export async function getSubmittedReportsForEducationOfficial() {
       return { reports: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
+    // Check if user has an admin-level role
+    const adminRoles = ["Education Official", "Admin", "System Administrator", "Administrator"]
+    if (!adminRoles.some(role => user.role?.toLowerCase() === role.toLowerCase())) {
       return { reports: [], error: "Only Education Officials and Admins can access this data." }
     }
     // Use service role client to ensure we can read all data
@@ -131,7 +134,9 @@ export async function getSubmittedReportsWithSearchAndPagination({
       return { reports: [], totalCount: 0, totalPages: 0, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
+    // Check if user has an admin-level role
+    const adminRoles = ["Education Official", "Admin", "System Administrator", "Administrator"]
+    if (!adminRoles.some(role => user.role?.toLowerCase() === role.toLowerCase())) {
       return { reports: [], totalCount: 0, totalPages: 0, error: "Only Education Officials and Admins can access this data." }
     }
 
@@ -296,8 +301,9 @@ export async function getSchoolsForSearch() {
       return { schools: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-
+    // Check if user has an admin-level role
+    const adminRoles2 = ["Education Official", "Admin", "System Administrator", "Administrator"]
+    if (!adminRoles2.some(role => user.role?.toLowerCase() === role.toLowerCase())) {
       return { schools: [], error: "Only Education Officials and Admins can access this data." }
     }
 
@@ -442,7 +448,9 @@ export async function getReportCounts() {
       return { totalReports: 0, currentMonthReports: 0, error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
+    // Check if user has an admin-level role
+    const adminRoles3 = ["Education Official", "Admin", "System Administrator", "Administrator"]
+    if (!adminRoles3.some(role => user.role?.toLowerCase() === role.toLowerCase())) {
       return { totalReports: 0, currentMonthReports: 0, error: "Only Education Officials and Admins can access this data." }
     }
 
@@ -959,43 +967,44 @@ export async function getSchoolsOverviewData() {
       return { schools: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official") {
-      return { schools: [], error: "Only Education Officials can access this data." }
-    }
+    // Check permissions - user needs either view_all or view_regional
+    const canViewAll = await checkPermission("schools_overview.view_all")
+    const canViewRegional = await checkPermission("schools_overview.view_regional")
 
-    // Check cache first
-    if (schoolsCache && (Date.now() - schoolsCache.timestamp) < CACHE_DURATION) {
-      return { schools: schoolsCache.data, error: null }
+    if (!canViewAll && !canViewRegional) {
+      return { schools: [], error: "You do not have permission to view schools overview." }
     }
 
     // Use service role client to ensure we can read all data
     const supabase = createServiceRoleSupabaseClient()
 
-    // Optimized: Get schools with additional information
-    const [schoolsResult] = await Promise.all([
-      // Get all schools with their regions and school levels
-      supabase
-        .from("sms_schools")
-        .select(`
+    // Build the query
+    let query = supabase
+      .from("sms_schools")
+      .select(`
+        id,
+        name,
+        region_id,
+        code,
+        grade,
+        school_level_id,
+        sms_regions!inner(
           id,
-          name,
-          region_id,
-          code,
-          grade,
-          school_level_id,
-          sms_regions!inner(
-            id,
-            name
-          ),
-          sms_school_levels(
-            id,
-            name
-          )
-        `)
-        .order("name", { ascending: true })
-    ])
+          name
+        ),
+        sms_school_levels(
+          id,
+          name
+        )
+      `)
+      .order("name", { ascending: true })
 
-    const { data: schools, error: schoolsError } = schoolsResult
+    // If user only has view_regional permission, filter by their assigned region
+    if (!canViewAll && canViewRegional && user.region) {
+      query = query.eq("region_id", user.region)
+    }
+
+    const { data: schools, error: schoolsError } = await query
 
     if (schoolsError) {
       console.error("Error fetching schools:", schoolsError)
@@ -1575,8 +1584,13 @@ export async function getRegionsForFilter() {
       return { regions: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { regions: [], error: "Only Education Officials and Admins can access this data." }
+    // Check if user has any PE report permission or is Education Official/Admin
+    const canViewAllPE = await checkPermission("pe_reports.view_all")
+    const isEducationOfficial = user.role === "Education Official"
+    const isAdmin = user.role === "Admin"
+
+    if (!canViewAllPE && !isEducationOfficial && !isAdmin) {
+      return { regions: [], error: "You do not have permission to access this data." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1700,8 +1714,12 @@ export async function getPhysicalEducationReports() {
       return { reports: [], error: "User not authenticated." }
     }
 
-    if (user.role !== "Education Official" && user.role !== "Admin") {
-      return { reports: [], error: "Only Education Officials and Admins can access this data." }
+    // Check permissions - user needs either view_all or view_regional
+    const canViewAll = await checkPermission("pe_reports.view_all")
+    const canViewRegional = await checkPermission("pe_reports.view_regional")
+
+    if (!canViewAll && !canViewRegional) {
+      return { reports: [], error: "You do not have permission to view PE reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1810,8 +1828,12 @@ export async function getRegionalPhysicalEducationReports({
       return { reports: [], totalCount: 0, totalPages: 0, error: "User not authenticated." }
     }
 
-    if (user.role !== "Regional Officer" && user.role !== "Education Official" && user.role !== "Admin") {
-      return { reports: [], totalCount: 0, totalPages: 0, error: "Only Regional Officers, Education Officials and Admins can access this data." }
+    // Check permissions - user needs either view_all or view_regional
+    const canViewAll = await checkPermission("pe_reports.view_all")
+    const canViewRegional = await checkPermission("pe_reports.view_regional")
+
+    if (!canViewAll && !canViewRegional) {
+      return { reports: [], totalCount: 0, totalPages: 0, error: "You do not have permission to view PE reports." }
     }
 
     const supabase = createServiceRoleSupabaseClient()
@@ -1848,13 +1870,13 @@ export async function getRegionalPhysicalEducationReports({
       .eq('hmr_report.status', 'submitted')
       .is('hmr_report.deleted_on', null)
 
-    // Filter by region for Regional Officers - use region ID for more reliable filtering
-    if (user.role === "Regional Officer" && user.region) {
+    // If user only has view_regional permission, filter by their assigned region
+    if (!canViewAll && canViewRegional && user.region) {
       query = query.eq('hmr_report.sms_schools.region_id', user.region)
     }
 
-    // For Education Officials/Admins, apply region filter if selected
-    if ((user.role === "Education Official" || user.role === "Admin") && selectedRegionId && selectedRegionId !== "all") {
+    // If user has view_all permission, they can optionally filter by region
+    if (canViewAll && selectedRegionId && selectedRegionId !== "all") {
       query = query.eq('hmr_report.sms_schools.region_id', selectedRegionId)
     }
 

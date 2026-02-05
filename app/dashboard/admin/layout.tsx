@@ -1,6 +1,7 @@
 import type React from "react"
 import { getPendingVerifications } from "@/app/actions/admin"
 import { AdminLayoutClient } from "@/components/admin/admin-layout-client"
+import { getUserPermissions } from "@/app/actions/permissions"
 
 // Force dynamic rendering for admin routes that use cookies
 export const dynamic = 'force-dynamic'
@@ -11,11 +12,21 @@ interface DashboardLayoutProps {
 }
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { verifications: pendingVerifications } = await getPendingVerifications()
-  const pendingCount = pendingVerifications.length
+  const [verificationsResult, userPermissions] = await Promise.all([
+    getPendingVerifications(),
+    getUserPermissions()
+  ])
+
+  const pendingCount = verificationsResult.verifications.length
+  const permissions = userPermissions?.permissions || []
+
+  // Debug logging
+  console.log("[Admin Layout] User permissions result:", userPermissions)
+  console.log("[Admin Layout] Permissions array:", permissions)
+  console.log("[Admin Layout] Permissions count:", permissions.length)
 
   return (
-    <AdminLayoutClient pendingCount={pendingCount}>
+    <AdminLayoutClient pendingCount={pendingCount} userPermissions={permissions}>
       {children}
     </AdminLayoutClient>
   )

@@ -1,7 +1,16 @@
 import { getRegions } from "@/app/actions/admin"
 import { MapPin, Hash } from "lucide-react"
+import { checkPermission } from "@/lib/permissions"
+import { redirect } from "next/navigation"
 
 export default async function RegionsPage() {
+  // Check view permission (using actual permission key from database)
+  const canView = await checkPermission("regions.view")
+
+  if (!canView) {
+    redirect("/dashboard/admin")
+  }
+
   const { regions, error } = await getRegions(1, 100) // Get all regions without pagination
 
   if (error) {

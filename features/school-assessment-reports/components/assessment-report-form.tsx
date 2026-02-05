@@ -1016,10 +1016,10 @@ export function AssessmentReportForm({
     value: number | undefined,
     onChange: (value: number) => void
   ) => (
-    <div className="space-y-3 p-4 border rounded-lg">
+    <div className="space-y-3 p-4 border border-slate-200 dark:border-slate-700/50 rounded-lg bg-white dark:bg-[hsl(222,47%,11%)]">
       <div>
-        <Label className="text-base font-semibold">{label}</Label>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        <Label className="text-base font-semibold text-slate-900 dark:text-white">{label}</Label>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>
       </div>
       <RadioGroup
         value={value?.toString() || ''}
@@ -1028,13 +1028,13 @@ export function AssessmentReportForm({
       >
         {RATING_OPTIONS.map((option) => (
           <div key={option.value} className="flex items-center space-x-2">
-            <RadioGroupItem value={option.value.toString()} id={`${label}-${option.value}`} />
+            <RadioGroupItem value={option.value.toString()} id={`${label}-${option.value}`} className="border-slate-300 dark:border-slate-600" />
             <Label
               htmlFor={`${label}-${option.value}`}
               className="text-sm font-normal cursor-pointer"
             >
-              <span className="font-medium">{option.label}</span>
-              <span className="block text-xs text-muted-foreground">{option.description}</span>
+              <span className="font-medium text-slate-900 dark:text-white">{option.label}</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">{option.description}</span>
             </Label>
           </div>
         ))}
@@ -1056,10 +1056,10 @@ export function AssessmentReportForm({
     const maxVal = max ?? 100
 
     return (
-      <div className="space-y-2 p-4 border rounded-lg">
+      <div className="space-y-2 p-4 border border-slate-200 dark:border-slate-700/50 rounded-lg bg-white dark:bg-[hsl(222,47%,11%)]">
         <div>
-          <Label className="text-base font-semibold">{label}</Label>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          <Label className="text-base font-semibold text-slate-900 dark:text-white">{label}</Label>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{description}</p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
@@ -1077,23 +1077,23 @@ export function AssessmentReportForm({
               }}
               min={minVal}
               max={maxVal}
-              className="max-w-[100px]"
+              className="max-w-[100px] bg-white dark:bg-[hsl(222,47%,15%)] border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white"
             />
-            {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+            {suffix && <span className="text-sm text-slate-500 dark:text-slate-400">{suffix}</span>}
           </div>
-          
+
           {isPercentage && (
             <div className="flex-1 flex items-center gap-3">
-              <span className="text-xs text-muted-foreground min-w-[24px]">{minVal}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[24px]">{minVal}%</span>
               <input
                 type="range"
                 min={minVal}
                 max={maxVal}
                 value={value ?? minVal}
                 onChange={(e) => onChange(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
               />
-              <span className="text-xs text-muted-foreground min-w-[32px]">{maxVal}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[32px]">{maxVal}%</span>
             </div>
           )}
         </div>
@@ -1157,25 +1157,25 @@ export function AssessmentReportForm({
     disabled?: boolean
   ) => {
     const options = field.options || []
-    
+
     return (
-      <div className="space-y-2 p-4 border rounded-lg">
+      <div className="space-y-2 p-4 border border-slate-200 dark:border-slate-700/50 rounded-lg bg-white dark:bg-[hsl(222,47%,11%)]">
         <div className="flex items-center">
-          <Label className="text-base font-semibold">{field.label}</Label>
+          <Label className="text-base font-semibold text-slate-900 dark:text-white">{field.label}</Label>
           {renderImportanceIndicator(field.importance)}
         </div>
-        <p className="text-sm text-muted-foreground">{field.description}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{field.description}</p>
         <Select
           value={value || ''}
           onValueChange={onChange}
           disabled={disabled}
         >
-          <SelectTrigger className="max-w-[300px]">
+          <SelectTrigger className="max-w-[300px] bg-white dark:bg-[hsl(222,47%,15%)] border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white">
             <SelectValue placeholder="Select an option" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-[hsl(222,47%,13%)] border-slate-200 dark:border-slate-700">
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.value} className="text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800">
                 {option.label}
               </SelectItem>
             ))}
@@ -1198,18 +1198,18 @@ export function AssessmentReportForm({
     const maxVal = field.max ?? 100
     
     return (
-      <div className="space-y-2 p-4 border rounded-lg">
+      <div className="space-y-2 p-4 border border-slate-200 dark:border-slate-700/50 rounded-lg bg-white dark:bg-[hsl(222,47%,11%)]">
         <div className="flex items-center">
-          <Label className="text-base font-semibold">{field.label}</Label>
+          <Label className="text-base font-semibold text-slate-900 dark:text-white">{field.label}</Label>
           {renderImportanceIndicator(field.importance)}
           {isAutoCalc && (
-            <Badge variant="outline" className="ml-2 text-xs">
+            <Badge variant="outline" className="ml-2 text-xs dark:border-slate-600 dark:text-slate-300">
               <Sparkles className="h-3 w-3 mr-1" />
               Auto-calculated
             </Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">{field.description}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{field.description}</p>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center gap-2">
             <Input
@@ -1229,15 +1229,15 @@ export function AssessmentReportForm({
               min={minVal}
               max={maxVal}
               step={field.step || 1}
-              className="max-w-[100px]"
+              className="max-w-[100px] bg-white dark:bg-[hsl(222,47%,15%)] border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white"
               disabled={disabled || isAutoCalc}
             />
-            {field.suffix && <span className="text-sm text-muted-foreground">{field.suffix}</span>}
+            {field.suffix && <span className="text-sm text-slate-500 dark:text-slate-400">{field.suffix}</span>}
           </div>
 
           {isPercentage && !isAutoCalc && (
             <div className="flex-1 flex items-center gap-3">
-              <span className="text-xs text-muted-foreground min-w-[24px]">{minVal}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[24px]">{minVal}%</span>
               <input
                 type="range"
                 min={minVal}
@@ -1245,10 +1245,10 @@ export function AssessmentReportForm({
                 step={field.step || 1}
                 value={value ?? minVal}
                 onChange={(e) => onChange(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
                 disabled={disabled}
               />
-              <span className="text-xs text-muted-foreground min-w-[32px]">{maxVal}%</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 min-w-[32px]">{maxVal}%</span>
             </div>
           )}
         </div>
@@ -1476,10 +1476,10 @@ export function AssessmentReportForm({
     
     return (
       <div className="space-y-6">
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>TAPS Metrics</AlertTitle>
-          <AlertDescription>
+        <Alert className="bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertTitle className="text-blue-800 dark:text-blue-300">TAPS Metrics</AlertTitle>
+          <AlertDescription className="text-blue-700 dark:text-blue-400">
             Fields are ordered by importance. Red dot = Critical, Amber dot = Important, Yellow dot = Standard.
           </AlertDescription>
         </Alert>
@@ -2020,11 +2020,11 @@ export function AssessmentReportForm({
     <div className="grid gap-6 lg:grid-cols-4">
       <div className="lg:col-span-3 space-y-6">
         {/* Header */}
-        <Card>
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700/50">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle className="text-xl">
+                <CardTitle className="text-xl text-slate-900 dark:text-white">
                   {isTAPS ? 'TAPS Assessment Report' : 'School Assessment Report'}
                 </CardTitle>
                 <CardDescription>
@@ -2042,7 +2042,7 @@ export function AssessmentReportForm({
                     </Badge>
                   )}
                   {isTAPS && (
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
                       TAPS Metrics
                     </Badge>
                   )}
@@ -2064,7 +2064,7 @@ export function AssessmentReportForm({
         </Card>
         
         {/* Progress Steps */}
-        <Card>
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700/50">
           <CardContent className="pt-6">
             <div className="flex overflow-x-auto gap-2 pb-2">
               {currentFormSections.map((section, index) => {
@@ -2084,8 +2084,8 @@ export function AssessmentReportForm({
                       index === currentSection
                         ? 'bg-primary text-primary-foreground'
                         : index < currentSection
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-primary/20 text-primary dark:bg-primary/30'
+                        : 'bg-slate-100 dark:bg-[hsl(222,47%,13%)] text-muted-foreground'
                     }`}
                   >
                     {section.icon}
@@ -2100,9 +2100,9 @@ export function AssessmentReportForm({
         </Card>
         
         {/* Current Section */}
-        <Card>
+        <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
               {currentFormSections[currentSection].icon}
               <span className={isCurrentSectionIncomplete ? 'text-destructive' : undefined}>
                 {currentFormSections[currentSection].title}
@@ -2170,50 +2170,50 @@ export function AssessmentReportForm({
       {/* Sidebar - Live Score Impact */}
       <div className="hidden lg:block">
         <div className="sticky top-6 space-y-6">
-          <Card className="border-2 border-primary/20 shadow-lg overflow-hidden">
-            <div className="bg-primary/5 px-4 py-3 border-b border-primary/10">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+          <Card className="border-2 border-primary/20 dark:border-primary/30 shadow-lg overflow-hidden bg-white dark:bg-[hsl(222,47%,9%)]">
+            <div className="bg-primary/5 dark:bg-primary/10 px-4 py-3 border-b border-primary/10 dark:border-primary/20">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-blue-400 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Live Score Impact
               </h3>
             </div>
             <CardContent className="pt-6 space-y-6">
               <div className="text-center">
-                <div className="text-5xl font-black tracking-tighter text-primary">{totalScore}</div>
-                <div className="text-[10px] font-bold text-muted-foreground mt-1 uppercase">
+                <div className="text-5xl font-black tracking-tighter text-primary dark:text-blue-400">{totalScore}</div>
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase">
                   OUT OF {isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000} POINTS
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] font-bold uppercase">
-                  <span className="text-muted-foreground">Estimated Rating</span>
-                  <span className="text-primary">{currentRating}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Estimated Rating</span>
+                  <span className="text-primary dark:text-blue-400">{currentRating}</span>
                 </div>
-                <Progress value={(totalScore / (isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000)) * 100} className="h-2" />
+                <Progress value={(totalScore / (isTAPS ? TAPS_TOTAL_MAX_SCORE : 1000)) * 100} className="h-2 bg-slate-200 dark:bg-slate-700" />
               </div>
 
-              <Separator />
+              <Separator className="bg-slate-200 dark:bg-slate-700" />
 
               <div className="space-y-3">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Category Breakdown</h4>
+                <h4 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">Category Breakdown</h4>
                 <div className="space-y-3">
                   {Object.entries(currentScores).map(([cat, score]) => {
-                    const config = isTAPS 
+                    const config = isTAPS
                       ? TAPS_CATEGORY_CONFIGS.find(c => c.categoryId === cat)
                       : ALL_CATEGORY_CONFIGS.find(c => c.categoryId === cat)
-                    
+
                     if (!config) return null
                     const maxPoints = config.maxPoints || 100 // Fallback for demo
                     const percentage = Math.round(((score as number) / maxPoints) * 100)
-                    
+
                     return (
                       <div key={cat} className="space-y-1">
                         <div className="flex justify-between text-[10px] font-medium">
-                          <span className="truncate max-w-[120px] text-muted-foreground">{config.categoryLabel}</span>
-                          <span className="font-bold">{score}/{maxPoints}</span>
+                          <span className="truncate max-w-[120px] text-slate-500 dark:text-slate-400">{config.categoryLabel}</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{score}/{maxPoints}</span>
                         </div>
-                        <Progress value={percentage} className="h-1" />
+                        <Progress value={percentage} className="h-1 bg-slate-200 dark:bg-slate-700" />
                       </div>
                     )
                   })}
@@ -2222,12 +2222,12 @@ export function AssessmentReportForm({
             </CardContent>
           </Card>
           
-          <Card className="bg-primary/5 border-none">
+          <Card className="bg-primary/5 dark:bg-primary/10 border-none">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
                 <Sparkles className="h-5 w-5 text-primary shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-xs font-bold">Real-time Insights</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Real-time Insights</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Your score and rating are calculated instantly as you provide data. This helps you see the impact of each metric on the overall assessment.
                   </p>

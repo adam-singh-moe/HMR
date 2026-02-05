@@ -95,7 +95,7 @@ async function fetchOrGenerateRecommendations(reportId: string) {
 
 export default function RegionalOfficerAssessmentPage() {
   return (
-    <AuthWrapper requiredRole="Regional Officer">
+    <AuthWrapper>
       <RegionalOfficerAssessmentContent />
     </AuthWrapper>
   )
