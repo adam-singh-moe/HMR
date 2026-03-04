@@ -6,6 +6,7 @@ export const runtime = "nodejs"
 
 type Body = {
   entityId?: string
+  schoolLevelId?: string
 }
 
 export async function POST(req: Request) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ predictions: null, error: "Missing entityId." }, { status: 400 })
     }
 
-    const result = await generatePredictiveAnalytics(entityId)
+    const result = await generatePredictiveAnalytics(entityId, body?.schoolLevelId)
     return NextResponse.json(result)
   } catch (error) {
     console.error("/api/school-assessment/predictive-analytics error:", error)

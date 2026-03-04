@@ -620,11 +620,16 @@ export function SchoolRankingsTable({
                 <TableBody>
                   {paginated.map((school, index) => {
                     const displayRank = startIndex + index + 1
+                    const rowKey = school.schoolId || `${school.schoolName}-${school.regionName}-${displayRank}`
                     return (
                       <TableRow
-                        key={school.schoolId}
+                        key={rowKey}
                         className={`border-b border-slate-200/50 dark:border-slate-700/30 ${onViewSchool ? "cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-500/5" : "hover:bg-transparent dark:hover:bg-transparent"} transition-colors`}
-                        onClick={() => onViewSchool?.(school.schoolId)}
+                        onClick={() => {
+                          if (school.schoolId) {
+                            onViewSchool?.(school.schoolId)
+                          }
+                        }}
                       >
                         <TableCell className="py-1.5">
                           <div

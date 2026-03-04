@@ -1202,7 +1202,7 @@ export async function getMySchoolReport(periodId: string) {
 /**
  * Gets reports for a region (for Regional Officers)
  */
-export async function getRegionalReports(regionId?: string, periodId?: string) {
+export async function getRegionalReports(regionId?: string, periodId?: string, schoolLevelId?: string) {
   try {
     const user = await getUser()
 
@@ -1238,6 +1238,10 @@ export async function getRegionalReports(regionId?: string, periodId?: string) {
     
     if (targetRegionId) {
       query = query.eq('sms_schools.region_id', targetRegionId)
+    }
+
+    if (schoolLevelId && schoolLevelId !== 'all') {
+      query = query.eq('sms_schools.school_level_id', schoolLevelId)
     }
     
     if (periodId) {
@@ -1308,7 +1312,7 @@ export async function getNationalReports(filters?: ReportFilters) {
       .from('hmr_school_assessment_reports')
       .select(`
         *,
-        sms_schools(id, name, region_id, sms_regions(name)),
+        sms_schools!inner(id, name, region_id, school_level_id, sms_regions(name)),
         hmr_school_assessment_periods(*)
       `)
       .order('submitted_at', { ascending: false, nullsFirst: false })
@@ -1352,6 +1356,9 @@ export async function getNationalReports(filters?: ReportFilters) {
     }
     if (filters?.status) {
       query = query.eq('status', filters.status)
+    }
+    if (filters?.schoolLevelId && filters.schoolLevelId !== 'all') {
+      query = query.eq('sms_schools.school_level_id', filters.schoolLevelId)
     }
     if (filters?.ratingLevel) {
       query = query.eq('rating_level', filters.ratingLevel)

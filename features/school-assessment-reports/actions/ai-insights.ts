@@ -37,6 +37,85 @@ interface AssessmentInsightContext {
 
 type AssessmentSystem = "demo" | "taps"
 
+function applySchoolLevelFilter(query: any, schoolLevelId?: string) {
+  if (!schoolLevelId || schoolLevelId === 'all') {
+    return query
+  }
+
+  return query.eq('sms_schools.school_level_id', schoolLevelId)
+}
+
+function parseTermWindowPeriodId(periodId: string): { academicYear: string; termNumber: number } | null {
+  if (!periodId.startsWith('term-window-')) return null
+
+  const parts = periodId.replace('term-window-', '').split('-')
+  if (parts.length < 2) return null
+
+  const termNumber = parseInt(parts[parts.length - 1], 10)
+  const academicYear = parts.slice(0, -1).join('-')
+
+  if (!Number.isFinite(termNumber)) return null
+
+  return { academicYear, termNumber }
+}
+
+async function resolvePeriodFilter(
+  supabase: ReturnType<typeof createServiceRoleSupabaseClient>,
+  periodId?: string
+): Promise<{ academic_year?: string; term_name?: string; period_id?: string } | null> {
+  if (!periodId || periodId === 'all' || periodId === 'all-historical') {
+    return null
+  }
+
+  const termWindow = parseTermWindowPeriodId(periodId)
+  if (termWindow) {
+    const termNameMap: Record<number, string> = {
+      1: 'First Term',
+      2: 'Second Term',
+      3: 'Third Term',
+    }
+
+    return {
+      academic_year: termWindow.academicYear,
+      term_name: termNameMap[termWindow.termNumber] || `Term ${termWindow.termNumber}`,
+    }
+  }
+
+  const { data: period } = await supabase
+    .from('hmr_school_assessment_periods')
+    .select('academic_year, term_name')
+    .eq('id', periodId)
+    .maybeSingle()
+
+  if (period?.academic_year && period?.term_name) {
+    return {
+      academic_year: period.academic_year,
+      term_name: period.term_name,
+    }
+  }
+
+  return { period_id: periodId }
+}
+
+async function applyResolvedPeriodFilter(
+  supabase: ReturnType<typeof createServiceRoleSupabaseClient>,
+  query: any,
+  periodId?: string
+): Promise<any> {
+  const filters = await resolvePeriodFilter(supabase, periodId)
+  if (!filters) return query
+
+  if (filters.academic_year && filters.term_name) {
+    return query.eq('academic_year', filters.academic_year).eq('term_name', filters.term_name)
+  }
+
+  if (filters.period_id) {
+    return query.eq('period_id', filters.period_id)
+  }
+
+  return query
+}
+
 interface AIInsightResult {
   insight: string | null
   error: string | null
@@ -62,6 +141,9 @@ interface EarlyWarningResult {
     regionName: string
     currentScore: number
     predictedScore: number
+    isTAPS?: boolean
+    ratingLevel?: string | null
+    tapsRatingGrade?: string | null
     riskLevel: 'low' | 'medium' | 'high' | 'critical'
     warningType: string
     recommendation: string
@@ -187,7 +269,10 @@ export async function generateSchoolAssessmentInsight(
 export async function generateRegionalAssessmentInsight(
   regionId: string,
   periodId?: string,
-  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' | 'category_comparison' = 'overview'
+  schoolLevelId?: string,
+  insightType: 'overview' | 'comparison' | 'trends' | 'recommendations' | 'category_comparison' = 'overview',
+  _academicYear?: string,
+  _termName?: string,
 ): Promise<AIInsightResult> {
   try {
     const user = await getUser()
@@ -219,10 +304,9 @@ export async function generateRegionalAssessmentInsight(
       .eq('status', 'submitted')
       .order('total_score', { ascending: false })
       .limit(50)
+    query = applySchoolLevelFilter(query, schoolLevelId)
 
-    if (periodId) {
-      query = query.eq('period_id', periodId)
-    }
+    query = await applyResolvedPeriodFilter(supabase, query, periodId)
 
     const { data: reports } = await query
 
@@ -243,13 +327,12 @@ export async function generateRegionalAssessmentInsight(
     // Fetch national averages for comparison
     let nationalQuery = supabase
       .from('hmr_school_assessment_reports')
-      .select('total_score')
+      .select('total_score, sms_schools!inner(school_level_id)')
       .eq('status', 'submitted')
       .limit(500)
+    nationalQuery = applySchoolLevelFilter(nationalQuery, schoolLevelId)
 
-    if (periodId) {
-      nationalQuery = nationalQuery.eq('period_id', periodId)
-    }
+    nationalQuery = await applyResolvedPeriodFilter(supabase, nationalQuery, periodId)
 
     // Prefer DB filter by school_type; fall back to TAPS marker if needed.
     nationalQuery = system === 'taps'
@@ -297,6 +380,7 @@ export async function generateRegionalAssessmentInsight(
  */
 export async function generateNationalAssessmentInsight(
   periodId?: string,
+  schoolLevelId?: string,
   insightType: 'overview' | 'regional_comparison' | 'trends' | 'policy_recommendations' = 'overview'
 ): Promise<AIInsightResult> {
   try {
@@ -329,10 +413,9 @@ export async function generateNationalAssessmentInsight(
       `)
       .eq('status', 'submitted')
       .limit(200)
+    query = applySchoolLevelFilter(query, schoolLevelId)
 
-    if (periodId) {
-      query = query.eq('period_id', periodId)
-    }
+    query = await applyResolvedPeriodFilter(supabase, query, periodId)
 
     const { data: reports } = await query
 
@@ -403,7 +486,8 @@ export async function generateNationalAssessmentInsight(
  * Generate predictive analytics for a school's future performance
  */
 export async function generatePredictiveAnalytics(
-  schoolId: string
+  schoolId: string,
+  schoolLevelId?: string
 ): Promise<PredictiveResult> {
   try {
     const user = await getUser()
@@ -417,7 +501,7 @@ export async function generatePredictiveAnalytics(
     let maxTotal = TOTAL_MAX_SCORE
 
     if (schoolId === 'national') {
-      const { trends, error: trendError } = await getNationalTrends(12)
+      const { trends, error: trendError } = await getNationalTrends(12, schoolLevelId)
       if (trendError || !trends || trends.length < 2) {
         return { 
           predictions: null, 
@@ -586,7 +670,8 @@ export async function generateRegionalPredictions(
  */
 export async function getEarlyWarnings(
   regionId?: string,
-  threshold?: number
+  threshold?: number,
+  schoolLevelId?: string
 ): Promise<EarlyWarningResult> {
   try {
     const user = await getUser()
@@ -605,6 +690,7 @@ export async function getEarlyWarnings(
       `)
       .eq('status', 'submitted')
       .order('submitted_at', { ascending: false })
+    query = applySchoolLevelFilter(query, schoolLevelId)
 
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -634,9 +720,22 @@ export async function getEarlyWarnings(
 
       const system = detectAssessmentSystem(latestReport)
       const maxTotal = getMaxTotal(system)
-      const effectiveThreshold = threshold ?? Math.round(maxTotal * 0.4)
+
+      // Thresholds are provided in demo scale (0-1000) from dashboard UI.
+      // Convert to current assessment scale so TAPS schools are evaluated fairly.
+      const effectiveThreshold = threshold === undefined
+        ? Math.round(maxTotal * 0.4)
+        : Math.round((threshold / 1000) * maxTotal)
       const criticalThreshold = Math.round(maxTotal * 0.3)
       const trendThreshold = Math.max(1, Math.round(maxTotal * 0.03))
+      const currentScore = latestReport.total_score || 0
+
+      const ratingLevel = latestReport.rating_level || latestReport.ratingLevel
+      const tapsRatingGrade = latestReport.taps_rating_grade || latestReport.tapsRatingGrade
+      const hasAtRiskRating =
+        ratingLevel === 'needs_improvement' ||
+        tapsRatingGrade === 'D' ||
+        tapsRatingGrade === 'E'
 
       // Check for various warning conditions
       const warningIndicators: string[] = []
@@ -644,10 +743,19 @@ export async function getEarlyWarnings(
       let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low'
 
       // 1. Score below threshold
-      if ((latestReport.total_score || 0) < effectiveThreshold) {
-        warningIndicators.push(`Current score (${latestReport.total_score}) is below threshold (${effectiveThreshold})`)
-        riskLevel = (latestReport.total_score || 0) < criticalThreshold ? 'critical' : 'high'
+      if (currentScore < effectiveThreshold) {
+        warningIndicators.push(`Current score (${currentScore}/${maxTotal}) is below threshold (${effectiveThreshold}/${maxTotal})`)
+        riskLevel = currentScore < criticalThreshold ? 'critical' : 'high'
         warningType = 'Low Performance'
+      }
+
+      // 1b. Align with real report ratings (Needs Improvement, D/E)
+      if (hasAtRiskRating) {
+        warningIndicators.push('Latest submitted report is rated as at-risk (Needs Improvement / D-E).')
+        if (riskLevel === 'low' || riskLevel === 'medium') {
+          riskLevel = currentScore < criticalThreshold ? 'critical' : 'high'
+        }
+        warningType = warningType || 'At-Risk Rating'
       }
 
       // 2. Declining trend
@@ -675,27 +783,26 @@ export async function getEarlyWarnings(
         }
       })
 
-      // Upgrade risk level based on category issues if not already set
-      if (categoryIssueCount > 0 && riskLevel === 'low') {
-        if (categoryIssueCount >= 3) {
-          riskLevel = 'high'
-          warningType = warningType || 'Multiple Category Issues'
-        } else {
-          riskLevel = 'medium'
-          warningType = warningType || 'Category Performance Issue'
-        }
+      // Category issues should support existing high-risk signals, not create standalone alerts.
+      if (categoryIssueCount >= 3 && (riskLevel === 'high' || riskLevel === 'critical')) {
+        warningType = warningType || 'Multiple Category Issues'
       }
 
-      if (warningIndicators.length > 0) {
+      const shouldIncludeWarning =
+        hasAtRiskRating ||
+        riskLevel === 'high' ||
+        riskLevel === 'critical'
+
+      if (warningIndicators.length > 0 && shouldIncludeWarning) {
         // Generate recommendation based on issues
         const recommendation = generateWarningRecommendation(warningIndicators, latestReport)
 
         // Predict next score
-        let predictedScore = latestReport.total_score
+        let predictedScore = currentScore
         if (schoolData.length >= 2) {
           const scores = schoolData.map(r => r.total_score || 0).reverse()
           const trend = calculateTrendSlope(scores)
-          predictedScore = Math.round((latestReport.total_score || 0) + trend)
+          predictedScore = Math.round(currentScore + trend)
         }
 
         predictedScore = Math.max(0, Math.min(maxTotal, predictedScore || 0))
@@ -704,8 +811,11 @@ export async function getEarlyWarnings(
           schoolId,
           schoolName: school.name,
           regionName: school.sms_regions?.name || 'Unknown',
-          currentScore: latestReport.total_score,
+          currentScore,
           predictedScore,
+          isTAPS: system === 'taps',
+          ratingLevel: latestReport.rating_level || null,
+          tapsRatingGrade: latestReport.taps_rating_grade || null,
           riskLevel,
           warningType: warningType || 'Performance Concern',
           recommendation,

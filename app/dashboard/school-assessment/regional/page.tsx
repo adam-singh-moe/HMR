@@ -6,10 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { Pagination } from "@/components/pagination"
 import {
   FileTextIcon,
   TrendingUpIcon,
@@ -21,6 +24,7 @@ import {
   AlertTriangle,
   ClipboardCheck,
   Building2,
+  Search,
 } from "lucide-react"
 import { getUser } from "@/app/actions/auth"
 import { 
@@ -76,6 +80,43 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T
 }
 
+async function getJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { method: "GET" })
+  return (await res.json()) as T
+}
+
+interface SchoolLevelOption {
+  id: string
+  name: string
+}
+
+interface NonSubmittedSchool {
+  id: string
+  name: string
+  code: string | null
+  grade: string | null
+  regionId: string
+  regionName: string
+  schoolLevelId: string | null
+  schoolLevelName: string
+}
+
+async function fetchSchoolLevels() {
+  return getJson<{ levels: SchoolLevelOption[]; error: string | null }>(
+    "/api/school-assessment/education-official/school-levels"
+  )
+}
+
+async function fetchNonSubmittedSchools(periodId: string | null, schoolLevelId: string | null) {
+  return postJson<{
+    schools: NonSubmittedSchool[]
+    regions: { id: string; name: string }[]
+    grades: string[]
+    total: number
+    error: string | null
+  }>("/api/school-assessment/education-official/non-submitted-schools", { periodId, schoolLevelId })
+}
+
 async function fetchRecommendations(reportId: string) {
   return postJson<{ recommendations: any[]; error: string | null }>(
     "/api/school-assessment/recommendations",
@@ -111,6 +152,7 @@ function RegionalOfficerAssessmentContent() {
   }
   const { toast } = useToast()
   const { user } = useAuth()
+  const canUseSchoolLevelFilter = user?.role === "Education Official" || user?.role === "Regional Officer"
   
   const currentTab = searchParams.get('tab') || 'overview'
   
@@ -140,6 +182,15 @@ function RegionalOfficerAssessmentContent() {
   const [isExporting, setIsExporting] = useState(false)
   const [allPeriods, setAllPeriods] = useState<any[]>([])
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>('all')
+  const [schoolLevels, setSchoolLevels] = useState<SchoolLevelOption[]>([])
+  const [selectedSchoolLevelId, setSelectedSchoolLevelId] = useState<string>('all')
+  const [nonSubmittedSchools, setNonSubmittedSchools] = useState<NonSubmittedSchool[]>([])
+  const [nonSubmittedGrades, setNonSubmittedGrades] = useState<string[]>([])
+  const [nonSubmittedLoading, setNonSubmittedLoading] = useState(false)
+  const [nonSubmittedSearchQuery, setNonSubmittedSearchQuery] = useState("")
+  const [nonSubmittedGradeFilter, setNonSubmittedGradeFilter] = useState<string>("all")
+  const [nonSubmittedPage, setNonSubmittedPage] = useState(1)
+  const nonSubmittedPageSize = 15
 
   const recommendations = selectedReport?.id
     ? (recommendationsByReportId[selectedReport.id] ?? [])
@@ -152,7 +203,7 @@ function RegionalOfficerAssessmentContent() {
   useEffect(() => {
     loadInitialData()
   }, [])
-  
+
   const loadInitialData = async () => {
     setLoading(true)
     try {
@@ -163,12 +214,17 @@ function RegionalOfficerAssessmentContent() {
         setRegionName(userData.region_name || '')
 
         // Get all periods for selector
-        const allPeriodsResult = await getAllPeriods()
+        const [allPeriodsResult, schoolLevelsResult] = await Promise.all([
+          getAllPeriods(),
+          fetchSchoolLevels(),
+        ])
         if (allPeriodsResult.periods) {
           setAllPeriods(allPeriodsResult.periods)
         }
+        if (schoolLevelsResult.levels) {
+          setSchoolLevels(schoolLevelsResult.levels)
+        }
 
-        // Get active term window
         const windowResult = await getActiveTermWindow()
         let periodId: string | undefined = undefined
 
@@ -184,12 +240,6 @@ function RegionalOfficerAssessmentContent() {
           if (activePeriod) {
             periodId = activePeriod.id
             setSelectedPeriodId(activePeriod.id)
-          } else if (allPeriodsResult.periods.length > 0) {
-            // Fallback to first period if no active match
-             // But prefer the one that matches synthesis ID style if possible? No, just picked first.
-             // Actually, if we have synthetic periods, they should match.
-             // If we rely on synthetic periods, id will be `term-window-...`
-             // If the active window returns 'First Term', and synthetic generates 'First Term', they match.
           }
         } else if (allPeriodsResult.periods.length > 0) {
            // Default to most recent period if no active window
@@ -198,7 +248,7 @@ function RegionalOfficerAssessmentContent() {
         }
 
         // Load regional data with the resolved period ID
-        await loadRegionalData(userData.region, periodId)
+        await loadRegionalData(userData.region, periodId, selectedSchoolLevelId === 'all' ? undefined : selectedSchoolLevelId)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -212,16 +262,16 @@ function RegionalOfficerAssessmentContent() {
     }
   }
 
-  const loadRegionalData = async (regionId: string, periodId?: string) => {
+  const loadRegionalData = async (regionId: string, periodId?: string, schoolLevelId?: string) => {
     try {
       // Get regional statistics
-      const statsResult = await getRegionalStatistics(regionId, periodId)
+      const statsResult = await getRegionalStatistics(regionId, periodId, schoolLevelId)
       if (statsResult.stats) {
         setStats(statsResult.stats)
       }
       
       // Get reports
-      const reportsResult = await getRegionalReports(regionId, periodId)
+      const reportsResult = await getRegionalReports(regionId, periodId, schoolLevelId)
       if (reportsResult.reports) {
         setReports(reportsResult.reports.map((r: any) => ({
           id: r.id,
@@ -238,60 +288,72 @@ function RegionalOfficerAssessmentContent() {
       }
       
       // Get rankings
-      const rankingsResult = await getRegionalSchoolRankings(regionId, periodId, 500)
+      const rankingsResult = await getRegionalSchoolRankings(regionId, periodId, 500, schoolLevelId)
       if (rankingsResult.rankings) {
         setRankings(rankingsResult.rankings)
       }
       
       // Get trends
-      const trendsResult = await getRegionalTrends(regionId)
+      const trendsResult = await getRegionalTrends(regionId, 9, schoolLevelId)
       if (trendsResult.trends) {
         setTrends(trendsResult.trends)
       }
       
       // Get category performance
-      const perfResult = await getCategoryPerformance(periodId, regionId)
+      const perfResult = await getCategoryPerformance(periodId, regionId, schoolLevelId)
       if (perfResult.performance) {
         setCategoryPerformance(perfResult.performance)
       }
       
       // NEW: Get submission progress breakdown
-      const progressResult = await getSubmissionProgressBreakdown(regionId, periodId)
+      const progressResult = await getSubmissionProgressBreakdown(regionId, periodId, schoolLevelId)
       if (!progressResult.error) {
         setSubmissionProgress(progressResult)
       }
       
       // NEW: Get category gap analysis
-      const gapsResult = await getCategoryGapAnalysis(regionId, periodId)
+      const gapsResult = await getCategoryGapAnalysis(regionId, periodId, schoolLevelId)
       if (!gapsResult.error) {
         setCategoryGaps(gapsResult)
       }
       
       // NEW: Get most improved schools
-      const improvedResult = await getMostImprovedSchools(regionId, 5)
+      const improvedResult = await getMostImprovedSchools(regionId, 5, schoolLevelId)
       if (!improvedResult.error) {
         setMostImproved(improvedResult)
       }
       
       // NEW: Get region vs national comparison
-      const comparisonResult = await getRegionVsNationalComparison(regionId, periodId)
+      const comparisonResult = await getRegionVsNationalComparison(regionId, periodId, schoolLevelId)
       if (!comparisonResult.error) {
         setRegionVsNational(comparisonResult)
       }
       
       // NEW: Get category leaders
-      const leadersResult = await getCategoryLeaders(regionId, periodId)
+      const leadersResult = await getCategoryLeaders(regionId, periodId, schoolLevelId)
       if (!leadersResult.error) {
         setCategoryLeaders(leadersResult.leaders)
       }
       
       // NEW: Get schools needing attention
-      const attentionResult = await getSchoolsNeedingAttention(regionId, 400, periodId)
+      const attentionResult = await getSchoolsNeedingAttention(regionId, 400, periodId, schoolLevelId)
       if (!attentionResult.error) {
         setSchoolsNeedingAttention(attentionResult.schools)
       }
+
+      setNonSubmittedLoading(true)
+      const nonSubmittedResult = await fetchNonSubmittedSchools(
+        periodId || null,
+        schoolLevelId || null
+      )
+      if (!nonSubmittedResult.error) {
+        setNonSubmittedSchools(nonSubmittedResult.schools || [])
+        setNonSubmittedGrades(nonSubmittedResult.grades || [])
+      }
     } catch (error) {
       console.error('Error loading regional data:', error)
+    } finally {
+      setNonSubmittedLoading(false)
     }
   }
 
@@ -400,6 +462,26 @@ function RegionalOfficerAssessmentContent() {
   // ============================================================================
   // RENDER
   // ============================================================================
+
+  const filteredNonSubmittedSchools = nonSubmittedSchools.filter((school) => {
+    const matchesSearch = nonSubmittedSearchQuery.trim() === "" ||
+      school.name.toLowerCase().includes(nonSubmittedSearchQuery.toLowerCase())
+
+    const matchesGrade = nonSubmittedGradeFilter === "all" ||
+      (school.grade || "") === nonSubmittedGradeFilter
+
+    return matchesSearch && matchesGrade
+  })
+
+  useEffect(() => {
+    setNonSubmittedPage(1)
+  }, [nonSubmittedSearchQuery, nonSubmittedGradeFilter, selectedPeriodId, selectedSchoolLevelId])
+
+  const nonSubmittedTotalPages = Math.max(1, Math.ceil(filteredNonSubmittedSchools.length / nonSubmittedPageSize))
+  const paginatedNonSubmittedSchools = filteredNonSubmittedSchools.slice(
+    (nonSubmittedPage - 1) * nonSubmittedPageSize,
+    nonSubmittedPage * nonSubmittedPageSize
+  )
   
   if (loading) {
     return (
@@ -459,7 +541,7 @@ function RegionalOfficerAssessmentContent() {
             value={selectedPeriodId} 
             onValueChange={(value) => {
               setSelectedPeriodId(value)
-              loadRegionalData(regionId!, value === 'all' ? undefined : value)
+              loadRegionalData(regionId!, value === 'all' ? undefined : value, selectedSchoolLevelId === 'all' ? undefined : selectedSchoolLevelId)
             }}
           >
             <SelectTrigger className="w-[180px] h-9 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700">
@@ -474,6 +556,28 @@ function RegionalOfficerAssessmentContent() {
               {allPeriods.length === 0 && <SelectItem value="all" disabled>No periods available</SelectItem>}
             </SelectContent>
           </Select>
+
+          {canUseSchoolLevelFilter && (
+            <Select
+              value={selectedSchoolLevelId}
+              onValueChange={(value) => {
+                setSelectedSchoolLevelId(value)
+                loadRegionalData(regionId!, selectedPeriodId === 'all' ? undefined : selectedPeriodId, value === 'all' ? undefined : value)
+              }}
+            >
+              <SelectTrigger className="w-[180px] h-9 bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200 dark:border-slate-700">
+                <SelectValue placeholder="Select Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                {schoolLevels.map((level) => (
+                  <SelectItem key={level.id} value={level.id}>
+                    {level.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -487,6 +591,10 @@ function RegionalOfficerAssessmentContent() {
           <TabsTrigger value="schools" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
             <School className="h-4 w-4" />
             <span className="hidden sm:inline">Schools</span>
+          </TabsTrigger>
+          <TabsTrigger value="not-submitted" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
+            <ClipboardCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Not Submitted</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="gap-2 rounded-lg px-3 py-1.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:dark:bg-[hsl(222,47%,11%)] data-[state=active]:text-slate-900 data-[state=active]:dark:text-white data-[state=active]:shadow-sm">
             <FileTextIcon className="h-4 w-4" />
@@ -655,7 +763,11 @@ function RegionalOfficerAssessmentContent() {
               type="regional_comparison"
               title="AI Regional Analysis"
               description="Get AI-powered insights about your region's performance"
-              filters={{ regionId: regionId || undefined }}
+              filters={{
+                regionId: regionId || undefined,
+                periodId: selectedPeriodId !== 'all' ? selectedPeriodId : undefined,
+                schoolLevelId: selectedSchoolLevelId === 'all' ? undefined : selectedSchoolLevelId,
+              }}
               autoGenerate={false}
             />
             
@@ -664,6 +776,7 @@ function RegionalOfficerAssessmentContent() {
               regionId={regionId || undefined}
               regionName={regionName || 'Your Region'}
               threshold={400}
+              schoolLevelId={selectedSchoolLevelId === 'all' ? undefined : selectedSchoolLevelId}
               autoGenerate={false}
             />
           </div>
@@ -673,7 +786,11 @@ function RegionalOfficerAssessmentContent() {
             <AIComparativeAnalysis
               type="categories"
               entityIds={['academic', 'attendance', 'infrastructure', 'teaching_quality', 'management', 'student_welfare', 'community']}
-              filters={{ regionId: regionId || undefined }}
+              filters={{
+                regionId: regionId || undefined,
+                periodId: selectedPeriodId !== 'all' ? selectedPeriodId : undefined,
+                schoolLevelId: selectedSchoolLevelId === 'all' ? undefined : selectedSchoolLevelId,
+              }}
               title="AI Category Comparison"
               description="AI-powered analysis comparing performance across assessment categories"
             />
@@ -709,6 +826,91 @@ function RegionalOfficerAssessmentContent() {
               }}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="not-submitted" className="space-y-6">
+          <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                <ClipboardCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                Schools Without Submitted Reports
+              </CardTitle>
+              <CardDescription className="text-slate-500 dark:text-slate-400">
+                {filteredNonSubmittedSchools.length} schools pending submission for the selected term and level in {regionName || 'your region'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                  <Input
+                    placeholder="Search by school name..."
+                    value={nonSubmittedSearchQuery}
+                    onChange={(e) => setNonSubmittedSearchQuery(e.target.value)}
+                    className="pl-10 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  />
+                </div>
+
+                <Select value={nonSubmittedGradeFilter} onValueChange={setNonSubmittedGradeFilter}>
+                  <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                    <SelectValue placeholder="All Grades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Grades</SelectItem>
+                    {nonSubmittedGrades.map((grade) => (
+                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Grade</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School Level</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {nonSubmittedLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                          Loading non-submitted schools...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredNonSubmittedSchools.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                          No schools found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedNonSubmittedSchools.map((school) => (
+                        <TableRow key={school.id} className="border-b border-slate-200/50 dark:border-slate-700/30">
+                          <TableCell className="font-medium text-slate-900 dark:text-white">{school.name}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-400">{school.grade || '-'}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-400">{school.schoolLevelName}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {!nonSubmittedLoading && filteredNonSubmittedSchools.length > 0 && (
+                <div className="mt-4">
+                  <Pagination
+                    currentPage={Math.min(nonSubmittedPage, nonSubmittedTotalPages)}
+                    totalPages={nonSubmittedTotalPages}
+                    totalItems={filteredNonSubmittedSchools.length}
+                    pageSize={nonSubmittedPageSize}
+                    onPageChange={setNonSubmittedPage}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Reports Tab */}

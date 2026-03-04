@@ -286,6 +286,32 @@ async function applyResolvedPeriodFilter(query: any, periodId?: string): Promise
   return { query }
 }
 
+function applySchoolLevelFilter(query: any, schoolLevelId?: string): any {
+  if (!schoolLevelId || schoolLevelId === 'all') {
+    return query
+  }
+
+  return query.eq('sms_schools.school_level_id', schoolLevelId)
+}
+
+function dedupeRankingsBySchool<T extends {
+  schoolId: string
+  normalizedScore: number
+}> (rows: T[]): T[] {
+  const bySchool = new Map<string, T>()
+
+  for (const row of rows) {
+    if (!row.schoolId) continue
+
+    const existing = bySchool.get(row.schoolId)
+    if (!existing || row.normalizedScore > existing.normalizedScore) {
+      bySchool.set(row.schoolId, row)
+    }
+  }
+
+  return Array.from(bySchool.values())
+}
+
 // ============================================================================
 // REGIONAL ANALYTICS
 // ============================================================================
@@ -295,7 +321,8 @@ async function applyResolvedPeriodFilter(query: any, periodId?: string): Promise
  */
 export async function getRegionalStatistics(
   regionId: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{ stats: AnalyticsRegionalStats | null; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
@@ -336,6 +363,7 @@ export async function getRegionalStatistics(
       `)
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
+    reportsQuery = applySchoolLevelFilter(reportsQuery, schoolLevelId)
     
     // Get pending (draft) reports count for this region/period too
     let pendingQuery = supabase
@@ -343,6 +371,7 @@ export async function getRegionalStatistics(
       .select('id, sms_schools!inner(region_id)', { count: 'exact', head: true })
       .eq('status', 'draft')
       .eq('sms_schools.region_id', regionId)
+    pendingQuery = applySchoolLevelFilter(pendingQuery, schoolLevelId)
 
     const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, periodId)
     const { query: filteredPendingQuery } = await applyResolvedPeriodFilter(pendingQuery, periodId)
@@ -355,7 +384,9 @@ export async function getRegionalStatistics(
     ] = await Promise.all([
       filteredReportsQuery,
       filteredPendingQuery,
-      supabase.from('sms_schools').select('id', { count: 'exact', head: true }).eq('region_id', regionId)
+      schoolLevelId && schoolLevelId !== 'all'
+        ? supabase.from('sms_schools').select('id', { count: 'exact', head: true }).eq('region_id', regionId).eq('school_level_id', schoolLevelId)
+        : supabase.from('sms_schools').select('id', { count: 'exact', head: true }).eq('region_id', regionId)
     ]);
     
     // Explicitly destructure results to be sure
@@ -404,7 +435,7 @@ export async function getRegionalStatistics(
     }
     
     // Calculate statistics...
-    const normalizedScores = reports.map(r => {
+    const normalizedScores = reports.map((r: any) => {
       const score = r.total_score || 0
       const isTAPS = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
       if (isTAPS) return Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000))
@@ -423,7 +454,7 @@ export async function getRegionalStatistics(
       needs_improvement: 0,
     }
     
-    reports.forEach(r => {
+    reports.forEach((r: any) => {
       const score = r.total_score || 0
       const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
       const normalizedScore = is_taps ? Math.min(1000, Math.round((score / TAPS_TOTAL_MAX_SCORE) * 1000)) : score
@@ -444,7 +475,7 @@ export async function getRegionalStatistics(
       academic: [], attendance: [], infrastructure: [], teaching_quality: [], management: [], student_welfare: [], community: [],
     }
     
-    reports.forEach(r => {
+    reports.forEach((r: any) => {
       const is_taps = !!(r.taps_rating_grade || r.taps_school_inputs_scores || r.taps_leadership_scores || r.taps_academics_scores)
       if (is_taps) {
         if (r.taps_academics_scores?.total !== undefined) categoryTotals.academic.push(Math.round((r.taps_academics_scores.total / 200) * 300))
@@ -501,7 +532,8 @@ export async function getRegionalStatistics(
 export async function getRegionalSchoolRankings(
   regionId: string,
   periodId?: string,
-  limit: number = 20
+  limit: number = 20,
+  schoolLevelId?: string
 ): Promise<{ rankings: SchoolRanking[]; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
@@ -520,6 +552,7 @@ export async function getRegionalSchoolRankings(
       `)
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -531,7 +564,7 @@ export async function getRegionalSchoolRankings(
       return { rankings: [], error: 'Failed to fetch rankings.' }
     }
 
-    const processedRankings = (reports || []).map((r: any) => {
+    const processedRankingsRaw = (reports || []).map((r: any) => {
       // Handle potential array return from join
       const schoolInfo = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools
       const regionInfo = Array.isArray(schoolInfo?.sms_regions) ? schoolInfo.sms_regions[0] : schoolInfo?.sms_regions
@@ -552,6 +585,8 @@ export async function getRegionalSchoolRankings(
         tapsRatingGrade: r.taps_rating_grade as TAPSRatingGrade,
       }
     })
+
+    const processedRankings = dedupeRankingsBySchool(processedRankingsRaw)
 
     // Sort by normalized score (Performance)
     processedRankings.sort((a, b) => b.normalizedScore - a.normalizedScore)
@@ -604,7 +639,8 @@ export async function getAllRegions(): Promise<{ regions: { id: string; name: st
  * Gets comprehensive national statistics
  */
 export async function getNationalStatistics(
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{ stats: AnalyticsNationalStats | null; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
@@ -633,6 +669,7 @@ export async function getNationalStatistics(
         sms_schools:school_id(id, name, region_id, sms_regions:region_id(id, name))
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -677,9 +714,13 @@ export async function getNationalStatistics(
       .select('id, name')
     
     // Get total schools
-    const { count: totalSchools } = await supabase
+    let totalSchoolsQuery = supabase
       .from('sms_schools')
       .select('id', { count: 'exact', head: true })
+    if (schoolLevelId && schoolLevelId !== 'all') {
+      totalSchoolsQuery = totalSchoolsQuery.eq('school_level_id', schoolLevelId)
+    }
+    const { count: totalSchools } = await totalSchoolsQuery
     
     if (!reports || reports.length === 0) {
       return {
@@ -880,7 +921,8 @@ export async function getNationalStatistics(
  */
 export async function getNationalSchoolRankings(
   periodId?: string,
-  limit: number = 20
+  limit: number = 20,
+  schoolLevelId?: string
 ): Promise<{ rankings: SchoolRanking[]; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
@@ -898,6 +940,7 @@ export async function getNationalSchoolRankings(
         sms_schools:school_id(id, name, region_id, sms_regions:region_id(name))
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -910,7 +953,7 @@ export async function getNationalSchoolRankings(
       return { rankings: [], error: 'Failed to fetch rankings.' }
     }
     
-    const processedRankings = (reports || []).map((r: any) => {
+    const processedRankingsRaw = (reports || []).map((r: any) => {
       // Handle potential array return from join
       const schoolInfo = Array.isArray(r.sms_schools) ? r.sms_schools[0] : r.sms_schools
       const regionInfo = Array.isArray(schoolInfo?.sms_regions) ? schoolInfo.sms_regions[0] : schoolInfo?.sms_regions
@@ -931,6 +974,8 @@ export async function getNationalSchoolRankings(
         tapsRatingGrade: r.taps_rating_grade as TAPSRatingGrade,
       }
     })
+
+    const processedRankings = dedupeRankingsBySchool(processedRankingsRaw)
 
     // Sort by normalized score (Performance)
     processedRankings.sort((a, b) => b.normalizedScore - a.normalizedScore)
@@ -1036,12 +1081,13 @@ export async function getSchoolTrends(
  */
 export async function getRegionalTrends(
   regionId: string,
-  limit: number = 9
+  limit: number = 9,
+  schoolLevelId?: string
 ): Promise<{ trends: TrendData[]; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    const { data: reports, error } = await supabase
+    let trendsQuery = supabase
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
@@ -1057,6 +1103,9 @@ export async function getRegionalTrends(
       `)
       .eq('status', 'submitted')
       .eq('sms_schools.region_id', regionId)
+    trendsQuery = applySchoolLevelFilter(trendsQuery, schoolLevelId)
+
+    const { data: reports, error } = await trendsQuery
     
     if (error) {
       console.error('Error fetching regional trends:', error)
@@ -1134,12 +1183,13 @@ export async function getRegionalTrends(
  * Gets national trend data over time
  */
 export async function getNationalTrends(
-  limit: number = 9
+  limit: number = 9,
+  schoolLevelId?: string
 ): Promise<{ trends: TrendData[]; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    const { data: reports, error } = await supabase
+    let trendsQuery = supabase
       .from('hmr_school_assessment_reports')
       .select(`
         total_score,
@@ -1150,9 +1200,13 @@ export async function getNationalTrends(
         taps_school_inputs_scores,
         taps_leadership_scores,
         taps_academics_scores,
-        hmr_school_assessment_periods(academic_year, term_name, sequence_order)
+        hmr_school_assessment_periods(academic_year, term_name, sequence_order),
+        sms_schools!inner(school_level_id)
       `)
       .eq('status', 'submitted')
+    trendsQuery = applySchoolLevelFilter(trendsQuery, schoolLevelId)
+
+    const { data: reports, error } = await trendsQuery
     
     if (error) {
       console.error('Error fetching national trends:', error)
@@ -1235,7 +1289,8 @@ export async function getNationalTrends(
  */
 export async function getCategoryPerformance(
   periodId?: string,
-  regionId?: string
+  regionId?: string,
+  schoolLevelId?: string
 ): Promise<{ performance: CategoryPerformance[]; error: string | null }> {
   try {
     const supabase = createServiceRoleSupabaseClient()
@@ -1253,6 +1308,7 @@ export async function getCategoryPerformance(
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -1346,7 +1402,8 @@ export async function getCategoryPerformance(
  * Gets submission status by region
  */
 export async function getSubmissionStatusByRegion(
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{ 
   data: { regionId: string; regionName: string; submitted: number; pending: number; total: number; totalSchools?: number; submittedCount?: number; pendingCount?: number }[];
   error: string | null 
@@ -1354,10 +1411,23 @@ export async function getSubmissionStatusByRegion(
   try {
     const supabase = createServiceRoleSupabaseClient()
     
-    // Get all regions with school counts
+    // Get all regions
     const { data: regions, error: regionsError } = await supabase
       .from('sms_regions')
-      .select('id, name, sms_schools(id)')
+      .select('id, name')
+        // Get filtered schools for totals
+        let schoolsQuery = supabase
+          .from('sms_schools')
+          .select('id, region_id')
+        if (schoolLevelId && schoolLevelId !== 'all') {
+          schoolsQuery = schoolsQuery.eq('school_level_id', schoolLevelId)
+        }
+        const { data: schools, error: schoolsError } = await schoolsQuery
+
+        if (schoolsError) {
+          return { data: [], error: 'Failed to fetch schools.' }
+        }
+
     
     if (regionsError || !regions) {
       return { data: [], error: 'Failed to fetch regions.' }
@@ -1368,6 +1438,15 @@ export async function getSubmissionStatusByRegion(
       .from('hmr_school_assessment_reports')
       .select('school_id, sms_schools(region_id)')
       .eq('status', 'submitted')
+    reportsQuery = applySchoolLevelFilter(reportsQuery, schoolLevelId)
+        const totalSchoolsByRegion: Record<string, number> = {}
+        ;(schools || []).forEach((school: any) => {
+          const id = school.region_id
+          if (id) {
+            totalSchoolsByRegion[id] = (totalSchoolsByRegion[id] || 0) + 1
+          }
+        })
+
     
     // Apply period filter (handles synthetic IDs and legacy UUID resolution)
     const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, periodId)
@@ -1390,7 +1469,7 @@ export async function getSubmissionStatusByRegion(
     
     // Build result
     const data = (regions || []).map((region: any) => {
-      const total = region.sms_schools?.length || 0
+      const total = totalSchoolsByRegion[region.id] || 0
       const submitted = submissionsByRegion[region.id] || 0
       return {
         regionId: region.id,
@@ -1717,7 +1796,8 @@ export async function getCategoryStrengthAnalysis(
  */
 export async function getSubmissionProgressBreakdown(
   regionId?: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   submitted: number
   inProgress: number
@@ -1736,6 +1816,9 @@ export async function getSubmissionProgressBreakdown(
     if (regionId) {
       schoolsQuery = schoolsQuery.eq('region_id', regionId)
     }
+    if (schoolLevelId && schoolLevelId !== 'all') {
+      schoolsQuery = schoolsQuery.eq('school_level_id', schoolLevelId)
+    }
     const { count: totalSchools } = await schoolsQuery
     const total = totalSchools || 0
     
@@ -1748,6 +1831,7 @@ export async function getSubmissionProgressBreakdown(
         school_id,
         sms_schools!inner(region_id)
       `)
+    reportsQuery = applySchoolLevelFilter(reportsQuery, schoolLevelId)
     
     if (regionId) {
       reportsQuery = reportsQuery.eq('sms_schools.region_id', regionId)
@@ -1796,7 +1880,8 @@ export async function getSubmissionProgressBreakdown(
  */
 export async function getMostImprovedSchools(
   regionId?: string,
-  limit: number = 5
+  limit: number = 5,
+  schoolLevelId?: string
 ): Promise<{
   improved: { schoolId: string; schoolName: string; regionName: string; currentScore: number; previousScore: number; improvement: number; improvementPercent: number }[]
   declined: { schoolId: string; schoolName: string; regionName: string; currentScore: number; previousScore: number; decline: number; declinePercent: number }[]
@@ -1824,6 +1909,7 @@ export async function getMostImprovedSchools(
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
       .order('submitted_at', { ascending: false })
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -1924,7 +2010,8 @@ export async function getMostImprovedSchools(
  */
 export async function getCategoryGapAnalysis(
   regionId?: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   gaps: { category: string; label: string; averageScore: number; maxScore: number; gap: number; gapPercentage: number; filledPercentage: number }[]
   weakestCategory: string | null
@@ -1954,6 +2041,7 @@ export async function getCategoryGapAnalysis(
         sms_schools!inner(region_id)
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -2058,7 +2146,8 @@ export async function getCategoryGapAnalysis(
  */
 export async function getScoreDistribution(
   regionId?: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   distribution: { range: string; count: number; percentage: number; minScore: number; maxScore: number }[]
   totalReports: number
@@ -2080,6 +2169,7 @@ export async function getScoreDistribution(
       `)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -2170,7 +2260,8 @@ export async function getScoreDistribution(
  */
 export async function getRegionVsNationalComparison(
   regionId: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   regionAverage: number
   nationalAverage: number
@@ -2197,6 +2288,7 @@ export async function getRegionVsNationalComparison(
       `)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -2275,7 +2367,8 @@ export async function getRegionVsNationalComparison(
 export async function getSchoolsNeedingAttention(
   regionId?: string,
   threshold: number = 400,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   schools: { schoolId: string; schoolName: string; regionName: string; score: number; deficit: number; ratingLevel: string }[]
   count: number
@@ -2299,6 +2392,7 @@ export async function getSchoolsNeedingAttention(
       `)
       .eq('status', 'submitted')
       .order('total_score', { ascending: true })
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -2343,7 +2437,8 @@ export async function getSchoolsNeedingAttention(
  */
 export async function getCategoryLeaders(
   regionId?: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   leaders: { category: string; label: string; schoolName: string; schoolId: string; score: number; maxScore: number; percentage: number }[]
   error: string | null
@@ -2372,6 +2467,7 @@ export async function getCategoryLeaders(
         sms_schools!inner(id, name, region_id)
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -2466,7 +2562,8 @@ export async function getCategoryLeaders(
 export async function getRegionalCategoryRankings(
   category: CategoryName,
   regionId?: string,
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   rankings: { rank: number; schoolId: string; schoolName: string; regionName?: string; score: number; maxScore: number; percentage: number }[]
   error: string | null
@@ -2500,6 +2597,7 @@ export async function getRegionalCategoryRankings(
         sms_schools!inner(id, name, region_id, sms_regions(name))
       `)
       .eq('status', 'submitted')
+    query = applySchoolLevelFilter(query, schoolLevelId)
 
     if (regionId) {
       query = query.eq('sms_schools.region_id', regionId)
@@ -2548,7 +2646,8 @@ export async function getRegionalCategoryRankings(
  * Gets underperforming regions (below national average)
  */
 export async function getUnderperformingRegions(
-  periodId?: string
+  periodId?: string,
+  schoolLevelId?: string
 ): Promise<{
   regions: { regionId: string; regionName: string; average: number; nationalAverage: number; deficit: number; schoolCount: number }[]
   count: number
@@ -2565,6 +2664,7 @@ export async function getUnderperformingRegions(
       `)
       .eq('status', 'submitted')
       .not('total_score', 'is', null)
+    query = applySchoolLevelFilter(query, schoolLevelId)
     
     const { query: filteredQuery } = await applyResolvedPeriodFilter(query, periodId)
     query = filteredQuery
@@ -2612,6 +2712,154 @@ export async function getUnderperformingRegions(
   } catch (error) {
     console.error('Error in getUnderperformingRegions:', error)
     return { regions: [], count: 0, error: 'An unexpected error occurred.' }
+  }
+}
+
+export async function getNonSubmittedSchools(options?: {
+  periodId?: string
+  schoolLevelId?: string
+  regionId?: string
+  searchQuery?: string
+  grade?: string
+}): Promise<{
+  schools: {
+    id: string
+    name: string
+    code: string | null
+    grade: string | null
+    regionId: string
+    regionName: string
+    schoolLevelId: string | null
+    schoolLevelName: string
+  }[]
+  regions: { id: string; name: string }[]
+  grades: string[]
+  total: number
+  error: string | null
+}> {
+  try {
+    const user = await getUser()
+    if (!user) {
+      return { schools: [], regions: [], grades: [], total: 0, error: 'User not authenticated.' }
+    }
+
+    if (user.role !== 'Regional Officer' && user.role !== 'Education Official') {
+      return { schools: [], regions: [], grades: [], total: 0, error: 'You do not have permission to view this data.' }
+    }
+
+    const supabase = createServiceRoleSupabaseClient()
+
+    const requestedRegionId = options?.regionId && options.regionId !== 'all' ? options.regionId : undefined
+    const effectiveRegionId = user.role === 'Regional Officer'
+      ? (user.region || undefined)
+      : requestedRegionId
+
+    if (user.role === 'Regional Officer' && !effectiveRegionId) {
+      return { schools: [], regions: [], grades: [], total: 0, error: 'Regional officer is not assigned to a region.' }
+    }
+
+    let schoolsQuery = supabase
+      .from('sms_schools')
+      .select(`
+        id,
+        name,
+        code,
+        grade,
+        region_id,
+        school_level_id,
+        sms_regions!inner(id, name),
+        sms_school_levels(id, name)
+      `)
+      .order('name', { ascending: true })
+
+    if (effectiveRegionId) {
+      schoolsQuery = schoolsQuery.eq('region_id', effectiveRegionId)
+    }
+
+    if (options?.schoolLevelId && options.schoolLevelId !== 'all') {
+      schoolsQuery = schoolsQuery.eq('school_level_id', options.schoolLevelId)
+    }
+
+    const { data: schoolsRaw, error: schoolsError } = await schoolsQuery
+
+    if (schoolsError) {
+      console.error('Error fetching schools for non-submitted list:', schoolsError)
+      return { schools: [], regions: [], grades: [], total: 0, error: 'Failed to fetch schools.' }
+    }
+
+    const schools = (schoolsRaw || []).map((school: any) => {
+      const region = Array.isArray(school.sms_regions) ? school.sms_regions[0] : school.sms_regions
+      const level = Array.isArray(school.sms_school_levels) ? school.sms_school_levels[0] : school.sms_school_levels
+
+      return {
+        id: school.id,
+        name: school.name,
+        code: school.code || null,
+        grade: school.grade || null,
+        regionId: school.region_id,
+        regionName: region?.name || 'Unknown Region',
+        schoolLevelId: school.school_level_id || null,
+        schoolLevelName: level?.name || 'Unknown Level',
+      }
+    })
+
+    if (schools.length === 0) {
+      return { schools: [], regions: [], grades: [], total: 0, error: null }
+    }
+
+    let reportsQuery = supabase
+      .from('hmr_school_assessment_reports')
+      .select(`
+        school_id,
+        sms_schools!inner(region_id, school_level_id)
+      `)
+      .eq('status', 'submitted')
+
+    if (effectiveRegionId) {
+      reportsQuery = reportsQuery.eq('sms_schools.region_id', effectiveRegionId)
+    }
+
+    reportsQuery = applySchoolLevelFilter(reportsQuery, options?.schoolLevelId)
+
+    const { query: filteredReportsQuery } = await applyResolvedPeriodFilter(reportsQuery, options?.periodId)
+    const { data: submittedReports, error: reportsError } = await filteredReportsQuery
+
+    if (reportsError) {
+      console.error('Error fetching submitted reports for non-submitted list:', reportsError)
+      return { schools: [], regions: [], grades: [], total: 0, error: 'Failed to fetch submitted reports.' }
+    }
+
+    const submittedSchoolIds = new Set((submittedReports || []).map((r: any) => r.school_id).filter(Boolean))
+
+    let nonSubmittedSchools = schools.filter((school) => !submittedSchoolIds.has(school.id))
+
+    if (options?.searchQuery?.trim()) {
+      const q = options.searchQuery.trim().toLowerCase()
+      nonSubmittedSchools = nonSubmittedSchools.filter((school) => school.name.toLowerCase().includes(q))
+    }
+
+    if (options?.grade && options.grade !== 'all') {
+      nonSubmittedSchools = nonSubmittedSchools.filter((school) => (school.grade || '').toLowerCase() === options.grade!.toLowerCase())
+    }
+
+    const regions = Array.from(
+      new Map(nonSubmittedSchools.map((school) => [school.regionId, { id: school.regionId, name: school.regionName }])).values()
+    ).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+
+    const grades = Array.from(
+      new Set(nonSubmittedSchools.map((school) => school.grade).filter((g): g is string => Boolean(g && g.trim())))
+    ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+
+    return {
+      schools: nonSubmittedSchools,
+      regions,
+      grades,
+      total: nonSubmittedSchools.length,
+      error: null,
+    }
+  } catch (error) {
+    console.error('Error in getNonSubmittedSchools:', error)
+    return { schools: [], regions: [], grades: [], total: 0, error: 'An unexpected error occurred.' }
   }
 }
 

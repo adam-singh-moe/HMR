@@ -7,13 +7,14 @@ export const runtime = "nodejs"
 type Body = {
   regionId?: string
   threshold?: number
+  schoolLevelId?: string
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => null)) as Body | null
 
-    const result = await getEarlyWarnings(body?.regionId, body?.threshold)
+    const result = await getEarlyWarnings(body?.regionId, body?.threshold, body?.schoolLevelId)
     return NextResponse.json(result)
   } catch (error) {
     console.error("/api/school-assessment/early-warnings error:", error)

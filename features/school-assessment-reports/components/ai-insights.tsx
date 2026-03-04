@@ -1715,6 +1715,7 @@ async function fetchAssessmentInsight(body: {
   scope: "national" | "regional" | "school"
   id?: string
   periodId?: string
+  schoolLevelId?: string
   insightType?: string
   academicYear?: string
   termName?: string
@@ -1755,10 +1756,10 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return data as T
 }
 
-async function fetchEarlyWarnings(regionId?: string, threshold?: number) {
+async function fetchEarlyWarnings(regionId?: string, threshold?: number, schoolLevelId?: string) {
   return postJson<{ warnings?: any[]; error?: string | null }>(
     "/api/school-assessment/early-warnings",
-    { regionId, threshold }
+    { regionId, threshold, schoolLevelId }
   )
 }
 
@@ -1769,10 +1770,10 @@ async function fetchImprovementPlan(schoolId: string, reportId?: string) {
   )
 }
 
-async function fetchPredictiveAnalytics(entityId: string) {
+async function fetchPredictiveAnalytics(entityId: string, schoolLevelId?: string) {
   return postJson<{ predictions?: any; error?: string | null }>(
     "/api/school-assessment/predictive-analytics",
-    { entityId }
+    { entityId, schoolLevelId }
   )
 }
 
@@ -1794,6 +1795,7 @@ interface AIInsightCardProps {
     schoolId?: string
     regionId?: string
     periodId?: string
+    schoolLevelId?: string
   }
   className?: string
   autoGenerate?: boolean // Auto-generate on mount (default: true)
@@ -1825,8 +1827,9 @@ export function AIInsightCard({
     getCacheKey(type, {
       schoolId: filters.schoolId,
       regionId: filters.regionId,
-      periodId: filters.periodId
-    }), [type, filters.schoolId, filters.regionId, filters.periodId]
+      periodId: filters.periodId,
+      schoolLevelId: filters.schoolLevelId,
+    }), [type, filters.schoolId, filters.regionId, filters.periodId, filters.schoolLevelId]
   )
 
   const generateInsight = useCallback(async (skipCache = false) => {
@@ -1853,17 +1856,20 @@ export function AIInsightCard({
           scope: "school",
           id: filters.schoolId,
           periodId: filters.periodId,
+          schoolLevelId: filters.schoolLevelId,
         })
       } else if (filters.regionId) {
         result = await fetchAssessmentInsight({
           scope: "regional",
           id: filters.regionId,
           periodId: filters.periodId,
+          schoolLevelId: filters.schoolLevelId,
         })
       } else {
         result = await fetchAssessmentInsight({
           scope: "national",
           periodId: filters.periodId,
+          schoolLevelId: filters.schoolLevelId,
         })
       }
       
@@ -1880,7 +1886,18 @@ export function AIInsightCard({
     } finally {
       setLoading(false)
     }
-  }, [filters.schoolId, filters.regionId, filters.periodId, cacheKey])
+  }, [filters.schoolId, filters.regionId, filters.periodId, filters.schoolLevelId, cacheKey])
+
+  // Hydrate from cache on mount / cache key change (useful when switching dashboard tabs)
+  useEffect(() => {
+    const cached = getFromCache(cacheKey)
+    if (!cached) return
+
+    setInsight(cached)
+    setHasGenerated(true)
+    setFromCache(true)
+    setError(null)
+  }, [cacheKey])
 
   // Auto-generate on mount
   useEffect(() => {
@@ -1893,59 +1910,66 @@ export function AIInsightCard({
     <div className="h-full">
       <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-purple-200/50 dark:border-purple-500/20 h-full flex flex-col ${className}`}>
         <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-500/5 dark:to-blue-500/5 border-b border-purple-200/30 dark:border-purple-500/10">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-purple-600" />
-              {title}
-              {description && <span className="text-sm font-normal text-muted-foreground">{description}</span>}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {hasGenerated && (
-                <>
-                  {fromCache && (
-                    <Badge variant="outline" className="text-xs gap-1">
-                      <History className="h-3 w-3" />
-                      Cached
-                    </Badge>
-                  )}
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    AI
-                  </Badge>
-                </>
-              )}
-
-              {insight && !loading && (
-                <div className="flex items-center gap-2">
-                  <FullscreenInsightModal 
-                    content={insight} 
-                    title={title} 
-                    description={description}
-                    trigger={
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Maximize2 className="h-4 w-4" />
-                        Fullscreen
-                      </Button>
-                    }
-                  />
-                  <Button
-                    data-print-hide
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => {
-                      printMarkdownToPdf(insight, title)
-                    }}
-                  >
-                    <Printer className="h-4 w-4" />
-                    Print / Save PDF
-                  </Button>
-                </div>
+          <div className="space-y-3">
+            <div className="min-w-0">
+              <CardTitle className="flex items-start gap-2 text-lg">
+                <Sparkles className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <span className="min-w-0 break-words">{title}</span>
+              </CardTitle>
+              {description && (
+                <CardDescription className="mt-1">
+                  {description}
+                </CardDescription>
               )}
             </div>
+
+            {hasGenerated && (
+              <div className="flex flex-wrap items-center gap-2">
+                {fromCache && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    <History className="h-3 w-3" />
+                    Cached
+                  </Badge>
+                )}
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  AI
+                </Badge>
+
+                {insight && !loading && (
+                  <>
+                    <FullscreenInsightModal 
+                      content={insight} 
+                      title={title} 
+                      description={description}
+                      trigger={
+                        <Button variant="outline" size="sm" className="gap-2 max-w-full">
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="hidden sm:inline">Fullscreen</span>
+                          <span className="sm:hidden">View</span>
+                        </Button>
+                      }
+                    />
+                    <Button
+                      data-print-hide
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 max-w-full"
+                      onClick={() => {
+                        printMarkdownToPdf(insight, title)
+                      }}
+                    >
+                      <Printer className="h-4 w-4" />
+                      <span className="hidden sm:inline">Print / Save PDF</span>
+                      <span className="sm:hidden">Print</span>
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-4 flex-1 flex flex-col">
@@ -2030,6 +2054,7 @@ interface AIAtRiskAlertProps {
   regionId?: string
   regionName?: string
   threshold?: number
+  schoolLevelId?: string
   className?: string
   autoGenerate?: boolean
 }
@@ -2043,6 +2068,7 @@ export function AIAtRiskAlert({
   regionId,
   regionName = "Your Region",
   threshold,
+  schoolLevelId,
   className = "",
   autoGenerate = true
 }: AIAtRiskAlertProps) {
@@ -2053,9 +2079,10 @@ export function AIAtRiskAlert({
   const [fromCache, setFromCache] = useState(false)
 
   const thresholdKey = threshold === undefined ? 'auto' : String(threshold)
+  const atRiskCacheVersion = 'v2'
   const cacheKey = useMemo(
-    () => getCacheKey('at-risk', { regionId, threshold: thresholdKey }),
-    [regionId, thresholdKey]
+    () => getCacheKey('at-risk', { regionId, threshold: thresholdKey, schoolLevelId, version: atRiskCacheVersion }),
+    [regionId, thresholdKey, schoolLevelId, atRiskCacheVersion]
   )
 
   const loadAtRiskSchools = useCallback(async (skipCache = false) => {
@@ -2077,7 +2104,7 @@ export function AIAtRiskAlert({
     setFromCache(false)
     
     try {
-      const result = await fetchEarlyWarnings(regionId, threshold)
+      const result = await fetchEarlyWarnings(regionId, threshold, schoolLevelId)
       if (result.error) {
         setError(result.error)
         return
@@ -2093,7 +2120,22 @@ export function AIAtRiskAlert({
     } finally {
       setLoading(false)
     }
-  }, [regionId, threshold, cacheKey])
+  }, [regionId, threshold, schoolLevelId, cacheKey])
+
+  // Hydrate from cache on mount / cache key change
+  useEffect(() => {
+    const cached = getFromCache(cacheKey)
+    if (!cached) return
+
+    try {
+      setSchools(JSON.parse(cached))
+      setHasLoaded(true)
+      setFromCache(true)
+      setError(null)
+    } catch {
+      // Ignore malformed cache entries
+    }
+  }, [cacheKey])
 
   // Auto-load on mount
   useEffect(() => {
@@ -2110,30 +2152,84 @@ export function AIAtRiskAlert({
     !['critical', 'high', 'medium'].includes(s.riskLevel)
   )
 
+  const getReportRatingBadge = (school: any) => {
+    if (school?.isTAPS && school?.tapsRatingGrade) {
+      const grade = String(school.tapsRatingGrade).toUpperCase()
+      const tapsClassMap: Record<string, string> = {
+        A: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
+        B: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+        C: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+        D: 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
+        E: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
+      }
+      return (
+        <Badge className={tapsClassMap[grade] || tapsClassMap.C}>
+          Grade {grade}
+        </Badge>
+      )
+    }
+
+    if (!school?.ratingLevel) return null
+
+    const labelMap: Record<string, string> = {
+      outstanding: 'Outstanding',
+      very_good: 'Very Good',
+      good: 'Good',
+      satisfactory: 'Satisfactory',
+      needs_improvement: 'Needs Improvement',
+    }
+
+    const classMap: Record<string, string> = {
+      outstanding: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
+      very_good: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+      good: 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30',
+      satisfactory: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
+      needs_improvement: 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
+    }
+
+    const value = String(school.ratingLevel)
+    return (
+      <Badge className={classMap[value] || classMap.satisfactory}>
+        {labelMap[value] || value.replace(/_/g, ' ')}
+      </Badge>
+    )
+  }
+
   return (
     <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-orange-200/50 dark:border-orange-500/20 h-full flex flex-col ${className}`}>
       <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-500/5 dark:to-red-500/5 border-b border-orange-200/30 dark:border-orange-500/10">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="h-5 w-5 text-orange-600" />
-              At-Risk Schools
+        <div className="space-y-3">
+          <div className="min-w-0">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+              <Shield className="h-5 w-5 text-orange-600 flex-shrink-0" />
+              <span>At-Risk Schools</span>
               {hasLoaded && schools.length > 0 && (
-                <Badge variant="destructive" className="ml-2">
+                <Badge variant="destructive">
                   {schools.length} identified
                 </Badge>
               )}
             </CardTitle>
             <CardDescription>AI-powered early warning system for schools needing attention</CardDescription>
           </div>
+
           {hasLoaded && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {fromCache && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <History className="h-3 w-3" />
                   Cached
                 </Badge>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => loadAtRiskSchools(true)}
+                className="gap-1 max-w-full"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span className="hidden sm:inline">Regenerate</span>
+                <span className="sm:hidden">Refresh</span>
+              </Button>
             </div>
           )}
         </div>
@@ -2184,9 +2280,12 @@ export function AIAtRiskAlert({
                 <p className="text-xs font-semibold text-red-600 uppercase mb-2">Critical</p>
                 {criticalSchools.map((school) => (
                   <div key={school.schoolId} className="p-2 rounded bg-red-50 dark:bg-red-950/20 mb-2">
-                    <p className="font-medium text-sm">{school.schoolName}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{school.schoolName}</p>
+                      {getReportRatingBadge(school)}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Score: {school.currentScore} | {school.warningType || school.indicators?.[0] || 'At Risk'}
+                      Score: {school.currentScore}{school.isTAPS ? '/429' : '/1000'} | {school.warningType || school.indicators?.[0] || 'At Risk'}
                     </p>
                   </div>
                 ))}
@@ -2197,9 +2296,12 @@ export function AIAtRiskAlert({
                 <p className="text-xs font-semibold text-orange-600 uppercase mb-2">High Risk</p>
                 {highRiskSchools.map((school) => (
                   <div key={school.schoolId} className="p-2 rounded bg-orange-50 dark:bg-orange-950/20 mb-2">
-                    <p className="font-medium text-sm">{school.schoolName}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{school.schoolName}</p>
+                      {getReportRatingBadge(school)}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Score: {school.currentScore} | {school.warningType || school.indicators?.[0] || 'At Risk'}
+                      Score: {school.currentScore}{school.isTAPS ? '/429' : '/1000'} | {school.warningType || school.indicators?.[0] || 'At Risk'}
                     </p>
                   </div>
                 ))}
@@ -2210,9 +2312,12 @@ export function AIAtRiskAlert({
                 <p className="text-xs font-semibold text-yellow-600 uppercase mb-2">Medium Risk</p>
                 {mediumRiskSchools.map((school) => (
                   <div key={school.schoolId} className="p-2 rounded bg-yellow-50 dark:bg-yellow-950/20 mb-2">
-                    <p className="font-medium text-sm">{school.schoolName}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{school.schoolName}</p>
+                      {getReportRatingBadge(school)}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Score: {school.currentScore} | {school.warningType || school.indicators?.[0] || 'At Risk'}
+                      Score: {school.currentScore}{school.isTAPS ? '/429' : '/1000'} | {school.warningType || school.indicators?.[0] || 'At Risk'}
                     </p>
                   </div>
                 ))}
@@ -2223,9 +2328,12 @@ export function AIAtRiskAlert({
                 <p className="text-xs font-semibold text-gray-600 uppercase mb-2">At Risk</p>
                 {otherRiskSchools.map((school) => (
                   <div key={school.schoolId} className="p-2 rounded bg-gray-50 dark:bg-gray-950/20 mb-2">
-                    <p className="font-medium text-sm">{school.schoolName}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{school.schoolName}</p>
+                      {getReportRatingBadge(school)}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Score: {school.currentScore} | {school.warningType || school.indicators?.[0] || 'At Risk'}
+                      Score: {school.currentScore}{school.isTAPS ? '/429' : '/1000'} | {school.warningType || school.indicators?.[0] || 'At Risk'}
                     </p>
                   </div>
                 ))}
@@ -2438,6 +2546,7 @@ export function AIRecommendationPanel({
 interface AITrendPredictionProps {
   type: 'school' | 'region' | 'national'
   entityId?: string
+  schoolLevelId?: string
   historicalData?: { period: string; score: number }[]
   title?: string
   description?: string
@@ -2453,6 +2562,7 @@ interface AITrendPredictionProps {
 export function AITrendPrediction({
   type,
   entityId,
+  schoolLevelId,
   historicalData = [],
   title = "Performance Prediction",
   description = "AI-powered forecast based on historical trends",
@@ -2465,8 +2575,8 @@ export function AITrendPrediction({
   const [fromCache, setFromCache] = useState(false)
 
   const cacheKey = useMemo(() => 
-    getCacheKey('prediction', { type, entityId }), 
-    [type, entityId]
+    getCacheKey('prediction', { type, entityId, schoolLevelId }), 
+    [type, entityId, schoolLevelId]
   )
 
   const generatePrediction = useCallback(async (skipCache = false) => {
@@ -2495,7 +2605,7 @@ export function AITrendPrediction({
         return
       }
 
-      const result = await fetchPredictiveAnalytics(targetId)
+      const result = await fetchPredictiveAnalytics(targetId, schoolLevelId)
       if (result.error) {
         setError(result.error)
         return
@@ -2511,7 +2621,21 @@ export function AITrendPrediction({
     } finally {
       setLoading(false)
     }
-  }, [entityId, cacheKey])
+  }, [entityId, schoolLevelId, cacheKey])
+
+  // Hydrate from cache on mount / cache key change
+  useEffect(() => {
+    const cached = getFromCache(cacheKey)
+    if (!cached) return
+
+    try {
+      setPrediction(JSON.parse(cached))
+      setFromCache(true)
+      setError(null)
+    } catch {
+      // Ignore malformed cache entries
+    }
+  }, [cacheKey])
 
   // Auto-generate on mount
   useEffect(() => {
@@ -2529,36 +2653,48 @@ export function AITrendPrediction({
   return (
     <Card className={`bg-white dark:bg-[hsl(222,47%,9%)] border-indigo-200/50 dark:border-indigo-500/20 h-full flex flex-col ${className}`}>
       <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-500/5 dark:to-purple-500/5 border-b border-indigo-200/30 dark:border-indigo-500/10">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="space-y-3">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="h-5 w-5 text-indigo-600" />
-              {title}
+              <Target className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+              <span className="min-w-0 break-words">{title}</span>
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
+
           {prediction && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {fromCache && (
                 <Badge variant="outline" className="text-xs gap-1">
                   <History className="h-3 w-3" />
                   Cached
                 </Badge>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generatePrediction(true)}
+                className="gap-1 max-w-full"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span className="hidden sm:inline">Regenerate</span>
+                <span className="sm:hidden">Refresh</span>
+              </Button>
               <Badge variant="secondary" className="gap-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
                 <Sparkles className="h-3 w-3" />
                 AI
               </Badge>
               {prediction.insight && (
-                <div className="flex items-center gap-2 ml-2">
+                <>
                   <FullscreenInsightModal 
                     content={prediction.insight} 
                     title={title} 
                     description={description}
                     trigger={
-                      <Button variant="outline" size="sm" className="gap-2">
+                      <Button variant="outline" size="sm" className="gap-2 max-w-full">
                         <Maximize2 className="h-4 w-4" />
-                        Fullscreen
+                        <span className="hidden sm:inline">Fullscreen</span>
+                        <span className="sm:hidden">View</span>
                       </Button>
                     }
                   />
@@ -2566,15 +2702,16 @@ export function AITrendPrediction({
                     data-print-hide
                     variant="outline"
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 max-w-full"
                     onClick={() => {
                       printMarkdownToPdf(prediction.insight, title)
                     }}
                   >
                     <Printer className="h-4 w-4" />
-                    Print / Save PDF
+                    <span className="hidden sm:inline">Print / Save PDF</span>
+                    <span className="sm:hidden">Print</span>
                   </Button>
-                </div>
+                </>
               )}
             </div>
           )}
@@ -2667,6 +2804,7 @@ interface AIComparativeAnalysisProps {
     schoolId?: string
     regionId?: string
     periodId?: string
+    schoolLevelId?: string
     academicYear?: string
     termName?: string
   }
@@ -2704,6 +2842,7 @@ export function AIComparativeAnalysis({
         result = await fetchAssessmentInsight({
           scope: "national",
           periodId: filters.periodId || periodId,
+          schoolLevelId: filters.schoolLevelId,
           insightType: "regional_comparison",
         })
       } else if (type === 'categories' && filters?.regionId) {
@@ -2712,6 +2851,7 @@ export function AIComparativeAnalysis({
           scope: "regional",
           id: filters.regionId,
           periodId: filters.periodId || periodId,
+          schoolLevelId: filters.schoolLevelId,
           insightType: "category_comparison",
           academicYear: filters.academicYear,
           termName: filters.termName,

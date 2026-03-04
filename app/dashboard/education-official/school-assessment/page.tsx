@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/components/ui/use-toast"
 import { AuthWrapper, useAuth } from "@/components/auth-wrapper"
+import { Pagination } from "@/components/pagination"
 import { 
   FileTextIcon, 
   TrendingUpIcon, 
@@ -70,6 +71,22 @@ interface RegionPerformance {
   changePercent?: number
 }
 
+interface SchoolLevelOption {
+  id: string
+  name: string
+}
+
+interface NonSubmittedSchool {
+  id: string
+  name: string
+  code: string | null
+  grade: string | null
+  regionId: string
+  regionName: string
+  schoolLevelId: string | null
+  schoolLevelName: string
+}
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
@@ -104,7 +121,13 @@ async function fetchPeriodsAndActive() {
   )
 }
 
-async function fetchDashboardData(periodId: string | null) {
+async function fetchSchoolLevels() {
+  return getJson<{ levels: SchoolLevelOption[]; error: string | null }>(
+    "/api/school-assessment/education-official/school-levels"
+  )
+}
+
+async function fetchDashboardData(periodId: string | null, schoolLevelId: string | null) {
   return postJson<{
     statsResult: any
     reportsResult: any
@@ -119,7 +142,17 @@ async function fetchDashboardData(periodId: string | null) {
     leadersResult: any
     categoryPerformanceResult: any
     error: string | null
-  }>("/api/school-assessment/education-official/dashboard-data", { periodId })
+  }>("/api/school-assessment/education-official/dashboard-data", { periodId, schoolLevelId })
+}
+
+async function fetchNonSubmittedSchools(periodId: string | null, schoolLevelId: string | null) {
+  return postJson<{
+    schools: NonSubmittedSchool[]
+    regions: { id: string; name: string }[]
+    grades: string[]
+    total: number
+    error: string | null
+  }>("/api/school-assessment/education-official/non-submitted-schools", { periodId, schoolLevelId })
 }
 
 async function fetchReport(reportId: string) {
@@ -148,6 +181,8 @@ function EducationOfficialAssessmentContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { user } = useAuth()
+  const canUseSchoolLevelFilter = user?.role === "Education Official" || user?.role === "Regional Officer"
+  const canViewNonSubmittedTab = user?.role === "Education Official" || user?.role === "Regional Officer"
   
   const currentTab = searchParams.get('tab') || 'overview'
   
@@ -156,6 +191,8 @@ function EducationOfficialAssessmentContent() {
   const [activePeriod, setActivePeriod] = useState<AssessmentPeriod | null>(null)
   const [allPeriods, setAllPeriods] = useState<AssessmentPeriod[]>([])
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
+  const [schoolLevels, setSchoolLevels] = useState<SchoolLevelOption[]>([])
+  const [selectedSchoolLevelId, setSelectedSchoolLevelId] = useState<string>("all")
   const [stats, setStats] = useState<any>(null)
   const [reports, setReports] = useState<any[]>([])
   const [rankings, setRankings] = useState<any[]>([])
@@ -177,6 +214,15 @@ function EducationOfficialAssessmentContent() {
   const [underperformingRegions, setUnderperformingRegions] = useState<any[] | null>(null)
   const [submissionProgress, setSubmissionProgress] = useState<any>(null)
   const [categoryLeaders, setCategoryLeaders] = useState<any[] | null>(null)
+  const [nonSubmittedSchools, setNonSubmittedSchools] = useState<NonSubmittedSchool[]>([])
+  const [nonSubmittedRegions, setNonSubmittedRegions] = useState<{ id: string; name: string }[]>([])
+  const [nonSubmittedGrades, setNonSubmittedGrades] = useState<string[]>([])
+  const [nonSubmittedLoading, setNonSubmittedLoading] = useState(false)
+  const [nonSubmittedSearchQuery, setNonSubmittedSearchQuery] = useState("")
+  const [nonSubmittedGradeFilter, setNonSubmittedGradeFilter] = useState<string>("all")
+  const [nonSubmittedRegionFilter, setNonSubmittedRegionFilter] = useState<string>("all")
+  const [nonSubmittedPage, setNonSubmittedPage] = useState(1)
+  const nonSubmittedPageSize = 15
 
   const recommendations = selectedReport?.id
     ? (recommendationsByReportId[selectedReport.id] ?? [])
@@ -194,13 +240,20 @@ function EducationOfficialAssessmentContent() {
     if (selectedPeriodId) {
       loadPeriodData(selectedPeriodId)
     }
-  }, [selectedPeriodId])
+  }, [selectedPeriodId, selectedSchoolLevelId])
 
   async function loadInitialData() {
     setLoading(true)
     try {
       // Load all periods and active period
-      const result = await fetchPeriodsAndActive()
+      const [result, levelsResult] = await Promise.all([
+        fetchPeriodsAndActive(),
+        fetchSchoolLevels(),
+      ])
+
+      if (levelsResult.levels) {
+        setSchoolLevels(levelsResult.levels)
+      }
 
       if (result.periods) {
         setAllPeriods(result.periods)
@@ -244,7 +297,7 @@ function EducationOfficialAssessmentContent() {
         underperformingResult,
         progressResult,
         leadersResult,
-      } = await fetchDashboardData(periodId ?? null)
+      } = await fetchDashboardData(periodId ?? null, selectedSchoolLevelId === "all" ? null : selectedSchoolLevelId)
 
       if (statsResult.stats) setStats(statsResult.stats)
       if (reportsResult.reports) {
@@ -270,6 +323,20 @@ function EducationOfficialAssessmentContent() {
       if (!progressResult.error) setSubmissionProgress(progressResult)
       if (!leadersResult.error) setCategoryLeaders(leadersResult.leaders)
 
+      if (canViewNonSubmittedTab) {
+        setNonSubmittedLoading(true)
+        const nonSubmittedResult = await fetchNonSubmittedSchools(
+          periodId ?? null,
+          selectedSchoolLevelId === "all" ? null : selectedSchoolLevelId
+        )
+
+        if (!nonSubmittedResult.error) {
+          setNonSubmittedSchools(nonSubmittedResult.schools || [])
+          setNonSubmittedRegions(nonSubmittedResult.regions || [])
+          setNonSubmittedGrades(nonSubmittedResult.grades || [])
+        }
+      }
+
     } catch (error) {
       console.error('Error loading period data:', error)
       toast({
@@ -278,6 +345,7 @@ function EducationOfficialAssessmentContent() {
         variant: "destructive",
       })
     } finally {
+      setNonSubmittedLoading(false)
       setLoading(false)
     }
   }
@@ -386,6 +454,28 @@ function EducationOfficialAssessmentContent() {
     return matchesSearch && matchesRegion
   })
 
+  const filteredNonSubmittedSchools = nonSubmittedSchools.filter((school) => {
+    const matchesSearch = nonSubmittedSearchQuery.trim() === "" ||
+      school.name.toLowerCase().includes(nonSubmittedSearchQuery.toLowerCase())
+
+    const matchesGrade = nonSubmittedGradeFilter === "all" ||
+      (school.grade || "") === nonSubmittedGradeFilter
+
+    const matchesRegion = nonSubmittedRegionFilter === "all" || school.regionId === nonSubmittedRegionFilter
+
+    return matchesSearch && matchesGrade && matchesRegion
+  })
+
+  useEffect(() => {
+    setNonSubmittedPage(1)
+  }, [nonSubmittedSearchQuery, nonSubmittedGradeFilter, nonSubmittedRegionFilter, selectedPeriodId, selectedSchoolLevelId])
+
+  const nonSubmittedTotalPages = Math.max(1, Math.ceil(filteredNonSubmittedSchools.length / nonSubmittedPageSize))
+  const paginatedNonSubmittedSchools = filteredNonSubmittedSchools.slice(
+    (nonSubmittedPage - 1) * nonSubmittedPageSize,
+    nonSubmittedPage * nonSubmittedPageSize
+  )
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -415,6 +505,21 @@ function EducationOfficialAssessmentContent() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {canUseSchoolLevelFilter && (
+            <Select value={selectedSchoolLevelId} onValueChange={setSelectedSchoolLevelId}>
+              <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                <SelectValue placeholder="Select level" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                <SelectItem value="all">All Levels</SelectItem>
+                {schoolLevels.map((level) => (
+                  <SelectItem key={level.id} value={level.id}>
+                    {level.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {allPeriods.length > 0 && (
             <Select
               value={selectedPeriodId || ""}
@@ -439,7 +544,7 @@ function EducationOfficialAssessmentContent() {
       {/* Tabs */}
       <Tabs value={currentTab} onValueChange={handleTabChange}>
         <TabsList
-          className={`grid w-full ${selectedReport ? "grid-cols-5" : "grid-cols-4"} lg:w-auto lg:inline-grid bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-slate-200/50 dark:border-slate-700/50`}
+          className={`grid w-full ${selectedReport ? (canViewNonSubmittedTab ? "grid-cols-6" : "grid-cols-5") : (canViewNonSubmittedTab ? "grid-cols-5" : "grid-cols-4")} lg:w-auto lg:inline-grid bg-slate-100 dark:bg-[hsl(222,47%,11%)] border border-slate-200/50 dark:border-slate-700/50`}
         >
           <TabsTrigger value="overview" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
             <BarChart3 className="h-4 w-4" />
@@ -457,6 +562,12 @@ function EducationOfficialAssessmentContent() {
             <AlertTriangle className="h-4 w-4" />
             <span className="hidden sm:inline">Needs Attention</span>
           </TabsTrigger>
+          {canViewNonSubmittedTab && (
+            <TabsTrigger value="not-submitted" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
+              <School className="h-4 w-4" />
+              <span className="hidden sm:inline">Not Submitted</span>
+            </TabsTrigger>
+          )}
           {selectedReport && (
             <TabsTrigger value="details" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-[hsl(222,47%,15%)] data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">
               <FileTextIcon className="h-4 w-4" />
@@ -464,6 +575,107 @@ function EducationOfficialAssessmentContent() {
             </TabsTrigger>
           )}
         </TabsList>
+
+        {canViewNonSubmittedTab && (
+          <TabsContent value="not-submitted" className="space-y-6">
+            <Card className="bg-white dark:bg-[hsl(222,47%,9%)] border-slate-200/80 dark:border-slate-700/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
+                  <School className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  Schools Without Submitted Reports
+                </CardTitle>
+                <CardDescription className="text-slate-500 dark:text-slate-400">
+                  {filteredNonSubmittedSchools.length} schools pending submission for the selected term and level
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                    <Input
+                      placeholder="Search by school name..."
+                      value={nonSubmittedSearchQuery}
+                      onChange={(e) => setNonSubmittedSearchQuery(e.target.value)}
+                      className="pl-10 bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    />
+                  </div>
+
+                  <Select value={nonSubmittedGradeFilter} onValueChange={setNonSubmittedGradeFilter}>
+                    <SelectTrigger className="w-[180px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="All Grades" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                      <SelectItem value="all">All Grades</SelectItem>
+                      {nonSubmittedGrades.map((grade) => (
+                        <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={nonSubmittedRegionFilter} onValueChange={setNonSubmittedRegionFilter}>
+                    <SelectTrigger className="w-[220px] bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="All Regions" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-[hsl(222,47%,11%)] border-slate-200 dark:border-slate-700">
+                      <SelectItem value="all">All Regions</SelectItem>
+                      {nonSubmittedRegions.map((region) => (
+                        <SelectItem key={region.id} value={region.id}>{region.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-lg border border-slate-200/80 dark:border-slate-700/50 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 dark:bg-[hsl(222,47%,8%)] border-b border-slate-200/80 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-[hsl(222,47%,8%)]">
+                        <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Region</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">Grade</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-400 font-semibold">School Level</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {nonSubmittedLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                            Loading non-submitted schools...
+                          </TableCell>
+                        </TableRow>
+                      ) : filteredNonSubmittedSchools.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-slate-500 dark:text-slate-400 py-8">
+                            No schools found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedNonSubmittedSchools.map((school) => (
+                          <TableRow key={school.id} className="border-b border-slate-200/50 dark:border-slate-700/30">
+                            <TableCell className="font-medium text-slate-900 dark:text-white">{school.name}</TableCell>
+                            <TableCell className="text-slate-600 dark:text-slate-400">{school.regionName}</TableCell>
+                            <TableCell className="text-slate-600 dark:text-slate-400">{school.grade || '-'}</TableCell>
+                            <TableCell className="text-slate-600 dark:text-slate-400">{school.schoolLevelName}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                {!nonSubmittedLoading && filteredNonSubmittedSchools.length > 0 && (
+                  <div className="mt-4">
+                    <Pagination
+                      currentPage={Math.min(nonSubmittedPage, nonSubmittedTotalPages)}
+                      totalPages={nonSubmittedTotalPages}
+                      totalItems={filteredNonSubmittedSchools.length}
+                      pageSize={nonSubmittedPageSize}
+                      onPageChange={setNonSubmittedPage}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4 lg:space-y-6">
@@ -522,15 +734,21 @@ function EducationOfficialAssessmentContent() {
               type="overview"
               title="AI National Analysis"
               description="Get AI-powered insights about national assessment performance"
+              filters={{
+                periodId: selectedPeriodId || undefined,
+                schoolLevelId: selectedSchoolLevelId === "all" ? undefined : selectedSchoolLevelId,
+              }}
               autoGenerate={false}
             />
             <AIAtRiskAlert
               threshold={400}
+              schoolLevelId={selectedSchoolLevelId === "all" ? undefined : selectedSchoolLevelId}
               autoGenerate={false}
             />
             {trends.length > 0 ? (
               <AITrendPrediction
                 type="national"
+                schoolLevelId={selectedSchoolLevelId === "all" ? undefined : selectedSchoolLevelId}
                 historicalData={trends.map(t => ({
                   period: t.period,
                   score: t.averageScore || 0
@@ -638,6 +856,10 @@ function EducationOfficialAssessmentContent() {
             <AIComparativeAnalysis
               type="regions"
               entityIds={stats.regionComparison.slice(0, 5).map((r: any) => r.regionId || r.regionName)}
+              filters={{
+                periodId: selectedPeriodId || undefined,
+                schoolLevelId: selectedSchoolLevelId === "all" ? undefined : selectedSchoolLevelId,
+              }}
               title="AI Regional Comparison"
               description="AI-powered analysis comparing top performing regions"
             />

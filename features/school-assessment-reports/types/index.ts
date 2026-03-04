@@ -1146,6 +1146,7 @@ export interface PaginatedResponse<T> {
 export interface ReportFilters {
   regionId?: string;
   periodId?: string;
+  schoolLevelId?: string;
   status?: ReportStatus;
   ratingLevel?: RatingLevel;
   searchQuery?: string;

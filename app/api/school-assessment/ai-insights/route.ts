@@ -14,6 +14,7 @@ type Body = {
   scope: Scope
   id?: string
   periodId?: string
+  schoolLevelId?: string
   insightType?:
     | "overview"
     | "regional_comparison"
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
       const result = await generateRegionalAssessmentInsight(
         body.id,
         body.periodId,
+        body.schoolLevelId,
         insightType,
         body.academicYear,
         body.termName
@@ -65,7 +67,7 @@ export async function POST(req: Request) {
     const insightType =
       (body.insightType as any) || ("overview" as const)
 
-    const result = await generateNationalAssessmentInsight(body.periodId, insightType)
+    const result = await generateNationalAssessmentInsight(body.periodId, body.schoolLevelId, insightType)
     return NextResponse.json(result)
   } catch (error) {
     console.error("/api/school-assessment/ai-insights error:", error)
